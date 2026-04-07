@@ -972,7 +972,6 @@ export class TUI extends Container {
 		// Content shrunk below the working area and no overlays - re-render to clear empty rows
 		// (overlays need the padding, so only do this when no overlays are active)
 		// Configurable via setClearOnShrink() or PI_CLEAR_ON_SHRINK=0 env var
-		if (process.env.DEBUG_TUI === '1') console.error('[SHRINK CHECK]', { clearOnShrink: this.clearOnShrink, newLinesLen: newLines.length, maxLines: this.maxLinesRendered, overlays: this.overlayStack.length, prevLinesLen: this.previousLines.length });
 		if (this.clearOnShrink && newLines.length < this.previousLines.length && this.overlayStack.length === 0) {
 			logRedraw(`clearOnShrink (maxLinesRendered=${this.maxLinesRendered})`);
 			fullRender(true);
