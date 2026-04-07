@@ -573,7 +573,9 @@ describe("Markdown component", () => {
 
 				render(width: number): string[] {
 					const lines = this.markdown.render(width);
-					console.log(`MarkdownWithInput.render: width=${width}, lines=${JSON.stringify(lines)}, lineCount=${lines.length}`);
+					console.log(
+						`MarkdownWithInput.render: width=${width}, lines=${JSON.stringify(lines)}, lineCount=${lines.length}`,
+					);
 					this.markdownLineCount = lines.length;
 					return [...lines, "INPUT"];
 				}
@@ -600,9 +602,9 @@ describe("Markdown component", () => {
 			tui.start();
 			console.log(`After start: markdownLineCount=${component.markdownLineCount}`);
 			await terminal.flush();
-			
+
 			// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-			await new Promise(resolve => setTimeout(resolve, 50));
+			await new Promise((resolve) => setTimeout(resolve, 50));
 
 			console.log(`After flush: markdownLineCount=${component.markdownLineCount}`);
 			assert.ok(component.markdownLineCount > 0);

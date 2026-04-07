@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Terminal as XtermTerminalType } from "@xterm/headless";
-import { type Component, TUI, isTermuxSession } from "../src/tui.js";
+import { type Component, isTermuxSession, TUI } from "../src/tui.js";
 import { VirtualTerminal } from "./virtual-terminal.js";
 
 class TestComponent implements Component {
@@ -104,7 +104,7 @@ describe("TUI resize handling", () => {
 			tui.start();
 			await terminal.flush();
 			// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-			await new Promise(resolve => setTimeout(resolve, 50));
+			await new Promise((resolve) => setTimeout(resolve, 50));
 			terminal.clearWrites();
 
 			const initialRedraws = tui.fullRedraws;
@@ -113,7 +113,7 @@ describe("TUI resize handling", () => {
 				console.log(`Resizing to height ${height}`);
 				terminal.resize(40, height);
 				// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-				await new Promise(resolve => setTimeout(resolve, 50));
+				await new Promise((resolve) => setTimeout(resolve, 50));
 				await terminal.flush();
 				console.log(`After resize to ${height}, fullRedraws: ${tui.fullRedraws}`);
 			}
@@ -248,14 +248,14 @@ describe("TUI differential rendering", () => {
 		// Shrink to 3 lines, all identical to before (no content changes in remaining lines)
 		component.lines = ["Line 0", "Line 1", "Line 2"];
 		tui.requestRender();
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		// cursorRow should be 2 (last line of new content)
 		// Verify by doing another render with a change on line 1
 		component.lines = ["Line 0", "CHANGED", "Line 2"];
 		tui.requestRender();
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		const viewport = terminal.getViewport();
@@ -284,7 +284,7 @@ describe("TUI differential rendering", () => {
 		for (const frame of spinnerFrames) {
 			component.lines = ["Header", `Working ${frame}`, "Footer"];
 			tui.requestRender();
-			await new Promise(resolve => setTimeout(resolve, 50));
+			await new Promise((resolve) => setTimeout(resolve, 50));
 			await terminal.flush();
 
 			const viewport = terminal.getViewport();
@@ -394,7 +394,7 @@ describe("TUI differential rendering", () => {
 		tui.start();
 		await terminal.flush();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		let viewport = terminal.getViewport();
 		assert.ok(viewport[0]?.includes("Line 0"), "Initial content rendered");
@@ -403,14 +403,14 @@ describe("TUI differential rendering", () => {
 		component.lines = [];
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		// Add content back - this should work correctly even after empty state
 		component.lines = ["New Line 0", "New Line 1"];
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		viewport = terminal.getViewport();
@@ -457,7 +457,7 @@ describe("TUI differential rendering", () => {
 		component.lines = ["Line 0", "Line 1"];
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		assert.ok(tui.fullRedraws > initialRedraws, "Shrink should reset the viewport with a full redraw");
@@ -466,7 +466,7 @@ describe("TUI differential rendering", () => {
 		component.lines = ["Line 0", "Line 1", "Line 2"];
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		assert.strictEqual(tui.fullRedraws, redrawsAfterShrink, "Append should stay on the differential path");
@@ -493,25 +493,25 @@ describe("TUI differential rendering", () => {
 		tui.start();
 		await terminal.flush();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 
 		editor.lines = selectorLines;
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		editor.lines = editorLines;
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		const redrawsBeforeSwitch = tui.fullRedraws;
 		chat.lines = shortChat;
 		tui.requestRender();
 		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await new Promise((resolve) => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		assert.ok(tui.fullRedraws > redrawsBeforeSwitch, "Branch switch should trigger a full redraw");
