@@ -291,7 +291,7 @@ export async function loginAntigravity(
 	try {
 		// Build authorization URL
 		const authParams = new URLSearchParams({
-			client_id: getClientId()
+			client_id: getClientId(),
 			response_type: "code",
 			redirect_uri: REDIRECT_URI,
 			scope: SCOPES.join(" "),
