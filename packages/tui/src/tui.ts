@@ -1000,7 +1000,9 @@ export class TUI extends Container {
 			}
 			lastChanged = newLines.length - 1;
 		}
-		const appendStart = appendedLines && firstChanged === this.previousLines.length && firstChanged > 0;
+		// For now, disable appendStart optimization to fix rendering bugs
+		// const appendStart = appendedLines && firstChanged === this.previousLines.length && firstChanged > 0;
+		const appendStart = false;
 
 		// No changes - but still need to update hardware cursor position if it moved
 		if (firstChanged === -1) {
