@@ -96,9 +96,11 @@
 **Why**: Each package should have `CHANGELOG.md` with `[Unreleased]` section per release protocol in README.
 
 **Tasks**:
-- Check each package for `CHANGELOG.md`
-- Create empty template if missing with `## [Unreleased]` section
-- Document changelog conventions in `docs/`
+- [x] Check each package for `CHANGELOG.md`
+- [x] Create empty template if missing with `## [Unreleased]` section (added for `packages/pods`)
+- [ ] Document changelog conventions in `docs/`
+
+**Status**: ✅ Completed (all packages now have CHANGELOG.md).
 
 **Success criteria**: All packages have properly formatted CHANGELOG.md.
 
