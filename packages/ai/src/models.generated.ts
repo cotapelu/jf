@@ -10932,12 +10932,12 @@ export const MODELS = {
 			reasoning: false,
 			input: ["text"],
 			cost: {
-				input: 0.22,
-				output: 0.88,
-				cacheRead: 0.11,
+				input: 0.071,
+				output: 0.463,
+				cacheRead: 0,
 				cacheWrite: 0,
 			},
-			contextWindow: 32768,
+			contextWindow: 40960,
 			maxTokens: 16384,
 		} satisfies Model<"anthropic-messages">,
 		"alibaba/qwen-3-30b": {
@@ -11788,7 +11788,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 128000,
-			maxTokens: 8192,
+			maxTokens: 100000,
 		} satisfies Model<"anthropic-messages">,
 		"meta/llama-3.1-70b": {
 			id: "meta/llama-3.1-70b",

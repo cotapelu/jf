@@ -40,7 +40,7 @@
 **Progress**:
 - Fixed `clearOnShrink` default to `true` (was `false`).
 - Changed shrink detection to use `previousLines.length` instead of `maxLinesRendered` to avoid inflation.
-- Remaining: 8 tests still failing (differential rendering bugs). Deep debugging required.
+- Fixed all 8 failing TUI rendering tests (differential rendering bugs) - all tests now pass.
 
 **Tasks**:
 - Investigate root cause of remaining failures (append after shrink, stale content clearing, cursor tracking).
@@ -49,6 +49,8 @@
 - Re-run tests until all pass.
 
 **Success criteria**: All TUI tests pass (0 failures).
+
+**Status**: ✅ Completed - All TUI tests now pass.
 
 ---
 

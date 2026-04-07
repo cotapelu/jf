@@ -108,7 +108,7 @@ function parseSizeValue(value: SizeValue | undefined, referenceSize: number): nu
 	return undefined;
 }
 
-function isTermuxSession(): boolean {
+export function isTermuxSession(): boolean {
 	return Boolean(process.env.TERMUX_VERSION);
 }
 
@@ -913,6 +913,7 @@ export class TUI extends Container {
 
 		// Helper to clear scrollback and viewport and render all new lines
 		const fullRender = (clear: boolean): void => {
+			if (process.env.DEBUG_TUI === '1') console.error('[FULLRENDER] clear='+clear+' prev='+this.previousLines.length+' new='+newLines.length);
 			this.fullRedrawCount += 1;
 			let buffer = "\x1b[?2026h"; // Begin synchronized output
 			if (clear) buffer += "\x1b[2J\x1b[H\x1b[3J"; // Clear screen, home, then clear scrollback
@@ -972,6 +973,7 @@ export class TUI extends Container {
 		// Content shrunk below the working area and no overlays - re-render to clear empty rows
 		// (overlays need the padding, so only do this when no overlays are active)
 		// Configurable via setClearOnShrink() or PI_CLEAR_ON_SHRINK=0 env var
+		if (process.env.DEBUG_TUI === '1') console.error('[SHRINK CHECK]', { clearOnShrink: this.clearOnShrink, newLen: newLines.length, prevLen: this.previousLines.length, overlays: this.overlayStack.length });
 		if (this.clearOnShrink && newLines.length < this.previousLines.length && this.overlayStack.length === 0) {
 			logRedraw(`clearOnShrink (maxLinesRendered=${this.maxLinesRendered})`);
 			fullRender(true);
@@ -1070,6 +1072,10 @@ export class TUI extends Container {
 		let buffer = "\x1b[?2026h"; // Begin synchronized output
 		const prevViewportBottom = prevViewportTop + height - 1;
 		const moveTargetRow = appendStart ? firstChanged - 1 : firstChanged;
+		if (process.env.DEBUG_TUI === '1') {
+			const msg = `[DIFF] fc=${firstChanged} lc=${lastChanged} prev=${this.previousLines.length} new=${newLines.length} app=${appendedLines} as=${appendStart} mt=${appendStart?firstChanged-1:firstChanged} hw=${hardwareCursorRow} pTop=${prevViewportTop} vTop=${viewportTop} max=${this.maxLinesRendered} cs=${this.clearOnShrink}\n`;
+			console.error(msg);
+		}
 		if (moveTargetRow > prevViewportBottom) {
 			const currentScreenRow = Math.max(0, Math.min(height - 1, hardwareCursorRow - prevViewportTop));
 			const moveToBottom = height - 1 - currentScreenRow;

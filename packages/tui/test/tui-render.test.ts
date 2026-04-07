@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import type { Terminal as XtermTerminalType } from "@xterm/headless";
-import { type Component, TUI } from "../src/tui.js";
+import { type Component, TUI, isTermuxSession } from "../src/tui.js";
 import { VirtualTerminal } from "./virtual-terminal.js";
 
 class TestComponent implements Component {
@@ -93,6 +93,8 @@ describe("TUI resize handling", () => {
 
 	it("skips full re-render on height changes in Termux", async () => {
 		await withEnv({ TERMUX_VERSION: "1" }, async () => {
+			console.log("TERMUX_VERSION:", process.env.TERMUX_VERSION);
+			console.log("isTermuxSession():", isTermuxSession());
 			const terminal = new LoggingVirtualTerminal(40, 10);
 			const tui = new TUI(terminal);
 			const component = new TestComponent();
@@ -101,12 +103,19 @@ describe("TUI resize handling", () => {
 			component.lines = Array.from({ length: 20 }, (_, i) => `Line ${i}`);
 			tui.start();
 			await terminal.flush();
+			// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+			await new Promise(resolve => setTimeout(resolve, 50));
 			terminal.clearWrites();
 
 			const initialRedraws = tui.fullRedraws;
+			console.log("initialRedraws:", initialRedraws);
 			for (const height of [15, 8, 14, 11]) {
+				console.log(`Resizing to height ${height}`);
 				terminal.resize(40, height);
+				// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+				await new Promise(resolve => setTimeout(resolve, 50));
 				await terminal.flush();
+				console.log(`After resize to ${height}, fullRedraws: ${tui.fullRedraws}`);
 			}
 
 			assert.strictEqual(tui.fullRedraws, initialRedraws, "Height change should not trigger full redraw");
@@ -239,17 +248,22 @@ describe("TUI differential rendering", () => {
 		// Shrink to 3 lines, all identical to before (no content changes in remaining lines)
 		component.lines = ["Line 0", "Line 1", "Line 2"];
 		tui.requestRender();
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		// cursorRow should be 2 (last line of new content)
 		// Verify by doing another render with a change on line 1
 		component.lines = ["Line 0", "CHANGED", "Line 2"];
 		tui.requestRender();
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		const viewport = terminal.getViewport();
+		console.log("Viewport after change:", viewport);
+		console.log("viewport[1]:", JSON.stringify(viewport[1]));
+		console.log("typeof viewport[1]:", typeof viewport[1]);
 		// Line 1 should show "CHANGED", proving cursor tracking was correct
-		assert.ok(viewport[1]?.includes("CHANGED"), `Expected "CHANGED" on line 1, got: ${viewport[1]}`);
+		assert.ok(viewport[1]?.includes("CHANGED"), `Expected "CHANGED" on line 1, got: ${JSON.stringify(viewport[1])}`);
 
 		tui.stop();
 	});
@@ -270,6 +284,7 @@ describe("TUI differential rendering", () => {
 		for (const frame of spinnerFrames) {
 			component.lines = ["Header", `Working ${frame}`, "Footer"];
 			tui.requestRender();
+			await new Promise(resolve => setTimeout(resolve, 50));
 			await terminal.flush();
 
 			const viewport = terminal.getViewport();
@@ -378,6 +393,8 @@ describe("TUI differential rendering", () => {
 		component.lines = ["Line 0", "Line 1", "Line 2"];
 		tui.start();
 		await terminal.flush();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 
 		let viewport = terminal.getViewport();
 		assert.ok(viewport[0]?.includes("Line 0"), "Initial content rendered");
@@ -385,11 +402,15 @@ describe("TUI differential rendering", () => {
 		// Clear to empty
 		component.lines = [];
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		// Add content back - this should work correctly even after empty state
 		component.lines = ["New Line 0", "New Line 1"];
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		viewport = terminal.getViewport();
@@ -435,6 +456,8 @@ describe("TUI differential rendering", () => {
 
 		component.lines = ["Line 0", "Line 1"];
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		assert.ok(tui.fullRedraws > initialRedraws, "Shrink should reset the viewport with a full redraw");
@@ -442,6 +465,8 @@ describe("TUI differential rendering", () => {
 
 		component.lines = ["Line 0", "Line 1", "Line 2"];
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		assert.strictEqual(tui.fullRedraws, redrawsAfterShrink, "Append should stay on the differential path");
@@ -467,18 +492,26 @@ describe("TUI differential rendering", () => {
 		editor.lines = editorLines;
 		tui.start();
 		await terminal.flush();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 
 		editor.lines = selectorLines;
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		editor.lines = editorLines;
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		const redrawsBeforeSwitch = tui.fullRedraws;
 		chat.lines = shortChat;
 		tui.requestRender();
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		assert.ok(tui.fullRedraws > redrawsBeforeSwitch, "Branch switch should trigger a full redraw");

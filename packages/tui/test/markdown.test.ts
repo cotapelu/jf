@@ -573,11 +573,13 @@ describe("Markdown component", () => {
 
 				render(width: number): string[] {
 					const lines = this.markdown.render(width);
+					console.log(`MarkdownWithInput.render: width=${width}, lines=${JSON.stringify(lines)}, lineCount=${lines.length}`);
 					this.markdownLineCount = lines.length;
 					return [...lines, "INPUT"];
 				}
 
 				invalidate(): void {
+					console.log("MarkdownWithInput.invalidate called");
 					this.markdown.invalidate();
 				}
 			}
@@ -587,16 +589,28 @@ describe("Markdown component", () => {
 				italic: true,
 			});
 
+			console.log(`Initial markdownLineCount: ${new MarkdownWithInput(markdown).markdownLineCount}`);
+
 			const terminal = new VirtualTerminal(80, 6);
 			const tui = new TUI(terminal);
 			const component = new MarkdownWithInput(markdown);
+			console.log(`After construction: markdownLineCount=${component.markdownLineCount}`);
 			tui.addChild(component);
+			console.log(`After addChild: markdownLineCount=${component.markdownLineCount}`);
 			tui.start();
+			console.log(`After start: markdownLineCount=${component.markdownLineCount}`);
 			await terminal.flush();
+			
+			// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+			await new Promise(resolve => setTimeout(resolve, 50));
 
+			console.log(`After flush: markdownLineCount=${component.markdownLineCount}`);
 			assert.ok(component.markdownLineCount > 0);
 			const inputRow = component.markdownLineCount;
-			assert.strictEqual(getCellItalic(terminal, inputRow, 0), 0);
+			console.log(`Test: inputRow=${inputRow}`);
+			const italic = getCellItalic(terminal, inputRow, 0);
+			console.log(`Test: getCellItalic result=${italic}`);
+			assert.strictEqual(italic, 0);
 			tui.stop();
 		});
 	});

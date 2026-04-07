@@ -34,6 +34,8 @@ describe("TUI overlay with short content", () => {
 		// Trigger render
 		tui.start();
 		await new Promise((r) => process.nextTick(r));
+		// Wait for render to happen (TUI uses setTimeout with up to 16ms delay)
+		await new Promise(resolve => setTimeout(resolve, 50));
 		await terminal.flush();
 
 		const viewport = terminal.getViewport();

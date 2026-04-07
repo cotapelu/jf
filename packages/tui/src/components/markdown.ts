@@ -170,11 +170,12 @@ export class Markdown implements Component {
 		const result = [...emptyLines, ...contentLines, ...emptyLines];
 
 		// Update cache
+		const finalResult = result.length > 0 ? result : [""];
 		this.cachedText = this.text;
 		this.cachedWidth = width;
-		this.cachedLines = result;
+		this.cachedLines = finalResult;
 
-		return result.length > 0 ? result : [""];
+		return finalResult;
 	}
 
 	/**
@@ -509,7 +510,7 @@ export class Markdown implements Component {
 			result = result.slice(0, -stylePrefix.length);
 		}
 
-		return result;
+	return result;
 	}
 
 	/**

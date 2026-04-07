@@ -28,10 +28,10 @@ This is a **monorepo** containing multiple packages:
 ### 🚧 Known Issues & Limitations
 
 1. **No CI/CD**: No automated testing, building, or deployment pipelines
-2. **Test coverage**: ~99% pass (majority). 8 failing tests in TUI rendering (differential rendering bugs), 6 Ollama tests skipped due to insufficient memory (environment-limited)
+2. **Test coverage**: ~99% pass (majority). 6 Ollama tests skipped due to insufficient memory (environment-limited)
 3. **OSS Weekend mode active**: Issue tracker auto-closes until April 13, 2026 (per coding-agent README)
 4. **No changelog entries**: Version `0.0.3` but no `CHANGELOG.md` content visible in packages
-5. **TUI test failures**: 8 tests failing (differential rendering bugs) — tracked in TODO
+5. **TUI test failures**: All TUI tests now pass (0 failures)
 
 ### 🔧 Recent Fixes (2025-04-06)
 
@@ -107,4 +107,10 @@ Based on file timestamps:
 - Test coverage: ~99% (1574/1588 passing)
 - Identified remaining failures: 8 TUI rendering tests (bugs), 6 Ollama memory-limited tests (env)
 - Updated docs with metrics and TODO
+
+2025-04-07 — Type: Bugfix
+- Fixed all 8 TUI rendering test failures in packages/tui
+- Resolved differential rendering bugs affecting overlay positioning and cursor tracking
+- All TUI tests now pass (0 failures)
+- Updated PROJECT_STATE.md and TODO.md to reflect resolution
 
