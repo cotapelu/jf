@@ -972,6 +972,7 @@ export class TUI extends Container {
 		// Content shrunk below the working area and no overlays - re-render to clear empty rows
 		// (overlays need the padding, so only do this when no overlays are active)
 		// Configurable via setClearOnShrink() or PI_CLEAR_ON_SHRINK=0 env var
+		if (process.env.DEBUG_TUI === '1') console.error('[SHRINK CHECK]', { clearOnShrink: this.clearOnShrink, newLinesLen: newLines.length, maxLines: this.maxLinesRendered, overlays: this.overlayStack.length, prevLinesLen: this.previousLines.length });
 		if (this.clearOnShrink && newLines.length < this.maxLinesRendered && this.overlayStack.length === 0) {
 			logRedraw(`clearOnShrink (maxLinesRendered=${this.maxLinesRendered})`);
 			fullRender(true);
@@ -1000,9 +1001,7 @@ export class TUI extends Container {
 			}
 			lastChanged = newLines.length - 1;
 		}
-		// For now, disable appendStart optimization to fix rendering bugs
-		// const appendStart = appendedLines && firstChanged === this.previousLines.length && firstChanged > 0;
-		const appendStart = false;
+		const appendStart = appendedLines && firstChanged === this.previousLines.length && firstChanged > 0;
 
 		// No changes - but still need to update hardware cursor position if it moved
 		if (firstChanged === -1) {
