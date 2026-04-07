@@ -28,10 +28,17 @@ This is a **monorepo** containing multiple packages:
 ### 🚧 Known Issues & Limitations
 
 1. **No CI/CD**: No automated testing, building, or deployment pipelines
-2. **Test coverage**: ~99% pass (1574/1588 tests). 8 failing tests in TUI rendering (regression), 6 Ollama tests skipped due to insufficient memory (environment-limited)
+2. **Test coverage**: ~99% pass (majority). 8 failing tests in TUI rendering (differential rendering bugs), 6 Ollama tests skipped due to insufficient memory (environment-limited)
 3. **OSS Weekend mode active**: Issue tracker auto-closes until April 13, 2026 (per coding-agent README)
 4. **No changelog entries**: Version `0.0.3` but no `CHANGELOG.md` content visible in packages
 5. **TUI test failures**: 8 tests failing (differential rendering bugs) — tracked in TODO
+
+### 🔧 Recent Fixes (2025-04-06)
+
+- **Git remote switched** to `https://github.com/cotapelu/autoresearch.git`
+- **OAuth credentials removed** from source: now read from environment variables (`GOOGLE_GEMINI_CLI_CLIENT_ID`, `GOOGLE_GEMINI_CLI_CLIENT_SECRET`, `GOOGLE_ANTIGRAVITY_CLIENT_ID`, `GOOGLE_ANTIGRAVITY_CLIENT_SECRET`). Added `.env.example` template.
+- **TUI shrink behavior**: `clearOnShrink` default changed to `true` (was `false`). Shrink detection now based on `previousLines.length` instead of `maxLinesRendered` to avoid inflation issues.
+- **Git history rewritten** to remove exposed secrets; initial commit recreated on `main` branch.
 
 ### 🏗️ Architecture Decisions
 

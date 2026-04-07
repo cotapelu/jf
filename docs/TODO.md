@@ -37,11 +37,16 @@
 
 **Why**: 8 tests failing in `packages/tui` related to differential rendering, overlay positioning, cursor tracking. These are real bugs affecting TUI stability.
 
+**Progress**:
+- Fixed `clearOnShrink` default to `true` (was `false`).
+- Changed shrink detection to use `previousLines.length` instead of `maxLinesRendered` to avoid inflation.
+- Remaining: 8 tests still failing (differential rendering bugs). Deep debugging required.
+
 **Tasks**:
-- Investigate root cause of failures (likely in `tui-render.test.ts`)
-- Identify common code paths (TUI diff algorithm, viewport management)
-- Implement fix(es)
-- Re-run tests until all pass
+- Investigate root cause of remaining failures (append after shrink, stale content clearing, cursor tracking).
+- Review diff algorithm for edge cases.
+- Implement fix(es).
+- Re-run tests until all pass.
 
 **Success criteria**: All TUI tests pass (0 failures).
 
