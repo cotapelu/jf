@@ -79,6 +79,7 @@ import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.js";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.js";
 import { createAllToolDefinitions } from "./tools/index.js";
+import { type TodoPhase, TodoWriteTool } from "./tools/todo-write.js";
 import { createToolDefinitionFromAgentTool, wrapToolDefinition } from "./tools/tool-definition-wrapper.js";
 
 // ============================================================================
@@ -608,6 +609,8 @@ export class AgentSession {
 			await this._extensionRunner.emit({ type: "agent_start" });
 		} else if (event.type === "agent_end") {
 			await this._extensionRunner.emit({ type: "agent_end", messages: event.messages });
+			// TODO: Check for incomplete todos and auto-remind (needs message type fix)
+			// this.#checkTodoCompletion();
 		} else if (event.type === "turn_start") {
 			const extensionEvent: TurnStartEvent = {
 				type: "turn_start",
@@ -2310,6 +2313,10 @@ export class AgentSession {
 			Object.entries(baseToolDefinitions).map(([name, tool]) => [name, tool as ToolDefinition]),
 		);
 
+		// Add todo_write tool
+		const todoWriteTool = new TodoWriteTool(this);
+		this._baseToolDefinitions.set("todo_write", createToolDefinitionFromAgentTool(todoWriteTool));
+
 		const extensionsResult = this._resourceLoader.getExtensions();
 		if (options.flagValues) {
 			for (const [name, value] of options.flagValues) {
@@ -3055,5 +3062,21 @@ export class AgentSession {
 	 */
 	get extensionRunner(): ExtensionRunner | undefined {
 		return this._extensionRunner;
+	}
+
+	// =========================================================================
+	// Todo Management
+	// =========================================================================
+
+	#todoPhases: TodoPhase[] = [];
+
+	/** Get todo phases from session */
+	getTodoPhases(): TodoPhase[] {
+		return this.#todoPhases;
+	}
+
+	/** Set todo phases in session */
+	setTodoPhases(phases: TodoPhase[]): void {
+		this.#todoPhases = phases;
 	}
 }
