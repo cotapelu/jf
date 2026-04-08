@@ -631,6 +631,35 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 			}
 		}
 
+		// Process Kilo models (OpenAI-compatible gateway)
+		if (data.kilo?.models) {
+			const KILO_BASE_URL = "https://api.kilo.ai/api/gateway";
+
+			for (const [modelId, model] of Object.entries(data.kilo.models)) {
+				const m = model as ModelsDevModel & { status?: string };
+				if (m.tool_call !== true) continue;
+				if (m.status === "deprecated") continue;
+
+				models.push({
+					id: modelId,
+					name: m.name || modelId,
+					api: "openai-completions",
+					provider: "kilo",
+					baseUrl: KILO_BASE_URL,
+					reasoning: m.reasoning === true,
+					input: m.modalities?.input?.includes("image") ? ["text", "image"] : ["text"],
+					cost: {
+						input: m.cost?.input || 0,
+						output: m.cost?.output || 0,
+						cacheRead: m.cost?.cache_read || 0,
+						cacheWrite: m.cost?.cache_write || 0,
+					},
+					contextWindow: m.limit?.context || 4096,
+					maxTokens: m.limit?.output || 4096,
+				});
+			}
+		}
+
 		console.log(`Loaded ${models.length} tool-capable models from models.dev`);
 		return models;
 	} catch (error) {
@@ -1494,98 +1523,12 @@ async function generateModels() {
 		}
 	}
 
-	// Kilo Gateway models (OpenAI-compatible API that routes to various providers)
-	// Uses OpenAI completions format with model names like "anthropic/claude-opus-4.6"
-	const KILO_GATEWAY_BASE_URL = "https://api.kilo.ai/api/gateway";
-	const kiloGatewayModels: Model<"openai-completions">[] = [
-		{
-			id: "claude-opus-4-6",
-			name: "Claude Opus 4.6 (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
-			contextWindow: 200000,
-			maxTokens: 128000,
-		},
-		{
-			id: "claude-sonnet-4-6",
-			name: "Claude Sonnet 4.6 (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
-			contextWindow: 200000,
-			maxTokens: 64000,
-		},
-		{
-			id: "claude-haiku-4-5",
-			name: "Claude Haiku 4.5 (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 1, output: 5, cacheRead: 0.1, cacheWrite: 1.25 },
-			contextWindow: 200000,
-			maxTokens: 64000,
-		},
-		{
-			id: "gpt-5.4",
-			name: "GPT-5.4 (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 2.5, output: 15, cacheRead: 0.25, cacheWrite: 0 },
-			contextWindow: 272000,
-			maxTokens: 128000,
-		},
-		{
-			id: "gpt-5.1-codex",
-			name: "GPT-5.1 Codex (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 1.25, output: 5, cacheRead: 0.125, cacheWrite: 1.25 },
-			contextWindow: 400000,
-			maxTokens: 128000,
-		},
-		{
-			id: "gemini-2.5-pro",
-			name: "Gemini 2.5 Pro (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 1.25, output: 10, cacheRead: 0.125, cacheWrite: 0 },
-			contextWindow: 1048576,
-			maxTokens: 65536,
-		},
-		{
-			id: "gemini-2.5-flash",
-			name: "Gemini 2.5 Flash (Kilo)",
-			api: "openai-completions",
-			provider: "kilo-gateway",
-			baseUrl: KILO_GATEWAY_BASE_URL,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 0.3, output: 2.5, cacheRead: 0.03, cacheWrite: 0 },
-			contextWindow: 1048576,
-			maxTokens: 65536,
-		},
-	];
-	for (const model of kiloGatewayModels) {
-		if (!allModels.some(m => m.provider === "kilo-gateway" && m.id === model.id)) {
-			allModels.push(model);
+	// Rename "kilo" provider to "kilo-gateway" for models from models.dev
+	// The Kilo API is https://api.kilo.ai/api/gateway
+	for (const model of allModels) {
+		if (model.provider === "kilo") {
+			model.provider = "kilo-gateway";
+			model.baseUrl = "https://api.kilo.ai/api/gateway";
 		}
 	}
 
