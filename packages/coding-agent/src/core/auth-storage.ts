@@ -12,7 +12,13 @@ import {
 	type OAuthLoginCallbacks,
 	type OAuthProviderId,
 } from "@mariozechner/pi-ai";
-import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from "@mariozechner/pi-ai/oauth";
+import {
+	getOAuthApiKey,
+	getOAuthProvider,
+	getOAuthProviders,
+	getSimpleApiKeyProviders,
+	type SimpleApiKeyProvider,
+} from "@mariozechner/pi-ai/oauth";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
@@ -489,5 +495,19 @@ export class AuthStorage {
 	 */
 	getOAuthProviders() {
 		return getOAuthProviders();
+	}
+
+	/**
+	 * Get all simple API key providers (no OAuth, just API key)
+	 */
+	getSimpleApiKeyProviders(): SimpleApiKeyProvider[] {
+		return getSimpleApiKeyProviders();
+	}
+
+	/**
+	 * Set API key for a simple provider (no OAuth)
+	 */
+	setApiKey(providerId: string, apiKey: string): void {
+		this.set(providerId, { type: "api_key", key: apiKey });
 	}
 }

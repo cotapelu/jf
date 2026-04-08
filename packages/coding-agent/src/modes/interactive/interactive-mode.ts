@@ -25,6 +25,7 @@ import {
 	type Component,
 	Container,
 	fuzzyFilter,
+	Input,
 	Loader,
 	Markdown,
 	matchesKey,
@@ -3887,13 +3888,17 @@ export class InteractiveMode {
 			const selector = new OAuthSelectorComponent(
 				mode,
 				this.session.modelRegistry.authStorage,
-				async (providerId: string) => {
+				async (providerId: string, isSimple: boolean) => {
 					done();
 
 					if (mode === "login") {
-						await this.showLoginDialog(providerId);
+						if (isSimple) {
+							await this.showSimpleApiKeyLogin(providerId);
+						} else {
+							await this.showLoginDialog(providerId);
+						}
 					} else {
-						// Logout flow
+						// Logout flow - only for OAuth providers
 						const providerInfo = this.session.modelRegistry.authStorage
 							.getOAuthProviders()
 							.find((p) => p.id === providerId);
@@ -3918,7 +3923,7 @@ export class InteractiveMode {
 		});
 	}
 
-	private async showLoginDialog(providerId: string): Promise<void> {
+		private async showLoginDialog(providerId: string): Promise<void> {
 		const providerInfo = this.session.modelRegistry.authStorage.getOAuthProviders().find((p) => p.id === providerId);
 		const providerName = providerInfo?.name || providerId;
 
@@ -3953,57 +3958,83 @@ export class InteractiveMode {
 		};
 
 		try {
-			await this.session.modelRegistry.authStorage.login(providerId as OAuthProviderId, {
-				onAuth: (info: { url: string; instructions?: string }) => {
-					dialog.showAuth(info.url, info.instructions);
+			await this.session.modelRegistry.authStorage.login(
+				providerId,
+				{
+					onAuth: (info) => {
+						dialog.showAuth(info.url, info.instructions);
+					},
+					onPrompt: (prompt) => {
+						return dialog.showPrompt(prompt.message, prompt.placeholder);
+					},
+					onProgress: (message) => {
+						dialog.showProgress(message);
+					},
+				}
+			);
 
-					if (usesCallbackServer) {
-						// Show input for manual paste, racing with callback
-						dialog
-							.showManualInput("Paste redirect URL below, or complete login in browser:")
-							.then((value) => {
-								if (value && manualCodeResolve) {
-									manualCodeResolve(value);
-									manualCodeResolve = undefined;
-								}
-							})
-							.catch(() => {
-								if (manualCodeReject) {
-									manualCodeReject(new Error("Login cancelled"));
-									manualCodeReject = undefined;
-								}
-							});
-					} else if (providerId === "github-copilot") {
-						// GitHub Copilot polls after onAuth
-						dialog.showWaiting("Waiting for browser authentication...");
-					}
-					// For Anthropic: onPrompt is called immediately after
-				},
-
-				onPrompt: async (prompt: { message: string; placeholder?: string }) => {
-					return dialog.showPrompt(prompt.message, prompt.placeholder);
-				},
-
-				onProgress: (message: string) => {
-					dialog.showProgress(message);
-				},
-
-				onManualCodeInput: () => manualCodePromise,
-
-				signal: dialog.signal,
-			});
-
-			// Success
-			restoreEditor();
-			this.session.modelRegistry.refresh();
+			await this.session.modelRegistry.refresh();
 			await this.updateAvailableProviderCount();
-			this.showStatus(`Logged in to ${providerName}. Credentials saved to ${getAuthPath()}`);
+			this.showStatus(`Logged in to ${providerName}`);
 		} catch (error: unknown) {
+			this.showError(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
+		} finally {
+			// Restore editor
 			restoreEditor();
-			const errorMsg = error instanceof Error ? error.message : String(error);
-			if (errorMsg !== "Login cancelled") {
-				this.showError(`Failed to login to ${providerName}: ${errorMsg}`);
+		}
+	}
+
+	private async showSimpleApiKeyLogin(providerId: string): Promise<void> {
+		const simpleProviders = this.session.modelRegistry.authStorage.getSimpleApiKeyProviders();
+		const providerInfo = simpleProviders.find((p) => p.id === providerId);
+		const providerName = providerInfo?.name || providerId;
+		const placeholder = providerInfo?.placeholder || "sk-...";
+
+		this.editorContainer.clear();
+		const input = new Input();
+		const container = new Container();
+		container.addChild(new Text(theme.fg("warning", `Enter API key for ${providerName}:`), 1, 0));
+		container.addChild(new Text(theme.fg("dim", `e.g., ${placeholder}`), 1, 0));
+		container.addChild(new Spacer(1));
+		container.addChild(input);
+		container.addChild(
+			new Text(
+				`(${keyHint("tui.select.cancel", "to cancel")}, ${keyHint("tui.select.confirm", "to submit")})`,
+				1,
+				0,
+			),
+		);
+
+		this.editorContainer.addChild(container);
+		this.ui.setFocus(input);
+		this.ui.requestRender();
+
+		const apiKey = await new Promise<string | undefined>((resolve) => {
+			input.onSubmit = () => {
+				resolve(input.getValue());
+			};
+			input.onEscape = () => {
+				resolve(undefined);
+			};
+		});
+
+		// Restore editor
+		this.editorContainer.clear();
+		this.editorContainer.addChild(this.editor);
+		this.ui.setFocus(this.editor);
+		this.ui.requestRender();
+
+		if (apiKey && apiKey.trim()) {
+			try {
+				this.session.modelRegistry.authStorage.setApiKey(providerId, apiKey.trim());
+				this.session.modelRegistry.refresh();
+				await this.updateAvailableProviderCount();
+				this.showStatus(`API key saved for ${providerName}`);
+			} catch (error: unknown) {
+				this.showError(`Failed to save API key: ${error instanceof Error ? error.message : String(error)}`);
 			}
+		} else {
+			this.showStatus("API key not saved");
 		}
 	}
 

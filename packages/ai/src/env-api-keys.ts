@@ -125,6 +125,7 @@ export function getEnvApiKey(provider: any): string | undefined {
 		huggingface: "HF_TOKEN",
 		opencode: "OPENCODE_API_KEY",
 		"opencode-go": "OPENCODE_API_KEY",
+		"kilo-gateway": "KILO_GATEWAY_API_KEY",
 		"kimi-coding": "KIMI_API_KEY",
 	};
 

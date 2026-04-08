@@ -39,6 +39,7 @@ export type KnownProvider =
 	| "huggingface"
 	| "opencode"
 	| "opencode-go"
+	| "kilo-gateway"
 	| "kimi-coding";
 export type Provider = KnownProvider | string;
 

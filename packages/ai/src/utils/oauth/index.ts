@@ -29,6 +29,39 @@ export { loginOpenAICodex, openaiCodexOAuthProvider, refreshOpenAICodexToken } f
 export * from "./types.js";
 
 // ============================================================================
+// Simple API Key Providers (no OAuth, just API key)
+// ============================================================================
+
+export interface SimpleApiKeyProvider {
+	id: string;
+	name: string;
+	envVar?: string;
+	placeholder?: string;
+}
+
+const BUILT_IN_SIMPLE_PROVIDERS: SimpleApiKeyProvider[] = [
+	{ id: "opencode", name: "OpenCode Zen", placeholder: "sk-..." },
+	{ id: "opencode-go", name: "OpenCode Go", placeholder: "sk-..." },
+	{ id: "kilo-gateway", name: "Kilo Gateway", placeholder: "kg-..." },
+];
+
+const simpleProviderRegistry = new Map<string, SimpleApiKeyProvider>(
+	BUILT_IN_SIMPLE_PROVIDERS.map((provider) => [provider.id, provider]),
+);
+
+export function getSimpleApiKeyProviders(): SimpleApiKeyProvider[] {
+	return Array.from(simpleProviderRegistry.values());
+}
+
+export function registerSimpleApiKeyProvider(provider: SimpleApiKeyProvider): void {
+	simpleProviderRegistry.set(provider.id, provider);
+}
+
+export function getSimpleApiKeyProvider(id: string): SimpleApiKeyProvider | undefined {
+	return simpleProviderRegistry.get(id);
+}
+
+// ============================================================================
 // Provider Registry
 // ============================================================================
 

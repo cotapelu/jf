@@ -20,6 +20,12 @@ export * from "./stream.js";
 export * from "./types.js";
 export * from "./utils/event-stream.js";
 export * from "./utils/json-parse.js";
+export type { SimpleApiKeyProvider } from "./utils/oauth/index.js";
+export {
+	getSimpleApiKeyProvider,
+	getSimpleApiKeyProviders,
+	registerSimpleApiKeyProvider,
+} from "./utils/oauth/index.js";
 export type {
 	OAuthAuthInfo,
 	OAuthCredentials,
