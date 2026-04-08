@@ -832,6 +832,11 @@ export class AgentSession {
 		return this.sessionManager.getSessionFile();
 	}
 
+	/** Current session directory */
+	get sessionDir(): string {
+		return this.sessionManager.getSessionDir();
+	}
+
 	/** Current session ID */
 	get sessionId(): string {
 		return this.sessionManager.getSessionId();
@@ -3073,6 +3078,17 @@ export class AgentSession {
 	/** Get todo phases from session */
 	getTodoPhases(): TodoPhase[] {
 		return this.#todoPhases;
+	}
+
+	/** Get current task status for footer display */
+	getTodoStatus(): string | undefined {
+		const phases = this.#todoPhases;
+		if (phases.length === 0) return undefined;
+
+		const inProgress = phases.flatMap((p) => p.tasks).find((t) => t.status === "in_progress");
+		if (!inProgress) return undefined;
+
+		return `${inProgress.id}: ${inProgress.content.slice(0, 40)}${inProgress.content.length > 40 ? "..." : ""}`;
 	}
 
 	/** Set todo phases in session */

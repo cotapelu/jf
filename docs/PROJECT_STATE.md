@@ -123,4 +123,5 @@ Based on file timestamps:
 - Enhanced error message formatting in pi CLI with visual indicators and better context for argument validation errors
 - Completed performance profiling: RPC startup time 1355.2ms, build time 6234.5ms
 - Updated TODO.md to mark Performance Profiling task as completed
+- Added Todo System Enhancements: unit tests for todo-write.ts, file persistence (.pi/todos.json), built-in /todos CLI command with filtering, footer widget showing current task
 

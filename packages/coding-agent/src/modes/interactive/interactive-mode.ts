@@ -2214,6 +2214,10 @@ export class InteractiveMode {
 				await this.shutdown();
 				return;
 			}
+			if (text === "/todos" || text.startsWith("/todos ")) {
+				this.handleTodosCommand(text);
+				return;
+			}
 
 			// Handle bash command (! for normal, !! for excluded from context)
 			if (text.startsWith("!")) {
@@ -4577,6 +4581,80 @@ export class InteractiveMode {
 	private handleDaxnuts(): void {
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DaxnutsComponent(this.ui));
+		this.ui.requestRender();
+	}
+
+	private handleTodosCommand(text: string): void {
+		this.editor.setText("");
+
+		const phases = this.session.getTodoPhases();
+		if (phases.length === 0) {
+			this.chatContainer.addChild(new Spacer(1));
+			this.chatContainer.addChild(
+				new Text(theme.fg("dim", "No todo list. Use todo_write tool to create one."), 1, 0),
+			);
+			this.ui.requestRender();
+			return;
+		}
+
+		// Parse filter argument (e.g., /todos pending, /todos completed)
+		let filter: string | undefined;
+		if (text.startsWith("/todos ")) {
+			filter = text.slice(7).trim().toLowerCase();
+		}
+
+		let info = theme.bold("Todo List\n\n");
+		let totalRemaining = 0;
+		let totalDone = 0;
+
+		for (const phase of phases) {
+			const pendingTasks = phase.tasks.filter((t) => t.status === "pending" || t.status === "in_progress");
+			const doneTasks = phase.tasks.filter((t) => t.status === "completed" || t.status === "abandoned");
+
+			// Apply filter if specified
+			let displayTasks = phase.tasks;
+			if (filter === "pending" || filter === "in_progress") {
+				displayTasks = pendingTasks;
+			} else if (filter === "completed" || filter === "abandoned") {
+				displayTasks = doneTasks;
+			}
+
+			if (displayTasks.length === 0) continue;
+
+			info += `${theme.fg("accent", `  ▼ ${phase.name}`)}\n`;
+			for (const task of displayTasks) {
+				const statusIcon =
+					task.status === "completed"
+						? "✓"
+						: task.status === "in_progress"
+							? "→"
+							: task.status === "abandoned"
+								? "✗"
+								: "○";
+				const statusColor =
+					task.status === "completed"
+						? "success"
+						: task.status === "in_progress"
+							? "accent"
+							: task.status === "abandoned"
+								? "error"
+								: "dim";
+				info += `    ${theme.fg(statusColor, statusIcon)} ${task.id} ${task.content}\n`;
+				if (task.details && task.status === "in_progress") {
+					for (const line of task.details.split("\n")) {
+						info += `${theme.fg("dim", `      ${line}`)}\n`;
+					}
+				}
+			}
+			info += "\n";
+			totalRemaining += pendingTasks.length;
+			totalDone += doneTasks.length;
+		}
+
+		info += theme.fg("dim", `${totalRemaining} remaining, ${totalDone} done`);
+
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(info, 1, 0));
 		this.ui.requestRender();
 	}
 

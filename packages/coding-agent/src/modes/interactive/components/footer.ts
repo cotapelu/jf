@@ -215,6 +215,12 @@ export class FooterComponent implements Component {
 			lines.push(truncateToWidth(statusLine, width, theme.fg("dim", "...")));
 		}
 
+		// Add current task from todo list if any
+		const todoStatus = this.footerData.getTodoStatus();
+		if (todoStatus) {
+			lines.push(theme.fg("accent", `→ ${todoStatus}`));
+		}
+
 		return lines;
 	}
 }

@@ -96,6 +96,7 @@ export class FooterDataProvider {
 	private reftableTablesListPath: string | null = null;
 	private branchChangeCallbacks = new Set<() => void>();
 	private availableProviderCount = 0;
+	private todoStatus: string | undefined = undefined;
 	private refreshTimer: ReturnType<typeof setTimeout> | null = null;
 	private refreshInFlight = false;
 	private refreshPending = false;
@@ -148,6 +149,17 @@ export class FooterDataProvider {
 	/** Internal: update available provider count */
 	setAvailableProviderCount(count: number): void {
 		this.availableProviderCount = count;
+	}
+
+	/** Get current todo status for footer display */
+	getTodoStatus(): string | undefined {
+		return this.todoStatus;
+	}
+
+	/** Internal: set todo status for footer display */
+	setTodoStatus(status: string | undefined): void {
+		this.todoStatus = status;
+		this.notifyBranchChange(); // Reuse the notification since footer renders when this changes
 	}
 
 	setCwd(cwd: string): void {
@@ -335,5 +347,5 @@ export class FooterDataProvider {
 /** Read-only view for extensions - excludes setExtensionStatus, setAvailableProviderCount and dispose */
 export type ReadonlyFooterDataProvider = Pick<
 	FooterDataProvider,
-	"getGitBranch" | "getExtensionStatuses" | "getAvailableProviderCount" | "onBranchChange"
+	"getGitBranch" | "getExtensionStatuses" | "getAvailableProviderCount" | "onBranchChange" | "getTodoStatus"
 >;

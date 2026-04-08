@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
 import { StringEnum } from "@mariozechner/pi-ai";
 import type { Component } from "@mariozechner/pi-tui";
@@ -100,6 +102,53 @@ interface TodoFile {
 	nextPhaseId: number;
 }
 
+interface PersistedTodo {
+	version: 1;
+	phases: TodoPhase[];
+	nextTaskId: number;
+	nextPhaseId: number;
+	updatedAt: string;
+}
+
+// =============================================================================
+// Persistence helpers
+// =============================================================================
+
+function getTodoFilePath(sessionDir: string): string {
+	return join(sessionDir, "todos.json");
+}
+
+function loadTodoFromFile(sessionDir: string): TodoFile | null {
+	const filePath = getTodoFilePath(sessionDir);
+	if (!existsSync(filePath)) return null;
+
+	try {
+		const content = readFileSync(filePath, "utf-8");
+		const parsed: PersistedTodo = JSON.parse(content);
+		if (parsed.version !== 1) return null;
+		return { phases: parsed.phases, nextTaskId: parsed.nextTaskId, nextPhaseId: parsed.nextPhaseId };
+	} catch {
+		return null;
+	}
+}
+
+function saveTodoToFile(sessionDir: string, todo: TodoFile): void {
+	const filePath = getTodoFilePath(sessionDir);
+	const dir = dirname(filePath);
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
+
+	const persisted: PersistedTodo = {
+		version: 1,
+		phases: todo.phases,
+		nextTaskId: todo.nextTaskId,
+		nextPhaseId: todo.nextPhaseId,
+		updatedAt: new Date().toISOString(),
+	};
+	writeFileSync(filePath, JSON.stringify(persisted, null, 2));
+}
+
 // =============================================================================
 // State helpers
 // =============================================================================
@@ -166,7 +215,7 @@ function clonePhases(phases: TodoPhase[]): TodoPhase[] {
 	return phases.map((phase) => ({ ...phase, tasks: phase.tasks.map((task) => ({ ...task })) }));
 }
 
-function normalizeInProgressTask(phases: TodoPhase[]): void {
+export function normalizeInProgressTask(phases: TodoPhase[]): void {
 	const orderedTasks = phases.flatMap((phase) => phase.tasks);
 	if (orderedTasks.length === 0) return;
 
@@ -200,7 +249,7 @@ export function getLatestTodoPhasesFromEntries(entries: SessionEntry[]): TodoPha
 	return [];
 }
 
-function applyOps(file: TodoFile, ops: TodoWriteParams["ops"]): { file: TodoFile; errors: string[] } {
+export function applyOps(file: TodoFile, ops: TodoWriteParams["ops"]): { file: TodoFile; errors: string[] } {
 	const errors: string[] = [];
 
 	for (const op of ops) {
@@ -274,7 +323,7 @@ function applyOps(file: TodoFile, ops: TodoWriteParams["ops"]): { file: TodoFile
 	return { file, errors };
 }
 
-function formatSummary(phases: TodoPhase[], errors: string[]): string {
+export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 	const tasks = phases.flatMap((p) => p.tasks);
 	if (tasks.length === 0) return errors.length > 0 ? `Errors: ${errors.join("; ")}` : "Todo list cleared.";
 
@@ -353,12 +402,26 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		_onUpdate?: AgentToolUpdateCallback<TodoWriteToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<TodoWriteToolDetails>> {
-		const previousPhases = this.session.getTodoPhases();
+		// Load persisted todo if not in memory
+		let previousPhases = this.session.getTodoPhases();
+		if (previousPhases.length === 0 && this.session.sessionFile) {
+			const loaded = loadTodoFromFile(this.session.sessionDir);
+			if (loaded) {
+				previousPhases = loaded.phases;
+				this.session.setTodoPhases(previousPhases);
+			}
+		}
+
 		const current = fileFromPhases(previousPhases);
 		const { file: updated, errors } = applyOps(current, params.ops);
 		this.session.setTodoPhases(updated.phases);
-		const sessionFile = this.session.sessionManager.getSessionFile();
-		const storage = sessionFile ? "session" : "memory";
+
+		// Save to file if session is being persisted
+		if (this.session.sessionFile) {
+			saveTodoToFile(this.session.sessionDir, updated);
+		}
+
+		const storage = this.session.sessionFile ? "session" : "memory";
 
 		// Auto-trigger: after creating/updating todo, continue with first pending task
 		const hasNewOrUpdatedTodos = params.ops.some(
