@@ -238,7 +238,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 	}
 
 	// Clamp to model capabilities
-	if (!model || !model.reasoning) {
+	if (!model?.reasoning) {
 		thinkingLevel = "off";
 	}
 

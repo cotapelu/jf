@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getModel, getModels, getProviders, modelsAreEqual, supportsXhigh } from "../src/models.js";
-import type { Api, KnownProvider, Model } from "../src/types.js";
+import { describe, expect, it } from "vitest";
+import { getModel, getModels, getProviders, modelsAreEqual, supportsXhigh } from "../../src/models.js";
+import type { Api, KnownProvider, Model } from "../../src/types.js";
 
 describe("Provider Contract Tests", () => {
 	// We won't register faux providers since getProviders only returns
@@ -24,8 +24,8 @@ describe("Provider Contract Tests", () => {
 
 	it("should return models for each provider", () => {
 		const providers = getProviders();
-		providers.forEach((provider) => {
-			const models = getModels(provider as KnownProvider);
+		providers.forEach((provider: KnownProvider) => {
+			const models = getModels(provider as any);
 			expect(Array.isArray(models)).toBe(true);
 
 			// Spot check a few providers to ensure they have models
@@ -42,10 +42,10 @@ describe("Provider Contract Tests", () => {
 
 		for (const provider of testProviders) {
 			if (providers.includes(provider)) {
-				const models = getModels(provider);
+				const models = getModels(provider as any);
 				if (models.length > 0) {
 					const modelId = models[0].id;
-					const model = getModel(provider, modelId);
+					const model = getModel(provider as any, modelId as any);
 					expect(model).toBeDefined();
 					expect(model?.id).toBe(modelId);
 					expect(model?.provider).toBe(provider);
@@ -61,8 +61,8 @@ describe("Provider Contract Tests", () => {
 	it("should validate model structure matches TypeScript Model interface", () => {
 		const providers = getProviders();
 		for (const provider of providers) {
-			const models = getModels(provider as KnownProvider);
-			models.forEach((model) => {
+			const models = getModels(provider as any);
+			models.forEach((model: Model<Api>) => {
 				// Required fields from Model<TApi> interface
 				expect(typeof model.id).toBe("string");
 				expect(typeof model.name).toBe("string");
@@ -71,7 +71,7 @@ describe("Provider Contract Tests", () => {
 				expect(typeof model.baseUrl).toBe("string");
 				expect(typeof model.reasoning).toBe("boolean");
 				expect(Array.isArray(model.input)).toBe(true);
-				model.input.forEach((input) => {
+				model.input.forEach((input: "text" | "image") => {
 					expect(input).toBeOneOf(["text", "image"]);
 				});
 				expect(typeof model.cost).toBe("object");
@@ -99,7 +99,7 @@ describe("Provider Contract Tests", () => {
 		let modelId: string | null = null;
 
 		for (const provider of providers) {
-			const models = getModels(provider);
+			const models = getModels(provider as any);
 			if (models.length > 0) {
 				testProvider = provider;
 				modelId = models[0].id;
@@ -109,13 +109,14 @@ describe("Provider Contract Tests", () => {
 
 		if (testProvider && modelId) {
 			// Get the same model instance twice
-			const model1a = getModel(testProvider, modelId);
-			const model1b = getModel(testProvider, modelId);
+			const model1a = getModel(testProvider as any, modelId as any);
+			const model1b = getModel(testProvider as any, modelId as any);
 
 			// Get a different model if available
 			let model2 = null;
-			if (models.length > 1) {
-				model2 = getModel(testProvider, models[1].id);
+			const allModels = getModels(testProvider as any);
+			if (allModels.length > 1) {
+				model2 = getModel(testProvider as any, allModels[1].id as any);
 			}
 
 			// Test equality
@@ -146,7 +147,7 @@ describe("Provider Contract Tests", () => {
 		let testModel: Model<Api> | null = null;
 
 		for (const provider of providers) {
-			const models = getModels(provider as KnownProvider);
+			const models = getModels(provider as any);
 			if (models.length > 0) {
 				testModel = models[0];
 				break;

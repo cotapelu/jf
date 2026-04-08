@@ -8,7 +8,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { AssistantMessage, ImageContent, Message, Model, OAuthProviderId } from "@mariozechner/pi-ai";
+import type { AssistantMessage, ImageContent, Message, Model } from "@mariozechner/pi-ai";
 import type {
 	AutocompleteItem,
 	EditorComponent,
@@ -41,7 +41,6 @@ import { spawn, spawnSync } from "child_process";
 import {
 	APP_NAME,
 	getAgentDir,
-	getAuthPath,
 	getDebugLogPath,
 	getShareViewerUrl,
 	getUpdateInstruction,
@@ -3928,7 +3927,7 @@ export class InteractiveMode {
 		const providerName = providerInfo?.name || providerId;
 
 		// Providers that use callback servers (can paste redirect URL)
-		const usesCallbackServer = providerInfo?.usesCallbackServer ?? false;
+		const _usesCallbackServer = providerInfo?.usesCallbackServer ?? false;
 
 		// Create login dialog component
 		const dialog = new LoginDialogComponent(this.ui, providerId, (_success, _message) => {
@@ -3942,11 +3941,11 @@ export class InteractiveMode {
 		this.ui.requestRender();
 
 		// Promise for manual code input (racing with callback server)
-		let manualCodeResolve: ((code: string) => void) | undefined;
-		let manualCodeReject: ((err: Error) => void) | undefined;
-		const manualCodePromise = new Promise<string>((resolve, reject) => {
-			manualCodeResolve = resolve;
-			manualCodeReject = reject;
+		let _manualCodeResolve: ((code: string) => void) | undefined;
+		let _manualCodeReject: ((err: Error) => void) | undefined;
+		const _manualCodePromise = new Promise<string>((resolve, reject) => {
+			_manualCodeResolve = resolve;
+			_manualCodeReject = reject;
 		});
 
 		// Restore editor helper
@@ -4021,7 +4020,7 @@ export class InteractiveMode {
 		this.ui.setFocus(this.editor);
 		this.ui.requestRender();
 
-		if (apiKey && apiKey.trim()) {
+		if (apiKey?.trim()) {
 			try {
 				this.session.modelRegistry.authStorage.setApiKey(providerId, apiKey.trim());
 				this.session.modelRegistry.refresh();

@@ -71,7 +71,7 @@ export class EventsWatcher {
 
 		// Watch for changes
 		this.watcher = watch(this.eventsDir, (_eventType, filename) => {
-			if (!filename || !filename.endsWith(".json")) return;
+			if (!filename?.endsWith(".json")) return;
 			this.debounce(filename, () => this.handleFileChange(filename));
 		});
 

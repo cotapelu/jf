@@ -97,9 +97,9 @@ export class OAuthSelectorComponent extends Container {
 				: (provider as OAuthProviderInterface).name;
 			let line = "";
 			if (isSelected) {
-				line = theme.fg("accent", "→ " + providerName) + statusIndicator;
+				line = theme.fg("accent", `→ ${providerName}`) + statusIndicator;
 			} else {
-				line = " " + providerName + statusIndicator;
+				line = ` ${providerName}${statusIndicator}`;
 			}
 
 			this.listContainer.addChild(new TruncatedText(line, 0, 0));
