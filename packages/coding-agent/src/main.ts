@@ -195,12 +195,14 @@ function validateForkFlags(parsed: Args): void {
 	].filter((flag): flag is string => flag !== undefined);
 
 	if (conflictingFlags.length > 0) {
-		console.error(`
+		console.error(
+			`
 ${chalk.red.bold("✗ Invalid Argument Combination")}
 ${chalk.dim("The --fork flag cannot be used with:")}
-  ${conflictingFlags.map(flag => chalk.yellow(`  • ${flag}`)).join("\n")}
+  ${conflictingFlags.map((flag) => chalk.yellow(`  • ${flag}`)).join("\n")}
 ${chalk.dim("Please remove one of the conflicting flags and try again.")}
-		`.trim());
+		`.trim(),
+		);
 		process.exit(1);
 	}
 }

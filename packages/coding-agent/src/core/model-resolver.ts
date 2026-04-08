@@ -36,7 +36,7 @@ export const defaultModelPerProvider: Record<KnownProvider, string> = {
 	"opencode-go": "kimi-k2.5",
 	"kilo-gateway": "claude-opus-4-6",
 	"kimi-coding": "kimi-k2-thinking",
-	"nvidia": "nvidia/nemotron-super-3-120b-a12b",
+	nvidia: "nvidia/nemotron-super-3-120b-a12b",
 };
 
 export interface ScopedModel {
