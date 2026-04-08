@@ -13,11 +13,11 @@ for (const [provider, models] of Object.entries(MODELS)) {
 }
 
 type ModelApi<
-	TProvider extends KnownProvider,
+	TProvider extends keyof typeof MODELS,
 	TModelId extends keyof (typeof MODELS)[TProvider],
 > = (typeof MODELS)[TProvider][TModelId] extends { api: infer TApi } ? (TApi extends Api ? TApi : never) : never;
 
-export function getModel<TProvider extends KnownProvider, TModelId extends keyof (typeof MODELS)[TProvider]>(
+export function getModel<TProvider extends keyof typeof MODELS, TModelId extends keyof (typeof MODELS)[TProvider]>(
 	provider: TProvider,
 	modelId: TModelId,
 ): Model<ModelApi<TProvider, TModelId>> {
@@ -29,7 +29,7 @@ export function getProviders(): KnownProvider[] {
 	return Array.from(modelRegistry.keys()) as KnownProvider[];
 }
 
-export function getModels<TProvider extends KnownProvider>(
+export function getModels<TProvider extends keyof typeof MODELS>(
 	provider: TProvider,
 ): Model<ModelApi<TProvider, keyof (typeof MODELS)[TProvider]>>[] {
 	const models = modelRegistry.get(provider);

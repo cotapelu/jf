@@ -119,4 +119,8 @@ Based on file timestamps:
 - Verified all tests still pass (507/507 TUI tests passing)
 - Confirmed no vulnerabilities with `npm audit`
 - Updated TODO.md to mark Dependency Audit task as completed
+- Fixed TypeScript type error in packages/ai/src/models.ts by changing `KnownProvider` constraint to `keyof typeof MODELS` to resolve model indexing issues
+- Enhanced error message formatting in pi CLI with visual indicators and better context for argument validation errors
+- Completed performance profiling: RPC startup time 1355.2ms, build time 6234.5ms
+- Updated TODO.md to mark Performance Profiling task as completed
 

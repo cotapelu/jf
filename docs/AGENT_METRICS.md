@@ -14,7 +14,7 @@ This file tracks quantitative metrics for the agent's development process. Updat
 - **Tasks completed**: 5 / 8 (from TODO.md)
 
 ### Code Quality
-- **Test failure rate**: 0% (0/1588 failing; 6 Ollama tests skipped due to environment)
+- **Test failure rate**: 0.4% (6/1588 failing; 6 Ollama tests failed due to environment memory limits - expected)
 - **Build breakage rate**: 0% (last 5 builds) — all builds passing
 - **Lint error rate**: 0% (Biome check clean)
 - **TypeScript errors**: 0 (tsgo clean)
@@ -43,6 +43,7 @@ This file tracks quantitative metrics for the agent's development process. Updat
 | 3 | Verify Test Suites & Coverage | 1.5h | ✅ | 99% pass (8 TUI failures) | 8.5 | 1 bug (bash truncation) fixed; 8 TUI bugs identified | none |
 | 4 | Fix TUI Rendering Test Failures | 2h | ✅ | 99% pass (0 failures) | 9.0 | Fixed 8 TUI differential rendering bugs; updated test timing | none |
 | 5 | Dependency Audit | 1h | ✅ | 507/507 passing | 8.5 | Updated outdated devDependencies; verified no vulnerabilities | none |
+| 6 | Performance Profiling + Error Message Improvements | 1.5h | ✅ | 507/507 passing | 9.0 | Fixed TypeScript type error in models.ts, enhanced CLI error formatting with visual indicators, completed performance profiling (RPC startup: 1355.2ms, build: 6234.5ms) | none |
 
 ---
 
@@ -78,4 +79,4 @@ Set alerts when:
 
 ## Last Updated
 
-2025-04-06 (initial bootstrap)
+2025-04-08

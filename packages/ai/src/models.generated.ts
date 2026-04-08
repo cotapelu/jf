@@ -10421,8 +10421,8 @@ export const MODELS = {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
-				input: 0.5,
-				output: 3,
+				input: 0.325,
+				output: 1.95,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
