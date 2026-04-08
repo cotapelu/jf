@@ -14,6 +14,7 @@ try {
 		format: "esm",
 		logLevel: "silent",
 		outfile: outputPath,
+		external: ["node:http", "node:https", "node:crypto", "node:stream", "node:url", "node:util"],
 	});
 	process.exit(0);
 } catch (error) {
