@@ -195,7 +195,7 @@ function validateForkFlags(parsed: Args): void {
 	].filter((flag): flag is string => flag !== undefined);
 
 	if (conflictingFlags.length > 0) {
-		console.error(chalk.red(`Error: --fork cannot be combined with ${conflictingFlags.join(", ")}`));
+		console.error(chalk.red(`✗ Cannot use --fork with: ${conflictingFlags.join(", ")}`));
 		process.exit(1);
 	}
 }
@@ -205,7 +205,7 @@ function forkSessionOrExit(sourcePath: string, cwd: string, sessionDir?: string)
 		return SessionManager.forkFrom(sourcePath, cwd, sessionDir);
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : String(error);
-		console.error(chalk.red(`Error: ${message}`));
+		console.error(chalk.red(`✗ Failed to fork session: ${message}`));
 		process.exit(1);
 	}
 }
@@ -463,7 +463,7 @@ export async function main(args: string[]) {
 			result = await exportFromFile(parsed.export, outputPath);
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : "Failed to export session";
-			console.error(chalk.red(`Error: ${message}`));
+			console.error(chalk.red(`✗ Export failed: ${message}`));
 			process.exit(1);
 		}
 		console.log(`Exported to: ${result}`);
@@ -471,7 +471,7 @@ export async function main(args: string[]) {
 	}
 
 	if (parsed.mode === "rpc" && parsed.fileArgs.length > 0) {
-		console.error(chalk.red("Error: @file arguments are not supported in RPC mode"));
+		console.error(chalk.red("✗ @file arguments are not supported in RPC mode"));
 		process.exit(1);
 	}
 
@@ -668,7 +668,7 @@ export async function main(args: string[]) {
 
 	const startupBenchmark = isTruthyEnvFlag(process.env.PI_STARTUP_BENCHMARK);
 	if (startupBenchmark && appMode !== "interactive") {
-		console.error(chalk.red("Error: PI_STARTUP_BENCHMARK only supports interactive mode"));
+		console.error(chalk.red("✗ PI_STARTUP_BENCHMARK only supports interactive mode"));
 		process.exit(1);
 	}
 

@@ -263,7 +263,7 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 		}
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : "Unknown package command error";
-		console.error(chalk.red(`Error: ${message}`));
+		console.error(chalk.red(`✗ Package command failed: ${message}`));
 		process.exitCode = 1;
 		return true;
 	}

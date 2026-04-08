@@ -184,6 +184,7 @@
 ## Backlog
 
 - Improve error messages in pi CLI
+  **Status**: ⏳ In Progress - Improved console.error formatting with visual indicators
 - Add more examples to `packages/coding-agent/examples/`
 - Document extension/skill creation process
 - Create video tutorials or screencasts
