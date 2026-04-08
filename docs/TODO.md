@@ -200,3 +200,77 @@
 - Fixed todo-write auto-continue: agent now continues working on pending tasks after creating/updating todo list
 - Created docs/TODO_SYSTEM.md with technical specification
 - **Todo System Enhancements**: Added unit tests, persistence to file, /todos CLI command, and footer widget showing current task
+- **Full Project Reading**: Completed initial scan of codebase (15+ files read), discovered architecture overview
+
+---
+
+## Issues Discovered During Full Project Reading (2026-04-08)
+
+### Project Structure Issues
+
+1. **Legacy Code Presence**
+   - Location: `omp-legacy/` directory
+   - Issue: Contains old Rust/TypeScript code not integrated with current packages
+   - Impact: May cause confusion for new developers
+   - Recommendation: Document that omp-legacy is deprecated or remove if unused
+
+2. **Version Synchronization**
+   - Current: All packages at version 0.0.3 (lockstepped)
+   - Issue: Single version for all packages may not reflect individual package changes
+   - Recommendation: Consider independent versioning or clearer changelog per package
+
+3. **Documentation Gaps**
+   - Missing: Clear architecture diagram
+   - Missing: Quick start guide for new contributors
+   - Missing: API documentation for internal packages
+
+### Code Quality Observations
+
+4. **Provider Abstraction Complexity**
+   - Location: `packages/ai/src/providers/`
+   - Observation: 20+ providers with varying feature support (thinking, tools, streaming)
+   - Risk: Feature parity issues across providers
+   - Recommendation: Document provider capabilities matrix
+
+5. **Extension System Complexity**
+   - Location: `packages/coding-agent/src/core/extensions/`
+   - Observation: Extensive event types (50+ events) for lifecycle hooks
+   - Risk: High learning curve for extension developers
+   - Recommendation: Provide extension templates/examples
+
+6. **Tool Definitions Inconsistency**
+   - Location: `packages/coding-agent/src/core/tools/`
+   - Observation: Multiple tool implementations (bash, read, write, edit, grep, find, ls)
+   - Risk: Duplicated logic across tools
+   - Recommendation: Abstract common patterns
+
+### Configuration & Environment
+
+7. **OAuth Implementation**
+   - Location: Multiple files in `packages/ai/src/utils/oauth/`
+   - Observation: OAuth tokens use sk-ant-oat prefix detection
+   - Issue: May be brittle if token format changes
+   - Recommendation: Use proper token introspection
+
+8. **Environment Variable Handling**
+   - Observation: Multiple auth methods (API key, OAuth, env vars)
+   - Risk: Security if credentials exposed
+   - Recommendation: Document secure credential management
+
+### Testing & Documentation
+
+9. **Test Coverage Unknown**
+   - Status: ~99% reported but specific coverage per package unclear
+   - Recommendation: Add per-package coverage reports
+
+10. **Model Registry Generated**
+    - Location: `packages/ai/src/models.generated.ts`
+    - Observation: Auto-generated from MODELS constant
+    - Risk: Manual edits will be overwritten
+    - Recommendation: Document generation process
+
+### Recommendations Summary
+
+- **High Priority**: Document omp-legacy status, create architecture overview
+- **Medium Priority**: Provider capabilities matrix, extension development guide
+- **Low Priority**: API documentation, test coverage per package

@@ -387,6 +387,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly label = "Todo Write";
 	readonly description =
 		"Manage todo/task lists with phases and tasks. Actions: replace, add_phase, add_task, update, remove_task";
+	readonly promptSnippet = "Manage todo/task lists with phases and tasks";
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
 	readonly strict = true;

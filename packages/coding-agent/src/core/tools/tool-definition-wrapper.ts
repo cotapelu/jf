@@ -32,7 +32,7 @@ export function wrapToolDefinitions(
  * provides plain AgentTool overrides that do not include prompt metadata or renderers.
  */
 export function createToolDefinitionFromAgentTool(tool: AgentTool<any>): ToolDefinition<any, unknown> {
-	return {
+	const def: ToolDefinition<any, unknown> = {
 		name: tool.name,
 		label: tool.label,
 		description: tool.description,
@@ -40,4 +40,16 @@ export function createToolDefinitionFromAgentTool(tool: AgentTool<any>): ToolDef
 		prepareArguments: tool.prepareArguments,
 		execute: async (toolCallId, params, signal, onUpdate) => tool.execute(toolCallId, params, signal, onUpdate),
 	};
+
+	// Copy promptSnippet if present (AgentTool may have extra fields beyond the interface)
+	if ("promptSnippet" in tool) {
+		def.promptSnippet = (tool as any).promptSnippet;
+	}
+
+	// Copy promptGuidelines if present
+	if ("promptGuidelines" in tool) {
+		def.promptGuidelines = (tool as any).promptGuidelines;
+	}
+
+	return def;
 }
