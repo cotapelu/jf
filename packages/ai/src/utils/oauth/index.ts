@@ -43,6 +43,7 @@ const BUILT_IN_SIMPLE_PROVIDERS: SimpleApiKeyProvider[] = [
 	{ id: "opencode", name: "OpenCode Zen", placeholder: "sk-..." },
 	{ id: "opencode-go", name: "OpenCode Go", placeholder: "sk-..." },
 	{ id: "kilo-gateway", name: "Kilo Gateway", placeholder: "kg-..." },
+	{ id: "nvidia", name: "NVIDIA NIM", placeholder: "nv-..." },
 ];
 
 const simpleProviderRegistry = new Map<string, SimpleApiKeyProvider>(

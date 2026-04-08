@@ -40,7 +40,8 @@ export type KnownProvider =
 	| "opencode"
 	| "opencode-go"
 	| "kilo-gateway"
-	| "kimi-coding";
+	| "kimi-coding"
+	| "nvidia";
 export type Provider = KnownProvider | string;
 
 export type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh";

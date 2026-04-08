@@ -127,6 +127,7 @@ export function getEnvApiKey(provider: any): string | undefined {
 		"opencode-go": "OPENCODE_API_KEY",
 		"kilo-gateway": "KILO_GATEWAY_API_KEY",
 		"kimi-coding": "KIMI_API_KEY",
+		"nvidia": "NVIDIA_API_KEY",
 	};
 
 	const envVar = envMap[provider];
