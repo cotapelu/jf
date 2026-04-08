@@ -372,13 +372,19 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 				.find((t) => t.status === "in_progress" || t.status === "pending");
 
 			if (nextTask) {
-				// Small delay to ensure tool result is processed, then continue
-				// Only continue if agent is not already processing
-				setTimeout(() => {
-					if (!this.session.isStreaming) {
-						this.session.agent.continue().catch(() => {});
+				// Wait for agent to finish current turn (agent_end) before continuing
+				// This ensures the tool result is fully processed first
+				const unsubscribe = this.session.subscribe((event) => {
+					if (event.type === "agent_end") {
+						// Small delay to ensure event processing is complete
+						setTimeout(() => {
+							if (!this.session.isStreaming) {
+								this.session.agent.continue().catch(() => {});
+							}
+						}, 50);
+						unsubscribe();
 					}
-				}, 10);
+				});
 			}
 		}
 
