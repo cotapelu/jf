@@ -146,6 +146,46 @@
 
 ---
 
+## Todo System Enhancements
+
+### Testing
+**Priority**: Medium
+**Risk**: Low
+**Cost**: 2h
+
+**Tasks**:
+- [ ] Write unit tests for todo-write.ts (applyOps, normalizeInProgressTask, formatSummary)
+- [ ] Write integration tests for AgentSession persistence
+
+### Persistence
+**Priority**: High
+**Risk**: Low
+**Cost**: 1h
+
+**Tasks**:
+- [ ] Save todo to file (`.pi/todos.json`)
+- [ ] Load todo from file on session start
+
+### CLI Commands
+**Priority**: Medium
+**Risk**: Low
+**Cost**: 1h
+
+**Tasks**:
+- [ ] Built-in `/todos` command (not just in extensions)
+- [ ] Filter todos by status
+
+### UI/UX
+**Priority**: Low
+**Risk**: Low
+**Cost**: 2h
+
+**Tasks**:
+- [ ] Footer widget showing current task
+- [ ] Progress bar visualization
+
+---
+
 ## Last Updated
 
 2026-04-08
@@ -158,3 +198,4 @@
 - Created EXTENSION_GUIDE.md
 - P1, P2, P4, P5 completed
 - Fixed todo-write auto-continue: agent now continues working on pending tasks after creating/updating todo list
+- Created docs/TODO_SYSTEM.md with technical specification
