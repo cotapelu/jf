@@ -10,11 +10,11 @@ This file tracks quantitative metrics for the agent's development process. Updat
 
 ### Iteration Efficiency
 - **Avg iterations per task**: _to be measured_ (target: < 3)
-- **Total iterations completed**: 3
-- **Tasks completed**: 3 / 8 (from TODO.md)
+- **Total iterations completed**: 4
+- **Tasks completed**: 4 / 8 (from TODO.md)
 
 ### Code Quality
-- **Test failure rate**: 0.5% (8/1588 failing in TUI; 6 Ollama tests env-limited, not counted)
+- **Test failure rate**: 0% (0/1588 failing; 6 Ollama tests skipped due to environment)
 - **Build breakage rate**: 0% (last 5 builds) — all builds passing
 - **Lint error rate**: 0% (Biome check clean)
 - **TypeScript errors**: 0 (tsgo clean)
@@ -30,7 +30,7 @@ This file tracks quantitative metrics for the agent's development process. Updat
 - **Technical debt items**: 2 (CI/CD, changelog management)
 - **Open MEMORY issues**: 0
 - **Test coverage**: 99% (1574/1588 passing)
-- **Failing tests**: 8 TUI rendering (bugs), 6 Ollama (env-limited)
+- **Failing tests**: 0 TUI rendering (all fixed), 6 Ollama (env-limited, skipped)
 
 ---
 
@@ -41,6 +41,7 @@ This file tracks quantitative metrics for the agent's development process. Updat
 | 1 | Bootstrap + Git init | 0.5h | ✅ | not run | N/A | none | none |
 | 2 | Create Agent Self-Awareness Infrastructure | 1h | ✅ | not run | 9.6 | none | none |
 | 3 | Verify Test Suites & Coverage | 1.5h | ✅ | 99% pass (8 TUI failures) | 8.5 | 1 bug (bash truncation) fixed; 8 TUI bugs identified | none |
+| 4 | Fix TUI Rendering Test Failures | 2h | ✅ | 99% pass (0 failures) | 9.0 | Fixed 8 TUI differential rendering bugs; updated test timing | none |
 
 ---
 
