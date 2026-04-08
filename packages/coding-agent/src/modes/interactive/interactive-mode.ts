@@ -3923,7 +3923,7 @@ export class InteractiveMode {
 		});
 	}
 
-		private async showLoginDialog(providerId: string): Promise<void> {
+	private async showLoginDialog(providerId: string): Promise<void> {
 		const providerInfo = this.session.modelRegistry.authStorage.getOAuthProviders().find((p) => p.id === providerId);
 		const providerName = providerInfo?.name || providerId;
 
@@ -3958,20 +3958,17 @@ export class InteractiveMode {
 		};
 
 		try {
-			await this.session.modelRegistry.authStorage.login(
-				providerId,
-				{
-					onAuth: (info) => {
-						dialog.showAuth(info.url, info.instructions);
-					},
-					onPrompt: (prompt) => {
-						return dialog.showPrompt(prompt.message, prompt.placeholder);
-					},
-					onProgress: (message) => {
-						dialog.showProgress(message);
-					},
-				}
-			);
+			await this.session.modelRegistry.authStorage.login(providerId, {
+				onAuth: (info) => {
+					dialog.showAuth(info.url, info.instructions);
+				},
+				onPrompt: (prompt) => {
+					return dialog.showPrompt(prompt.message, prompt.placeholder);
+				},
+				onProgress: (message) => {
+					dialog.showProgress(message);
+				},
+			});
 
 			await this.session.modelRegistry.refresh();
 			await this.updateAvailableProviderCount();

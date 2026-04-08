@@ -3,6 +3,7 @@ dist/
 *.log
 .DS_Store
 *.tsbuildinfo
+package-lock.json
 # packages/*/node_modules/
 packages/*/dist/
 packages/*/dist-chrome/
