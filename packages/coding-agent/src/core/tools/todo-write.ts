@@ -360,6 +360,28 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		const sessionFile = this.session.sessionManager.getSessionFile();
 		const storage = sessionFile ? "session" : "memory";
 
+		// Auto-trigger: after creating/updating todo, continue with first pending task
+		const hasNewOrUpdatedTodos = params.ops.some(
+			(op) => op.op === "replace" || op.op === "add_phase" || op.op === "add_task",
+		);
+
+		if (hasNewOrUpdatedTodos) {
+			// Find first in_progress or pending task to work on
+			const nextTask = updated.phases
+				.flatMap((p) => p.tasks)
+				.find((t) => t.status === "in_progress" || t.status === "pending");
+
+			if (nextTask) {
+				// Small delay to ensure tool result is processed, then continue
+				// Only continue if agent is not already processing
+				setTimeout(() => {
+					if (!this.session.isStreaming) {
+						this.session.agent.continue().catch(() => {});
+					}
+				}, 10);
+			}
+		}
+
 		return {
 			content: [{ type: "text", text: formatSummary(updated.phases, errors) }],
 			details: { phases: updated.phases, storage },

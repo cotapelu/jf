@@ -157,3 +157,4 @@
 - Added dependabot configuration
 - Created EXTENSION_GUIDE.md
 - P1, P2, P4, P5 completed
+- Fixed todo-write auto-continue: agent now continues working on pending tasks after creating/updating todo list
