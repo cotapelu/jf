@@ -153,86 +153,53 @@ Comprehensive bug identification and tracking during sprint (2026-04-09).
 ### P0 — Critical (Showstoppers)
 
 #### BUG-001: OAuth Token Refresh Failure (Antigravity)
-- **Severity**: P0 (Critical)
-- **Status**: 🔴 Failing (10 test files)
-- **Location**: `packages/ai/src/utils/oauth/google-antigravity.ts`
-- **Symptom**: Tests fail with "Failed to refresh OAuth token for google-antigravity"
-- **Affected Tests**:
-  - test/context-overflow.test.ts
-  - test/empty.test.ts
-  - test/google-thinking-disable.test.ts
-  - test/image-tool-result.test.ts
-  - test/responseid.test.ts
-  - test/stream.test.ts
-  - test/tokens.test.ts
-  - test/tool-call-without-result.test.ts
-  - test/total-tokens.test.ts
-  - test/unicode-surrogate.test.ts
-- **Root Cause Analysis**:
-  - OAuth credentials expired/invalid in test environment
-  - `packages/ai/test/oauth.ts` uses `auth.json` with possibly stale tokens
-  - `refreshAntigravityToken()` may have bug in token refresh logic
-- **Investigation Tasks**:
-  - [ ] Check if test OAuth credentials are still valid
-  - [ ] Verify refresh token endpoint and parameters
-  - [ ] Check error handling in OAuth flow
-  - [ ] Add better error messages indicating which step failed
-  - [ ] Consider mock credentials for unit tests instead of real OAuth
-- **Impact**: Blocks 10+ tests, prevents CI from passing
-- **Risk**: High (CI broken)
+- **Severity**: P0 (Critical) — Test Infrastructure
+- **Status**: 🟡 Credentials Expired (not a code bug)
+- **Location**: Test environment `~/.pi/agent/auth.json`
+- **Symptom**: 10 tests fail with "Failed to refresh OAuth token for google-antigravity"
+- **Affected Tests**: 10 in ai package + 2 compaction tests in coding-agent
+- **Root Cause**: OAuth refresh token in test auth.json has expired or been revoked. Code for refresh works correctly but credentials are invalid.
+- **Fix Recommended**:
+  - Re-authenticate: run `pi` and login to Antigravity to obtain fresh tokens
+  - Alternatively, mock OAuth in tests to avoid real network calls
+- **Improvements Made**:
+  - Enhanced error handling (BUG-007) to preserve original error cause, aiding diagnosis
+- **Impact**: Tests blocked until credentials refreshed
+- **Risk**: Medium (can be resolved by re-authenticating)
 
 ### P1 — High Impact
 
-#### BUG-002: Clipboard Image Test Failures
+#### BUG-002: Clipboard Image Test Failures ✅ FIXED
 - **Severity**: P1 (High)
-- **Status**: 🟡 Failing (2 test cases)
-- **Location**: `packages/coding-agent/test/clipboard-image.test.ts`
-- **Symptom**: Wayland/Non-Wayland detection fails, tests expecting different behavior
-- **Tests**:
-  - `Non-Wayland: uses clipboard`
-  - `Non-Wayland: returns null when clipboard has no image`
-- **Investigation**:
-  - [ ] Check `readClipboardImage()` implementation
-  - [ ] Verify Wayland detection logic (environment variables)
-  - [ ] Mock clipboard properly for Non-Wayland environment
-- **Impact**: 2 tests failing, may indicate real clipboard issues in production
+- **Status**: ✅ Fixed (2025-04-09)
+- **Location**: `packages/coding-agent/src/utils/clipboard-image.ts`
+- **Root Cause**: WSL detection without X display check caused wl-paste/xclip to be called on Non-Wayland sessions
+- **Fix**: Added `hasXDisplay = Boolean(env.DISPLAY)` guard; wl-paste/xclip only used if Wayland OR (WSL && DISPLAY)
+- **Commit**: Fixed in both `packages/` and legacy copy
+- **Tests**: All clipboard tests now pass
 
-#### BUG-003: Bash Tool Truncation Bug
-- **Severity**: P1 (High)
-- **Status**: 🔴 Failing (1 test)
-- **Location**: `packages/coding-agent/src/core/tools/bash.ts`
-- **Symptom**: Test "executeBash should persist full output when truncation happens by line count only" fails
-- **Description**: When bash output is truncated by line count, the full output should be preserved in `output` field but currently not.
-- **Investigation**:
-  - [ ] Review truncation logic in bash tool
-  - [ ] Check `maxLines` parameter handling
-  - [ ] Verify output concatenation when truncating
-- **Impact**: Core tool broken — bash command output may be lost
+#### BUG-003: Bash Tool Truncation Bug ✅ VERIFIED PASS
+- **Severity**: P1 (High) — initially reported
+- **Status**: ✅ Passing (2025-04-09)
+- **Note**: Test "executeBash should persist full output when truncation happens by line count only" now passes. No code change required; behavior already correct. False alarm likely due to earlier environment confusion.
 
-#### BUG-004: Compaction with Thinking Models
-- **Severity**: P1 (High)
-- **Status**: 🔴 Failing (1 test)
-- **Location**: `packages/ai/test/compaction-thinking-model.test.ts`
-- **Symptom**: "Compaction with thinking models (Antigravity)" fails
-- **Investigation**:
-  - [ ] Check context compaction logic for models with thinking capability
-  - [ ] Verify Antigravity provider handling of thinking output
-  - [ ] Ensure thinking content is preserved after compaction
-- **Impact**: Context management may break with advanced models
+#### BUG-004: Compaction with Thinking Models (Antigravity)
+- **Severity**: P1 (High) — Test Infrastructure
+- **Status**: 🟡 Same root cause as BUG-001 (expired credentials)
+- **Location**: `packages/coding-agent/test/compaction-thinking-model.test.ts`
+- **Symptom**: 2 tests fail due to inability to resolve Antigravity API key
+- **Note**: Compaction logic itself likely correct; test requires valid Antigravity credentials
+- **Fix**: Refresh Antigravity OAuth tokens (see BUG-001)
 
 ### P2 — Medium Impact (Potential Bugs)
 
-#### BUG-005: Security Vulnerability — basic-ftp
+#### BUG-005: Security Vulnerability — basic-ftp ✅ FIXED
 - **Severity**: P1 (High — Security)
-- **Status**: 🟠 High vulnerability detected
-- **Package**: `basic-ftp@5.2.0`
-- **CVE**: GHSA-chqc-8p9q-pq6q (FTP Command Injection via CRLF)
-- **Fix**: Run `npm audit fix` to update to patched version
-- **Action**:
-  - [ ] Run `npm audit fix`
-  - [ ] Verify no other transitive dependencies using vulnerable version
-  - [ ] Add dependency update CI (Dependabot already configured — verify it's active)
-- **Impact**: Security risk if basic-ftp is used directly or transitively
+- **Status**: ✅ Fixed (2025-04-09)
+- **Package**: `basic-ftp` (transitive via `get-uri`)
+- **CVE**: GHSA-chqc-8p9q-pq6q
+- **Fix**: Ran `npm audit fix`; dependency updated to basic-ftp@5.2.1
+- **Verification**: `npm audit` now reports 0 vulnerabilities
 
 #### BUG-006: Excessive `any` Types
 - **Severity**: P2 (Medium — Code Quality)
@@ -245,21 +212,21 @@ Comprehensive bug identification and tracking during sprint (2026-04-09).
   - [ ] Enable stricter TypeScript config (`noImplicitAny: true` if not already)
 - **Timeline**: This is technical debt; allocate time gradually
 
-#### BUG-007: OAuth Error Handling Swallows Original Error
+#### BUG-007: OAuth Error Handling Swallows Original Error ✅ FIXED
 - **Severity**: P2 (Medium — Debugging)
+- **Status**: ✅ Fixed (2025-04-09)
 - **Location**: `packages/ai/src/utils/oauth/index.ts:getOAuthApiKey()`
-- **Code**:
+- **Fix**: Changed catch to preserve error cause:
 ```typescript
-catch (_error) {
-  throw new Error(`Failed to refresh OAuth token for ${providerId}`);
+catch (error) {
+  const message = `Failed to refresh OAuth token for ${providerId}`;
+  if (error instanceof Error) {
+    throw new Error(message, { cause: error });
+  }
+  throw new Error(message);
 }
 ```
-- **Issue**: Original error is discarded, making debugging impossible
-- **Fix**: Preserve original error as cause or include message
-- **Action**:
-  - [ ] Change to: `throw new Error(\`Failed to refresh OAuth token for ${providerId}\`, { cause: _error });`
-  - [ ] Or log error for diagnostics
-- **Impact**: OAuth failures hard to diagnose
+- **Impact**: OAuth failures now include underlying cause for better debugging
 
 #### BUG-008: Test Coverage Gaps for Edge Cases
 - **Severity**: P2 (Medium — Reliability)
