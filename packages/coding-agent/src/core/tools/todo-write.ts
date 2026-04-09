@@ -387,40 +387,40 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly label = "Todo Write";
 	readonly description =
 		"Manages phased task lists. Use for multi-step tasks. \
-\n\n"
-		+ "Ops: \
-\n"
-		+ "- update: mark task in_progress BEFORE starting, completed AFTER (NOT before), abandoned (dropped). \
-\n"
-		+ "- add_task: add task to existing phase. Phase ID format: phase-1, phase-2, etc. \
-\n"
-		+ "- add_phase: create new phase. \
-\n"
-		+ "- replace: full reset (initial setup only). \
-\n"
-		+ "- remove_task: delete task. \
-\n\n"
-		+ "Rules: \
-\n"
-		+ "- Keep exactly ONE task in_progress at a time. \
-\n"
-		+ "- Mark in_progress BEFORE work, completed IMMEDIATELY after (no batching). \
-\n"
-		+ "- Use for tasks with 3+ distinct steps, or when user explicitly requests. \
-\n\n"
-		+ "Examples: \
-\n"
-		+ "- Start task: {op:'update',id:'task-1',status:'in_progress'} \
-\n"
-		+ "- Complete and start next: {op:'update',id:'task-1',status:'completed'},{op:'update',id:'task-2',status:'in_progress'} \
-\n"
-		+ "- Add task to phase-1: {op:'add_task',phase:'phase-1',content:'Fix authentication bug'} \
-\n"
-		+ "- Create todo: {op:'replace',phases:[{name:'Phase 1',tasks:[{content:'Read source'},{content:'Apply fix'},{content:'Test'}]}]}";
+\n\n" +
+		"Ops: \
+\n" +
+		"- update: mark task in_progress BEFORE starting, completed AFTER (NOT before), abandoned (dropped). \
+\n" +
+		"- add_task: add task to existing phase. Phase ID format: phase-1, phase-2, etc. \
+\n" +
+		"- add_phase: create new phase. \
+\n" +
+		"- replace: full reset (initial setup only). \
+\n" +
+		"- remove_task: delete task. \
+\n\n" +
+		"Rules: \
+\n" +
+		"- Keep exactly ONE task in_progress at a time. \
+\n" +
+		"- Mark in_progress BEFORE work, completed IMMEDIATELY after (no batching). \
+\n" +
+		"- Use for tasks with 3+ distinct steps, or when user explicitly requests. \
+\n\n" +
+		"Examples: \
+\n" +
+		"- Start task: {op:'update',id:'task-1',status:'in_progress'} \
+\n" +
+		"- Complete and start next: {op:'update',id:'task-1',status:'completed'},{op:'update',id:'task-2',status:'in_progress'} \
+\n" +
+		"- Add task to phase-1: {op:'add_task',phase:'phase-1',content:'Fix authentication bug'} \
+\n" +
+		"- Create todo: {op:'replace',phases:[{name:'Phase 1',tasks:[{content:'Read source'},{content:'Apply fix'},{content:'Test'}]}]}";
 	readonly promptSnippet = "Manage todo/task lists with phases and tasks";
 	readonly promptGuidelines = [
 		"Use todo_write tool for multi-step tasks - do NOT create .md files",
-		"Keep exactly ONE task in_progress at a time"
+		"Keep exactly ONE task in_progress at a time",
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
