@@ -8,7 +8,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { AssistantMessage, ImageContent, Message, Model } from "@mariozechner/pi-ai";
+import type { AssistantMessage, ImageContent, Message, Model, OAuthAuthInfo } from "@mariozechner/pi-ai";
 import type {
 	AutocompleteItem,
 	EditorComponent,
@@ -3946,7 +3946,7 @@ export class InteractiveMode {
 		const providerName = providerInfo?.name || providerId;
 
 		// Providers that use callback servers (can paste redirect URL)
-		const _usesCallbackServer = providerInfo?.usesCallbackServer ?? false;
+		const usesCallbackServer = providerInfo?.usesCallbackServer ?? false;
 
 		// Create login dialog component
 		const dialog = new LoginDialogComponent(this.ui, providerId, (_success, _message) => {
@@ -3960,11 +3960,11 @@ export class InteractiveMode {
 		this.ui.requestRender();
 
 		// Promise for manual code input (racing with callback server)
-		let _manualCodeResolve: ((code: string) => void) | undefined;
-		let _manualCodeReject: ((err: Error) => void) | undefined;
-		const _manualCodePromise = new Promise<string>((resolve, reject) => {
-			_manualCodeResolve = resolve;
-			_manualCodeReject = reject;
+		let manualCodeResolve: ((code: string) => void) | undefined;
+		let manualCodeReject: ((err: Error) => void) | undefined;
+		const manualCodePromise = new Promise<string>((resolve, reject) => {
+			manualCodeResolve = resolve;
+			manualCodeReject = reject;
 		});
 
 		// Restore editor helper
@@ -3977,8 +3977,30 @@ export class InteractiveMode {
 
 		try {
 			await this.session.modelRegistry.authStorage.login(providerId, {
-				onAuth: (info) => {
+				onAuth: (info: OAuthAuthInfo) => {
 					dialog.showAuth(info.url, info.instructions);
+
+					if (usesCallbackServer) {
+						// Show input for manual paste, racing with callback
+						dialog
+							.showManualInput("Paste redirect URL below, or complete login in browser:")
+							.then((value) => {
+								if (value && manualCodeResolve) {
+									manualCodeResolve(value);
+									manualCodeResolve = undefined;
+								}
+							})
+							.catch(() => {
+								if (manualCodeReject) {
+									manualCodeReject(new Error("Login cancelled"));
+									manualCodeReject = undefined;
+								}
+							});
+					} else if (providerId === "github-copilot") {
+						// GitHub Copilot polls after onAuth
+						dialog.showWaiting("Waiting for browser authentication...");
+					}
+					// For Anthropic: onPrompt is called immediately after
 				},
 				onPrompt: (prompt) => {
 					return dialog.showPrompt(prompt.message, prompt.placeholder);
@@ -3986,16 +4008,21 @@ export class InteractiveMode {
 				onProgress: (message) => {
 					dialog.showProgress(message);
 				},
+				onManualCodeInput: () => manualCodePromise,
+				signal: dialog.signal,
 			});
 
-			await this.session.modelRegistry.refresh();
+			// Success
+			restoreEditor();
+			this.session.modelRegistry.refresh();
 			await this.updateAvailableProviderCount();
 			this.showStatus(`Logged in to ${providerName}`);
 		} catch (error: unknown) {
-			this.showError(`Login failed: ${error instanceof Error ? error.message : String(error)}`);
-		} finally {
-			// Restore editor
 			restoreEditor();
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			if (errorMsg !== "Login cancelled") {
+				this.showError(`Failed to login to ${providerName}: ${errorMsg}`);
+			}
 		}
 	}
 
