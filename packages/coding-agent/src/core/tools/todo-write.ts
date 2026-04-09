@@ -386,13 +386,14 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly name = "todo_write";
 	readonly label = "Todo Write";
 	readonly description =
-		"Manage todo/task lists with phases and tasks. Actions: replace, add_phase, add_task, update, remove_task";
+		"Manage todo/task lists with phases and tasks. Use natural language: 'add task <description>' or 'complete <task-id>'. Actions: replace, add_phase, add_task, update, remove_task";
 	readonly promptSnippet = "Manage todo/task lists with phases and tasks";
 	readonly promptGuidelines = [
 		"Use todo_write tool to manage tasks - do NOT create .md files manually",
+		"When user asks to create/update todo, parse their natural language into tasks",
 		"Operations: replace (full replace), add_phase, add_task, update, remove_task",
 		"The agent will automatically continue working on pending tasks after creating/updating todo",
-		"Example: { op: 'add_task', phase: 'phase-1', content: 'Fix login bug' }",
+		"Example: User 'add task fix login bug' → { op: 'add_task', phase: 'phase-1', content: 'Fix login bug' }"
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
