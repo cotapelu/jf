@@ -205,6 +205,8 @@ export interface EditorTheme {
 export interface EditorOptions {
 	paddingX?: number;
 	autocompleteMaxVisible?: number;
+	initialHistory?: string[];
+	onHistoryAdd?: (text: string) => void;
 }
 
 const SLASH_COMMAND_SELECT_LIST_LAYOUT: SelectListLayoutOptions = {
@@ -261,6 +263,9 @@ export class Editor implements Component, Focusable {
 	private history: string[] = [];
 	private historyIndex: number = -1; // -1 = not browsing, 0 = most recent, 1 = older, etc.
 
+	// Callback to save history to file
+	private onHistoryAddCallback?: (text: string) => void;
+
 	// Kill ring for Emacs-style kill/yank operations
 	private killRing = new KillRing();
 	private lastAction: "kill" | "yank" | "type-word" | null = null;
@@ -286,6 +291,14 @@ export class Editor implements Component, Focusable {
 		this.paddingX = Number.isFinite(paddingX) ? Math.max(0, Math.floor(paddingX)) : 0;
 		const maxVisible = options.autocompleteMaxVisible ?? 5;
 		this.autocompleteMaxVisible = Number.isFinite(maxVisible) ? Math.max(3, Math.min(20, Math.floor(maxVisible))) : 5;
+
+		// Load initial history from file
+		if (options.initialHistory && options.initialHistory.length > 0) {
+			this.history = options.initialHistory;
+		}
+
+		// Callback to save history to file
+		this.onHistoryAddCallback = options.onHistoryAdd;
 	}
 
 	/** Set of currently valid paste IDs, for marker-aware segmentation. */
@@ -341,6 +354,8 @@ export class Editor implements Component, Focusable {
 		if (this.history.length > 100) {
 			this.history.pop();
 		}
+		// Save to file via callback
+		this.onHistoryAddCallback?.(trimmed);
 	}
 
 	private isEditorEmpty(): boolean {
