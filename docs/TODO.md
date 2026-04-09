@@ -188,9 +188,16 @@
 
 ## Last Updated
 
-2026-04-08
+2026-04-09
 
-**Recent Changes**:
+**Recent Changes (2026-04-09)**:
+- **Full Codebase Scan Complete**: Scanned all 7 packages (ai, agent, coding-agent, tui, mom, pods, web-ui)
+- Created `docs/TODO_SCAN.md` with detailed scan results
+- Architecture diagram and dependency graph documented
+- Identified 8 notable patterns across codebase
+- 7 questions generated for further investigation
+
+**Previous Changes**:
 - Biome migrated to v2.4.10
 - provider-contract.test.ts fixed
 - Browser smoke check fixed
@@ -200,7 +207,6 @@
 - Fixed todo-write auto-continue: agent now continues working on pending tasks after creating/updating todo list
 - Created docs/TODO_SYSTEM.md with technical specification
 - **Todo System Enhancements**: Added unit tests, persistence to file, /todos CLI command, and footer widget showing current task
-- **Full Project Reading**: Completed initial scan of codebase (15+ files read), discovered architecture overview
 
 ---
 

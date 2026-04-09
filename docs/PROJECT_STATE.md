@@ -125,3 +125,12 @@ Based on file timestamps:
 - Updated TODO.md to mark Performance Profiling task as completed
 - Added Todo System Enhancements: unit tests for todo-write.ts, file persistence (.pi/todos.json), built-in /todos CLI command with filtering, footer widget showing current task
 
+2025-04-09 — Type: Codebase Scan & Understanding
+- Created `docs/TODO_SCAN.md` with comprehensive scan plan
+- Scanned all 7 packages: ai, agent, coding-agent, tui, mom, pods, web-ui
+- Read all package READMEs and understood architecture
+- Produced architecture diagram (layer-based), dependency graph, key concepts summary
+- Identified 8 notable patterns: Event-driven, Provider plugin, TypeBox tools, Stream/Complete, Context serialization, Cross-provider handoffs, Extension system, Differential rendering
+- Generated 7 questions for further investigation
+- **Key Insight**: Well-architected monorepo with clear separation: ai (LLM abstraction) → agent (stateful logic) → coding-agent (terminal UI)
+
