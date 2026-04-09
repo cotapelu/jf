@@ -1,18 +1,18 @@
 # Full Project Reading Todo List
 
 ## Project Overview
-- **Total code files**: 299 TypeScript/TSX files (excluding node_modules, dist, binaries)
-- **Packages**: agent (5), ai (43), coding-agent (130), mom (16), pods (9), tui (25), web-ui (71)
+- **Total code files**: ~579 TypeScript files (excluding node_modules, dist, binaries)
+- **Packages**: agent (6), ai (43), coding-agent (280+), mom (13), pods (8), tui (42), web-ui (70)
 - **Additional**: omp-legacy, pi-mono-legacy (legacy codebases)
 
 ---
 
 ## Reading Progress (2026-04-09)
 
-- **Total Tasks**: ~150
-- **Completed**: 60+
+- **Total Tasks**: ~200
+- **Completed**: 70+
 - **In Progress**: 0
-- **Not Started**: ~90
+- **Not Started**: ~130
 
 ---
 
@@ -24,6 +24,7 @@
 
 ### Phase 2: Package agent ✅
 - [x] index.ts, agent.ts, agent-loop.ts, types.ts, proxy.ts
+- [x] Test files
 
 ### Phase 3: Package ai ✅
 - [x] Core: index.ts, types.ts, models.ts, cli.ts, stream.ts, api-registry.ts
@@ -55,7 +56,273 @@
 
 ---
 
-## Key Architecture Discoveries
+## Remaining Tasks (To Be Read)
+
+### Phase A: packages/ai - Remaining Providers (8 files)
+- [x] packages/ai/src/providers/openai-completions.ts
+- [x] packages/ai/src/providers/google-vertex.ts
+- [ ] packages/ai/src/providers/mistral.ts
+- [ ] packages/ai/src/providers/amazon-bedrock.ts
+- [ ] packages/ai/src/providers/bedrock-provider.ts
+- [ ] packages/ai/src/providers/azure-openai-responses.ts
+- [ ] packages/ai/src/providers/faux.ts
+- [ ] packages/ai/src/providers/github-copilot-headers.ts
+- [ ] packages/ai/src/providers/transform-messages.ts
+- [ ] packages/ai/src/providers/register-builtins.ts
+- [ ] packages/ai/src/providers/simple-options.ts
+
+### Phase B: packages/ai - Utils (9 files)
+- [x] packages/ai/src/utils/validation.ts
+- [ ] packages/ai/src/utils/oauth-page.ts
+- [ ] packages/ai/src/utils/pkce.ts
+- [ ] packages/ai/src/utils/oauth/github-copilot.ts
+- [ ] packages/ai/src/utils/oauth/anthropic.ts
+- [ ] packages/ai/src/utils/oauth/google-gemini-cli.ts
+- [ ] packages/ai/src/utils/oauth/google-antigravity.ts
+- [ ] packages/ai/src/utils/oauth/openai-codex.ts
+- [ ] packages/ai/src/utils/oauth/types.ts
+- [ ] packages/ai/src/utils/event-stream.ts
+- [ ] packages/ai/src/utils/hash.ts
+- [ ] packages/ai/src/utils/json-parse.ts
+- [ ] packages/ai/src/utils/overflow.ts
+- [ ] packages/ai/src/utils/sanitize-unicode.ts
+- [ ] packages/ai/src/utils/typebox-helpers.ts
+- [ ] packages/ai/src/env-api-keys.ts
+- [ ] packages/ai/src/oauth.ts
+
+### Phase H: packages/coding-agent - Core (50 files)
+- [x] packages/coding-agent/src/core/agent-session.ts (partial read)
+- [ ] packages/coding-agent/src/core/agent-session-runtime.ts
+- [ ] packages/coding-agent/src/core/agent-session-services.ts
+- [ ] packages/coding-agent/src/core/auth-storage.ts
+- [ ] packages/coding-agent/src/core/bash-executor.ts
+- [ ] packages/coding-agent/src/core/command-history.ts
+- [ ] packages/coding-agent/src/core/compaction/branch-summarization.ts
+- [ ] packages/coding-agent/src/core/compaction/compaction.ts
+- [ ] packages/coding-agent/src/core/compaction/utils.ts
+- [ ] packages/coding-agent/src/core/defaults.ts
+- [ ] packages/coding-agent/src/core/diagnostics.ts
+- [ ] packages/coding-agent/src/core/event-bus.ts
+- [ ] packages/coding-agent/src/core/exec.ts
+- [ ] packages/coding-agent/src/core/export-html/ansi-to-html.ts
+- [ ] packages/coding-agent/src/core/export-html/tool-renderer.ts
+- [ ] packages/coding-agent/src/core/extensions/loader.ts
+- [ ] packages/coding-agent/src/core/extensions/runner.ts
+- [ ] packages/coding-agent/src/core/extensions/types.ts
+- [ ] packages/coding-agent/src/core/extensions/wrapper.ts
+- [ ] packages/coding-agent/src/core/footer-data-provider.ts
+- [ ] packages/coding-agent/src/core/keybindings.ts
+- [ ] packages/coding-agent/src/core/messages.ts
+- [ ] packages/coding-agent/src/core/model-registry.ts
+- [ ] packages/coding-agent/src/core/model-resolver.ts
+- [ ] packages/coding-agent/src/core/output-guard.ts
+- [ ] packages/coding-agent/src/core/package-manager.ts
+- [ ] packages/coding-agent/src/core/prompt-templates.ts
+- [ ] packages/coding-agent/src/core/resolve-config-value.ts
+- [ ] packages/coding-agent/src/core/resource-loader.ts
+- [ ] packages/coding-agent/src/core/sdk.ts
+- [ ] packages/coding-agent/src/core/session-cwd.ts
+- [ ] packages/coding-agent/src/core/settings-manager.ts
+- [ ] packages/coding-agent/src/core/slash-commands.ts
+- [ ] packages/coding-agent/src/core/source-info.ts
+- [ ] packages/coding-agent/src/core/system-prompt.ts
+- [ ] packages/coding-agent/src/core/timings.ts
+- [ ] packages/coding-agent/src/core/tools/edit-diff.ts
+- [ ] packages/coding-agent/src/core/tools/file-mutation-queue.ts
+- [ ] packages/coding-agent/src/core/tools/path-utils.ts
+- [ ] packages/coding-agent/src/core/tools/render-utils.ts
+- [ ] packages/coding-agent/src/core/tools/tool-definition-wrapper.ts
+- [ ] packages/coding-agent/src/core/tools/truncate.ts
+
+### Phase D: packages/coding-agent - CLI (6 files)
+- [ ] packages/coding-agent/src/cli.ts
+- [ ] packages/coding-agent/src/cli/config-selector.ts
+- [ ] packages/coding-agent/src/cli/file-processor.ts
+- [ ] packages/coding-agent/src/cli/initial-message.ts
+- [ ] packages/coding-agent/src/cli/list-models.ts
+
+### Phase E: packages/coding-agent - Modes (8 files)
+- [ ] packages/coding-agent/src/modes/interactive/components/armin.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/assistant-message.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/bash-execution.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/branch-summary-message.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/compaction-summary-message.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/config-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/countdown-timer.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/custom-editor.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/custom-message.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/diff.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/dynamic-border.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/extension-editor.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/extension-input.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/extension-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/footer.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/keybinding-hints.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/login-dialog.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/model-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/oauth-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/scoped-models-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/session-selector-search.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/session-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/settings-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/show-images-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/skill-invocation-message.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/theme-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/thinking-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/tool-execution.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/tree-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/user-message-selector.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/user-message.ts
+- [ ] packages/coding-agent/src/modes/interactive/components/visual-truncate.ts
+- [ ] packages/coding-agent/src/modes/interactive/theme/theme.ts
+- [ ] packages/coding-agent/src/modes/rpc/jsonl.ts
+- [ ] packages/coding-agent/src/modes/rpc/rpc-types.ts
+
+### Phase F: packages/coding-agent - Utils (18 files)
+- [ ] packages/coding-agent/src/utils/changelog.ts
+- [ ] packages/coding-agent/src/utils/child-process.ts
+- [ ] packages/coding-agent/src/utils/clipboard-image.ts
+- [ ] packages/coding-agent/src/utils/clipboard-native.ts
+- [ ] packages/coding-agent/src/utils/clipboard.ts
+- [ ] packages/coding-agent/src/utils/exif-orientation.ts
+- [ ] packages/coding-agent/src/utils/frontmatter.ts
+- [ ] packages/coding-agent/src/utils/git.ts
+- [ ] packages/coding-agent/src/utils/image-convert.ts
+- [ ] packages/coding-agent/src/utils/image-resize.ts
+- [ ] packages/coding-agent/src/utils/mime.ts
+- [ ] packages/coding-agent/src/utils/paths.ts
+- [ ] packages/coding-agent/src/utils/photon.ts
+- [ ] packages/coding-agent/src/utils/shell.ts
+- [ ] packages/coding-agent/src/utils/sleep.ts
+- [ ] packages/coding-agent/src/utils/tools-manager.ts
+
+### Phase G: packages/coding-agent - Bun (2 files)
+- [ ] packages/coding-agent/src/bun/cli.ts
+- [ ] packages/coding-agent/src/bun/register-bedrock.ts
+
+### Phase H: packages/coding-agent - Root files (3 files)
+- [ ] packages/coding-agent/src/migrations.ts
+- [ ] packages/coding-agent/src/package-manager-cli.ts
+
+### Phase J: packages/tui - Remaining (22 files)
+- [x] packages/tui/src/terminal.ts (partial read)
+- [ ] packages/tui/src/autocomplete.ts
+- [ ] packages/tui/src/editor-component.ts
+- [ ] packages/tui/src/fuzzy.ts
+- [ ] packages/tui/src/keybindings.ts
+- [ ] packages/tui/src/keys.ts
+- [ ] packages/tui/src/kill-ring.ts
+- [ ] packages/tui/src/stdin-buffer.ts
+- [ ] packages/tui/src/terminal-image.ts
+- [ ] packages/tui/src/undo-stack.ts
+- [ ] packages/tui/src/utils.ts
+- [ ] packages/tui/src/components/box.ts
+- [ ] packages/tui/src/components/cancellable-loader.ts
+- [ ] packages/tui/src/components/editor.ts
+- [ ] packages/tui/src/components/image.ts
+- [ ] packages/tui/src/components/loader.ts
+- [ ] packages/tui/src/components/markdown.ts
+- [ ] packages/tui/src/components/select-list.ts
+- [ ] packages/tui/src/components/settings-list.ts
+- [ ] packages/tui/src/components/spacer.ts
+- [ ] packages/tui/src/components/text.ts
+- [ ] packages/tui/src/components/truncated-text.ts
+
+### Phase K: packages/mom - Remaining (7 files)
+- [x] packages/mom/src/slack.ts (partial read)
+- [ ] packages/mom/src/context.ts
+- [ ] packages/mom/src/download.ts
+- [ ] packages/mom/src/events.ts
+- [ ] packages/mom/src/log.ts
+- [ ] packages/mom/src/sandbox.ts
+- [ ] packages/mom/src/store.ts
+- [ ] packages/mom/src/tools/attach.ts
+- [ ] packages/mom/src/tools/bash.ts
+- [ ] packages/mom/src/tools/edit.ts
+- [ ] packages/mom/src/tools/read.ts
+- [ ] packages/mom/src/tools/truncate.ts
+- [ ] packages/mom/src/tools/write.ts
+
+### Phase L: packages/pods - Remaining (3 files)
+- [x] packages/pods/src/index.ts
+- [ ] packages/pods/src/types.ts
+- [ ] packages/pods/src/ssh.ts
+- [ ] packages/pods/src/commands/pods.ts
+- [ ] packages/pods/src/commands/prompt.ts
+
+### Phase M: packages/web-ui - Remaining (35 files)
+- [x] packages/web-ui/src/ChatPanel.ts (partial read)
+- [ ] packages/web-ui/src/components/AgentInterface.ts
+- [ ] packages/web-ui/src/components/AttachmentTile.ts
+- [ ] packages/web-ui/src/components/ConsoleBlock.ts
+- [ ] packages/web-ui/src/components/CustomProviderCard.ts
+- [ ] packages/web-ui/src/components/ExpandableSection.ts
+- [ ] packages/web-ui/src/components/Input.ts
+- [ ] packages/web-ui/src/components/MessageEditor.ts
+- [ ] packages/web-ui/src/components/MessageList.ts
+- [ ] packages/web-ui/src/components/Messages.ts
+- [ ] packages/web-ui/src/components/ProviderKeyInput.ts
+- [ ] packages/web-ui/src/components/StreamingMessageContainer.ts
+- [ ] packages/web-ui/src/components/ThinkingBlock.ts
+- [ ] packages/web-ui/src/components/message-renderer-registry.ts
+- [ ] packages/web-ui/src/components/sandbox/ArtifactsRuntimeProvider.ts
+- [ ] packages/web-ui/src/components/sandbox/AttachmentsRuntimeProvider.ts
+- [ ] packages/web-ui/src/components/sandbox/ConsoleRuntimeProvider.ts
+- [ ] packages/web-ui/src/components/sandbox/FileDownloadRuntimeProvider.ts
+- [ ] packages/web-ui/src/components/sandbox/RuntimeMessageBridge.ts
+- [ ] packages/web-ui/src/components/sandbox/RuntimeMessageRouter.ts
+- [ ] packages/web-ui/src/components/sandbox/SandboxRuntimeProvider.ts
+- [ ] packages/web-ui/src/components/sandbox/SandboxedIframe.ts
+- [ ] packages/web-ui/src/dialogs/ApiKeyPromptDialog.ts
+- [ ] packages/web-ui/src/dialogs/AttachmentOverlay.ts
+- [ ] packages/web-ui/src/dialogs/CustomProviderDialog.ts
+- [ ] packages/web-ui/src/dialogs/ModelSelector.ts
+- [ ] packages/web-ui/src/dialogs/PersistentStorageDialog.ts
+- [ ] packages/web-ui/src/dialogs/ProvidersModelsTab.ts
+- [ ] packages/web-ui/src/dialogs/SessionListDialog.ts
+- [ ] packages/web-ui/src/dialogs/SettingsDialog.ts
+- [ ] packages/web-ui/src/prompts/prompts.ts
+- [ ] packages/web-ui/src/utils/attachment-utils.ts
+- [ ] packages/web-ui/src/utils/auth-token.ts
+- [ ] packages/web-ui/src/utils/format.ts
+- [ ] packages/web-ui/src/utils/i18n.ts
+- [ ] packages/web-ui/src/utils/model-discovery.ts
+- [ ] packages/web-ui/src/utils/proxy-utils.ts
+- [ ] packages/web-ui/src/utils/test-sessions.ts
+- [ ] packages/web-ui/src/tools/extract-document.ts
+- [ ] packages/web-ui/src/tools/javascript-repl.ts
+- [ ] packages/web-ui/src/tools/renderer-registry.ts
+- [ ] packages/web-ui/src/tools/renderers/BashRenderer.ts
+- [ ] packages/web-ui/src/tools/renderers/CalculateRenderer.ts
+- [ ] packages/web-ui/src/tools/renderers/DefaultRenderer.ts
+- [ ] packages/web-ui/src/tools/renderers/GetCurrentTimeRenderer.ts
+- [ ] packages/web-ui/src/tools/types.ts
+- [ ] packages/web-ui/src/tools/artifacts/ArtifactElement.ts
+- [ ] packages/web-ui/src/tools/artifacts/ArtifactPill.ts
+- [ ] packages/web-ui/src/tools/artifacts/artifacts-tool-renderer.ts
+- [ ] packages/web-ui/src/tools/artifacts/artifacts.ts
+- [ ] packages/web-ui/src/tools/artifacts/Console.ts
+- [ ] packages/web-ui/src/tools/artifacts/DocxArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/ExcelArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/GenericArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/HtmlArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/ImageArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/MarkdownArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/PdfArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/SvgArtifact.ts
+- [ ] packages/web-ui/src/tools/artifacts/TextArtifact.ts
+- [ ] packages/web-ui/src/storage/app-storage.ts
+- [ ] packages/web-ui/src/storage/backends/indexeddb-storage-backend.ts
+- [ ] packages/web-ui/src/storage/stores/custom-providers-store.ts
+- [ ] packages/web-ui/src/storage/stores/provider-keys-store.ts
+- [ ] packages/web-ui/src/storage/stores/sessions-store.ts
+- [ ] packages/web-ui/src/storage/stores/settings-store.ts
+- [ ] packages/web-ui/src/storage/store.ts
+- [ ] packages/web-ui/src/storage/types.ts
+
+---
+
+## Key Architecture Discoveries (from previous scan)
 
 ### packages/ai - Unified LLM API
 - **Stream-based API**: Event emitters cho streaming responses
@@ -143,13 +410,9 @@ AgentSession (core)
 
 ---
 
-## Remaining Tasks
+## Notes
 
-- [ ] packages/ai: openai-completions.ts, google-vertex.ts, mistral.ts, amazon-bedrock.ts, bedrock-provider.ts
-- [ ] packages/ai: utils/validation.ts, oauth-page.ts, pkce.ts, github-copilot.ts, anthropic.ts, google-gemini-cli.ts
-- [ ] packages/coding-agent: migrations.ts, agent-session-runtime.ts, settings-manager.ts, model-registry.ts
-- [ ] packages/coding-agent: context-manager.ts, session.ts
-- [ ] packages/tui: terminal.ts, editor-component.ts, components/*
-- [ ] packages/mom: sandbox.ts, store.ts, slack.ts, context.ts, events.ts, download.ts, tools/*
-- [ ] packages/pods: index.ts, config.ts, types.ts, ssh.ts, commands/pods.ts
-- [ ] packages/web-ui: ChatPanel.ts, components/*, storage/*, tools/*
+- This is a reading task only - no code changes
+- Each file will be read and understood for architecture documentation
+- Progress will be updated as files are read
+- Focus on understanding the overall architecture and key patterns
