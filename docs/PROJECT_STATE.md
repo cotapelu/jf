@@ -28,10 +28,16 @@ This is a **monorepo** containing multiple packages:
 ### 🚧 Known Issues & Limitations
 
 1. **No CI/CD**: No automated testing, building, or deployment pipelines
-2. **Test coverage**: ~99% pass (majority). 6 Ollama tests skipped due to insufficient memory (environment-limited)
+2. **Test coverage**: ~99% pass (1574/1588). **14 test failures**:
+   - 10 OAuth Antigravity token refresh failures
+   - 2 clipboard image tests (Wayland detection)
+   - 1 bash tool truncation bug
+   - 1 compaction with thinking models test
+   - 6 Ollama tests skipped (insufficient memory)
 3. **OSS Weekend mode active**: Issue tracker auto-closes until April 13, 2026 (per coding-agent README)
 4. **No changelog entries**: Version `0.0.3` but no `CHANGELOG.md` content visible in packages
 5. **TUI test failures**: All TUI tests now pass (0 failures)
+6. **Security vulnerability**: `basic-ftp@5.2.0` has high severity CVE (GHSA-chqc-8p9q-pq6q)
 
 ### 🔧 Recent Fixes (2025-04-06)
 
@@ -133,4 +139,14 @@ Based on file timestamps:
 - Identified 8 notable patterns: Event-driven, Provider plugin, TypeBox tools, Stream/Complete, Context serialization, Cross-provider handoffs, Extension system, Differential rendering
 - Generated 7 questions for further investigation
 - **Key Insight**: Well-architected monorepo with clear separation: ai (LLM abstraction) → agent (stateful logic) → coding-agent (terminal UI)
+
+2025-04-09 — Type: Bug Hunt Sprint
+- Conducted full bug identification sweep across codebase
+- **Security**: Discovered `basic-ftp@5.2.0` vulnerability (GHSA-chqc-8p9q-pq6q)
+- **Test failures**: Identified 14 failing tests — 10 OAuth Antigravity, 2 clipboard, 1 bash truncation, 1 compaction
+- **Code quality**: Counted 13,924 `any` types — technical debt
+- **OAuth issues**: Error handling swallows original error, making debugging difficult
+- **Potential bugs**: Memory leaks, race conditions, missing validation, inconsistent tool parameter checks
+- Created comprehensive bug list in `docs/TODO.md` (Active Bug Hunt section) with 15 bugs categorized by severity (P0-P3)
+- Updated metrics in `docs/AGENT_METRICS.md`
 
