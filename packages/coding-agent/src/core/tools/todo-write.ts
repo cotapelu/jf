@@ -388,6 +388,12 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly description =
 		"Manage todo/task lists with phases and tasks. Actions: replace, add_phase, add_task, update, remove_task";
 	readonly promptSnippet = "Manage todo/task lists with phases and tasks";
+	readonly promptGuidelines = [
+		"Use todo_write tool to manage tasks - do NOT create .md files manually",
+		"Operations: replace (full replace), add_phase, add_task, update, remove_task",
+		"The agent will automatically continue working on pending tasks after creating/updating todo",
+		"Example: { op: 'add_task', phase: 'phase-1', content: 'Fix login bug' }",
+	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
 	readonly strict = true;
@@ -440,12 +446,13 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 				// This ensures the tool result is fully processed first
 				const unsubscribe = this.session.subscribe((event) => {
 					if (event.type === "agent_end") {
-						// Small delay to ensure event processing is complete
+						// Increase timeout to allow agent to fully process the tool result
 						setTimeout(() => {
+							// Check again after timeout - agent might still be processing
 							if (!this.session.isStreaming) {
 								this.session.agent.continue().catch(() => {});
 							}
-						}, 50);
+						}, 200);
 						unsubscribe();
 					}
 				});

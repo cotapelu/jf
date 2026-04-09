@@ -26,6 +26,7 @@ export {
 	createAgentSessionServices,
 } from "./agent-session-services.js";
 export { type BashExecutorOptions, type BashResult, executeBash, executeBashWithOperations } from "./bash-executor.js";
+export { type CommandEntry, createCommandHistory, formatCommandEntry, printCommands } from "./command-history.js";
 export type { CompactionResult } from "./compaction/index.js";
 export { createEventBus, type EventBus, type EventBusController } from "./event-bus.js";
 // Extensions system
@@ -72,4 +73,3 @@ export {
 	type TurnStartEvent,
 } from "./extensions/index.js";
 export { createSyntheticSourceInfo } from "./source-info.js";
-export { createCommandHistory, type CommandEntry, formatCommandEntry, printCommands } from "./command-history.js";

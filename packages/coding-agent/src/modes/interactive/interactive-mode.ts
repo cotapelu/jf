@@ -48,7 +48,7 @@ import {
 } from "../../config.js";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.js";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.js";
-import { createCommandHistory, type CommandHistory } from "../../core/command-history.js";
+import { type CommandHistory, createCommandHistory } from "../../core/command-history.js";
 import type {
 	ExtensionContext,
 	ExtensionRunner,
@@ -2483,6 +2483,9 @@ export class InteractiveMode {
 					this.streamingMessage = undefined;
 				}
 				this.pendingTools.clear();
+
+				// Update footer todo status after agent completes a turn
+				this.footerDataProvider.setTodoStatus(this.session.getTodoStatus());
 
 				await this.checkShutdownRequested();
 
