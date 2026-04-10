@@ -15,6 +15,7 @@ import type {
 export interface IMemoryStore {
 	save(input: MemoryInput): Result<Memory>;
 	find(query: string, options?: Partial<MemoryQuery>): MemorySearchResult;
+	list(options?: { limit?: number; offset?: number }): Memory[];
 	get(id: string): Result<Memory | null>;
 	update(id: string, data: MemoryUpdate): Result<Memory | null>;
 	delete(id: string): Result<boolean>;

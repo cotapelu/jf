@@ -52,7 +52,6 @@ function extractTSFunctions(content: string, filePath: string): CodeSymbol[] {
 	const funcRegex = /(?:function\s+(\w+)\s*\(|([a-zA-Z_$][\w$]*)\s*[:=]\s*(?:function\s*\(|\([^)]*\)\s*=>))/g;
 	let match: RegExpExecArray | null;
 
-	// biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp exec pattern
 	while ((match = funcRegex.exec(content)) !== null) {
 		const name = match[1] || match[2];
 		if (!name) continue;
@@ -78,7 +77,6 @@ function extractTSClasses(content: string, filePath: string): CodeSymbol[] {
 	const classRegex = /(?:class|interface|type|enum)\s+(\w+)(?:\s+extends\s+\w+)?/g;
 	let match: RegExpExecArray | null;
 
-	// biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp exec pattern
 	while ((match = classRegex.exec(content)) !== null) {
 		const name = match[1];
 		if (!name) continue;
@@ -113,7 +111,6 @@ function extractPythonFunctions(content: string, filePath: string): CodeSymbol[]
 	const funcRegex = /^(\s*)(?:async\s+)?def\s+(\w+)\s*\(/gm;
 	let match: RegExpExecArray | null;
 
-	// biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp exec pattern
 	while ((match = funcRegex.exec(content)) !== null) {
 		const name = match[2];
 		if (!name) continue;
@@ -139,7 +136,6 @@ function extractPythonClasses(content: string, filePath: string): CodeSymbol[] {
 	const classRegex = /^(\s*)class\s+(\w+)(?:\s*\([^)]*\))?\s*:/gm;
 	let match: RegExpExecArray | null;
 
-	// biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp exec pattern
 	while ((match = classRegex.exec(content)) !== null) {
 		const name = match[2];
 		if (!name) continue;

@@ -4,7 +4,9 @@
  */
 
 export { createCodeIndexer } from "./code-indexer.js";
+export { consolidate } from "./consolidation.js";
 export { createMemoryEngine } from "./crud.js";
+export { calculateHeatScore, updateAccessStats } from "./heat.js";
 export { MemoryTypeSchema, validateInput } from "./schemas.js";
 export type { IMemoryStore } from "./store/memory-store.js";
 export { createSQLiteStore } from "./store/sqlite-store.js";

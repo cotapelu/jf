@@ -110,6 +110,7 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 	const stmtDelete = db.prepare("DELETE FROM memories WHERE id = ?");
 	const stmtCount = db.prepare("SELECT COUNT(*) as count FROM memories");
 	const stmtClear = db.prepare("DELETE FROM memories");
+	const stmtList = db.prepare("SELECT * FROM memories ORDER BY updated_at DESC LIMIT ? OFFSET ?");
 
 	// Stats queries
 	const stmtStatsByType = db.prepare(`
@@ -149,7 +150,6 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const memory = mapRow(stmtGet.get(id));
 				return { ok: true, value: memory! };
 			} catch (e) {
-				
 				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
@@ -217,7 +217,6 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 				return { ok: true, value: memory };
 			} catch (e) {
-				
 				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
@@ -243,7 +242,6 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const updated = stmtGet.get(id);
 				return { ok: true, value: mapRow(updated) };
 			} catch (e) {
-				
 				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
@@ -253,7 +251,6 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const info = stmtDelete.run(id);
 				return { ok: true, value: info.changes > 0 };
 			} catch (e) {
-				
 				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
@@ -301,6 +298,13 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 		clear(): void {
 			stmtClear.run();
+		},
+
+		list(options: { limit?: number; offset?: number } = {}): Memory[] {
+			const limit = options.limit ?? 10000;
+			const offset = options.offset ?? 0;
+			const rows = stmtList.all(limit, offset) as Array<any>;
+			return rows.map(mapRow);
 		},
 	};
 }
