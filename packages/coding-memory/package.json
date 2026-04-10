@@ -1,0 +1,33 @@
+{
+  "name": "@mariozechner/pi-coding-memory",
+  "version": "0.1.0",
+  "description": "SQLite-backed memory store for coding agents - save and recall preferences, project facts, commands, and solutions",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "test": "vitest --run",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^25.5.2",
+
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4"
+  },
+  "keywords": ["pi", "coding-agent", "memory", "sqlite", "llm"],
+  "author": "Pi Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

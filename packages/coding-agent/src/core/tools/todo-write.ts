@@ -114,11 +114,11 @@ interface PersistedTodo {
 // Persistence helpers
 // =============================================================================
 
-function getTodoFilePath(sessionDir: string): string {
+export function getTodoFilePath(sessionDir: string): string {
 	return join(sessionDir, "todos.json");
 }
 
-function loadTodoFromFile(sessionDir: string): TodoFile | null {
+export function loadTodoFromFile(sessionDir: string): TodoFile | null {
 	const filePath = getTodoFilePath(sessionDir);
 	if (!existsSync(filePath)) return null;
 
@@ -132,7 +132,7 @@ function loadTodoFromFile(sessionDir: string): TodoFile | null {
 	}
 }
 
-function saveTodoToFile(sessionDir: string, todo: TodoFile): void {
+export function saveTodoToFile(sessionDir: string, todo: TodoFile): void {
 	const filePath = getTodoFilePath(sessionDir);
 	const dir = dirname(filePath);
 	if (!existsSync(dir)) {
@@ -417,10 +417,15 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		"- Add task to phase-1: {op:'add_task',phase:'phase-1',content:'Fix authentication bug'} \
 \n" +
 		"- Create todo: {op:'replace',phases:[{name:'Phase 1',tasks:[{content:'Read source'},{content:'Apply fix'},{content:'Test'}]}]}";
-	readonly promptSnippet = "Manage todo/task lists with phases and tasks";
+	readonly promptSnippet =
+		"Use todo_write for task management. NEVER create TODO.md files. Tracks progress across turns with phases and tasks. View with /todos.";
 	readonly promptGuidelines = [
-		"Use todo_write tool for multi-step tasks - do NOT create .md files",
-		"Keep exactly ONE task in_progress at a time",
+		"Always use todo_write for multi-step tasks - do NOT create TODO.md or any markdown file",
+		"Keep exactly ONE task in_progress at a time - enforce this strictly",
+		"Mark tasks in_progress BEFORE work, completed IMMEDIATELY after",
+		"Prefer structured phases (Analysis, Implementation, Review) for complex tasks",
+		"After todo_write call, explicitly state: '✅ Todo updated: X remaining, Y completed'",
+		"Suggest next action based on current in_progress task",
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
