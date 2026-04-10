@@ -43,3 +43,4 @@ pi-mono-legacy/
 # Generated
 packages/ai/src/models.generated.ts
 
+.ant-colony/
