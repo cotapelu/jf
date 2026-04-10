@@ -3,7 +3,7 @@
  * Designed specifically for coding agents
  */
 
-export type MemoryType = "preference" | "project" | "command" | "solution" | "note";
+export type MemoryType = "preference" | "project" | "command" | "solution" | "note" | "code_symbol";
 
 export interface Memory {
 	id: string;
@@ -16,6 +16,13 @@ export interface Memory {
 	access_count: number;
 	expires_at?: number;
 	metadata?: Record<string, unknown>;
+	// Code symbol metadata (when type === 'code_symbol')
+	symbol_type?: "function" | "class" | "interface" | "type" | "enum" | "module" | "variable";
+	file_path?: string;
+	line_start?: number;
+	line_end?: number;
+	language?: string;
+	signature?: string;
 }
 
 export interface MemoryInput {

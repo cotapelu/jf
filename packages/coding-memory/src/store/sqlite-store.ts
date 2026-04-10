@@ -40,7 +40,7 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 	db.exec(`
     CREATE TABLE IF NOT EXISTS memories (
       id TEXT PRIMARY KEY,
-      type TEXT NOT NULL CHECK(type IN ('preference', 'project', 'command', 'solution', 'note')),
+      type TEXT NOT NULL CHECK(type IN ('preference', 'project', 'command', 'solution', 'note', 'code_symbol')),
       content TEXT NOT NULL,
       tags TEXT NOT NULL DEFAULT '[]',
       weight REAL NOT NULL DEFAULT 0.5,
@@ -48,7 +48,14 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
       updated_at INTEGER NOT NULL,
       access_count INTEGER NOT NULL DEFAULT 0,
       expires_at INTEGER,
-      metadata TEXT DEFAULT '{}'
+      metadata TEXT DEFAULT '{}',
+      -- Code symbol metadata
+      symbol_type TEXT,
+      file_path TEXT,
+      line_start INTEGER,
+      line_end INTEGER,
+      language TEXT,
+      signature TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_type ON memories(type);

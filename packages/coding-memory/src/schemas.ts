@@ -5,7 +5,7 @@
 import { z } from "zod";
 import type { MemoryInput, MemoryType, MemoryUpdate, Result } from "./types.js";
 
-export const MemoryTypeSchema = z.enum(["preference", "project", "command", "solution", "note"]);
+export const MemoryTypeSchema = z.enum(["preference", "project", "command", "solution", "note", "code_symbol"]);
 
 export type MemoryTypeSchema = z.infer<typeof MemoryTypeSchema>;
 
@@ -17,6 +17,13 @@ export const MemoryInputSchema = z
 		weight: z.number().min(0).max(1).optional(),
 		expires_at: z.number().int().positive().optional(),
 		metadata: z.record(z.unknown()).optional(),
+		// Code symbol fields (only when type === 'code_symbol')
+		symbol_type: z.enum(["function", "class", "interface", "type", "enum", "module", "variable"]).optional(),
+		file_path: z.string().optional(),
+		line_start: z.number().int().positive().optional(),
+		line_end: z.number().int().positive().optional(),
+		language: z.string().optional(),
+		signature: z.string().optional(),
 	})
 	.strict();
 
@@ -27,6 +34,13 @@ export const MemoryUpdateSchema = z
 		weight: z.number().min(0).max(1).optional(),
 		expires_at: z.number().int().positive().optional(),
 		metadata: z.record(z.unknown()).optional(),
+		// Code symbol fields
+		symbol_type: z.enum(["function", "class", "interface", "type", "enum", "module", "variable"]).optional(),
+		file_path: z.string().optional(),
+		line_start: z.number().int().positive().optional(),
+		line_end: z.number().int().positive().optional(),
+		language: z.string().optional(),
+		signature: z.string().optional(),
 	})
 	.strict();
 
