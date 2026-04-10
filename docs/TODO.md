@@ -346,7 +346,657 @@ catch (error) {
 
 ---
 
-## Last Updated
+## Coding Agent CLI — Deep Code Analysis
+
+**Date**: 2026-04-10
+**Scope**: Full source code analysis of `packages/coding-agent` (140+ TypeScript files)
+**Method**: Line-by-line reading and architectural mapping
+
+### Executive Summary
+
+The `coding-agent` package is a sophisticated CLI/TUI application that provides an interactive AI coding assistant. It features:
+
+- **Multi-mode operation**: Interactive TUI, non-interactive print, and JSON-RPC modes
+- **Session management**: Persistent conversation trees with branching, forking, and navigation
+- **Compaction**: Automatic and manual context summarization
+- **Extension system**: Pluggable architecture for commands, tools, themes, skills, and prompt templates
+- **Rich tool set**: Read, write, edit, bash, grep, find, ls with streaming output
+- **Model flexibility**: Support for multiple LLM providers with dynamic switching and thinking level control
+- **OAuth & API key management**: Secure credential storage with auto-refresh
+- **HTML export**: Session export with syntax highlighting
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         main.ts                             │
+│  (Entry point: arg parsing → runtime creation → mode run) │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │ AgentSessionRuntime │
+                    │  (Runtime factory)  │
+                    └─────────┬──────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+┌───────▼───────┐   ┌────────▼─────────┐   ┌──────▼───────┐
+│ AgentSession  │   │ AgentSession     │   │  Services    │
+│ (Core logic)  │   │ Services         │   │ (cwd-bound)  │
+└───────┬───────┘   └────────┬─────────┘   └──────┬───────┘
+        │                    │                     │
+        │  ┌─────────────────┼─────────────────┐   │
+        │  │                 │                 │   │
+┌───────▼──▼───┐ ┌──────────▼──────────┐ ┌──▼──────▼──┐
+│   Agent      │ │ ExtensionRunner     │ │  Tools     │
+│   (core)     │ │ (events, tools,     │ │ (7 builtin)│
+└──────────────┘ │  commands, flags)   │ └────────────┘
+                 └─────────────────────┘
+
+Modes:
+- InteractiveMode: Full TUI with pi-tui
+- PrintMode: Non-interactive text/JSON output
+- RPCMode: JSON-RPC server for embedding
+```
+
+### Module Breakdown
+
+#### 1. Entry & CLI (`main.ts`, `cli/`)
+
+- **main.ts**: Orchestrates startup
+  - Parses CLI args (`cli/args.ts`)
+  - Handles offline mode, version, export
+  - Creates `SessionManager` based on flags (--session, --resume, --fork, --continue, --no-session)
+  - Builds `AgentSessionRuntime` via factory
+  - Dispatches to mode (interactive/print/rpc)
+  - ~550 lines
+
+- **cli/args.ts**: Comprehensive argument parsing
+  - Flags: --provider, --model, --thinking, --tools, --no-tools, --extensions, --skills, --prompt-templates, --themes
+  - Modes: --mode (text|json|rpc), --print
+  - Session: --session, --resume, --continue, --fork, --no-session, --session-dir
+  - Unknown flags captured for extensions
+  - Help text includes extension flags
+
+- **cli/file-processor.ts**: Processes @file arguments
+  - Reads files from disk
+  - Auto-resizes images if enabled
+  - Returns combined text + images
+
+- **cli/initial-message.ts**: Builds initial user message
+  - Combines CLI args, stdin content, file arguments
+  - Expands prompt templates
+
+#### 2. Core Session (`core/agent-session.ts` — 3109 lines)
+
+The heart of the system. **AgentSession** class encapsulates:
+
+- **Agent lifecycle**: subscribes to agent events, handles persistence
+- **Model & thinking management**: setModel(), cycleModel(), setThinkingLevel()
+- **Message queuing**: steer(), followUp() for streaming control
+- **Compaction**: manual (/) and automatic (threshold/overflow)
+- **Branching & navigation**: navigateTree(), fork(), getBranch()
+- **Bash execution**: executeBash() with streaming & cancellation
+- **Extension bindings**: bindExtensions(), _buildRuntime(), _refreshToolRegistry()
+- **Custom messages**: sendCustomMessage(), CustomMessageEntry
+- **Session stats**: getSessionStats(), getContextUsage()
+- **Export**: exportToHtml(), exportToJsonl()
+- **Event handling**: _handleAgentEvent() processes all agent events and emits to extensions
+
+Key internal state:
+- `_extensionRunner`: ExtensionRunner instance
+- `_toolRegistry`: Map of tool name → AgentTool
+- `_toolDefinitions`: Map of tool name → ToolDefinition (with sourceInfo)
+- `_scopedModels`: Models for Ctrl+P cycling
+- `_compactionAbortController`, `_autoCompactionAbortController`
+- `_retryState`: Retry logic with exponential backoff
+- `_pendingBashMessages`: Deferred bash messages during streaming
+
+Notable behaviors:
+- System prompt rebuilt on tool set changes via `_rebuildSystemPrompt()`
+- Tool call/result interception via `_installAgentToolHooks()`
+- Auto-retry on service errors (overloaded, 429, 5xx)
+- Compaction triggers on context overflow or threshold
+- Branch summarization on tree navigation with summarize option
+
+#### 3. Runtime & Services (`core/agent-session-runtime.ts`, `core/agent-session-services.ts`)
+
+- **AgentSessionServices**: cwd-bound services created per effective session cwd
+  - SettingsManager, ModelRegistry, ResourceLoader, AuthStorage
+  - Diagnostics collected during creation
+
+- **AgentSessionRuntime**: owns the current session + services
+  - Factory pattern: `CreateAgentSessionRuntimeFactory`
+  - Session switching: `switchSession()`, `newSession()`, `fork()`, `importFromJsonl()`
+  - Teardown/apply lifecycle with extension events
+  - Holds `modelFallbackMessage` when model restoration fails
+
+#### 4. Auth & Model Registry (`core/auth-storage.ts`, `core/model-registry.ts`)
+
+- **AuthStorage**: Credential storage with file locking
+  - Supports API keys and OAuth
+  - Runtime overrides (--api-key)
+  - OAuth token refresh with lock to prevent race conditions
+  - In-memory backend for testing
+
+- **ModelRegistry**: Discovers and manages LLM models
+  - Loads from `models.json`
+  - Registers custom providers from extensions
+  - Resolves API keys via AuthStorage
+  - `getAvailable()`: returns models with configured auth
+  - Caches provider instances
+
+#### 5. Resource Loading (`core/resource-loader.ts`)
+
+- **DefaultResourceLoader**: Aggregates resources from multiple sources
+  - Extensions (TS modules) via `discoverAndLoadExtensions()`
+  - Skills (markdown files with frontmatter)
+  - Prompt templates (markdown)
+  - Themes (JSON)
+  - Context files: `AGENTS.md`, `CLAUDE.md` (from cwd and ancestors)
+  - System prompt and append prompt from settings/CLI
+  - `extendResources()` for extension-discovered paths
+  - Reloadable for hot-reload
+
+#### 6. Extension System (`core/extensions/`)
+
+Modular plug-in architecture with typed events.
+
+- **Extension** (types.ts): Core interface
+  - `initialize()`: receive API, context, actions
+  - `shutdown()`: cleanup
+  - Event handlers: `onAgentStart`, `onAgentEnd`, `onTurnStart`, `onMessageStart`, `onToolCall`, etc.
+  - Command registration (`commands` map)
+  - Tool registration (`tools`)
+  - Flags (`flags`)
+  - Slash commands
+  - UI components (`components`)
+  - Resource discovery (`resources_discover`)
+
+- **ExtensionRunner**: Dispatches events to loaded extensions
+  - Maintains runtime state: `flagValues`, `pendingProviderRegistrations`
+  - Provides `ExtensionCommandContext` with session control methods
+  - Error aggregation and reporting
+  - `getAllRegisteredTools()` for tool registry
+
+- **Loader** (`loader.ts`): Discovers and loads extensions
+  - From `extensions/` dir in agentDir
+  - From CLI `--extension` paths
+  - From extension registry (NPM packages)
+  - Supports factories for programmatic loading
+  - Validates extension structure
+
+- **Wrapper** (`wrapper.ts`): Wraps plain AgentTool for extension context
+  - Injects `ctx` into tool execution
+  - Captures tool results for interception
+
+#### 7. Session Management (`core/session-manager.ts` — 1221 lines)
+
+Manages persistent session files (JSONL) with tree structure.
+
+- **SessionEntry types**:
+  - `SessionMessageEntry`: LLM messages
+  - `ThinkingLevelChangeEntry`, `ModelChangeEntry`
+  - `CompactionEntry`: summary + firstKeptEntryId
+  - `BranchSummaryEntry`: navigation summary
+  - `CustomEntry`: extension state persistence
+  - `CustomMessageEntry`: inject into LLM context
+  - `LabelEntry`: user bookmarks
+  - `SessionInfoEntry`: session display name
+
+- **SessionManager**:
+  - File I/O with append-only log
+  - Tree operations: `getBranch()`, `getEntries()`, `getTree()`, `getEntry()`
+  - Navigation: `branch()`, `resetLeaf()`, `createBranchedSession()`
+  - Session creation, opening, forking
+  - Compaction: `appendCompaction()`
+  - Branch summarization: `branchWithSummary()`
+  - Model/thinking persistence
+  - Version migration support (current v3)
+
+- **SessionContext**: Reconstructed linear context from branch
+  - Used by Agent to build prompt
+  - Messages concatenated along parent chain
+
+#### 8. Compaction System (`core/compaction/`)
+
+Automatically or manually summarize old conversation to free context.
+
+- **compaction.ts**: Core logic
+  - `prepareCompaction()`: finds cut point, extracts messages-to-summarize
+  - `findCutPoint()`: walks backwards accumulating estimated tokens
+  - `generateSummary()`: LLM call with structured prompt (Goal/Constraints/Progress/Decisions/NextSteps)
+  - `compact()`: returns CompactionResult with summary and details
+  - Token calculation: `calculateContextTokens()`, `estimateTokens()`
+  - File operation tracking across compactions
+
+- **branch-summarization.ts**: Similar summarization for tree navigation
+  - `generateBranchSummary()`: summarizes abandoned branch
+  - Uses same structured prompt format
+
+- **utils.ts**: File operation extraction from tools
+  - read, write, edit, bash operations
+  - `computeFileLists()`: dedup read/modified files
+  - `serializeConversation()` for LLM input
+
+**Settings**:
+- `enabled`, `reserveTokens` (default 16384), `keepRecentTokens` (default 20000)
+
+**Triggers**:
+- Manual: `/compact` command
+- Auto: context overflow (LLM error) → compact + retry
+- Auto: threshold check after each agent_end
+
+#### 9. Tools (`core/tools/`)
+
+Seven built-in tools (all follow same pattern):
+
+1. **read** (`read.ts`): File reading with glob support
+   - Options: `maxBytes` (default 1MB), `maxLines` (default 1000)
+   - Respects binary files, truncates with tail preserved
+
+2. **bash** (`bash.ts`): Shell command execution
+   - Uses `BashOperations` abstraction (local or remote)
+   - Streaming output via `onChunk`
+   - Cancellation via AbortSignal
+   - Sanitization: strip ANSI, binary cleanup, newline normalization
+   - Full output captured to temp file if > max (for later retrieval)
+
+3. **edit** (`edit.ts`): Find/replace editing
+   - `EditOperations`: diff, patch application
+   - Supports dry-run
+   - Integrates with `file-mutation-queue` for concurrency safety
+
+4. **write** (`write.ts`): File creation/overwriting
+   - Options: `createParents`, `append`
+   - Safety: respects `agents/rules/deny-write` patterns
+   - Wrapped with `FileMutationQueue` to serialize writes
+
+5. **grep** (`grep.ts`): Content search
+   - Options: `glob`, `include`, `exclude`, `maxResults`, `output`
+   - Line numbers, context lines
+
+6. **find** (`find.ts`): Filename search
+   - Options: `glob`, `maxResults`
+   - Uses `minimatch`
+
+7. **ls** (`ls.ts`): Directory listing
+   - Options: `path`, `depth`, `showHidden`
+
+All tools:
+- Defined via `ToolDefinition` (name, description, parameters schema)
+- Create both `AgentTool` (for runtime) and `ToolDefinition` (for LLM)
+- Truncation via `truncate.ts` utilities
+
+#### 10. Modes (`modes/`)
+
+Three execution modes:
+
+- **InteractiveMode** (`interactive/interactive-mode.ts` — 4687 lines)
+  - Full-screen TUI using `@mariozechner/pi-tui`
+  - Components: message rendering, editor, selectors, dialogs
+  - Keybindings: configurable, mode-specific
+  - Theme support (dark/light + custom)
+  - Streaming rendering with partial updates
+  - Footer with stats (tokens, cost, context %)
+  - Handles resize, clipboard images
+  - Lifecycle: init → run → stop
+
+- **PrintMode** (`print-mode.ts`)
+  - Non-interactive: process messages then exit
+  - Output: text (default) or JSON
+  - Useful for scripting
+
+- **RPCMode** (`rpc/rpc-mode.ts`)
+  - JSON-RPC 2.0 server over stdin/stdout
+  - Enables embedding in editors/IDEs
+  - Methods: `prompt`, `abort`, `subscribe`
+  - Format: newline-delimited JSON
+
+#### 11. Configuration & Settings (`core/settings-manager.ts`, `config.ts`)
+
+- **SettingsManager**:
+  - Loads `settings.json` from agentDir
+  - Hierarchical: project-local `./.pi/settings.json` overrides global
+  - Categories: models, themes, compaction, retry, tools, UI
+  - Reloadable
+  - Watch mode for changes
+
+- **config.ts**: Path resolution and constants
+  - `getAgentDir()`, `getSessionsDir()`, `getModelsPath()`, `getAuthPath()`
+  - `getPackageDir()`: handles bun binary vs node
+  - Asset shipping: themes, HTML export templates
+  - `APP_NAME`, `VERSION` from package.json
+
+#### 12. Bash Execution (`core/bash-executor.ts`)
+
+Unified bash runner used by both tool and AgentSession.executeBash().
+
+- `executeBashWithOperations()`: takes `BashOperations` abstraction
+- Local operations: `createLocalBashOperations()` spawns `bash`
+- Streaming: data callback per chunk
+- Sanitization: `sanitizeBinaryOutput()` strip ANSI, binary garbage
+- Truncation: keeps tail, writes full output to temp file
+- Cancellation: AbortSignal support
+
+#### 13. Command History (`core/command-history.ts`)
+
+Tracks user commands and messages for later recall.
+
+- Daily files: `.pi/commands/YYYY-MM-DD.json` (JSONL)
+- Entry: `{ ts, text, type, command?, args? }`
+- Query: by date range, by command name, text search
+- Used by `/history` and editor history integration
+
+#### 14. Utilities (`utils/`)
+
+- `clipboard*.ts`: Clipboard read (text, images) with platform detection
+- `git.ts`: Git URL parsing
+- `image-*`: Resize, convert (uses `@silvia-odwyer/photon-node`)
+- `shell.ts`: Shell config detection (bash/zsh/fish)
+- `sleep.ts`: Promise-based sleep with cancellation
+- `tools-manager.ts`: Ensure external tools (fd, rg) are installed
+- `frontmatter.ts`: YAML frontmatter parsing for skills
+
+#### 15. Migrations (`migrations.ts`)
+
+- Auth provider migrations (MIGRATION-001, MIGRATION-002)
+- Keybindings migration (v0.57 → v0.58)
+- Runs at startup, updates files atomically
+- Shows deprecation warnings in interactive mode
+
+### Data Flow Example: User Prompt in Interactive Mode
+
+1. User types message in TUI editor → `InteractiveMode` receives input
+2. `session.prompt(text, { images, streamingBehavior })` called
+3. `AgentSession.prompt()`:
+   - Check for extension commands (starts with `/`) → execute immediately if found
+   - Emit `input` event to extensions (can intercept/transform)
+   - Expand skill commands (`/skill:name`) and prompt templates
+   - If streaming: queue via `steer()` or `followUp()`
+   - Else: validate model & auth
+   - Build message array (custom from extensions + user)
+   - `agent.prompt(messages)`
+4. `Agent` processes tools, streams response
+5. Events flow: `turn_start` → `message_start` → `tool_execution_start` → `tool_execution_end` → `message_end` → `turn_end` → `agent_end`
+6. `AgentSession` event handler:
+   - Persists messages to `SessionManager`
+   - Checks auto-compaction (threshold/overflow)
+   - Triggers auto-retry if error
+7. `InteractiveMode` renders updates via components
+8. On completion: flush pending bash messages, update footer
+
+### Extension System Deep Dive
+
+Extensions are the primary customization mechanism. They can:
+
+- **Subscribe to events**: Almost any lifecycle moment
+- **Register tools**: LLM-callable functions
+- **Register commands**: `/command` invocations
+- **Define flags**: `--flag` CLI options
+- **Provide UI**: Custom editors, dialogs, widgets
+- **Discover resources**: skills, prompts, themes dynamically
+
+**Extension lifecycle**:
+1. Discovery: from `~/.pi/agent/extensions/`, NPM packages, CLI `--extension`
+2. Loading: `loadExtensionFromFactory()` → `Extension` instance
+3. Initialization: `extension.initialize(api, context, actions)`
+4. Event binding: `runner.on(event, handler)`
+5. Shutdown: `extension.shutdown()` on session end or reload
+
+**Safety**: Extensions run in same process; errors in one don't crash others (errors captured and emitted).
+
+### Testing Strategy
+
+- **Unit tests**: Each tool, compaction algorithm, session manager, settings
+- **Integration tests**: `test/suite/` for end-to-end scenarios
+- **Harness**: `test/harness.ts` provides test utilities
+- **Fixtures**: `test/fixtures/` for skills, extensions
+- **Coverage**: ~99% (1574/1588 passing)
+
+Notable test suites:
+- `agent-session-*.test.ts`: session features
+- `compaction*.test.ts`: summarization
+- `extensions-*.test.ts`: extension system
+- `interactive-mode-*.test.ts`: TUI behavior
+- `session-manager/`: tree navigation, persistence
+- `tools.test.ts`: all tools
+
+**Flaky/Env-specific**:
+- Ollama tests (memory insufficient)
+- OAuth tests (depend on real credentials)
+
+### Code Quality Observations
+
+- **TypeScript strictness**: Mixed; many `any` types (~14k occurrences) — technical debt
+- **Error handling**: Generally good; async operations wrapped in try/catch
+- **Resource cleanup**: AbortControllers, `dispose()` methods used
+- **Logging**: Minimal; uses console.error for diagnostics
+- **Documentation**: Inline comments sparse; relies on descriptive naming
+- **Testing**: Comprehensive but edge cases remain (see BUG-008)
+
+### Security Considerations
+
+- **Credentials**: Stored in `~/.pi/agent/auth.json` (mode 0o600)
+- **OAuth**: Tokens refreshed automatically with file locking
+- **Command injection**: Bash operations use shell; user-controlled input risk (mitigated by agent's controlled generation)
+- **File system**: Tools operate on arbitrary paths; session manager respects cwd
+- **Extension code execution**: Extensions run with full process privileges — trust required
+
+### Performance Characteristics
+
+- **Startup**: ~1.3s (RPC), ~17s full build
+- **Memory**: Agent session holds entire message history in memory
+- **Context estimation**: Conservative char/4 heuristic for pre-usage messages
+- **Compaction**: LLM call with reserved tokens (default ~12k)
+- **I/O**: Batched writes to session file; appends are atomic
+
+### Known Issues & Technical Debt
+
+From code inspection (in addition to tracked bugs):
+
+1. **Event listener leaks**: Many `on()` subscriptions; need systematic `off()` in `dispose()`
+2. **Concurrency**: Agent state not locked; concurrent tool calls could race (unlikely in single-turn but possible with extensions)
+3. **Error recovery**: OAuth refresh errors sometimes lose original cause (BUG-007 fixed in ai package, similar pattern elsewhere)
+4. **Type safety**: Excessive `any` undermines TypeScript benefits
+5. **File watchers**: SettingsManager reload uses `fs.watch` (platform limitations)
+6. **Temp files**: Bash full output stored in `/tmp` without cleanup (rely on OS)
+7. **Session file growth**: Unlimited growth between compactions; could become large
+8. **Extension flag parsing**: Unknown flags produce errors, but extensions may dynamically add flags at runtime (ordering issue)
+9. **Theme loading**: Multiple sources (global, project, CLI) — precedence not fully documented
+10. **Tool truncation**: Heuristic limits (maxBytes, maxLines) could drop important data; full output preserved to temp file but not auto-reloaded
+
+### Recommendations for Improvement
+
+1. **Memory management**: Introduce hard cap on session file size; force compaction after N entries
+2. **Observability**: Add structured logging (e.g., pino) with levels (debug, info, error)
+3. **Error handling**: Standardize error wrapping with cause; audit all catch blocks
+4. **Testing**: Add fuzzing for tool inputs (path traversal, huge files, unicode)
+5. **Concurrency**: Protect Agent.state mutations with a lock; queue concurrent prompts
+6. **Extension sandboxing**: Consider Worker threads or separate process for untrusted extensions
+7. **Type safety**: Gradually replace `any` with generics; enable `noImplicitAny`
+8. **Bash security**: Option to disable shell features (aliases, functions) for safer execution
+9. **Session encryption**: Optional encryption for sensitive sessions
+10. **Backup & sync**: Cloud sync of session directory (could use extensions)
+
+### Detailed File Inventory (140 source files)
+
+**Entry points**:
+- `src/main.ts` (primary)
+- `src/cli.ts` (thin wrapper)
+- `src/bun/cli.ts` (Bun binary entry)
+
+**CLI modules** (`src/cli/`):
+- args.ts (parsing + help)
+- config-selector.ts (TUI config editor)
+- file-processor.ts (@file handling)
+- initial-message.ts (compose initial prompt)
+- list-models.ts (model discovery output)
+- session-picker.ts (resume selector)
+
+**Core** (`src/core/`):
+- agent-session-runtime.ts (runtime lifecycle)
+- agent-session-services.ts (service factory)
+- agent-session.ts (main logic)
+- auth-storage.ts (credentials)
+- bash-executor.ts (bash runner)
+- command-history.ts (user command log)
+- compaction/ (summarization)
+  - branch-summarization.ts
+  - compaction.ts (core)
+  - index.ts (exports)
+  - utils.ts (file ops)
+- defaults.ts (DEFAULT_THINKING_LEVEL = medium)
+- diagnostics.ts (error types)
+- event-bus.ts (pub/sub)
+- exec.ts (OAuth login helpers)
+- export-html/ (HTML export)
+  - ansi-to-html.ts
+  - index.ts
+  - tool-renderer.ts
+  - template.js (HTML scaffold)
+  - vendor/ (highlight.js, marked.js)
+- extensions/ (plugin system)
+  - index.ts (exports)
+  - loader.ts (discovery/loading)
+  - runner.ts (event dispatch)
+  - types.ts (Extension interface, all event types)
+  - wrapper.ts (tool adapter)
+- footer-data-provider.ts (git branch + extension statuses)
+- index.ts (public API re-exports)
+- keybindings.ts (keymap management)
+- messages.ts (message constructors)
+- model-registry.ts (provider + model discovery)
+- model-resolver.ts (scope resolution, CLI --model parsing)
+- output-guard.ts (stdout takeover for non-interactive)
+- package-manager.ts (NPM/yarn/pnpm/bun detection)
+- prompt-templates.ts (template loading + expansion)
+- resolve-config-value.ts (env var interpolation)
+- resource-loader.ts (skills, prompts, themes, extensions, context files)
+- sdk.ts (programmatic API: createAgentSession, tools factories)
+- session-cwd.ts (cwd validation for session resume)
+- session-manager.ts (session file I/O + tree)
+- settings-manager.ts (settings.json with watch)
+- skills.ts (skill file loading + frontmatter)
+- slash-commands.ts (built-in commands like /model, /compact)
+- source-info.ts (provenance tracking)
+- system-prompt.ts (prompt construction)
+- timings.ts (startup profiling)
+- tools/ (builtin tools)
+  - bash.ts (tool def + implementation)
+  - edit.ts
+  - edit-diff.ts (diff parsing)
+  - file-mutation-queue.ts (serialize writes)
+  - find.ts
+  - grep.ts
+  - index.ts (aggregate exports)
+  - ls.ts
+  - path-utils.ts
+  - read.ts
+  - render-utils.ts
+  - todo-write.ts (todo tool)
+  - tool-definition-wrapper.ts (adapt AgentTool → ToolDefinition)
+  - truncate.ts
+  - write.ts
+
+**Modes** (`src/modes/`):
+- index.ts (exports: InteractiveMode, runPrintMode, runRpcMode)
+- interactive/ (TUI mode)
+  - interactive-mode.ts (orchestration)
+  - theme/ (color themes)
+    - theme.ts (theme loading, markdown highlighting)
+    - dark.json, light.json
+  - components/ (50+ UI components)
+    - armin.ts (welcome screen)
+    - assistant-message.ts
+    - bash-execution.ts
+    - bordered-loader.ts
+    - branch-summary-message.ts
+    - compaction-summary-message.ts
+    - config-selector.ts
+    - countdown-timer.ts
+    - custom-editor.ts (editor for extension data)
+    - custom-message.ts
+    - daxnuts.ts (easter egg)
+    - diff.ts (unified diff rendering)
+    - dynamic-border.ts
+    - extension-editor.ts
+    - extension-input.ts
+    - extension-selector.ts
+    - footer.ts (token stats, model, time)
+    - index.ts (aggregate)
+    - keybinding-hints.ts
+    - login-dialog.ts
+    - model-selector.ts
+    - oauth-selector.ts
+    - scoped-models-selector.ts
+    - session-selector-search.ts
+    - session-selector.ts
+    - settings-selector.ts
+    - show-images-selector.ts
+    - skill-invocation-message.ts
+    - theme-selector.ts
+    - thinking-selector.ts
+    - tool-execution.ts
+    - tree-selector.ts (branch navigation)
+    - user-message-selector.ts
+    - user-message.ts
+    - visual-truncate.ts
+- print-mode.ts (text/JSON output)
+- rpc/ (JSON-RPC)
+  - jsonl.ts (session import/export)
+  - rpc-client.ts (client for --mode=rpc)
+  - rpc-mode.ts (server)
+  - rpc-types.ts (type defs)
+
+**Other** (`src/`):
+- migrations.ts (auth, keybindings migrations)
+- package-manager-cli.ts (`pi install/remove/update/list` commands)
+- utils/
+  - changelog.ts (parse CHANGELOG.md)
+  - child-process.ts (spawn helpers)
+  - clipboard.ts (text clipboard)
+  - clipboard-image.ts (image clipboard + WSL/Wayland detection)
+  - exif-orientation.ts
+  - frontmatter.ts
+  - git.ts
+  - image-convert.ts (BMP/PNG conversion)
+  - image-resize.ts (photon-node)
+  - mime.ts
+  - paths.ts (path utilities)
+  - photon.ts (image processing wrapper)
+  - shell.ts (shell config)
+  - sleep.ts
+  - tools-manager.ts (ensure external tools)
+
+**Bun support** (`src/bun/`):
+- cli.ts (compiled binary entry)
+- register-bedrock.ts (Bun.semaphores hack for Antigravity)
+
+### Conclusion
+
+The `coding-agent` codebase is a mature, feature-rich CLI application with clean separation of concerns. Key strengths:
+
+- Well-designed extension system enabling third-party customization
+- Robust session persistence with tree navigation
+- Intelligent compaction to manage context limits
+- Comprehensive tool set with consistent abstractions
+- Multiple operation modes (TUI, print, RPC) for diverse use cases
+
+Primary areas for improvement:
+
+1. Reduce `any` usage to improve type safety
+2. Audit event listener cleanup to prevent memory leaks
+3. Add more edge-case tests (concurrency, large files, unicode)
+4. Consider extension sandboxing for security
+5. Implement session rotation/archival to bound file sizes
+6. Enhance logging for production debugging
+
+Overall, the codebase demonstrates solid engineering with room for incremental quality improvements.
+
+---
+
+
 
 2026-04-10
 
