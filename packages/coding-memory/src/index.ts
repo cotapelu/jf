@@ -3,6 +3,7 @@
  * SQLite-backed persistent memory for coding agents
  */
 
+export { createCodeIndexer } from "./code-indexer.js";
 export { createMemoryEngine } from "./crud.js";
 export { MemoryTypeSchema, validateInput } from "./schemas.js";
 export type { IMemoryStore } from "./store/memory-store.js";

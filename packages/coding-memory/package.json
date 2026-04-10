@@ -5,7 +5,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.build.json",
@@ -20,12 +22,18 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
+    "@types/chokidar": "^1.7.5",
     "@types/node": "^25.5.2",
-
     "typescript": "^5.6.3",
     "vitest": "^3.2.4"
   },
-  "keywords": ["pi", "coding-agent", "memory", "sqlite", "llm"],
+  "keywords": [
+    "pi",
+    "coding-agent",
+    "memory",
+    "sqlite",
+    "llm"
+  ],
   "author": "Pi Contributors",
   "license": "MIT",
   "engines": {

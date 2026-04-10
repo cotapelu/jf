@@ -4,7 +4,6 @@
  */
 
 import type { createMemoryEngine } from "./index.js";
-import type { IMemoryStore } from "./store/memory-store.js";
 import type { MemoryType, Result } from "./types.js";
 
 export interface MemoryTool {

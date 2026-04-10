@@ -4,19 +4,7 @@
 
 import { MemoryInputSchema, MemoryUpdateSchema, validateInput } from "./schemas.js";
 import type { IMemoryStore } from "./store/memory-store.js";
-import type {
-	Memory,
-	MemoryInput,
-	MemorySearchResult,
-	MemoryStats,
-	MemoryType,
-	MemoryUpdate,
-	Result,
-} from "./types.js";
-
-function now(): number {
-	return Date.now();
-}
+import type { Memory, MemorySearchResult, MemoryStats, MemoryType, Result } from "./types.js";
 
 export function createMemoryEngine(store: IMemoryStore) {
 	return {

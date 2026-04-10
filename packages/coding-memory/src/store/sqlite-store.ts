@@ -2,8 +2,8 @@
  * SQLite-backed Memory Store with Full-Text Search
  */
 
-import { existsSync, mkdirSync, unlinkSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import Database from "better-sqlite3";
 import type { IMemoryStore } from "../store/memory-store.js";
 import type {
@@ -149,8 +149,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const memory = mapRow(stmtGet.get(id));
 				return { ok: true, value: memory! };
 			} catch (e) {
-				const error = e as Error;
-				return { ok: false, error: error.message };
+				
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
 
@@ -195,8 +195,7 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 					memories: memories.slice(0, limit),
 					total: memories.length,
 				};
-			} catch (e) {
-				const error = e as Error;
+			} catch {
 				return { memories: [], total: 0 };
 			}
 		},
@@ -218,8 +217,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 				return { ok: true, value: memory };
 			} catch (e) {
-				const error = e as Error;
-				return { ok: false, error: error.message };
+				
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
 
@@ -244,8 +243,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const updated = stmtGet.get(id);
 				return { ok: true, value: mapRow(updated) };
 			} catch (e) {
-				const error = e as Error;
-				return { ok: false, error: error.message };
+				
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
 
@@ -254,8 +253,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const info = stmtDelete.run(id);
 				return { ok: true, value: info.changes > 0 };
 			} catch (e) {
-				const error = e as Error;
-				return { ok: false, error: error.message };
+				
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
 
@@ -290,10 +289,10 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 					byTags,
 					averageWeight: avgWeight,
 				};
-			} catch (e) {
+			} catch {
 				return {
 					total: 0,
-					byType: { preference: 0, project: 0, command: 0, solution: 0, note: 0 },
+					byType: { preference: 0, project: 0, command: 0, solution: 0, note: 0, code_symbol: 0 },
 					byTags: {},
 					averageWeight: 0,
 				};

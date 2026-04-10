@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import type { MemoryInput, MemoryType, MemoryUpdate, Result } from "./types.js";
+import type { Result } from "./types.js";
 
 export const MemoryTypeSchema = z.enum(["preference", "project", "command", "solution", "note", "code_symbol"]);
 
