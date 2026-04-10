@@ -268,7 +268,9 @@ export async function readClipboardImage(options?: {
 		const wsl = isWSL(env);
 		const wayland = isWaylandSession(env);
 
-		if (wayland || wsl) {
+		// Use wl-paste/xclip only if Wayland OR (WSL with X display, i.e., WSLg)
+		const hasXDisplay = Boolean(env.DISPLAY);
+		if (wayland || (wsl && hasXDisplay)) {
 			image = readClipboardImageViaWlPaste() ?? readClipboardImageViaXclip();
 		}
 

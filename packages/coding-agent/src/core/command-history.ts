@@ -238,7 +238,9 @@ export function formatCommandEntry(entry: CommandEntry): string {
 export function printCommands(entries: CommandEntry[], limit: number = 20): void {
 	const display = entries.slice(0, limit);
 	console.log(`\nFound ${entries.length} commands (showing ${display.length}):\n`);
-	display.forEach((e) => console.log(formatCommandEntry(e)));
+	for (const e of display) {
+		console.log(formatCommandEntry(e));
+	}
 	if (entries.length > limit) {
 		console.log(`\n... and ${entries.length - limit} more`);
 	}
