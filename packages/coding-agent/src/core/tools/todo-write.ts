@@ -347,8 +347,8 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 	if (errors.length > 0) {
 		lines.push(`⚠️ Errors: ${errors.join("; ")}`);
 	} else {
-		const pending = tasks.filter(t => t.status === "pending" || t.status === "in_progress").length;
-		const completed = tasks.filter(t => t.status === "completed" || t.status === "abandoned").length;
+		const pending = tasks.filter((t) => t.status === "pending" || t.status === "in_progress").length;
+		const completed = tasks.filter((t) => t.status === "completed" || t.status === "abandoned").length;
 		lines.push(`✅ Todo updated: ${pending} remaining, ${completed} completed.`);
 		lines.push(`📊 Use /todos to view, or continue with next task.`);
 		lines.push("");
