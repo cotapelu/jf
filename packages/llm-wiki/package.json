@@ -1,0 +1,45 @@
+{
+  "name": "@mariozechner/pi-llm-wiki",
+  "version": "0.65.2",
+  "description": "LLM-powered wiki/query extension for pi",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "shx rm -rf dist",
+    "build": "tsgo -p tsconfig.build.json",
+    "dev": "tsgo -p tsconfig.build.json --watch --preserveWatchOutput",
+    "dev:tsc": "tsgo -p tsconfig.build.json --watch --preserveWatchOutput",
+    "test": "vitest --run",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@mariozechner/pi-agent-core": "^0.65.2",
+    "@mariozechner/pi-ai": "^0.65.2",
+    "@sinclair/typebox": "^0.34.41",
+    "chalk": "^5.6.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "vitest": "^3.2.4",
+    "@typescript/native-preview": "^7.0.0-dev.20260407.1"
+  },
+  "keywords": [
+    "pi",
+    "llm",
+    "wiki",
+    "knowledge",
+    "query",
+    "extension"
+  ],
+  "author": "Pi Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
