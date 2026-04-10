@@ -348,9 +348,14 @@ catch (error) {
 
 ## Last Updated
 
-2026-04-09
+2026-04-10
 
-**Bug Hunt Sprint**: Full bug identification and tracking in progress (see "Active Bug Hunt" section above)
+**Maintenance Updates**:
+- Added run.sh script for easier execution
+- Updated .gitignore to include .ant-colony/ directory
+- Built all packages successfully
+- Ran test suite: confirmed 6 Ollama tests fail due to insufficient memory (environment limitation)
+- All other tests pass
 
 **Recent Changes (2026-04-09)**:
 - **Full Codebase Scan Complete**: Scanned all 7 packages (ai, agent, coding-agent, tui, mom, pods, web-ui)
