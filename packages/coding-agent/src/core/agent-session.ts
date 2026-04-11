@@ -67,7 +67,6 @@ import {
 	type TurnStartEvent,
 	wrapRegisteredTools,
 } from "./extensions/index.js";
-import { memoryToolDefinitions } from "./memory-store.js";
 import type { BashExecutionMessage, CustomMessage } from "./messages.js";
 import type { ModelRegistry } from "./model-registry.js";
 import { expandPromptTemplate, type PromptTemplate } from "./prompt-templates.js";
@@ -901,16 +900,6 @@ export class AgentSession {
 			if (toolGuidelines) {
 				promptGuidelines.push(...toolGuidelines);
 			}
-		}
-
-		// Add memory-specific guidelines if memory tools are available
-		if (validToolNames.some((n) => n.startsWith("memory_"))) {
-			promptGuidelines.push(
-				"Proactively save important user preferences, project facts, commands, and solutions using memory_save",
-				"Always call memory_find before answering questions about preferences, project setup, or past solutions",
-				"Leverage memory to maintain continuity across sessions and provide personalized assistance",
-				"Never store sensitive data (API keys, passwords) in memory",
-			);
 		}
 
 		const loaderSystemPrompt = this._resourceLoader.getSystemPrompt();
@@ -2313,30 +2302,17 @@ export class AgentSession {
 	}): void {
 		const autoResizeImages = this.settingsManager.getImageAutoResize();
 		const shellCommandPrefix = this.settingsManager.getShellCommandPrefix();
-		const baseToolDefinitions: Record<string, ToolDefinition> = this._baseToolsOverride
+		const baseToolDefinitions = this._baseToolsOverride
 			? Object.fromEntries(
 					Object.entries(this._baseToolsOverride).map(([name, tool]) => [
 						name,
 						createToolDefinitionFromAgentTool(tool),
 					]),
 				)
-			: (createAllToolDefinitions(this._cwd, {
+			: createAllToolDefinitions(this._cwd, {
 					read: { autoResizeImages },
 					bash: { commandPrefix: shellCommandPrefix },
-				}) as Record<string, ToolDefinition>);
-
-		// Merge built-in memory tools
-		for (const tool of memoryToolDefinitions) {
-			baseToolDefinitions[tool.name] = tool;
-			// Register prompt snippets and guidelines for memory tools
-			if (tool.promptSnippet) {
-				this._toolPromptSnippets.set(tool.name, tool.promptSnippet);
-			}
-			if (tool.promptGuidelines) {
-				const existing = this._toolPromptGuidelines.get(tool.name) ?? [];
-				this._toolPromptGuidelines.set(tool.name, [...existing, ...tool.promptGuidelines]);
-			}
-		}
+				});
 
 		this._baseToolDefinitions = new Map(
 			Object.entries(baseToolDefinitions).map(([name, tool]) => [name, tool as ToolDefinition]),
@@ -2375,20 +2351,7 @@ export class AgentSession {
 
 		const defaultActiveToolNames = this._baseToolsOverride
 			? Object.keys(this._baseToolsOverride)
-			: [
-					"read",
-					"bash",
-					"edit",
-					"write",
-					"grep",
-					"find",
-					"ls",
-					"todo_write",
-					"memory_save",
-					"memory_find",
-					"memory_forget",
-					"memory_stats",
-				];
+			: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo_write"];
 		const baseActiveToolNames = options.activeToolNames ?? defaultActiveToolNames;
 		this._refreshToolRegistry({
 			activeToolNames: baseActiveToolNames,
