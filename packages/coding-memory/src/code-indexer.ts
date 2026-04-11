@@ -246,7 +246,7 @@ export function createCodeIndexer(
 	};
 
 	const watchers: any[] = [];
-	const debounceTimers = new Map<string, NodeJS.Timeout>();
+	const debounceTimers = new Map<string, number>();
 
 	function shouldIndexFile(filePath: string): boolean {
 		const ext = extname(filePath).toLowerCase();
@@ -320,8 +320,9 @@ export function createCodeIndexer(
 		if (!shouldIndexFile(filePath)) return;
 
 		// Debounce
-		if (debounceTimers.has(filePath)) {
-			clearTimeout(debounceTimers.get(filePath));
+		const existingTimer = debounceTimers.get(filePath);
+		if (existingTimer !== undefined) {
+			clearTimeout(existingTimer);
 		}
 
 		debounceTimers.set(
@@ -333,7 +334,7 @@ export function createCodeIndexer(
 				} else {
 					await indexFile(filePath);
 				}
-			}, opts.debounceMs),
+			}, opts.debounceMs) as unknown as number,
 		);
 	}
 
@@ -379,7 +380,7 @@ export function createCodeIndexer(
 				watcher.close();
 			}
 			watchers.length = 0;
-			for (const timer of debounceTimers) {
+			for (const timer of debounceTimers.values()) {
 				clearTimeout(timer);
 			}
 			debounceTimers.clear();
