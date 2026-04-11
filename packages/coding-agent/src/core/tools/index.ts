@@ -102,7 +102,15 @@ import {
 	readTool,
 	readToolDefinition,
 } from "./read.js";
+import { getTodoFilePath, loadTodoFromFile, saveTodoToFile, todoWriteToolRenderer } from "./todo-write.js";
 import { createWriteTool, createWriteToolDefinition, writeTool, writeToolDefinition } from "./write.js";
+
+export {
+	getTodoFilePath,
+	loadTodoFromFile as loadTodo,
+	saveTodoToFile as saveTodo,
+	todoWriteToolRenderer,
+} from "./todo-write.js";
 
 export type Tool = AgentTool<any>;
 export type ToolDef = ToolDefinition<any, any>;
