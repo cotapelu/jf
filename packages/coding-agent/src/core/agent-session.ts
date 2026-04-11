@@ -79,7 +79,7 @@ import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.js";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.js";
 import { createAllToolDefinitions } from "./tools/index.js";
-import { type TodoPhase, TodoWriteTool } from "./tools/todo-write.js";
+import { loadTodoFromFile, type TodoPhase, TodoWriteTool } from "./tools/todo-write.js";
 import { createToolDefinitionFromAgentTool, wrapToolDefinition } from "./tools/tool-definition-wrapper.js";
 
 // ============================================================================
@@ -3074,9 +3074,18 @@ export class AgentSession {
 	// =========================================================================
 
 	#todoPhases: TodoPhase[] = [];
+	#todoLoaded = false;
 
 	/** Get todo phases from session */
 	getTodoPhases(): TodoPhase[] {
+		// Auto-load from file if not yet loaded and session is persisted
+		if (!this.#todoLoaded && this.sessionFile) {
+			const loaded = loadTodoFromFile(this.sessionDir);
+			if (loaded) {
+				this.#todoPhases = loaded.phases;
+			}
+			this.#todoLoaded = true;
+		}
 		return this.#todoPhases;
 	}
 
@@ -3094,5 +3103,6 @@ export class AgentSession {
 	/** Set todo phases in session */
 	setTodoPhases(phases: TodoPhase[]): void {
 		this.#todoPhases = phases;
+		this.#todoLoaded = true;
 	}
 }

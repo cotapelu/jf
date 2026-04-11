@@ -114,11 +114,11 @@ interface PersistedTodo {
 // Persistence helpers
 // =============================================================================
 
-function getTodoFilePath(sessionDir: string): string {
+export function getTodoFilePath(sessionDir: string): string {
 	return join(sessionDir, "todos.json");
 }
 
-function loadTodoFromFile(sessionDir: string): TodoFile | null {
+export function loadTodoFromFile(sessionDir: string): TodoFile | null {
 	const filePath = getTodoFilePath(sessionDir);
 	if (!existsSync(filePath)) return null;
 
@@ -132,7 +132,7 @@ function loadTodoFromFile(sessionDir: string): TodoFile | null {
 	}
 }
 
-function saveTodoToFile(sessionDir: string, todo: TodoFile): void {
+export function saveTodoToFile(sessionDir: string, todo: TodoFile): void {
 	const filePath = getTodoFilePath(sessionDir);
 	const dir = dirname(filePath);
 	if (!existsSync(dir)) {
@@ -344,7 +344,15 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 	const done = current.tasks.filter((t) => t.status === "completed" || t.status === "abandoned").length;
 
 	const lines: string[] = [];
-	if (errors.length > 0) lines.push(`Errors: ${errors.join("; ")}`);
+	if (errors.length > 0) {
+		lines.push(`⚠️ Errors: ${errors.join("; ")}`);
+	} else {
+		const pending = tasks.filter((t) => t.status === "pending" || t.status === "in_progress").length;
+		const completed = tasks.filter((t) => t.status === "completed" || t.status === "abandoned").length;
+		lines.push(`✅ Todo updated: ${pending} remaining, ${completed} completed.`);
+		lines.push(`📊 Use /todos to view, or continue with next task.`);
+		lines.push("");
+	}
 	if (remainingTasks.length === 0) {
 		lines.push("Remaining items: none.");
 	} else {
@@ -386,41 +394,16 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly name = "todo_write";
 	readonly label = "Todo Write";
 	readonly description =
-		"Manages phased task lists. Use for multi-step tasks. \
-\n\n" +
-		"Ops: \
-\n" +
-		"- update: mark task in_progress BEFORE starting, completed AFTER (NOT before), abandoned (dropped). \
-\n" +
-		"- add_task: add task to existing phase. Phase ID format: phase-1, phase-2, etc. \
-\n" +
-		"- add_phase: create new phase. \
-\n" +
-		"- replace: full reset (initial setup only). \
-\n" +
-		"- remove_task: delete task. \
-\n\n" +
-		"Rules: \
-\n" +
-		"- Keep exactly ONE task in_progress at a time. \
-\n" +
-		"- Mark in_progress BEFORE work, completed IMMEDIATELY after (no batching). \
-\n" +
-		"- Use for tasks with 3+ distinct steps, or when user explicitly requests. \
-\n\n" +
-		"Examples: \
-\n" +
-		"- Start task: {op:'update',id:'task-1',status:'in_progress'} \
-\n" +
-		"- Complete and start next: {op:'update',id:'task-1',status:'completed'},{op:'update',id:'task-2',status:'in_progress'} \
-\n" +
-		"- Add task to phase-1: {op:'add_task',phase:'phase-1',content:'Fix authentication bug'} \
-\n" +
-		"- Create todo: {op:'replace',phases:[{name:'Phase 1',tasks:[{content:'Read source'},{content:'Apply fix'},{content:'Test'}]}]}";
-	readonly promptSnippet = "Manage todo/task lists with phases and tasks";
+		"Manages a structured todo list that persists across turns. NEVER create TODO.md files - always use this tool for task tracking. View progress with /todos command.";
+	readonly promptSnippet =
+		"Use todo_write for task management. NEVER create TODO.md files. Tracks progress across turns with phases and tasks. View with /todos.";
 	readonly promptGuidelines = [
-		"Use todo_write tool for multi-step tasks - do NOT create .md files",
-		"Keep exactly ONE task in_progress at a time",
+		"Always use todo_write for multi-step tasks - do NOT create TODO.md or any markdown file",
+		"Keep exactly ONE task in_progress at a time - enforce this strictly",
+		"Mark tasks in_progress BEFORE work, completed IMMEDIATELY after",
+		"Prefer structured phases (Analysis, Implementation, Review) for complex tasks",
+		"After todo_write call, explicitly state: '✅ Todo updated: X remaining, Y completed'",
+		"Suggest next action based on current in_progress task",
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";

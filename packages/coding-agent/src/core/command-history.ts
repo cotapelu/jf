@@ -165,7 +165,8 @@ export class CommandHistory {
 
 	private appendEntry(entry: CommandEntry): void {
 		const file = this.getDateFile(new Date());
-		const line = JSON.stringify(entry) + "\n";
+		const line = `${JSON.stringify(entry)}
+`;
 
 		// Create file if not exists
 		if (!existsSync(file)) {
