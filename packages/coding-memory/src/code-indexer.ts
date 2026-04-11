@@ -379,7 +379,9 @@ export function createCodeIndexer(
 				watcher.close();
 			}
 			watchers.length = 0;
-			debounceTimers.forEach((timer) => clearTimeout(timer));
+			for (const timer of debounceTimers) {
+				clearTimeout(timer);
+			}
 			debounceTimers.clear();
 		},
 
