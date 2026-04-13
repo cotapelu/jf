@@ -63,9 +63,8 @@ const StatsOp = Type.Object({
 
 const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, StatsOp]);
 
-export const memorySchema = Type.Object({
-	op: memoryOpsSchema,
-});
+// Flat schema (direct union, not nested in object)
+export const memorySchema = memoryOpsSchema;
 
 type MemoryParams = Static<typeof memorySchema>;
 
@@ -88,7 +87,8 @@ export const memoryToolDefinition = {
 		_onUpdate: AgentToolUpdateCallback<any> | undefined,
 		ctx: { engine: ReturnType<typeof createMemoryEngine> },
 	): Promise<AgentToolResult<any>> {
-		const op = params.op;
+		// params is now the direct op object (save | find | forget | stats)
+		const op = params;
 
 		try {
 			switch (op.op) {
