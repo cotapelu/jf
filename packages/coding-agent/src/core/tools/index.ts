@@ -126,6 +126,7 @@ export const allTools = {
 	find: findTool,
 	ls: lsTool,
 	todo_write: null as any,
+	memory: null as any,
 };
 
 export const allToolDefinitions = {
@@ -137,6 +138,7 @@ export const allToolDefinitions = {
 	find: findToolDefinition,
 	ls: lsToolDefinition,
 	todo_write: {} as any,
+	memory: {} as any,
 };
 
 export type ToolName = keyof typeof allTools;
@@ -174,6 +176,7 @@ export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): R
 		todo_write: {} as any,
 		find: createFindToolDefinition(cwd),
 		ls: createLsToolDefinition(cwd),
+		memory: {} as any,
 	};
 }
 
@@ -200,5 +203,6 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		grep: createGrepTool(cwd),
 		find: createFindTool(cwd),
 		ls: createLsTool(cwd),
+		memory: null as any,
 	};
 }
