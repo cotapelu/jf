@@ -7,6 +7,7 @@ import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mario
 import type { MemoryType } from "@mariozechner/pi-coding-memory";
 import { createMemoryEngine, createSQLiteStore } from "@mariozechner/pi-coding-memory";
 import { type Static, Type } from "@sinclair/typebox";
+import { join } from "path";
 import type { AgentSession } from "../agent-session.js";
 
 // =============================================================================
@@ -118,7 +119,6 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		if (!this._engine) {
 			// Store in session dir or default location
 			const sessionDir = this.session.sessionDir;
-			const { join } = require("path");
 			const memoryPath = sessionDir
 				? join(sessionDir, "..", "memory.db")
 				: join(process.env.HOME || ".", ".pi", "agent", "memory.db");
