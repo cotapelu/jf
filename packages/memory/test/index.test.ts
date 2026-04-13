@@ -328,25 +328,20 @@ describe("LLM Tool Interface", () => {
 		engine = createMemoryEngine(store);
 	});
 
-	it("should have all required tools", async () => {
+	it("should have memory tool", async () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
 		const toolNames = tools.getTools().map((t) => t.name);
-		expect(toolNames).toContain("memory_save");
-		expect(toolNames).toContain("memory_find");
-		expect(toolNames).toContain("memory_forget");
-		expect(toolNames).toContain("memory_stats");
+		expect(toolNames).toContain("memory");
 	});
 
-	it("should execute save tool", async () => {
+	it("should execute save operation", async () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
-		const result = await tools.executeTool("memory_save", {
-			content: "User uses 4 spaces",
-			type: "preference",
-			tags: ["style"],
+		const result = await tools.executeTool("memory", {
+			op: { op: "save", content: "User uses 4 spaces", type: "preference", tags: ["style"] },
 		});
 
 		expect(result.ok).toBe(true);
@@ -355,7 +350,7 @@ describe("LLM Tool Interface", () => {
 		}
 	});
 
-	it("should execute find tool", async () => {
+	it("should execute find operation", async () => {
 		engine.save({
 			content: "Python version is 3.11",
 			type: "project",
@@ -365,13 +360,13 @@ describe("LLM Tool Interface", () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
-		const result = await tools.executeTool("memory_find", {
-			query: "python",
+		const result = await tools.executeTool("memory", {
+			op: { op: "find", query: "python" },
 		});
 
 		expect(result.ok).toBe(true);
 		if (result.ok) {
-			expect((result.value as any).memories.length).toBeGreaterThan(0);
+			expect((result.value as any).total).toBe(1);
 		}
 	});
 
@@ -379,7 +374,7 @@ describe("LLM Tool Interface", () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
-		const result = await tools.executeTool("memory_stats", {});
+		const result = await tools.executeTool("memory", { op: { op: "stats" } });
 		const formatted = tools.formatToolResult(result);
 
 		const parsed = JSON.parse(formatted);
@@ -393,8 +388,9 @@ describe("LLM Tool Interface", () => {
 
 		const prompt = tools.generateSystemPrompt();
 
-		expect(prompt).toContain("memory_save");
-		expect(prompt).toContain("memory_find");
+		expect(prompt).toContain("memory");
+		expect(prompt).toContain("save");
+		expect(prompt).toContain("find");
 		expect(prompt).toContain("preference");
 		expect(prompt).toContain("project");
 	});

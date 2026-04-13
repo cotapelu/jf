@@ -10,7 +10,7 @@ export { calculateHeatScore, updateAccessStats } from "./heat.js";
 export { MemoryTypeSchema, validateInput } from "./schemas.js";
 export type { IMemoryStore } from "./store/memory-store.js";
 export { createSQLiteStore } from "./store/sqlite-store.js";
-export { createLLMToolInterface, type LLMToolInterface, TOOL_SCHEMAS } from "./tools.js";
+export { createLLMToolInterface, type LLMToolInterface, memoryToolDefinition, TOOL_SCHEMAS } from "./tools.js";
 export type {
 	Memory,
 	MemoryInput,

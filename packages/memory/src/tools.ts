@@ -1,152 +1,254 @@
 /**
- * LLM Tool Interface for Coding Memory
- * Provides tools that LLM can call to interact with memory
+ * Memory Tool Definition for pi coding agent
+ * Uses unified schema pattern (like todo-write): one tool with op field
  */
 
+import type { AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
+import { type Static, Type } from "@sinclair/typebox";
 import type { createMemoryEngine } from "./index.js";
 import type { MemoryType, Result } from "./types.js";
 
-export interface MemoryTool {
-	name: string;
-	description: string;
-	parameters: Record<string, unknown>;
-}
+// =============================================================================
+// Schema - Unified memory operations
+// =============================================================================
+
+const SaveOp = Type.Object({
+	op: Type.Literal("save"),
+	content: Type.String({ description: "The information to save (max 10000 chars)" }),
+	type: Type.Union(
+		[
+			Type.Literal("preference"),
+			Type.Literal("project"),
+			Type.Literal("command"),
+			Type.Literal("solution"),
+			Type.Literal("note"),
+		],
+		{
+			description:
+				"Type of memory: preference (user coding style), project (project facts), command (workflows), solution (bug fixes), note (general)",
+		},
+	),
+	tags: Type.Optional(Type.Array(Type.String(), { description: "Optional tags for categorization" })),
+	weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1, description: "Importance 0-1, default 0.5" })),
+	expires_at: Type.Optional(Type.Number({ description: "Optional expiration timestamp (Unix ms)" })),
+});
+
+const FindOp = Type.Object({
+	op: Type.Literal("find"),
+	query: Type.String({ description: "Search query (e.g., 'python indentation', 'database')" }),
+	type: Type.Optional(
+		Type.Union(
+			[
+				Type.Literal("preference"),
+				Type.Literal("project"),
+				Type.Literal("command"),
+				Type.Literal("solution"),
+				Type.Literal("note"),
+			],
+			{ description: "Optional filter by memory type" },
+		),
+	),
+	tags: Type.Optional(Type.Array(Type.String(), { description: "Optional filter by tags (AND logic)" })),
+	limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100, description: "Max results, default 10" })),
+});
+
+const ForgetOp = Type.Object({
+	op: Type.Literal("forget"),
+	id: Type.String({ description: "Memory ID to delete" }),
+});
+
+const StatsOp = Type.Object({
+	op: Type.Literal("stats"),
+});
+
+const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, StatsOp]);
+
+export const memorySchema = Type.Object({
+	op: memoryOpsSchema,
+});
+
+type MemoryParams = Static<typeof memorySchema>;
+
+// =============================================================================
+// Tool Definition
+// =============================================================================
+
+export const memoryToolDefinition = {
+	name: "memory",
+	label: "Memory",
+	description:
+		"Store and retrieve persistent information across sessions. Use to remember user preferences, project facts, commands, and solutions.",
+	promptSnippet: "memory: store and retrieve persistent info",
+	parameters: memorySchema,
+
+	async execute(
+		_toolCallId: string,
+		params: MemoryParams,
+		_signal: AbortSignal | undefined,
+		_onUpdate: AgentToolUpdateCallback<any> | undefined,
+		ctx: { engine: ReturnType<typeof createMemoryEngine> },
+	): Promise<AgentToolResult<any>> {
+		const op = params.op;
+
+		try {
+			switch (op.op) {
+				case "save": {
+					const result = ctx.engine.save({
+						content: op.content,
+						type: op.type as MemoryType,
+						tags: op.tags,
+						weight: op.weight,
+						expires_at: op.expires_at,
+					});
+
+					if (!result.ok) {
+						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+					}
+					return {
+						content: [{ type: "text", text: `Saved to ${op.type}: ${op.content.substring(0, 100)}` }],
+						details: {
+							id: result.value.id,
+							type: result.value.type,
+							message: `Saved to ${op.type}`,
+						},
+					};
+				}
+
+				case "find": {
+					const result = ctx.engine.find(op.query, {
+						type: op.type as MemoryType | undefined,
+						tags: op.tags,
+						limit: op.limit,
+					});
+
+					if (!result.ok) {
+						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+					}
+					return {
+						content: [{ type: "text", text: `Found ${result.value.total} memories` }],
+						details: {
+							total: result.value.total,
+							memories: result.value.memories.map((m) => ({
+								id: m.id,
+								content: m.content,
+								type: m.type,
+								tags: m.tags,
+								created_at: m.created_at,
+							})),
+						},
+					};
+				}
+
+				case "forget": {
+					const result = ctx.engine.delete(op.id);
+
+					if (!result.ok) {
+						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+					}
+					return {
+						content: [{ type: "text", text: result.value ? "Memory deleted" : "Memory not found" }],
+						details: {
+							deleted: result.value,
+							message: result.value ? "Memory deleted" : "Memory not found",
+						},
+					};
+				}
+
+				case "stats": {
+					const result = ctx.engine.stats();
+
+					if (!result.ok) {
+						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+					}
+					return {
+						content: [{ type: "text", text: `Total: ${result.value.total} memories` }],
+						details: result.value,
+					};
+				}
+
+				default:
+					return {
+						content: [{ type: "text", text: `Unknown op: ${(op as any).op}` }],
+						details: { error: `Unknown op: ${(op as any).op}` },
+					};
+			}
+		} catch (e) {
+			const error = e as Error;
+			return { content: [{ type: "text", text: error.message }], details: { error: error.message } };
+		}
+	},
+};
+
+// =============================================================================
+// Convenience helpers (for direct use without agent integration)
+// =============================================================================
 
 export interface LLMToolInterface {
-	getTools(): MemoryTool[];
+	getTools(): { name: string; description: string; parameters: any }[];
 	executeTool(name: string, params: Record<string, unknown>): Promise<Result<unknown>>;
 	formatToolResult(result: Result<unknown>): string;
 	generateSystemPrompt(): string;
 }
 
-export const TOOL_SCHEMAS: Record<string, MemoryTool> = {
-	memory_save: {
-		name: "memory_save",
-		description:
-			"Save important information to memory (preferences, project facts, commands, solutions). Use this when user shares something you want to remember for future sessions.",
-		parameters: {
-			type: "object",
-			properties: {
-				content: {
-					type: "string",
-					description: "The information to save (max 10000 chars)",
-				},
-				type: {
-					type: "string",
-					enum: ["preference", "project", "command", "solution", "note"],
-					description:
-						"Type of memory: preference (user coding style), project (project-specific facts), command (workflow commands), solution (bug fixes, patterns), note (general)",
-				},
-				tags: {
-					type: "array",
-					items: { type: "string" },
-					description: "Optional tags for categorization (e.g., ['python', 'testing'])",
-				},
-				weight: {
-					type: "number",
-					minimum: 0,
-					maximum: 1,
-					description: "Importance weight 0-1 (default 0.5). Higher = more relevant for recall",
-				},
-				expires_at: {
-					type: "number",
-					description: "Optional expiration timestamp (Unix ms). Leave empty for permanent",
-				},
-			},
-			required: ["content", "type"],
-		},
-	},
-
-	memory_find: {
-		name: "memory_find",
-		description:
-			"Search memory for information relevant to a query. Retrieves ranked memories based on content similarity.",
-		parameters: {
-			type: "object",
-			properties: {
-				query: {
-					type: "string",
-					description: "Search query (e.g., 'python indentation', 'database connection')",
-				},
-				type: {
-					type: "string",
-					enum: ["preference", "project", "command", "solution", "note"],
-					description: "Optional filter by memory type",
-				},
-				tags: {
-					type: "array",
-					items: { type: "string" },
-					description: "Optional filter by tags (AND logic)",
-				},
-				limit: {
-					type: "number",
-					minimum: 1,
-					maximum: 100,
-					description: "Max results (default 10)",
-				},
-			},
-			required: ["query"],
-		},
-	},
-
-	memory_forget: {
-		name: "memory_forget",
-		description: "Delete a memory by ID. Use when user asks to remove/forget something.",
-		parameters: {
-			type: "object",
-			properties: {
-				id: {
-					type: "string",
-					description: "Memory ID to delete",
-				},
-			},
-			required: ["id"],
-		},
-	},
-
-	memory_stats: {
-		name: "memory_stats",
-		description: "Get statistics about stored memories (count by type, tags, etc.)",
-		parameters: {
-			type: "object",
-			properties: {},
-		},
-	},
-};
-
+/**
+ * Create an LLMToolInterface for direct LLM usage (non-agent context)
+ */
 export function createLLMToolInterface(engine: ReturnType<typeof createMemoryEngine>): LLMToolInterface {
+	const toolDef = memoryToolDefinition;
+
 	return {
-		getTools(): MemoryTool[] {
-			return Object.values(TOOL_SCHEMAS);
+		getTools(): { name: string; description: string; parameters: any }[] {
+			return [
+				{
+					name: toolDef.name,
+					description: toolDef.description,
+					parameters: toolDef.parameters,
+				},
+			];
 		},
 
 		async executeTool(name: string, params: Record<string, unknown>): Promise<Result<unknown>> {
+			if (name !== "memory") {
+				return { ok: false, error: `Unknown tool: ${name}` };
+			}
+
+			const op = (params.op as Record<string, unknown>)?.op as string;
+			if (!op) {
+				return { ok: false, error: "Missing op field" };
+			}
+
 			try {
-				switch (name) {
-					case "memory_save":
+				switch (op) {
+					case "save": {
+						const p = params.op as Record<string, unknown>;
 						return engine.save({
-							content: params.content as string,
-							type: params.type as MemoryType,
-							tags: params.tags as string[] | undefined,
-							weight: params.weight as number | undefined,
-							expires_at: params.expires_at as number | undefined,
-						}) as Result<unknown>;
-					case "memory_find":
-						return engine.find(params.query as string, {
-							type: params.type as MemoryType | undefined,
-							tags: params.tags as string[] | undefined,
-							limit: params.limit as number | undefined,
-						}) as Result<unknown>;
-					case "memory_forget":
-						return engine.delete(params.id as string) as Result<unknown>;
-					case "memory_stats":
-						return engine.stats() as Result<unknown>;
+							content: p.content as string,
+							type: p.type as MemoryType,
+							tags: p.tags as string[] | undefined,
+							weight: p.weight as number | undefined,
+							expires_at: p.expires_at as number | undefined,
+						});
+					}
+					case "find": {
+						const p = params.op as Record<string, unknown>;
+						return engine.find(p.query as string, {
+							type: p.type as MemoryType | undefined,
+							tags: p.tags as string[] | undefined,
+							limit: p.limit as number | undefined,
+						});
+					}
+					case "forget": {
+						const p = params.op as Record<string, unknown>;
+						return engine.delete(p.id as string);
+					}
+					case "stats": {
+						return engine.stats();
+					}
 					default:
-						return { ok: false, error: `Unknown tool: ${name}` };
+						return { ok: false, error: `Unknown op: ${op}` };
 				}
 			} catch (e) {
-				const error = e as Error;
-				return { ok: false, error: error.message };
+				return { ok: false, error: (e as Error).message };
 			}
 		},
 
@@ -154,58 +256,49 @@ export function createLLMToolInterface(engine: ReturnType<typeof createMemoryEng
 			if (!result.ok) {
 				return JSON.stringify({ success: false, error: result.error });
 			}
-			// Remove sensitive metadata for LLM
-			const value = JSON.parse(JSON.stringify(result.value));
-			if (value.memories) {
-				for (const mem of value.memories as any[]) {
-					delete mem.metadata;
-				}
-			}
-			return JSON.stringify({ success: true, data: value });
+			return JSON.stringify({ success: true, data: result.value });
 		},
 
 		generateSystemPrompt(): string {
-			return `You have access to a Memory system for storing and retrieving information across sessions.
+			return `## memory
 
-## Available Tools:
+Store and retrieve persistent information across sessions.
 
-### memory_save
-Save important information. Use for:
-- User preferences (indentation, language, framework)
-- Project facts (database, API URLs, deployment)
-- Commands (test, build, deploy workflows)
-- Solutions (bug fixes, patterns)
-- Notes (general)
+### Operations
 
-Example: User says "I use 4 spaces" → call memory_save(type="preference", content="4 spaces for indentation", tags=["style"])
+**save** - Save important information
+- content: What to remember (string)
+- type: preference | project | command | solution | note
+- tags: Optional categorization array
+- weight: Importance 0-1, default 0.5
 
-### memory_find
-Search saved memories. Use when:
-- You need to recall something from previous sessions
-- User asks about their preferences or project setup
-- You're unsure about something you've seen before
+**find** - Search memory
+- query: Search string
+- type: Optional filter by memory type
+- tags: Optional filter by tags (AND)
+- limit: Max results, default 10
 
-Example: User asks "What database do we use?" → call memory_find(query="database")
+**forget** - Delete a memory
+- id: Memory ID to delete
 
-### memory_forget
-Delete a memory by ID. Use when user explicitly asks to remove/forget something.
+**stats** - Get memory statistics (no params)
 
-### memory_stats
-Get statistics about stored memories (for debugging).
+### Usage Examples
 
-## Important:
+User says "I use 4 spaces" → memory({ op: "save", content: "4 spaces for indentation", type: "preference", tags: ["style"] })
 
-1. Save NEW information proactively when user shares preferences, project details, or solutions.
-2. Recall information BEFORE making assumptions about user's setup.
-3. Never share or log API keys or sensitive data (they should be tagged specially).
-4. Memory persists across sessions - it's your long-term knowledge about this user/project.
+User asks "What database?" → memory({ op: "find", query: "database" })
 
-## Memory Types:
-- preference: User coding style, editor settings, language versions
-- project: Project-specific facts (DB, APIs, architecture)
-- command: Terminal commands, workflows, scripts
-- solution: Bug fixes, code patterns, workarounds
-- note: General notes, meetings, ideas`;
+User asks to remove something → memory({ op: "forget", id: "xxx" })`;
 		},
 	};
 }
+
+// Keep old exports for backward compatibility
+export const TOOL_SCHEMAS: Record<string, any> = {
+	memory: {
+		name: "memory",
+		description: memoryToolDefinition.description,
+		parameters: memorySchema,
+	},
+};
