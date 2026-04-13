@@ -23,15 +23,17 @@ describe("Coding Memory", () => {
 			const result = engine.save(input);
 
 			expect(result.ok).toBe(true);
-			expect(result.value).toMatchObject({
-				content: "User prefers 4 spaces for indentation",
-				type: "preference",
-				tags: ["style", "python"],
-				weight: 0.8,
-			});
-			expect(result.value.id).toBeDefined();
-			expect(result.value.created_at).toBeDefined();
-			expect(result.value.access_count).toBe(0);
+			if (result.ok) {
+				expect(result.value).toMatchObject({
+					content: "User prefers 4 spaces for indentation",
+					type: "preference",
+					tags: ["style", "python"],
+					weight: 0.8,
+				});
+				expect(result.value.id).toBeDefined();
+				expect(result.value.created_at).toBeDefined();
+				expect(result.value.access_count).toBe(0);
+			}
 		});
 
 		it("should assign default weight", () => {
@@ -41,7 +43,9 @@ describe("Coding Memory", () => {
 			});
 
 			expect(result.ok).toBe(true);
-			expect(result.value.weight).toBe(0.5);
+			if (result.ok) {
+				expect(result.value.weight).toBe(0.5);
+			}
 		});
 
 		it("should reject empty content", () => {
@@ -51,7 +55,9 @@ describe("Coding Memory", () => {
 			} as any);
 
 			expect(result.ok).toBe(false);
-			expect(result.error).toContain("validation");
+			if (!result.ok) {
+				expect(result.error).toContain("validation");
+			}
 		});
 
 		it("should reject invalid type", () => {
@@ -61,6 +67,9 @@ describe("Coding Memory", () => {
 			} as any);
 
 			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error).toContain("validation");
+			}
 		});
 	});
 
@@ -96,18 +105,22 @@ describe("Coding Memory", () => {
 			const result = engine.find("spaces indentation");
 
 			expect(result.ok).toBe(true);
-			expect(result.value.total).toBeGreaterThan(0);
-			expect(result.value.memories[0]).toMatchObject({
-				type: "preference",
-			});
+			if (result.ok) {
+				expect(result.value.total).toBeGreaterThan(0);
+				expect(result.value.memories[0]).toMatchObject({
+					type: "preference",
+				});
+			}
 		});
 
 		it("should filter by type", () => {
 			const result = engine.find("project", { type: "project" });
 
 			expect(result.ok).toBe(true);
-			for (const mem of result.value.memories) {
-				expect(mem.type).toBe("project");
+			if (result.ok) {
+				for (const mem of result.value.memories) {
+					expect(mem.type).toBe("project");
+				}
 			}
 		});
 
@@ -115,8 +128,10 @@ describe("Coding Memory", () => {
 			const result = engine.find("project", { tags: ["database"] });
 
 			expect(result.ok).toBe(true);
-			for (const mem of result.value.memories) {
-				expect(mem.tags).toContain("database");
+			if (result.ok) {
+				for (const mem of result.value.memories) {
+					expect(mem.tags).toContain("database");
+				}
 			}
 		});
 
@@ -124,7 +139,9 @@ describe("Coding Memory", () => {
 			const result = engine.find("test", { limit: 2 });
 
 			expect(result.ok).toBe(true);
-			expect(result.value.memories.length).toBeLessThanOrEqual(2);
+			if (result.ok) {
+				expect(result.value.memories.length).toBeLessThanOrEqual(2);
+			}
 		});
 	});
 
@@ -134,19 +151,24 @@ describe("Coding Memory", () => {
 				content: "Test memory",
 				type: "note",
 			});
-			const id = saveResult.value!.id;
+			if (!saveResult.ok) throw new Error("save failed");
+			const id = saveResult.value.id;
 
 			const getResult = engine.get(id);
 
 			expect(getResult.ok).toBe(true);
-			expect(getResult.value?.content).toBe("Test memory");
+			if (getResult.ok) {
+				expect(getResult.value?.content).toBe("Test memory");
+			}
 		});
 
 		it("should return null for non-existent id", () => {
 			const result = engine.get("non_existent");
 
 			expect(result.ok).toBe(true);
-			expect(result.value).toBeNull();
+			if (result.ok) {
+				expect(result.value).toBeNull();
+			}
 		});
 	});
 
@@ -156,7 +178,8 @@ describe("Coding Memory", () => {
 				content: "Original",
 				type: "preference",
 			});
-			const id = saveResult.value!.id;
+			if (!saveResult.ok) throw new Error("save failed");
+			const id = saveResult.value.id;
 
 			// Ensure timestamps differ
 			await new Promise((r) => setTimeout(r, 2));
@@ -166,8 +189,10 @@ describe("Coding Memory", () => {
 			});
 
 			expect(updateResult.ok).toBe(true);
-			expect(updateResult.value?.content).toBe("Updated");
-			expect(updateResult.value?.updated_at).toBeGreaterThan(saveResult.value!.created_at);
+			if (updateResult.ok) {
+				expect(updateResult.value?.content).toBe("Updated");
+				expect(updateResult.value?.updated_at).toBeGreaterThan(saveResult.value.created_at);
+			}
 		});
 
 		it("should update tags", () => {
@@ -176,14 +201,17 @@ describe("Coding Memory", () => {
 				type: "note",
 				tags: ["old"],
 			});
-			const id = saveResult.value!.id;
+			if (!saveResult.ok) throw new Error("save failed");
+			const id = saveResult.value.id;
 
 			const updateResult = engine.update(id, {
 				tags: ["new", "tags"],
 			});
 
 			expect(updateResult.ok).toBe(true);
-			expect(updateResult.value?.tags).toEqual(["new", "tags"]);
+			if (updateResult.ok) {
+				expect(updateResult.value?.tags).toEqual(["new", "tags"]);
+			}
 		});
 
 		it("should return null for non-existent memory", () => {
@@ -192,7 +220,9 @@ describe("Coding Memory", () => {
 			});
 
 			expect(result.ok).toBe(true);
-			expect(result.value).toBeNull();
+			if (result.ok) {
+				expect(result.value).toBeNull();
+			}
 		});
 	});
 
@@ -202,21 +232,28 @@ describe("Coding Memory", () => {
 				content: "To delete",
 				type: "note",
 			});
-			const id = saveResult.value!.id;
+			if (!saveResult.ok) throw new Error("save failed");
+			const id = saveResult.value.id;
 
 			const deleteResult = engine.delete(id);
 			const getResult = engine.get(id);
 
 			expect(deleteResult.ok).toBe(true);
-			expect(deleteResult.value).toBe(true);
-			expect(getResult.value).toBeNull();
+			if (deleteResult.ok) {
+				expect(deleteResult.value).toBe(true);
+			}
+			if (getResult.ok) {
+				expect(getResult.value).toBeNull();
+			}
 		});
 
 		it("should return false for non-existent memory", () => {
 			const result = engine.delete("non_existent");
 
 			expect(result.ok).toBe(true);
-			expect(result.value).toBe(false);
+			if (result.ok) {
+				expect(result.value).toBe(false);
+			}
 		});
 	});
 
@@ -230,12 +267,14 @@ describe("Coding Memory", () => {
 			const stats = engine.stats();
 
 			expect(stats.ok).toBe(true);
-			expect(stats.value.total).toBe(4);
-			expect(stats.value.byType.preference).toBe(2);
-			expect(stats.value.byType.project).toBe(1);
-			expect(stats.value.byType.command).toBe(1);
-			expect(stats.value.byTags.a).toBe(2);
-			expect(stats.value.byTags.b).toBe(2);
+			if (stats.ok) {
+				expect(stats.value.total).toBe(4);
+				expect(stats.value.byType.preference).toBe(2);
+				expect(stats.value.byType.project).toBe(1);
+				expect(stats.value.byType.command).toBe(1);
+				expect(stats.value.byTags.a).toBe(2);
+				expect(stats.value.byTags.b).toBe(2);
+			}
 		});
 	});
 
@@ -247,7 +286,10 @@ describe("Coding Memory", () => {
 			engine.clear();
 
 			const stats = engine.stats();
-			expect(stats.value.total).toBe(0);
+			expect(stats.ok).toBe(true);
+			if (stats.ok) {
+				expect(stats.value.total).toBe(0);
+			}
 		});
 	});
 
@@ -267,7 +309,9 @@ describe("Coding Memory", () => {
 			const result = engine.find("python");
 
 			expect(result.ok).toBe(true);
-			expect(result.value.memories[0].tags).toContain("python");
+			if (result.ok) {
+				expect(result.value.memories[0].tags).toContain("python");
+			}
 		});
 
 		it("should not return expired memories", () => {
@@ -284,32 +328,29 @@ describe("LLM Tool Interface", () => {
 		engine = createMemoryEngine(store);
 	});
 
-	it("should have all required tools", async () => {
+	it("should have memory tool", async () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
 		const toolNames = tools.getTools().map((t) => t.name);
-		expect(toolNames).toContain("memory_save");
-		expect(toolNames).toContain("memory_find");
-		expect(toolNames).toContain("memory_forget");
-		expect(toolNames).toContain("memory_stats");
+		expect(toolNames).toContain("memory");
 	});
 
-	it("should execute save tool", async () => {
+	it("should execute save operation", async () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
-		const result = await tools.executeTool("memory_save", {
-			content: "User uses 4 spaces",
-			type: "preference",
-			tags: ["style"],
+		const result = await tools.executeTool("memory", {
+			op: { op: "save", content: "User uses 4 spaces", type: "preference", tags: ["style"] },
 		});
 
 		expect(result.ok).toBe(true);
-		expect((result.value as any).id).toBeDefined();
+		if (result.ok) {
+			expect((result.value as any).id).toBeDefined();
+		}
 	});
 
-	it("should execute find tool", async () => {
+	it("should execute find operation", async () => {
 		engine.save({
 			content: "Python version is 3.11",
 			type: "project",
@@ -319,19 +360,21 @@ describe("LLM Tool Interface", () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
-		const result = await tools.executeTool("memory_find", {
-			query: "python",
+		const result = await tools.executeTool("memory", {
+			op: { op: "find", query: "python" },
 		});
 
 		expect(result.ok).toBe(true);
-		expect((result.value as any).memories.length).toBeGreaterThan(0);
+		if (result.ok) {
+			expect((result.value as any).total).toBe(1);
+		}
 	});
 
 	it("should format tool results properly", async () => {
 		const { createLLMToolInterface } = await import("../src/index.js");
 		const tools = createLLMToolInterface(engine);
 
-		const result = await tools.executeTool("memory_stats", {});
+		const result = await tools.executeTool("memory", { op: { op: "stats" } });
 		const formatted = tools.formatToolResult(result);
 
 		const parsed = JSON.parse(formatted);
@@ -345,8 +388,9 @@ describe("LLM Tool Interface", () => {
 
 		const prompt = tools.generateSystemPrompt();
 
-		expect(prompt).toContain("memory_save");
-		expect(prompt).toContain("memory_find");
+		expect(prompt).toContain("memory");
+		expect(prompt).toContain("save");
+		expect(prompt).toContain("find");
 		expect(prompt).toContain("preference");
 		expect(prompt).toContain("project");
 	});

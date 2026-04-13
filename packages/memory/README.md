@@ -46,15 +46,17 @@ console.log(result.memories[0].content); // "User uses 4 spaces for indentation"
 const llmTools = tools.getTools();
 // Pass these to your LLM provider's tool/function calling feature
 
-// When LLM calls a tool:
-const toolResult = await tools.executeTool("memory_find", { query: "database" });
+// When LLM calls the tool:
+const toolResult = await tools.executeTool("memory", {
+  op: { op: "find", query: "database" }
+});
 ```
 
 ## Features
 
 - **Persistent**: SQLite file survives restarts
 - **Fast**: FTS5 (full-text search) with BM25 ranking
-- **Simple**: 4 tools, 5 memory types, no bloat
+- **Unified**: Single tool with operation parameter (like todo_write)
 - **Typed**: Full TypeScript + Zod validation
 - **Secure**: Optional metadata for sensitive data (encryption TBD)
 - **Zero config**: Works out of the box
@@ -69,13 +71,22 @@ const toolResult = await tools.executeTool("memory_find", { query: "database" })
 | `solution` | Bug fixes, code patterns, workarounds | "Check null before divide", "Use debounce 300ms" |
 | `note` | General notes, meeting summaries, ideas | "ADR: chose React over Vue" |
 
-## Tools (LLM Interface)
+## Unified Tool: `memory`
 
-### `memory_save`
-Save information to memory.
+Single tool with `op` field for all operations:
 
 ```typescript
 {
+  op: "save" | "find" | "forget" | "stats",
+  // ... operation-specific parameters
+}
+```
+
+### `save` - Save information to memory
+
+```typescript
+{
+  op: "save",
   content: "string (required, max 10000 chars)",
   type: "preference | project | command | solution | note (required)",
   tags?: ["string array, max 20 tags, each max 50 chars"],
@@ -84,11 +95,26 @@ Save information to memory.
 }
 ```
 
-### `memory_find`
-Search memory by query.
+Example LLM tool call:
+```json
+{
+  "name": "memory",
+  "arguments": {
+    "op": {
+      "op": "save",
+      "content": "User uses 4 spaces for indentation",
+      "type": "preference",
+      "tags": ["style", "python"]
+    }
+  }
+}
+```
+
+### `find` - Search memory by query
 
 ```typescript
 {
+  op: "find",
   query: "string (required)",
   type?: "preference | project | ... (optional filter)",
   tags?: ["string array, AND logic (optional filter)"],
@@ -96,25 +122,46 @@ Search memory by query.
 }
 ```
 
-### `memory_forget`
-Delete a memory by ID.
+Example:
+```json
+{
+  "name": "memory",
+  "arguments": {
+    "op": {
+      "op": "find",
+      "query": "database"
+    }
+  }
+}
+```
+
+### `forget` - Delete a memory by ID
 
 ```typescript
 {
+  op: "forget",
   id: "string (required)"
 }
 ```
 
-### `memory_stats`
-Get statistics about stored memories.
+### `stats` - Get statistics
 
 ```typescript
-{} // no params
+{
+  op: "stats"
+}
 ```
 
-## Integration with Coding Agent
+## Integration with pi Coding Agent
 
-This package is designed to be used as an **extension** or **built-in tool** for coding agents like `@mariozechner/pi-coding-agent`.
+This package provides a tool definition ready for agent integration:
+
+```typescript
+import { memoryToolDefinition } from '@mariozechner/pi-coding-memory';
+
+// Use memoryToolDefinition directly with the agent
+// It follows the same pattern as built-in tools (bash, read, write, etc.)
+```
 
 ### As Extension
 
@@ -123,48 +170,46 @@ Create `~/.pi/extensions/memory/` and install this package:
 ```typescript
 // extension.ts
 import { Extension } from '@mariozechner/pi-coding-agent';
-import { createSQLiteStore, createMemoryEngine, createLLMToolInterface } from '@mariozechner/pi-coding-memory';
+import { createSQLiteStore, createMemoryEngine, memoryToolDefinition } from '@mariozechner/pi-coding-memory';
 
 export default {
   name: 'memory',
   async setup(api) {
     const store = createSQLiteStore(); // Uses default path
     const engine = createMemoryEngine(store);
-    const tools = createLLMToolInterface(engine);
 
-    // Register memory tools
-    api.registerTools(tools.getTools());
-
-    // Optional: Add command
-    api.registerCommand({
-      name: 'memory-stats',
-      description: 'Show memory statistics',
-      async execute() {
-        const stats = engine.stats();
-        api.console.log(JSON.stringify(stats.value, null, 2));
+    // Register the memory tool
+    api.registerTool({
+      ...memoryToolDefinition,
+      execute: async (toolCallId, params, signal, onUpdate, ctx) => {
+        // Wire up the engine to the context
+        return memoryToolDefinition.execute(toolCallId, params, signal, onUpdate, { engine });
       }
     });
   }
 };
 ```
 
-### As Built-in (fork)
-
-Add to `packages/coding-agent/src/tools/index.ts`:
+### Direct Usage (without agent)
 
 ```typescript
-import { createSQLiteStore, createMemoryEngine, createLLMToolInterface } from '@mariozechner/pi-coding-memory';
+import { createLLMToolInterface } from '@mariozechner/pi-coding-memory';
 
-const memoryStore = createSQLiteStore();
-const memoryEngine = createMemoryEngine(memoryStore);
-const memoryTools = createLLMToolInterface(memoryEngine);
+const store = createSQLiteStore();
+const engine = createMemoryEngine(store);
+const tools = createLLMToolInterface(engine);
 
-export function createAllToolDefinitions() {
-  return [
-    ...getDefaultTools(),
-    ...memoryTools.getTools(),
-  ];
-}
+// Get tool definitions for LLM
+const toolDefs = tools.getTools();
+// [{ name: "memory", description: "...", parameters: {...} }]
+
+// Execute tool calls from LLM
+const result = await tools.executeTool("memory", {
+  op: { op: "save", content: "User preference", type: "preference" }
+});
+
+// Format result for LLM
+const formatted = tools.formatToolResult(result);
 ```
 
 ## Usage Pattern
@@ -176,10 +221,13 @@ When user says something important:
 ```
 User: "I use 4 spaces for Python"
 ↓
-LLM decides to call: memory_save({
-  content: "User uses 4 spaces for indentation",
-  type: "preference",
-  tags: ["style", "python"]
+LLM decides to call: memory({
+  op: {
+    op: "save",
+    content: "User uses 4 spaces for indentation",
+    type: "preference",
+    tags: ["style", "python"]
+  }
 })
 ```
 
@@ -192,7 +240,7 @@ User: "How should I format the code?"
 ↓
 LLM thinks: "I need to know user's indentation preference"
 ↓
-LLM calls: memory_find({ query: "indentation style" })
+LLM calls: memory({ op: { op: "find", query: "indentation" } })
 ↓
 Gets result: "User uses 4 spaces"
 ↓
@@ -208,18 +256,18 @@ Memory is stored in `~/.pi/agent/memory.db` (or custom path). New sessions autom
 ```
 ┌─────────────────────────────────────────────┐
 │           Coding Agent (CLI)                │
-│  Tools: read, write, edit, bash, MEMORY    │
+│  Tools: read, write, edit, bash, memory    │
 ├─────────────────────────────────────────────┤
 │         Coding Memory (this package)        │
 ├─────────────┬──────────────┬───────────────┤
-│   SQLite    │   FTS5       │   Tools       │
-│   (data)    │   (search)   │   (LLM API)   │
+│   SQLite    │   FTS5       │   Tool Def   │
+│   (data)    │   (search)   │   (LLM API)  │
 └─────────────┴──────────────┴───────────────┘
 ```
 
 - **SQLite**: Single-file, ACID, zero-config, perfect for CLI
 - **FTS5**: Built-in full-text search with BM25 ranking
-- **Tools**: 4 simple tools for LLM function calling
+- **Tool**: Single unified tool with operation parameter
 
 ## Why SQLite?
 
@@ -240,25 +288,6 @@ const store = createSQLiteStore('./project/.pi/memory.db');
 const store = createSQLiteStore(`./.pi/memory-${projectName}.db`);
 ```
 
-## Configuration
-
-No config needed. But you can tune:
-
-```typescript
-// In future: custom weight defaults, search params
-const store = createSQLiteStore(path, {
-  defaultWeight: 0.6,
-  // ...
-});
-```
-
-## Limitations
-
-- **No encryption**: Sensitive data (API keys) should be handled separately (consider `@mariozechner/pi-vault`)
-- **No embedding**: Semantic search uses keyword matching (FTS5). For advanced embedding, use separate RAG system.
-- **Single-user**: SQLite file, not designed for multi-user collaboration
-- **No wiki**: This is key-value, not linked documents. For Obsidian-style wiki, combine with markdown files.
-
 ## Testing
 
 ```bash
@@ -269,7 +298,7 @@ npm test
 
 ```bash
 npm run dev  # Watch mode
-npm run test
+npm test
 ```
 
 ## Roadmap
@@ -280,19 +309,6 @@ npm run test
 - [ ] Export/import (JSON, markdown)
 - [ ] Tag-based auto-categorization
 - [ ] Conflict resolution (if multi-user ever needed)
-
-## Comparison
-
-| Feature | pi-memory (old) | pi-coding-memory (new) | LLM Wiki |
-|---------|-----------------|------------------------|----------|
-| Storage | In-memory Map | SQLite file | Markdown files |
-| Search | Simple keyword | FTS5 (BM25) | Full-text (via qmd) |
-| Persistent | ❌ No | ✅ Yes | ✅ Yes |
-| Human-readable | ❌ | ❌ (binary) | ✅ Yes |
-| Obsidian integration | ❌ | ❌ | ✅ Yes |
-| Cross-linking | ❌ | ❌ | ✅ Yes |
-| Simple for coding | ⚠️ OK | ✅ Best | ❌ Overkill |
-| Version control | ❌ | ❌ | ✅ Git |
 
 ## License
 

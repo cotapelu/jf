@@ -210,6 +210,35 @@ describe("Coding Agent Tools", () => {
 
 			expect(getTextOutput(result)).toContain("Successfully wrote");
 		});
+
+		it("should handle empty content", async () => {
+			const testFile = join(testDir, "empty-write.txt");
+			const content = "";
+
+			const result = await writeTool.execute("test-call-5", { path: testFile, content });
+
+			expect(getTextOutput(result)).toContain("Successfully wrote");
+			expect(getTextOutput(result)).toContain(testFile);
+			expect(result.details).toBeUndefined();
+
+			// Verify file was created and is empty
+			expect(existsSync(testFile)).toBe(true);
+			expect(readFileSync(testFile, "utf8")).toBe("");
+		});
+
+		it("should handle special characters and unicode", async () => {
+			const testFile = join(testDir, "special-write.txt");
+			const content = "Hello 世界 🌍\nNull byte: \\0\nUnicode: café, naïve, résumé\nSymbols: ©®™";
+
+			const result = await writeTool.execute("test-call-6", { path: testFile, content });
+
+			expect(getTextOutput(result)).toContain("Successfully wrote");
+			expect(getTextOutput(result)).toContain(testFile);
+
+			// Verify content was written correctly
+			expect(existsSync(testFile)).toBe(true);
+			expect(readFileSync(testFile, "utf8")).toBe(content);
+		});
 	});
 
 	describe("edit tool", () => {

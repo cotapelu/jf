@@ -79,6 +79,7 @@ import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.js";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.js";
 import { createAllToolDefinitions } from "./tools/index.js";
+import { MemoryTool } from "./tools/memory.js";
 import { loadTodoFromFile, type TodoPhase, TodoWriteTool } from "./tools/todo-write.js";
 import { createToolDefinitionFromAgentTool, wrapToolDefinition } from "./tools/tool-definition-wrapper.js";
 
@@ -149,7 +150,7 @@ export interface AgentSessionConfig {
 	customTools?: ToolDefinition[];
 	/** Model registry for API key resolution and model discovery */
 	modelRegistry: ModelRegistry;
-	/** Initial active built-in tool names. Default: [read, bash, edit, write] */
+	/** Initial active built-in tool names. Default: [read, bash, edit, write, grep, find, ls, todo_write, memory] */
 	initialActiveToolNames?: string[];
 	/**
 	 * Override base tools (useful for custom runtimes).
@@ -2322,6 +2323,10 @@ export class AgentSession {
 		const todoWriteTool = new TodoWriteTool(this);
 		this._baseToolDefinitions.set("todo_write", createToolDefinitionFromAgentTool(todoWriteTool));
 
+		// Add memory tool
+		const memoryTool = new MemoryTool(this);
+		this._baseToolDefinitions.set("memory", createToolDefinitionFromAgentTool(memoryTool));
+
 		const extensionsResult = this._resourceLoader.getExtensions();
 		if (options.flagValues) {
 			for (const [name, value] of options.flagValues) {
@@ -2351,7 +2356,7 @@ export class AgentSession {
 
 		const defaultActiveToolNames = this._baseToolsOverride
 			? Object.keys(this._baseToolsOverride)
-			: ["read", "bash", "edit", "write", "todo_write"];
+			: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo_write", "memory"];
 		const baseActiveToolNames = options.activeToolNames ?? defaultActiveToolNames;
 		this._refreshToolRegistry({
 			activeToolNames: baseActiveToolNames,

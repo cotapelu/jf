@@ -423,6 +423,32 @@ export function registerBuiltInApiProviders(): void {
 		stream: streamBedrockLazy,
 		streamSimple: streamSimpleBedrockLazy,
 	});
+
+	// Register test provider for chaos engineering
+	registerApiProvider({
+		api: "test-api",
+		stream: (_model, _context, _options) => {
+			const { testProvider } = require("./test-provider.js");
+			return testProvider.stream("", _options);
+		},
+		streamSimple: (_model, _context, _options) => {
+			const { testProvider } = require("./test-provider.js");
+			return testProvider.stream("", _options);
+		},
+	});
+
+	// Register timeout test provider for chaos engineering
+	registerApiProvider({
+		api: "timeout-test-api",
+		stream: (_model, _context, _options) => {
+			const { timeoutTestProvider } = require("./test-provider.js");
+			return timeoutTestProvider.stream("", _options);
+		},
+		streamSimple: (_model, _context, _options) => {
+			const { timeoutTestProvider } = require("./test-provider.js");
+			return timeoutTestProvider.stream("", _options);
+		},
+	});
 }
 
 export function resetApiProviders(): void {

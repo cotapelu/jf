@@ -390,6 +390,8 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 // Tool Class
 // =============================================================================
 
+let autoTriggerInProgress = false;
+
 export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWriteToolDetails> {
 	readonly name = "todo_write";
 	readonly label = "Todo Write";
@@ -441,33 +443,28 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 		const storage = this.session.sessionFile ? "session" : "memory";
 
-		// Auto-trigger: after creating/updating todo, continue with first pending task
 		const hasNewOrUpdatedTodos = params.ops.some(
 			(op) => op.op === "replace" || op.op === "add_phase" || op.op === "add_task",
 		);
 
-		if (hasNewOrUpdatedTodos) {
-			// Find first in_progress or pending task to work on
-			const nextTask = updated.phases
-				.flatMap((p) => p.tasks)
-				.find((t) => t.status === "in_progress" || t.status === "pending");
-
-			if (nextTask) {
-				// Wait for agent to finish current turn (agent_end) before continuing
-				// This ensures the tool result is fully processed first
-				const unsubscribe = this.session.subscribe((event) => {
-					if (event.type === "agent_end") {
-						// Increase timeout to allow agent to fully process the tool result
-						setTimeout(() => {
-							// Check again after timeout - agent might still be processing
-							if (!this.session.isStreaming) {
-								this.session.agent.continue().catch(() => {});
-							}
-						}, 200);
-						unsubscribe();
-					}
-				});
-			}
+		if (hasNewOrUpdatedTodos && !autoTriggerInProgress) {
+			autoTriggerInProgress = true;
+			this.session.sendCustomMessage(
+				{
+					customType: "todo-auto-continue",
+					content: "Continue with the next task from the todo list",
+					display: false,
+					details: { autoTrigger: true, timestamp: Date.now() },
+				},
+				{ deliverAs: "followUp" },
+			);
+			// Wait for agent to finish, then continue to process follow-up queue
+			this.session.agent.waitForIdle().then(() => {
+				this.session.agent.continue().catch(() => {});
+			});
+			setTimeout(() => {
+				autoTriggerInProgress = false;
+			}, 500);
 		}
 
 		return {
