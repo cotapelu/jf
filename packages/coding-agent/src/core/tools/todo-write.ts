@@ -449,7 +449,15 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 		if (hasNewOrUpdatedTodos && !autoTriggerInProgress) {
 			autoTriggerInProgress = true;
-			this.session.agent.continue().catch(() => {});
+			this.session.sendCustomMessage(
+				{
+					customType: "todo-auto-continue",
+					content: "",
+					display: false,
+					details: { autoTrigger: true, timestamp: Date.now() },
+				},
+				{ deliverAs: "followUp" },
+			);
 			setTimeout(() => {
 				autoTriggerInProgress = false;
 			}, 500);
