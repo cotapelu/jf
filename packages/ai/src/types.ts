@@ -44,6 +44,12 @@ export type KnownProvider =
 	| "nvidia";
 export type Provider = KnownProvider | string;
 
+export interface ProviderOptions {
+	failStream?: string;
+	failComplete?: string;
+	failStreamWithThoughts?: string;
+}
+
 export type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh";
 
 /** Token budgets for each thinking level (token-based providers only) */

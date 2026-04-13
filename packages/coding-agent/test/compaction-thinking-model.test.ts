@@ -30,8 +30,10 @@ import {
 // Check for auth
 const HAS_ANTIGRAVITY_AUTH = hasAuthForProvider("google-antigravity");
 const HAS_ANTHROPIC_AUTH = !!API_KEY;
+const HAS_ANTIGRAVITY_ENV =
+	!!process.env.GOOGLE_ANTIGRAVITY_CLIENT_ID && !!process.env.GOOGLE_ANTIGRAVITY_CLIENT_SECRET;
 
-describe.skipIf(!HAS_ANTIGRAVITY_AUTH)("Compaction with thinking models (Antigravity)", () => {
+describe.skipIf(!HAS_ANTIGRAVITY_AUTH || !HAS_ANTIGRAVITY_ENV)("Compaction with thinking models (Antigravity)", () => {
 	let session: AgentSession;
 	let tempDir: string;
 	let apiKey: string;
