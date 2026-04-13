@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added `memory` tool for persistent key-value storage using SQLite. Use `memory` tool to save and retrieve persistent information across sessions. See `packages/memory/README.md` for usage.
+
+### Changed
+
+- Updated Biome configuration schema from 2.3.8 to 2.4.11
+
 ## [0.65.2] - 2026-04-06
 
 ## [0.65.1] - 2026-04-05
