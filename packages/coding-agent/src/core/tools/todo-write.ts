@@ -452,12 +452,16 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 			this.session.sendCustomMessage(
 				{
 					customType: "todo-auto-continue",
-					content: "",
+					content: "Continue with the next task from the todo list",
 					display: false,
 					details: { autoTrigger: true, timestamp: Date.now() },
 				},
 				{ deliverAs: "followUp" },
 			);
+			// Wait for agent to finish, then continue to process follow-up queue
+			this.session.agent.waitForIdle().then(() => {
+				this.session.agent.continue().catch(() => {});
+			});
 			setTimeout(() => {
 				autoTriggerInProgress = false;
 			}, 500);
