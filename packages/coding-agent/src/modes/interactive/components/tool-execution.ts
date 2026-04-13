@@ -96,6 +96,18 @@ export class ToolExecutionComponent extends Container {
 		return this.builtInToolDefinition !== undefined || this.toolDefinition !== undefined;
 	}
 
+	private getToolLabel(): string {
+		// Try to get label from tool definition first
+		if (this.builtInToolDefinition?.label) {
+			return this.builtInToolDefinition.label;
+		}
+		if (this.toolDefinition?.label) {
+			return this.toolDefinition.label;
+		}
+		// Fallback to tool name
+		return this.toolName;
+	}
+
 	private getRenderContext(lastComponent: Component | undefined): ToolRenderContext {
 		return {
 			args: this.args,
@@ -117,7 +129,7 @@ export class ToolExecutionComponent extends Container {
 	}
 
 	private createCallFallback(): Component {
-		return new Text(theme.fg("toolTitle", theme.bold(this.toolName)), 0, 0);
+		return new Text(theme.fg("toolTitle", theme.bold(this.getToolLabel())), 0, 0);
 	}
 
 	private createResultFallback(): Component | undefined {
@@ -314,7 +326,7 @@ export class ToolExecutionComponent extends Container {
 	}
 
 	private formatToolExecution(): string {
-		let text = theme.fg("toolTitle", theme.bold(this.toolName));
+		let text = theme.fg("toolTitle", theme.bold(this.getToolLabel()));
 		const content = JSON.stringify(this.args, null, 2);
 		if (content) {
 			text += `\n\n${content}`;
