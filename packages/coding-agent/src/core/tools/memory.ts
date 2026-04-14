@@ -111,17 +111,15 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 
 	private _engine: ReturnType<typeof createMemoryEngine> | undefined;
 
-	constructor(private session: AgentSession) {
+	constructor(_session: AgentSession) {
 		// Lazy init - create engine on first use
 	}
 
 	private getEngine(): ReturnType<typeof createMemoryEngine> {
 		if (!this._engine) {
-			// Store in session dir or default location
-			const sessionDir = this.session.sessionDir;
-			const memoryPath = sessionDir
-				? join(sessionDir, "..", "memory.db")
-				: join(process.env.HOME || ".", ".pi", "agent", "memory.db");
+			// Always use the same location for cross-session memory sharing
+			// This ensures memory persists across all sessions
+			const memoryPath = join(process.env.HOME || ".", ".pi", "agent", "memory.db");
 
 			const store = createSQLiteStore(memoryPath);
 			this._engine = createMemoryEngine(store);

@@ -278,6 +278,56 @@ Memory is stored in `~/.pi/agent/memory.db` (or custom path). New sessions autom
 - **Portable**: Copy file → move to another machine
 - **Standard**: Ubiquitous, battle-tested
 
+## Search Behavior and Limitations
+
+### Full-Text Search (FTS5)
+
+Memory uses SQLite's FTS5 (Full-Text Search) with BM25 ranking for fast, relevant search results. The search system has the following behavior:
+
+**Primary Search (FTS5)**:
+- Uses FTS5 with `porter unicode61` tokenizer
+- Provides BM25 ranking for relevance scoring
+- Fast and efficient for most queries
+- Supports natural language search
+
+**Fallback Search (LIKE)**:
+- Automatically falls back to LIKE pattern matching when FTS5 fails
+- Handles special characters that FTS5 cannot process
+- Ensures search always returns results even with complex queries
+
+### Known Limitations
+
+**Unicode Search**:
+- FTS5 tokenizer processes unicode content correctly
+- Search queries with unicode characters work via fallback LIKE search
+- Example: Content "你好世界" can be found with query "你好" or "世界"
+
+**Special Characters**:
+- FTS5 MATCH syntax doesn't support special characters like `@#$%^&*()`
+- These characters are handled via fallback LIKE search
+- Example: Content "@#$%" can be found with query "@#$%"
+
+**Search Performance**:
+- FTS5 is faster and provides ranking
+- LIKE fallback is slower but ensures comprehensive search
+- Both methods respect type and tag filters
+
+### Search Examples
+
+```typescript
+// Normal text search (uses FTS5)
+engine.find("database"); // Fast, ranked results
+
+// Unicode search (uses LIKE fallback)
+engine.find("你好世界"); // Works via fallback
+
+// Special characters (uses LIKE fallback)
+engine.find("@#$%"); // Works via fallback
+
+// Combined with filters
+engine.find("test", { type: "project", tags: ["important"] });
+```
+
 ## Advanced: Custom Store Path
 
 ```typescript

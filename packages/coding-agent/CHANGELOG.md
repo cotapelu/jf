@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **CRITICAL**: Fixed memory tool path logic to use unified database across all sessions. Previously, different sessions would create separate databases, preventing cross-session memory sharing. Now all sessions use `~/.pi/agent/memory.db` consistently.
+- **MEDIUM**: Improved memory search with unicode and special characters support. Memory search now automatically falls back to LIKE pattern matching when FTS5 cannot process certain characters, ensuring comprehensive search coverage.
+
 ### Added
 
 - Added `memory` tool for persistent key-value storage using SQLite. Use `memory` tool to save and retrieve persistent information across sessions. See `packages/memory/README.md` for usage.

@@ -160,19 +160,41 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const type = options.type;
 				const requiredTags = options.tags ?? [];
 
-				// FTS search
-				const ftsResults = db
-					.prepare(
-						`SELECT memories.* FROM memories
-             JOIN memories_fts ON memories.rowid = memories_fts.rowid
-             WHERE memories_fts MATCH ?
-             ORDER BY bm25(memories_fts)
-             LIMIT ${limit * 2}`, // Fetch more to account for filtering
-					)
-					.all(query);
+				let memories: Memory[] = [];
+				let ftsFailed = false;
 
-				// Convert to Memory objects
-				let memories = ftsResults.map(mapRow);
+				// Try FTS search first (for better ranking)
+				try {
+					const ftsResults = db
+						.prepare(
+							`SELECT memories.* FROM memories
+								JOIN memories_fts ON memories.rowid = memories_fts.rowid
+								WHERE memories_fts MATCH ?
+								ORDER BY bm25(memories_fts)
+								LIMIT ${limit * 2}`, // Fetch more to account for filtering
+						)
+						.all(query);
+
+					memories = ftsResults.map(mapRow);
+				} catch (_ftsError) {
+					// FTS failed (e.g., special characters in query), fallback to LIKE
+					ftsFailed = true;
+				}
+
+				// Fallback to LIKE search if FTS failed or no results
+				if (ftsFailed || memories.length === 0) {
+					const likePattern = `%${query}%`;
+					const likeResults = db
+						.prepare(
+							`SELECT * FROM memories
+								WHERE content LIKE ? OR tags LIKE ?
+								ORDER BY updated_at DESC
+								LIMIT ${limit * 2}`,
+						)
+						.all(likePattern, likePattern);
+
+					memories = likeResults.map(mapRow);
+				}
 
 				// Apply filters
 				if (type) {
