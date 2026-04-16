@@ -57,11 +57,21 @@ const ForgetOp = Type.Object({
 	id: Type.String({ description: "Memory ID to delete" }),
 });
 
+const UpdateOp = Type.Object({
+	op: Type.Literal("update"),
+	id: Type.String({ description: "Memory ID to update" }),
+	content: Type.Optional(Type.String({ minLength: 1, maxLength: 10000 })),
+	tags: Type.Optional(Type.Array(Type.String({ maxLength: 50 }), { max: 20 })),
+	weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
+	expires_at: Type.Optional(Type.Number()),
+	metadata: Type.Optional(Type.Any()),
+});
+
 const StatsOp = Type.Object({
 	op: Type.Literal("stats"),
 });
 
-const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, StatsOp]);
+const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, UpdateOp, StatsOp]);
 
 // Flat schema (direct union, not nested in object)
 export const memorySchema = memoryOpsSchema;
@@ -154,6 +164,38 @@ export const memoryToolDefinition = {
 					};
 				}
 
+				case "update": {
+					const result = ctx.engine.update(op.id, {
+						content: op.content,
+						tags: op.tags,
+						weight: op.weight,
+						expires_at: op.expires_at,
+						metadata: op.metadata,
+					});
+
+					if (!result.ok) {
+						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+					}
+					if (!result.value) {
+						return {
+							content: [{ type: "text", text: "Memory not found" }],
+							details: { updated: false, message: "Memory not found" },
+						};
+					}
+					return {
+						content: [{ type: "text", text: "Memory updated" }],
+						details: {
+							updated: true,
+							memory: {
+								id: result.value.id,
+								content: result.value.content,
+								type: result.value.type,
+								tags: result.value.tags,
+							},
+							message: "Memory updated",
+						},
+					};
+				}
 				case "stats": {
 					const result = ctx.engine.stats();
 
@@ -240,6 +282,17 @@ export function createLLMToolInterface(engine: ReturnType<typeof createMemoryEng
 					case "forget": {
 						const p = params.op as Record<string, unknown>;
 						return engine.delete(p.id as string);
+					}
+
+					case "update": {
+						const p = params.op as Record<string, unknown>;
+						return engine.update(p.id as string, {
+							content: p.content as string | undefined,
+							tags: p.tags as string[] | undefined,
+							weight: p.weight as number | undefined,
+							expires_at: p.expires_at as number | undefined,
+							metadata: p.metadata as Record<string, unknown> | undefined,
+						});
 					}
 					case "stats": {
 						return engine.stats();

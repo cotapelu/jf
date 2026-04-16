@@ -24,6 +24,14 @@ export interface MemoryToolDetails {
 	}>;
 	saved?: { id: string; type: string };
 	deleted?: boolean;
+	updated?: boolean;
+	memory?: {
+		id: string;
+		content: string;
+		type: string;
+		tags: string[];
+	};
+	message?: string;
 	byType?: Record<string, number>;
 	byTags?: Record<string, number>;
 	error?: string;
@@ -78,11 +86,21 @@ const ForgetOp = Type.Object({
 	id: Type.String({ description: "Memory ID to delete" }),
 });
 
+const UpdateOp = Type.Object({
+	op: Type.Literal("update"),
+	id: Type.String({ description: "Memory ID to update" }),
+	content: Type.Optional(Type.String({ minLength: 1, maxLength: 10000 })),
+	tags: Type.Optional(Type.Array(Type.String({ maxLength: 50 }), { max: 20 })),
+	weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
+	expires_at: Type.Optional(Type.Number()),
+	metadata: Type.Optional(Type.Any()),
+});
+
 const StatsOp = Type.Object({
 	op: Type.Literal("stats"),
 });
 
-const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, StatsOp]);
+const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, UpdateOp, StatsOp]);
 
 // Flat schema (direct union, not nested in object)
 export const memorySchema = memoryOpsSchema;
@@ -202,6 +220,41 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 					};
 				}
 
+				case "update": {
+					const result = this.getEngine().update(op.id, {
+						content: op.content,
+						tags: op.tags,
+						weight: op.weight,
+						expires_at: op.expires_at,
+						metadata: op.metadata,
+					});
+
+					if (!result.ok) {
+						return {
+							content: [{ type: "text", text: `Error: ${result.error}` }],
+							details: { error: result.error },
+						};
+					}
+					if (!result.value) {
+						return {
+							content: [{ type: "text", text: "Memory not found" }],
+							details: { updated: false, message: "Memory not found" },
+						};
+					}
+					return {
+						content: [{ type: "text", text: "Memory updated" }],
+						details: {
+							updated: true,
+							memory: {
+								id: result.value.id,
+								content: result.value.content,
+								type: result.value.type,
+								tags: result.value.tags,
+							},
+							message: "Memory updated",
+						},
+					};
+				}
 				case "stats": {
 					const result = this.getEngine().stats();
 

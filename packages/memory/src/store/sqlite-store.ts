@@ -167,6 +167,10 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 		find(query: string, options: Partial<MemoryQuery> = {}): Result<MemorySearchResult> {
 			try {
+				// Validate query non-empty
+				if (!query || query.trim() === "") {
+					return { ok: true, value: { memories: [], total: 0 } };
+				}
 				const limit = options.limit ?? 10;
 				const type = options.type;
 				const requiredTags = options.tags ?? [];
