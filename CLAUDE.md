@@ -417,7 +417,7 @@ Proposed changes: ...
 
 - `SYSTEM.md` — Workflow & governance reference
 - `AGENTS.md` — Code generation mindset
-- `SKILL.md` — Development rules & commands
+- `SKILL.md` — Development rules & commands (npm run check, testing, GitHub workflow)
 - `APPEND_SYSTEM.md` — AI-Native vision (AutoResearch paradigm)
 - `.pi/prompts/` — Slash command prompts (pr, wr, is, cl). See `docs/PROMPTS.md` for details.
 
