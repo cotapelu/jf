@@ -22,6 +22,8 @@ export interface ConsolidationOptions {
 	maxPerType?: Record<string, number>;
 	/** Pagination limit when fetching all memories (default: 1000) */
 	batchSize?: number;
+	/** Similarity algorithm: 'jaccard' (fast token overlap) or 'cosine-tfidf' (weighted) */
+	similarityAlgorithm?: "jaccard" | "cosine-tfidf";
 }
 
 export interface ConsolidationReport {
@@ -47,6 +49,7 @@ export async function consolidate(
 		minHeatScore = 0.01,
 		maxPerType = {},
 		batchSize = 1000,
+		similarityAlgorithm = "jaccard",
 	} = options;
 
 	const report: ConsolidationReport = {
@@ -75,8 +78,13 @@ export async function consolidate(
 	}
 
 	// 3. Merge duplicates
-	// Need to re-fetch after decay/deletes? For simplicity, work on original set
-	const merges = await mergeDuplicates(store, allMemories, mergeSimilarityThreshold);
+	// Precompute vectors if using cosine-tfidf
+	const vectors = similarityAlgorithm === "cosine-tfidf" ? precomputeTFIDFVectors(allMemories) : undefined;
+
+	const merges = await mergeDuplicates(store, allMemories, mergeSimilarityThreshold, {
+		algorithm: similarityAlgorithm,
+		vectors,
+	});
 	report.merged = merges.length;
 	for (const { deleteId } of merges) {
 		store.delete(deleteId);
@@ -86,7 +94,11 @@ export async function consolidate(
 	}
 
 	// 4. Prune weak memories if over limit
-	const currentStats = store.stats();
+	const statsResult = store.stats();
+	if (!statsResult.ok) {
+		throw new Error(statsResult.error);
+	}
+	const currentStats = statsResult.value;
 	if (currentStats.total > maxMemories) {
 		const pruned = await pruneWeak(store, maxMemories, minHeatScore, maxPerType, batchSize);
 		report.deleted += pruned;
@@ -95,7 +107,8 @@ export async function consolidate(
 
 	// 5. Summarize old sessions (optional, not implemented yet)
 
-	report.remaining = store.stats().total;
+	const finalStatsResult = store.stats();
+	report.remaining = finalStatsResult.ok ? finalStatsResult.value.total : 0;
 	return report;
 }
 
@@ -153,6 +166,7 @@ async function mergeDuplicates(
 	store: IMemoryStore,
 	memories: Memory[],
 	threshold: number,
+	opts?: { algorithm?: "jaccard" | "cosine-tfidf"; vectors?: Map<string, Vector> },
 ): Promise<{ deleteId: string }[]> {
 	const groups: Memory[][] = [];
 	const used = new Set<string>();
@@ -172,7 +186,16 @@ async function mergeDuplicates(
 			if (used.has(other.id)) continue;
 			if (other.type !== mem.type) continue;
 
-			const similarity = calculateSimilarity(mem, other);
+			// Compute similarity based on algorithm
+			const similarity: number =
+				opts?.algorithm === "cosine-tfidf" && opts.vectors
+					? (() => {
+							const vecA = opts.vectors!.get(mem.id);
+							const vecB = opts.vectors!.get(other.id);
+							return vecA && vecB ? cosineSimilarity(vecA, vecB) : 0;
+						})()
+					: calculateJaccardSimilarity(mem, other);
+
 			if (similarity >= threshold) {
 				group.push(other);
 				used.add(other.id);
@@ -222,7 +245,11 @@ async function pruneWeak(
 	maxPerType: Record<string, number>,
 	batchSize: number,
 ): Promise<number> {
-	const currentStats = store.stats();
+	const statsResult = store.stats();
+	if (!statsResult.ok) {
+		throw new Error(statsResult.error);
+	}
+	const currentStats = statsResult.value;
 	const overAll = currentStats.total - maxMemories;
 	if (overAll <= 0) return 0;
 
@@ -297,7 +324,72 @@ export async function summarizeOldSessions(_store: IMemoryStore, _olderThanDays:
 /**
  * Simple Jaccard similarity on token sets
  */
-function calculateSimilarity(memA: Memory, memB: Memory): number {
+interface Vector extends Map<string, number> {}
+
+function tokenize(text: string): string[] {
+	return text
+		.toLowerCase()
+		.replace(/[^a-z0-9\s]/g, " ")
+		.split(/\s+/)
+		.filter((s) => s.length > 0);
+}
+
+function precomputeTFIDFVectors(memories: Memory[]): Map<string, Vector> {
+	const N = memories.length;
+	const df = new Map<string, number>();
+
+	// Compute document frequency
+	for (const mem of memories) {
+		const tokens = new Set(tokenize(mem.content));
+		for (const token of tokens) {
+			df.set(token, (df.get(token) || 0) + 1);
+		}
+	}
+
+	// Compute IDF
+	const idf = new Map<string, number>();
+	for (const [token, count] of df) {
+		idf.set(token, Math.log(N / count));
+	}
+
+	// Compute TF-IDF vectors
+	const vectors = new Map<string, Vector>();
+	for (const mem of memories) {
+		const tokens = tokenize(mem.content);
+		const total = tokens.length || 1;
+		const tf = new Map<string, number>();
+		for (const token of tokens) {
+			tf.set(token, (tf.get(token) || 0) + 1);
+		}
+
+		const vec: Vector = new Map();
+		for (const [token, freq] of tf) {
+			const idf_val = idf.get(token) || 0;
+			vec.set(token, (freq / total) * idf_val);
+		}
+		vectors.set(mem.id, vec);
+	}
+
+	return vectors;
+}
+
+function cosineSimilarity(a: Vector, b: Vector): number {
+	let dot = 0;
+	let normA = 0;
+	for (const [token, val] of a) {
+		const valB = b.get(token) || 0;
+		dot += val * valB;
+		normA += val * val;
+	}
+	let normB = 0;
+	for (const val of b.values()) {
+		normB += val * val;
+	}
+	if (normA === 0 || normB === 0) return 0;
+	return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function calculateJaccardSimilarity(memA: Memory, memB: Memory): number {
 	const tokensA = new Set(memA.content.toLowerCase().split(/\s+/));
 	const tokensB = new Set(memB.content.toLowerCase().split(/\s+/));
 
