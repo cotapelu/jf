@@ -2324,7 +2324,7 @@ export class AgentSession {
 		this._baseToolDefinitions.set("todo_write", createToolDefinitionFromAgentTool(todoWriteTool));
 
 		// Add memory tool
-		const memoryTool = new MemoryTool(this);
+		const memoryTool = new MemoryTool();
 		this._baseToolDefinitions.set("memory", createToolDefinitionFromAgentTool(memoryTool));
 
 		const extensionsResult = this._resourceLoader.getExtensions();

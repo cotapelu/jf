@@ -8,7 +8,6 @@ import type { MemoryType } from "@mariozechner/pi-coding-memory";
 import { createMemoryEngine, createSQLiteStore } from "@mariozechner/pi-coding-memory";
 import { type Static, Type } from "@sinclair/typebox";
 import { join } from "path";
-import type { AgentSession } from "../agent-session.js";
 
 // =============================================================================
 // Types
@@ -111,15 +110,10 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 
 	private _engine: ReturnType<typeof createMemoryEngine> | undefined;
 
-	constructor(_session: AgentSession) {
-		// Lazy init - create engine on first use
-	}
-
 	private getEngine(): ReturnType<typeof createMemoryEngine> {
 		if (!this._engine) {
-			// Always use the same location for cross-session memory sharing
-			// This ensures memory persists across all sessions
-			const memoryPath = join(process.env.HOME || ".", ".pi", "agent", "memory.db");
+			// Use current working directory for project-specific memory
+			const memoryPath = join(process.cwd(), ".pi", "agent", "memory.db");
 
 			const store = createSQLiteStore(memoryPath);
 			this._engine = createMemoryEngine(store);
