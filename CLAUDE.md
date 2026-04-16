@@ -1,4 +1,6 @@
-# Autonomous Software Engineering Agent — v4 (Unified)
+# CLAUDE.md — Primary System Rules (v4 Unified)
+
+> **Note**: This is the **PRIMARY** system rules file. For workflow reference, see `SYSTEM.md`.
 
 ## CORE IDENTITY
 
@@ -46,26 +48,18 @@ Apply rules in strict priority order. Higher priority overrides lower when in co
 2. **Avoid hardcoding** (use configs, env vars)
 3. **Prioritize maintainability** over cleverness
 
-### **ZIG-SPECIFIC RULES** (IMPORTANT-1)
-** khi làm việc với Zig codebase, áp dụng thêm:
-1. **Always pair alloc.create() with deinit()**: Mọi `alloc.create()` hoặc `alloc.dupe()` phải có `free()`/`destroy()` trong `deinit()` hoặc `defer`.
-2. **Use errdefer for cleanup on error**: Khi allocate tài nguyên trong hàm có error union, dùng `errdefer` để đảm bảo cleanup.
-3. **Prefer `@TypeOf` generics wisely**: Khi dùng generic `Orchestrator(ProviderType)`, đảm bảo ProviderType có đầy đủ interface (init, deinit, chat). Test với NoOp provider.
-4. **Check allocator errors**: `alloc.dupe()`, `alloc.alloc()` có thể fail OOM — handle `error.OutOfMemory` thay vì panic.
-5. **Build.zig consistency**: Khi thêm file mới vào packages/, update `build.zig` modules và test imports. Breakage often comes from missing module dependencies.
-6. **Use `defer` and `errdefer` strategically**: Prefer `defer` for unconditional cleanup, `errdefer` for error-path cleanup. Nest carefully in functions with multiple exit points.
-7. **Thread safety with Mutex**: Khi dùng `std.Thread.Mutex`, lock/unlock phải cân bằng. Dùng `defer lock.unlock()` sau khi lock thành công.
-8. **Comptime vs runtime**: Avoid heavy comptime logic in hot paths; prefer runtime configuration for flexibility.
-9. **Testing Zig code**: Write unit tests in `tests/` using Zig's built-in test runner. Test both success and failure paths (error sets). Mock external dependencies (HTTP, file I/O).
-10. **Zig style conventions**: Follow Zig official style guide — 4-space indentation, const/var naming, error enum naming (CamelCase).
+### **TYPESCRIPT-SPECIFIC RULES** (IMPORTANT-1)
+**Khi làm việc với TypeScript codebase, áp dụng thêm:**
+1. **No `any` types**: Avoid `any` unless absolutely necessary. Use `unknown` for truly unknown types.
+2. **Strict null checks**: Always handle `null` and `undefined` explicitly.
+3. **No inline imports**: Never use `await import()` or `import("pkg").Type` in type positions.
+4. **Generic constraints**: Use proper extends constraints, avoid unsafe casts.
+5. **Type guards**: Prefer type guards over type assertions.
+6. **Async/await**: Use async/await over raw promises for readability.
+7. **Error handling**: Always handle async errors with try/catch or .catch().
+8. **Dependency updates**: Never remove/downgrade code to fix type errors; upgrade dependencies instead.
 
 **Whenever generating code**: Review MEMORY entries first (highest COUNT), then apply rules in order.
-
-### **Domain-Specific Rules (Zig)**
-1. **Memory Management**: Always free allocator memory on error paths. Never leak memory.
-2. **Interface Abstraction**: Use `wrapProvider` for interface abstractions; follow existing patterns in `packages/providers/`.
-3. **Polymorphism**: Prefer compile-time polymorphism (generic `Orchestrator`) over runtime vtable for performance and type safety.
-4. **Testing**: Test with both debug and release optimizations to catch optimization-specific bugs.
 
 ---
 
@@ -416,6 +410,16 @@ Proposed changes: ...
 [UPDATED_CODING_AGENT_MD]
 <full file content>
 ```
+
+---
+
+## 🔗 Related Files
+
+- `SYSTEM.md` — Workflow & governance reference
+- `AGENTS.md` — Code generation mindset
+- `SKILL.md` — Development rules & commands
+- `APPEND_SYSTEM.md` — AI-Native vision (AutoResearch paradigm)
+- `.pi/prompts/` — Slash command prompts (pr, wr, is, cl). See `docs/PROMPTS.md` for details.
 
 ---
 
