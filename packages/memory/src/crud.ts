@@ -22,6 +22,12 @@ export function createMemoryEngine(store: IMemoryStore) {
 				weight: data.weight,
 				expires_at: data.expires_at,
 				metadata: data.metadata,
+				symbol_type: data.symbol_type,
+				file_path: data.file_path,
+				line_start: data.line_start,
+				line_end: data.line_end,
+				language: data.language,
+				signature: data.signature,
 			});
 		},
 

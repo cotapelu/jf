@@ -102,8 +102,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 	// Prepare statements
 	const stmtInsert = db.prepare(`
-    INSERT INTO memories (id, type, content, tags, weight, created_at, updated_at, access_count, expires_at, metadata)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO memories (id, type, content, tags, weight, created_at, updated_at, access_count, expires_at, metadata, symbol_type, file_path, line_start, line_end, language, signature)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
 	const stmtGet = db.prepare("SELECT * FROM memories WHERE id = ?");
@@ -156,6 +156,12 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 					0, // access_count
 					input.expires_at,
 					metadataJson,
+					input.symbol_type ?? null,
+					input.file_path ?? null,
+					input.line_start ?? null,
+					input.line_end ?? null,
+					input.language ?? null,
+					input.signature ?? null,
 				);
 
 				const memory = mapRow(stmtGet.get(id));
@@ -441,6 +447,12 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 						mem.access_count,
 						mem.expires_at,
 						JSON.stringify(mem.metadata ?? {}),
+						mem.symbol_type ?? null,
+						mem.file_path ?? null,
+						mem.line_start ?? null,
+						mem.line_end ?? null,
+						mem.language ?? null,
+						mem.signature ?? null,
 					);
 					count++;
 				}
@@ -484,5 +496,11 @@ function mapRow(row: any): Memory {
 		access_count: row.access_count,
 		expires_at: row.expires_at,
 		metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+		symbol_type: row.symbol_type ?? undefined,
+		file_path: row.file_path ?? undefined,
+		line_start: row.line_start ?? undefined,
+		line_end: row.line_end ?? undefined,
+		language: row.language ?? undefined,
+		signature: row.signature ?? undefined,
 	};
 }
