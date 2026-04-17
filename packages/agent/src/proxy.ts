@@ -15,9 +15,12 @@ import {
 	type StopReason,
 	type ToolCall,
 } from "@mariozechner/pi-ai";
+import { Logger } from "./logger.js";
 
 // Create stream class matching ProxyMessageEventStream
 class ProxyMessageEventStream extends EventStream<AssistantMessageEvent, AssistantMessage> {
+	private readonly logger: Logger;
+
 	constructor() {
 		super(
 			(event) => event.type === "done" || event.type === "error",
@@ -27,6 +30,7 @@ class ProxyMessageEventStream extends EventStream<AssistantMessageEvent, Assista
 				throw new Error("Unexpected event type");
 			},
 		);
+		this.logger = new Logger();
 	}
 }
 
@@ -333,7 +337,7 @@ function processProxyEvent(
 
 		default: {
 			const _exhaustiveCheck: never = proxyEvent;
-			console.warn(`Unhandled proxy event type: ${(proxyEvent as any).type}`);
+			this.logger.warn(`Unhandled proxy event type: ${(proxyEvent as any).type}`);
 			return undefined;
 		}
 	}

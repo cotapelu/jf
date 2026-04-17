@@ -13062,13 +13062,13 @@ export const MODELS = {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
-				input: 0.08,
-				output: 0.35,
-				cacheRead: 0.01,
+				input: 0.07,
+				output: 0.39999999999999997,
+				cacheRead: 0.04,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 4096,
+			maxTokens: 262144,
 		} satisfies Model<"openai-completions">,
 		"google/gemma-4-26b-a4b-it:free": {
 			id: "google/gemma-4-26b-a4b-it:free",
@@ -13765,7 +13765,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 131072,
-			maxTokens: 131072,
+			maxTokens: 32768,
 		} satisfies Model<"openai-completions">,
 		"moonshotai/kimi-k2-0905": {
 			id: "moonshotai/kimi-k2-0905",

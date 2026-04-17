@@ -1791,7 +1791,7 @@ export class AgentSession {
 			// but we don't want it in context for the retry)
 			const messages = this.agent.state.messages;
 			if (messages.length > 0 && messages[messages.length - 1].role === "assistant") {
-				this.agent.state.messages = messages.slice(0, -1);
+				this.agent.state.messages = messages.length > 1 ? messages.slice(0, -1) : [];
 			}
 			await this._runAutoCompaction("overflow", true);
 			return;
