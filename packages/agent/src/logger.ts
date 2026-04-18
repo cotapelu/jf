@@ -1,7 +1,6 @@
 // Logger utility for structured logging
 import * as fs from "node:fs";
 import * as os from "node:os";
-import * as path from "node:path";
 
 export interface LogEntry {
 	timestamp: string;
@@ -12,22 +11,17 @@ export interface LogEntry {
 }
 
 export class Logger {
-	private readonly logFile: string | undefined;
-	private readonly minLevel: number;
+	public logFile: string | undefined;
+	public minLevel: number;
 
-	private static readonly levels: Record<string, number> = {
+	public static readonly levels: Record<string, number> = {
 		debug: 0,
 		info: 1,
 		warn: 2,
 		error: 3,
 	};
 
-	constructor(
-		options: {
-			logFile?: string;
-			minLevel?: "info" | "warn" | "error" | "debug";
-		} = {},
-	) {
+	constructor(options: { logFile?: string; minLevel?: "info" | "warn" | "error" | "debug" } = {}) {
 		this.logFile = options.logFile;
 		this.minLevel = Logger.levels[options.minLevel ?? "info"];
 	}

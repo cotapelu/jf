@@ -19,7 +19,7 @@ import { Logger } from "./logger.js";
 
 // Create stream class matching ProxyMessageEventStream
 class ProxyMessageEventStream extends EventStream<AssistantMessageEvent, AssistantMessage> {
-	private readonly logger: Logger;
+	public readonly logger: Logger;
 
 	constructor() {
 		super(
@@ -174,7 +174,7 @@ export function streamProxy(model: Model<any>, context: Context, options: ProxyS
 						const data = line.slice(6).trim();
 						if (data) {
 							const proxyEvent = JSON.parse(data) as ProxyAssistantMessageEvent;
-							const event = processProxyEvent(proxyEvent, partial);
+							const event = processProxyEvent(proxyEvent, partial, stream.logger);
 							if (event) {
 								stream.push(event);
 							}
@@ -215,6 +215,7 @@ export function streamProxy(model: Model<any>, context: Context, options: ProxyS
 function processProxyEvent(
 	proxyEvent: ProxyAssistantMessageEvent,
 	partial: AssistantMessage,
+	logger: Logger,
 ): AssistantMessageEvent | undefined {
 	switch (proxyEvent.type) {
 		case "start":
@@ -337,7 +338,7 @@ function processProxyEvent(
 
 		default: {
 			const _exhaustiveCheck: never = proxyEvent;
-			this.logger.warn(`Unhandled proxy event type: ${(proxyEvent as any).type}`);
+			logger.warn(`Unhandled proxy event type: ${(proxyEvent as any).type}`);
 			return undefined;
 		}
 	}
