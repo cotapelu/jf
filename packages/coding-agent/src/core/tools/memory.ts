@@ -71,23 +71,13 @@ const memorySchema = Type.Object({
 		Type.Object({
 			id: Type.String({ description: "Memory ID to update" }),
 			content: Type.Optional(Type.String({ description: "New content" })),
-			tags: Type.Optional(
-				Type.Union([
-					Type.Array(Type.String()),
-					Type.String(),
-				]),
-			),
+			tags: Type.Optional(Type.Union([Type.Array(Type.String()), Type.String()])),
 			weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
 		}),
 	),
 
 	// Stats: get memory statistics
-	stats: Type.Optional(
-		Type.Union([
-			Type.Boolean(),
-			Type.Object({}),
-		]),
-	),
+	stats: Type.Optional(Type.Union([Type.Boolean(), Type.Object({})])),
 
 	// List: export all memories
 	list: Type.Optional(
@@ -150,12 +140,9 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 	// Auto-detect memory type from content
 	private autoDetectType(content: string): MemoryType {
 		const lower = content.toLowerCase();
-		if (lower.includes("user thích") || lower.includes("prefer") || lower.includes("style"))
-			return "preference";
-		if (lower.includes("dự án") || lower.includes("project") || lower.includes("build"))
-			return "project";
-		if (lower.includes("cách chạy") || lower.includes("command") || lower.includes("run"))
-			return "command";
+		if (lower.includes("user thích") || lower.includes("prefer") || lower.includes("style")) return "preference";
+		if (lower.includes("dự án") || lower.includes("project") || lower.includes("build")) return "project";
+		if (lower.includes("cách chạy") || lower.includes("command") || lower.includes("run")) return "command";
 		if (lower.includes("bug") || lower.includes("fix") || lower.includes("lỗi") || lower.includes("sửa"))
 			return "solution";
 		return "note"; // default
@@ -347,7 +334,8 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 				} catch {
 					memories = [];
 				}
-				const limited: Array<{id: string; content: string; type: string; tags: string[]; created_at: number}> = memories.slice(0, params.list);
+				const limited: Array<{ id: string; content: string; type: string; tags: string[]; created_at: number }> =
+					memories.slice(0, params.list);
 				const summary =
 					limited.length > 0
 						? `${memories.length} memories (showing ${limited.length}):\n${limited
