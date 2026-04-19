@@ -527,8 +527,8 @@ describe("Context overflow error handling", () => {
 		}, 120000);
 
 		// Meta/Llama backend
-		it("meta-llama/llama-4-maverick via OpenRouter - should detect overflow via isContextOverflow", async () => {
-			const model = getModel("openrouter", "meta-llama/llama-4-maverick");
+		it("meta-llama/llama-3.1-70b-instruct via OpenRouter - should detect overflow via isContextOverflow", async () => {
+			const model = getModel("openrouter", "meta-llama/llama-3.1-70b-instruct");
 			const result = await testContextOverflow(model, process.env.OPENROUTER_API_KEY!);
 			logResult(result);
 
