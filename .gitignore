@@ -41,6 +41,6 @@ oh-my-pi-legacy/
 pi-mono-legacy/
 
 # Generated
-packages/ai/src/models.generated.ts
+#packages/ai/src/models.generated.ts
 
 .ant-colony/

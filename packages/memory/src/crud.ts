@@ -22,6 +22,12 @@ export function createMemoryEngine(store: IMemoryStore) {
 				weight: data.weight,
 				expires_at: data.expires_at,
 				metadata: data.metadata,
+				symbol_type: data.symbol_type,
+				file_path: data.file_path,
+				line_start: data.line_start,
+				line_end: data.line_end,
+				language: data.language,
+				signature: data.signature,
 			});
 		},
 
@@ -53,16 +59,52 @@ export function createMemoryEngine(store: IMemoryStore) {
 			query: string,
 			options?: Partial<{ type?: MemoryType; tags?: string[]; limit?: number }>,
 		): Result<MemorySearchResult> {
-			const result = store.find(query, options);
-			return { ok: true, value: result };
+			return store.find(query, options);
 		},
 
 		stats(): Result<MemoryStats> {
-			return { ok: true, value: store.stats() };
+			return store.stats();
 		},
 
 		clear(): void {
 			store.clear();
+		},
+
+		// Additional store methods
+		expunge(olderThan?: number): Result<number> {
+			return store.expunge(olderThan);
+		},
+
+		deleteByFilePath(filePath: string): Result<number> {
+			return store.deleteByFilePath(filePath);
+		},
+
+		exportJSON(): string {
+			return store.exportJSON();
+		},
+
+		importJSON(data: string): Result<number> {
+			return store.importJSON(data);
+		},
+
+		transaction<T>(fn: (store: IMemoryStore) => T): Result<T> {
+			return store.transaction(fn);
+		},
+
+		startAutoExpunge(intervalMs?: number): void {
+			store.startAutoExpunge(intervalMs);
+		},
+
+		stopAutoExpunge(): void {
+			store.stopAutoExpunge();
+		},
+
+		startAutoDecay(options?: { intervalMs?: number; decayAfterDays?: number; decayRate?: number }): void {
+			store.startAutoDecay(options);
+		},
+
+		stopAutoDecay(): void {
+			store.stopAutoDecay();
 		},
 	};
 }

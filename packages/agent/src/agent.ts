@@ -9,6 +9,7 @@ import {
 	type Transport,
 } from "@mariozechner/pi-ai";
 import { runAgentLoop, runAgentLoopContinue } from "./agent-loop.js";
+import { Logger } from "./logger.js";
 import type {
 	AfterToolCallContext,
 	AfterToolCallResult,
@@ -159,6 +160,7 @@ export class Agent {
 	private readonly listeners = new Set<(event: AgentEvent, signal: AbortSignal) => Promise<void> | void>();
 	private readonly steeringQueue: PendingMessageQueue;
 	private readonly followUpQueue: PendingMessageQueue;
+	private readonly logger: Logger;
 
 	public convertToLlm: (messages: AgentMessage[]) => Message[] | Promise<Message[]>;
 	public transformContext?: (messages: AgentMessage[], signal?: AbortSignal) => Promise<AgentMessage[]>;
@@ -201,6 +203,7 @@ export class Agent {
 		this.transport = options.transport ?? "sse";
 		this.maxRetryDelayMs = options.maxRetryDelayMs;
 		this.toolExecution = options.toolExecution ?? "parallel";
+		this.logger = new Logger();
 	}
 
 	/**
@@ -316,6 +319,7 @@ export class Agent {
 			);
 		}
 		const messages = this.normalizePromptInput(input, images);
+		this.logger.info(`Starting new prompt with ${messages.length} message(s)`);
 		await this.runPromptMessages(messages);
 	}
 
@@ -447,11 +451,13 @@ export class Agent {
 		this._state.streamingMessage = undefined;
 		this._state.errorMessage = undefined;
 
+		this.logger.debug("Starting agent run");
 		try {
 			await executor(abortController.signal);
 		} catch (error) {
 			await this.handleRunFailure(error, abortController.signal.aborted);
 		} finally {
+			this.logger.debug("Finished agent run");
 			this.finishRun();
 		}
 	}

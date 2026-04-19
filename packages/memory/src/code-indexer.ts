@@ -6,7 +6,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join as pathJoin } from "node:path";
 import { watch } from "chokidar";
-import type { MemoryInput } from "./types.js";
+import type { Memory, MemoryInput, Result } from "./types.js";
 
 export interface CodeSymbol {
 	type: "function" | "class" | "interface" | "type" | "enum" | "module" | "variable";
@@ -235,7 +235,11 @@ export interface CodeIndexer {
 }
 
 export function createCodeIndexer(
-	engine: { save: (input: MemoryInput) => any }, // Minimal interface
+	engine: {
+		save: (input: MemoryInput) => Result<Memory>;
+		deleteByFilePath: (filePath: string) => Result<number>;
+		transaction: <T>(fn: (store: import("./store/memory-store.js").IMemoryStore) => T) => Result<T>;
+	},
 	options: Partial<IndexerOptions> = {},
 ): CodeIndexer {
 	const opts: IndexerOptions = {
@@ -247,6 +251,8 @@ export function createCodeIndexer(
 
 	const watchers: any[] = [];
 	const debounceTimers = new Map<string, number>();
+	// File size limit (1MB)
+	const MAX_FILE_SIZE = 1024 * 1024;
 
 	function shouldIndexFile(filePath: string): boolean {
 		const ext = extname(filePath).toLowerCase();
@@ -264,6 +270,18 @@ export function createCodeIndexer(
 
 	async function indexFile(filePath: string): Promise<CodeSymbol[]> {
 		try {
+			// Check file size to prevent hanging on huge files
+			try {
+				const stats = await import("node:fs/promises").then((m) => m.stat(filePath));
+				if (stats.size > MAX_FILE_SIZE) {
+					console.warn(`Skipping ${filePath}: file too large (${stats.size} bytes)`);
+					return [];
+				}
+			} catch (_e) {
+				// Can't stat file, skip
+				return [];
+			}
+
 			const ext = extname(filePath).toLowerCase();
 			const language = languageFromExtension(ext);
 
@@ -283,25 +301,34 @@ export function createCodeIndexer(
 				symbols.push(...extractGeneric(content, filePath));
 			}
 
-			// Save each symbol to memory
-			for (const sym of symbols) {
-				const memoryInput: MemoryInput = {
-					content: formatSymbol(sym),
-					type: "code_symbol",
-					tags: [sym.type, language, sym.name.toLowerCase()],
-					weight: 0.5,
-					metadata: {
+			// Save all symbols for this file atomically
+			const result = engine.transaction((store) => {
+				for (const sym of symbols) {
+					const memoryInput: MemoryInput = {
+						content: formatSymbol(sym),
+						type: "code_symbol",
+						tags: [sym.type, language, sym.name.toLowerCase()],
+						weight: 0.5,
 						symbol_type: sym.type,
 						file_path: sym.file,
 						line_start: sym.start,
 						line_end: sym.end,
 						language: sym.language,
 						signature: sym.signature,
-					},
-				};
+					};
 
-				engine.save(memoryInput);
+					const saveResult = store.save(memoryInput);
+					if (!saveResult.ok) {
+						throw new Error(saveResult.error);
+					}
+				}
+				return symbols.length;
+			});
+
+			if (!result.ok) {
+				console.error(`Failed to index ${filePath}:`, result.error);
 			}
+			// Clean up old entries will be done by removeFileIndex using deleteByFilePath
 
 			opts.onIndexed?.(filePath, symbols);
 			return symbols;
@@ -332,16 +359,20 @@ export function createCodeIndexer(
 				if (event === "unlink") {
 					await removeFileIndex(filePath);
 				} else {
+					// For change/add, delete old symbols directly by file_path
+					await removeFileIndex(filePath);
 					await indexFile(filePath);
 				}
 			}, opts.debounceMs) as unknown as number,
 		);
 	}
 
-	async function removeFileIndex(_filePath: string) {
-		// TODO: implement efficient delete by file_path
-		// For now, skip - consolidation will prune old unused memories
-		console.log(`File removed: ${_filePath} (index cleanup not fully implemented)`);
+	async function removeFileIndex(filePath: string) {
+		// Directly delete all code symbols for this file
+		const result = engine.deleteByFilePath(filePath);
+		if (result.ok) {
+			console.log(`Removed ${result.value} symbols for ${filePath}`);
+		}
 	}
 
 	function getStats() {

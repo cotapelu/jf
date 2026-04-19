@@ -298,7 +298,19 @@ async function loadExtensionModule(extensionPath: string) {
 		...(isBunBinary ? { virtualModules: VIRTUAL_MODULES, tryNative: false } : { alias: getAliases() }),
 	});
 
-	const module = await jiti.import(extensionPath, { default: true });
+	// Create a promise that rejects after TIMEOUT_MS
+	const TIMEOUT_MS = 5000;
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		setTimeout(() => {
+			reject(new Error(`Extension loading timed out after ${TIMEOUT_MS}ms: ${extensionPath}`));
+		}, TIMEOUT_MS);
+	});
+
+	// Race the import against the timeout
+	const module = (await Promise.race([jiti.import(extensionPath, { default: true }), timeoutPromise])) as {
+		default?: unknown;
+	};
+
 	const factory = module as ExtensionFactory;
 	return typeof factory !== "function" ? undefined : factory;
 }

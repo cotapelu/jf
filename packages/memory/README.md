@@ -61,6 +61,53 @@ const toolResult = await tools.executeTool("memory", {
 - **Secure**: Optional metadata for sensitive data (encryption TBD)
 - **Zero config**: Works out of the box
 
+## Advanced Features
+
+### Automatic Cleanup & Decay
+
+- `startAutoExpunge(intervalMs?)` - Automatically delete expired memories (default: every 24h)
+- `stopAutoExpunge()` - Stop automatic cleanup
+- `startAutoDecay(options?)` - Gradually reduce weight of unused memories (configurable decay rate and interval)
+- `stopAutoDecay()` - Stop weight decay
+
+### Batch Operations
+
+- `expunge(olderThan?)` - Manually delete expired memories (or all if no arg)
+- `deleteByFilePath(filePath)` - Directly delete all code symbols associated with a file (uses index)
+- `transaction<T>(fn)` - Execute multiple operations atomically
+
+### Import/Export
+
+- `exportJSON()` - Export all memories as formatted JSON (for backup or migration)
+- `importJSON(data)` - Import memories from JSON, skips duplicates by ID
+
+### Improved Similarity Detection
+
+Consolidation now supports two similarity algorithms:
+
+- `jaccard` (default) - Fast token overlap
+- `cosine-tfidf` - Weighted by term frequency-inverse document frequency for more accurate duplicate detection
+
+Configure via `consolidate(store, { similarityAlgorithm: 'cosine-tfidf' })`
+
+### Indexes
+
+Additional indexes for performance:
+- `idx_expires_at` - Fast expired memory cleanup
+- `idx_file_path` - Quick lookup by file path
+- `idx_file_path_type` - Compound index for file-path + type queries
+
+## Code Symbol Indexing
+
+The code indexer automatically watches your project and indexes functions, classes, interfaces, and more into memory:
+
+- **Multi-language**: TypeScript, JavaScript, Python, and extensible to others
+- **File watching**: Real-time updates on file changes with debouncing
+- **Smart cleanup**: Automatically removes symbols when files are deleted
+- **Metadata**: Stores file path, line numbers, signature, and language
+
+See `createCodeIndexer()` for details.
+
 ## Memory Types
 
 | Type | Description | Example |
@@ -151,6 +198,22 @@ Example:
   op: "stats"
 }
 ```
+
+## Store Methods (Direct Usage)
+
+When using the store directly (not via the unified tool), you have access to additional methods:
+
+- `expunge(olderThan?)` - Delete expired memories (or all if `olderThan` is `Date.now()`)
+- `deleteByFilePath(filePath)` - Delete all memories with given `file_path` (typically for code symbols)
+- `exportJSON()` - Export all memories as JSON string
+- `importJSON(json)` - Import memories from JSON, returns count imported, skips duplicates
+- `startAutoExpunge(intervalMs?)` - Start background job to auto-clean expired memories
+- `stopAutoExpunge()` - Stop the auto-cleanup job
+- `startAutoDecay(options?)` - Start background weight decay for unused memories
+- `stopAutoDecay()` - Stop weight decay
+- `transaction<T>(fn)` - Run operations in a single atomic transaction
+
+These methods are available on `IMemoryStore` and `sqlite-store` implementations.
 
 ## Integration with pi Coding Agent
 
@@ -277,6 +340,56 @@ Memory is stored in `~/.pi/agent/memory.db` (or custom path). New sessions autom
 - **Persistent**: Survives restarts, power loss
 - **Portable**: Copy file → move to another machine
 - **Standard**: Ubiquitous, battle-tested
+
+## Search Behavior and Limitations
+
+### Full-Text Search (FTS5)
+
+Memory uses SQLite's FTS5 (Full-Text Search) with BM25 ranking for fast, relevant search results. The search system has the following behavior:
+
+**Primary Search (FTS5)**:
+- Uses FTS5 with `porter unicode61` tokenizer
+- Provides BM25 ranking for relevance scoring
+- Fast and efficient for most queries
+- Supports natural language search
+
+**Fallback Search (LIKE)**:
+- Automatically falls back to LIKE pattern matching when FTS5 fails
+- Handles special characters that FTS5 cannot process
+- Ensures search always returns results even with complex queries
+
+### Known Limitations
+
+**Unicode Search**:
+- FTS5 tokenizer processes unicode content correctly
+- Search queries with unicode characters work via fallback LIKE search
+- Example: Content "你好世界" can be found with query "你好" or "世界"
+
+**Special Characters**:
+- FTS5 MATCH syntax doesn't support special characters like `@#$%^&*()`
+- These characters are handled via fallback LIKE search
+- Example: Content "@#$%" can be found with query "@#$%"
+
+**Search Performance**:
+- FTS5 is faster and provides ranking
+- LIKE fallback is slower but ensures comprehensive search
+- Both methods respect type and tag filters
+
+### Search Examples
+
+```typescript
+// Normal text search (uses FTS5)
+engine.find("database"); // Fast, ranked results
+
+// Unicode search (uses LIKE fallback)
+engine.find("你好世界"); // Works via fallback
+
+// Special characters (uses LIKE fallback)
+engine.find("@#$%"); // Works via fallback
+
+// Combined with filters
+engine.find("test", { type: "project", tags: ["important"] });
+```
 
 ## Advanced: Custom Store Path
 

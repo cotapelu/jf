@@ -33,6 +33,13 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 	const db = new Database(dbPath);
 
+	// Auto-expunge background job
+	let autoExpungeInterval: ReturnType<typeof setInterval> | null = null;
+	// Auto-decay background job
+	let autoDecayInterval: ReturnType<typeof setInterval> | null = null;
+	// Decay config
+	const decayConfig = { decayAfterDays: 30, decayRate: 0.01 };
+
 	// Enable WAL mode for better concurrency
 	db.pragma("journal_mode = WAL");
 
@@ -61,6 +68,9 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
     CREATE INDEX IF NOT EXISTS idx_type ON memories(type);
     CREATE INDEX IF NOT EXISTS idx_created ON memories(created_at);
     CREATE INDEX IF NOT EXISTS idx_updated ON memories(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_expires_at ON memories(expires_at);
+    CREATE INDEX IF NOT EXISTS idx_file_path ON memories(file_path);
+    CREATE INDEX IF NOT EXISTS idx_file_path_type ON memories(file_path, type);
 
     -- Full-Text Search virtual table
     CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
@@ -92,8 +102,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 
 	// Prepare statements
 	const stmtInsert = db.prepare(`
-    INSERT INTO memories (id, type, content, tags, weight, created_at, updated_at, access_count, expires_at, metadata)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO memories (id, type, content, tags, weight, created_at, updated_at, access_count, expires_at, metadata, symbol_type, file_path, line_start, line_end, language, signature)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
 	const stmtGet = db.prepare("SELECT * FROM memories WHERE id = ?");
@@ -108,6 +118,7 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
     WHERE id = ?
   `);
 	const stmtDelete = db.prepare("DELETE FROM memories WHERE id = ?");
+	const stmtDeleteByFilePath = db.prepare("DELETE FROM memories WHERE file_path = ? AND type = 'code_symbol'");
 	const stmtCount = db.prepare("SELECT COUNT(*) as count FROM memories");
 	const stmtClear = db.prepare("DELETE FROM memories");
 	const stmtList = db.prepare("SELECT * FROM memories ORDER BY updated_at DESC LIMIT ? OFFSET ?");
@@ -145,6 +156,12 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 					0, // access_count
 					input.expires_at,
 					metadataJson,
+					input.symbol_type ?? null,
+					input.file_path ?? null,
+					input.line_start ?? null,
+					input.line_end ?? null,
+					input.language ?? null,
+					input.signature ?? null,
 				);
 
 				const memory = mapRow(stmtGet.get(id));
@@ -154,25 +171,51 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 			}
 		},
 
-		find(query: string, options: Partial<MemoryQuery> = {}): MemorySearchResult {
+		find(query: string, options: Partial<MemoryQuery> = {}): Result<MemorySearchResult> {
 			try {
+				// Validate query non-empty
+				if (!query || query.trim() === "") {
+					return { ok: true, value: { memories: [], total: 0 } };
+				}
 				const limit = options.limit ?? 10;
 				const type = options.type;
 				const requiredTags = options.tags ?? [];
 
-				// FTS search
-				const ftsResults = db
-					.prepare(
-						`SELECT memories.* FROM memories
-             JOIN memories_fts ON memories.rowid = memories_fts.rowid
-             WHERE memories_fts MATCH ?
-             ORDER BY bm25(memories_fts)
-             LIMIT ${limit * 2}`, // Fetch more to account for filtering
-					)
-					.all(query);
+				let memories: Memory[] = [];
+				let ftsFailed = false;
 
-				// Convert to Memory objects
-				let memories = ftsResults.map(mapRow);
+				// Try FTS search first (for better ranking)
+				try {
+					const ftsResults = db
+						.prepare(
+							`SELECT memories.* FROM memories
+								JOIN memories_fts ON memories.rowid = memories_fts.rowid
+								WHERE memories_fts MATCH ?
+								ORDER BY bm25(memories_fts)
+								LIMIT ?`, // Fetch more to account for filtering
+						)
+						.all(query, limit * 2);
+
+					memories = ftsResults.map(mapRow);
+				} catch (_ftsError) {
+					// FTS failed (e.g., special characters in query), fallback to LIKE
+					ftsFailed = true;
+				}
+
+				// Fallback to LIKE search if FTS failed or no results
+				if (ftsFailed || memories.length === 0) {
+					const likePattern = `%${query}%`;
+					const likeResults = db
+						.prepare(
+							`SELECT * FROM memories
+								WHERE content LIKE ? OR tags LIKE ?
+								ORDER BY updated_at DESC
+								LIMIT ?`,
+						)
+						.all(likePattern, likePattern, limit * 2);
+
+					memories = likeResults.map(mapRow);
+				}
 
 				// Apply filters
 				if (type) {
@@ -192,11 +235,14 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				}
 
 				return {
-					memories: memories.slice(0, limit),
-					total: memories.length,
+					ok: true,
+					value: {
+						memories: memories.slice(0, limit),
+						total: memories.length,
+					},
 				};
-			} catch {
-				return { memories: [], total: 0 };
+			} catch (e) {
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
 
@@ -255,7 +301,7 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 			}
 		},
 
-		stats(): MemoryStats {
+		stats(): Result<MemoryStats> {
 			try {
 				const total = (stmtCount.get() as { count: number }).count;
 
@@ -281,23 +327,151 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				const avgWeight = (stmtAvgWeight.get() as { avg: number | null }).avg || 0;
 
 				return {
-					total,
-					byType: byType as Record<Memory["type"], number>,
-					byTags,
-					averageWeight: avgWeight,
+					ok: true,
+					value: {
+						total,
+						byType: byType as Record<Memory["type"], number>,
+						byTags,
+						averageWeight: avgWeight,
+					},
 				};
-			} catch {
-				return {
-					total: 0,
-					byType: { preference: 0, project: 0, command: 0, solution: 0, note: 0, code_symbol: 0 },
-					byTags: {},
-					averageWeight: 0,
-				};
+			} catch (e) {
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
 			}
 		},
 
 		clear(): void {
 			stmtClear.run();
+		},
+
+		startAutoExpunge(intervalMs?: number): void {
+			if (autoExpungeInterval) return;
+			const interval = intervalMs ?? 24 * 60 * 60 * 1000; // Default 24 hours
+			autoExpungeInterval = setInterval(() => {
+				// Run expunge silently, ignore errors
+				try {
+					this.expunge();
+				} catch {}
+			}, interval);
+		},
+
+		stopAutoExpunge(): void {
+			if (autoExpungeInterval) {
+				clearInterval(autoExpungeInterval);
+				autoExpungeInterval = null;
+			}
+		},
+
+		startAutoDecay(options?: { intervalMs?: number; decayAfterDays?: number; decayRate?: number }): void {
+			if (autoDecayInterval) return;
+			if (options?.decayAfterDays !== undefined) decayConfig.decayAfterDays = options.decayAfterDays;
+			if (options?.decayRate !== undefined) decayConfig.decayRate = options.decayRate;
+			const interval = options?.intervalMs ?? 24 * 60 * 60 * 1000; // 24h
+
+			autoDecayInterval = setInterval(() => {
+				try {
+					// Fetch memories that haven't been updated recently
+					const cutoff = Date.now() - decayConfig.decayAfterDays * 24 * 60 * 60 * 1000;
+					// Select memories with updated_at < cutoff (not accessed recently)
+					const stmt = db.prepare(
+						"SELECT id, weight, updated_at FROM memories WHERE updated_at < ? AND expires_at IS NULL",
+					);
+					const candidates = stmt.all(cutoff) as Array<{ id: string; weight: number; updated_at: number }>;
+
+					for (const mem of candidates) {
+						const daysInactive = (Date.now() - mem.updated_at) / (24 * 60 * 60 * 1000);
+						const decayFactor = (1 - decayConfig.decayRate) ** daysInactive;
+						const newWeight = Math.max(0.01, mem.weight * decayFactor);
+
+						// Update if significantly changed
+						if (Math.abs(newWeight - mem.weight) > 0.001) {
+							db.prepare("UPDATE memories SET weight = ?, updated_at = ? WHERE id = ?").run(
+								newWeight,
+								Date.now(),
+								mem.id,
+							);
+						}
+					}
+				} catch {}
+			}, interval);
+		},
+
+		stopAutoDecay(): void {
+			if (autoDecayInterval) {
+				clearInterval(autoDecayInterval);
+				autoDecayInterval = null;
+			}
+		},
+
+		expunge(olderThan?: number): Result<number> {
+			try {
+				const cutoff = olderThan ?? Date.now();
+				const info = db.prepare("DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?").run(cutoff);
+				return { ok: true, value: info.changes };
+			} catch (e) {
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
+			}
+		},
+
+		deleteByFilePath(filePath: string): Result<number> {
+			try {
+				const info = stmtDeleteByFilePath.run(filePath);
+				return { ok: true, value: info.changes };
+			} catch (e) {
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
+			}
+		},
+
+		exportJSON(): string {
+			const rows = db.prepare("SELECT * FROM memories ORDER BY created_at ASC").all();
+			const memories = rows.map(mapRow);
+			return JSON.stringify(memories, null, 2);
+		},
+
+		importJSON(data: string): Result<number> {
+			try {
+				const memories: Memory[] = JSON.parse(data);
+				let count = 0;
+				for (const mem of memories) {
+					const existing = stmtGet.get(mem.id);
+					if (existing) continue;
+
+					stmtInsert.run(
+						mem.id,
+						mem.type,
+						mem.content,
+						JSON.stringify(mem.tags),
+						mem.weight,
+						mem.created_at,
+						mem.updated_at,
+						mem.access_count,
+						mem.expires_at,
+						JSON.stringify(mem.metadata ?? {}),
+						mem.symbol_type ?? null,
+						mem.file_path ?? null,
+						mem.line_start ?? null,
+						mem.line_end ?? null,
+						mem.language ?? null,
+						mem.signature ?? null,
+					);
+					count++;
+				}
+				return { ok: true, value: count };
+			} catch (e) {
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
+			}
+		},
+
+		transaction<T>(fn: (store: IMemoryStore) => T): Result<T> {
+			try {
+				const transaction = db.transaction(() => {
+					return fn(this);
+				});
+				const result = transaction();
+				return { ok: true, value: result };
+			} catch (e) {
+				return { ok: false, error: e instanceof Error ? e.message : String(e) };
+			}
 		},
 
 		list(options: { limit?: number; offset?: number } = {}): Memory[] {
@@ -322,5 +496,11 @@ function mapRow(row: any): Memory {
 		access_count: row.access_count,
 		expires_at: row.expires_at,
 		metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+		symbol_type: row.symbol_type ?? undefined,
+		file_path: row.file_path ?? undefined,
+		line_start: row.line_start ?? undefined,
+		line_end: row.line_end ?? undefined,
+		language: row.language ?? undefined,
+		signature: row.signature ?? undefined,
 	};
 }
