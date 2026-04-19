@@ -1,6 +1,6 @@
 /**
  * Memory Tool for pi coding agent
- * Stores and retrieves persistent information across sessions
+ * JSONL-style schema: each operation is a field
  */
 
 import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
@@ -34,116 +34,63 @@ export interface MemoryToolDetails {
 }
 
 // =============================================================================
-// Schema - Unified memory operations (like todo-write)
+// JSONL-style Schema - each operation is a field
 // =============================================================================
 
-const SaveOp = Type.Object({
-	op: Type.Literal("save"),
-	content: Type.String({
-		description: "The information to save (max 10000 chars)",
-	}),
-	type: Type.Union(
-		[
-			Type.Literal("preference"),
-			Type.Literal("project"),
-			Type.Literal("command"),
-			Type.Literal("solution"),
-			Type.Literal("note"),
-		],
-		{
-			description:
-				"Type of memory: preference (user coding style), project (project facts), command (workflows), solution (bug fixes), note (general)",
-		},
-	),
-	tags: Type.Optional(
-		Type.Union(
-			[
-				Type.Array(Type.String(), {
-					description: "Optional tags for categorization",
-				}),
-				Type.String(),
-			],
-			{
-				description: "Optional tags for categorization (array or JSON string)",
-			},
-		),
-	),
-	weight: Type.Optional(
-		Type.Number({
-			minimum: 0,
-			maximum: 1,
-			description: "Importance 0-1, default 0.5",
+const memorySchema = Type.Object({
+	// Save operation: content string → save as type (default: note)
+	save: Type.Optional(
+		Type.String({
+			description: "Content to save (automatically detects type and default options)",
 		}),
 	),
-	expires_at: Type.Optional(
-		Type.Number({
-			description: "Optional expiration timestamp (Unix ms)",
+
+	// Find operation: query string → search memories
+	find: Type.Optional(
+		Type.String({
+			description: "Search query to find memories",
 		}),
 	),
-});
 
-const FindOp = Type.Object({
-	op: Type.Literal("find"),
-	query: Type.String({
-		description: "Search query (e.g., 'python indentation', 'database')",
-	}),
-	type: Type.Optional(
-		Type.Union(
-			[
-				Type.Literal("preference"),
-				Type.Literal("project"),
-				Type.Literal("command"),
-				Type.Literal("solution"),
-				Type.Literal("note"),
-			],
-			{ description: "Optional filter by memory type" },
-		),
-	),
-	tags: Type.Optional(
-		Type.Union(
-			[
-				Type.Array(Type.String(), {
-					description: "Optional filter by tags (AND logic)",
-				}),
-				Type.String(),
-			],
-			{
-				description: "Optional filter by tags (AND logic) (array or JSON string)",
-			},
-		),
-	),
-	limit: Type.Optional(
-		Type.Number({
-			minimum: 1,
-			maximum: 100,
-			description: "Max results, default 10",
+	// Get operation: memory ID to retrieve
+	get: Type.Optional(
+		Type.String({
+			description: "Memory ID to retrieve",
 		}),
 	),
-});
 
-const GetOp = Type.Object({
-	op: Type.Literal("get"),
-	id: Type.String({ description: "Memory ID to retrieve" }),
-});
+	// Delete operation: memory ID to delete
+	delete: Type.Optional(
+		Type.String({
+			description: "Memory ID to delete",
+		}),
+	),
 
-const ForgetOp = Type.Object({
-	op: Type.Literal("forget"),
-	id: Type.String({ description: "Memory ID to delete" }),
-});
+	// Update operation: { id, content, ... }
+	update: Type.Optional(
+		Type.Object({
+			id: Type.String({ description: "Memory ID to update" }),
+			content: Type.Optional(Type.String({ description: "New content" })),
+			tags: Type.Optional(
+				Type.Union([
+					Type.Array(Type.String()),
+					Type.String(),
+				]),
+			),
+			weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
+		}),
+	),
 
-const UpdateOp = Type.Object({
-	op: Type.Literal("update"),
-	id: Type.String({ description: "Memory ID to update" }),
-	content: Type.Optional(Type.String({ minLength: 1, maxLength: 10000 })),
-	tags: Type.Optional(Type.Union([Type.Array(Type.String({ maxLength: 50 }), { max: 20 }), Type.String()])),
-	weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
-	expires_at: Type.Optional(Type.Number()),
-	metadata: Type.Optional(Type.Any()),
-});
+	// Stats: get memory statistics
+	stats: Type.Optional(
+		Type.Union([
+			Type.Boolean(),
+			Type.Object({}),
+		]),
+	),
 
-const ListOp = Type.Object({
-	op: Type.Literal("list"),
-	limit: Type.Optional(
+	// List: export all memories
+	list: Type.Optional(
 		Type.Number({
 			minimum: 1,
 			maximum: 1000,
@@ -152,16 +99,7 @@ const ListOp = Type.Object({
 	),
 });
 
-const StatsOp = Type.Object({
-	op: Type.Literal("stats"),
-});
-
-const memoryOpsSchema = Type.Union([SaveOp, FindOp, GetOp, ListOp, ForgetOp, UpdateOp, StatsOp]);
-
-// Flat schema (direct union, not nested in object)
-export const memorySchema = memoryOpsSchema;
-
-type MemoryParams = Static<typeof memorySchema>;
+export type MemoryParams = Static<typeof memorySchema>;
 
 // =============================================================================
 // Tool Class
@@ -209,6 +147,20 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		return undefined;
 	}
 
+	// Auto-detect memory type from content
+	private autoDetectType(content: string): MemoryType {
+		const lower = content.toLowerCase();
+		if (lower.includes("user thích") || lower.includes("prefer") || lower.includes("style"))
+			return "preference";
+		if (lower.includes("dự án") || lower.includes("project") || lower.includes("build"))
+			return "project";
+		if (lower.includes("cách chạy") || lower.includes("command") || lower.includes("run"))
+			return "command";
+		if (lower.includes("bug") || lower.includes("fix") || lower.includes("lỗi") || lower.includes("sửa"))
+			return "solution";
+		return "note"; // default
+	}
+
 	async execute(
 		_toolCallId: string,
 		params: MemoryParams,
@@ -216,229 +168,218 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		_onUpdate?: AgentToolUpdateCallback<MemoryToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<MemoryToolDetails>> {
-		// params is now the direct op object (save | find | forget | stats)
-		const op = params;
 		try {
-			// Normalize tags for operations that have tags field
-			const normalizedTags = "tags" in op ? this.normalizeTags(op.tags) : undefined;
-
-			switch (op.op) {
-				case "save": {
-					const result = this.getEngine().save({
-						content: op.content,
-						type: op.type as MemoryType,
-						tags: normalizedTags,
-						weight: op.weight,
-						expires_at: op.expires_at,
-					});
-					if (!result.ok) {
-						return {
-							content: [{ type: "text", text: `Error: ${result.error}` }],
-							details: { error: result.error },
-						};
-					}
+			// === SAVE ===
+			if (params.save !== undefined) {
+				const result = this.getEngine().save({
+					content: params.save,
+					type: this.autoDetectType(params.save), // auto-detect type
+					tags: [],
+					weight: 0.5,
+				});
+				if (!result.ok) {
 					return {
-						content: [
-							{
-								type: "text",
-								text: `Saved to ${op.type}: ${op.content.substring(0, 100)}`,
-							},
-						],
-						details: {
-							saved: { id: result.value.id, type: result.value.type },
+						content: [{ type: "text", text: `Error: ${result.error}` }],
+						details: { error: result.error },
+					};
+				}
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Saved: ${params.save.substring(0, 100)}`,
 						},
-					};
-				}
-				case "find": {
-					const result = this.getEngine().find(op.query, {
-						type: op.type as MemoryType | undefined,
-						tags: normalizedTags,
-						limit: op.limit,
-					});
-					if (!result.ok) {
-						return {
-							content: [{ type: "text", text: `Error: ${result.error}` }],
-							details: { error: result.error },
-						};
-					}
-					const summary =
-						result.value.memories.length > 0
-							? `Found ${result.value.total} memories:\n${result.value.memories
-									.map((m) => `- [${m.type}] ID: ${m.id}\n  ${m.content.substring(0, 80)}`)
-									.join("\n")}`
-							: `No memories found for "${op.query}"`;
-					return {
-						content: [{ type: "text", text: summary }],
-						details: {
-							total: result.value.total,
-							memories: result.value.memories.map((m) => ({
-								id: m.id,
-								content: m.content,
-								type: m.type,
-								tags: m.tags,
-								created_at: m.created_at,
-							})),
-						},
-					};
-				}
-				case "get": {
-					const result = this.getEngine().get(op.id);
-					if (!result.ok) {
-						return {
-							content: [{ type: "text", text: `Error: ${result.error}` }],
-							details: { error: result.error },
-						};
-					}
-					if (!result.value) {
-						return {
-							content: [{ type: "text", text: `Memory not found: ${op.id}` }],
-							details: { message: "Memory not found" },
-						};
-					}
-					const memory = result.value;
-					const summary = `Memory [${memory.type}] (ID: ${memory.id}):
-Content: ${memory.content}
-Tags: ${memory.tags?.join(", ") || "none"}
-Weight: ${memory.weight}
-Created: ${new Date(memory.created_at).toISOString()}
-Updated: ${new Date(memory.updated_at).toISOString()}`;
-					return {
-						content: [{ type: "text", text: summary }],
-						details: {
-							memory: {
-								id: memory.id,
-								content: memory.content,
-								type: memory.type,
-								tags: memory.tags,
-							},
-						},
-					};
-				}
-				case "forget": {
-					const result = this.getEngine().delete(op.id);
-					if (!result.ok) {
-						return {
-							content: [{ type: "text", text: `Error: ${result.error}` }],
-							details: { error: result.error },
-						};
-					}
-					if (!result.value) {
-						return {
-							content: [
-								{
-									type: "text",
-									text: `Memory not found: ${op.id}\n\nTo find available memories, use: memory({ op: "find", query: "your search term" })\nor\nmemory({ op: "stats" }) to see memory statistics.`,
-								},
-							],
-							details: { deleted: false, message: "Memory not found" },
-						};
-					}
-					return {
-						content: [{ type: "text", text: "Memory deleted" }],
-						details: { deleted: result.value },
-					};
-				}
-				case "update": {
-					const result = this.getEngine().update(op.id, {
-						content: op.content,
-						tags: normalizedTags,
-						weight: op.weight,
-						expires_at: op.expires_at,
-						metadata: op.metadata,
-					});
-					if (!result.ok) {
-						return {
-							content: [{ type: "text", text: `Error: ${result.error}` }],
-							details: { error: result.error },
-						};
-					}
-					if (!result.value) {
-						return {
-							content: [
-								{
-									type: "text",
-									text: `Memory not found: ${op.id}\n\nTo find available memories, use: memory({ op: "find", query: "your search term" })\nor\nmemory({ op: "get", id: "memory_id" }) to retrieve a specific memory.`,
-								},
-							],
-							details: { updated: false, message: "Memory not found" },
-						};
-					}
-					return {
-						content: [{ type: "text", text: "Memory updated" }],
-						details: {
-							updated: true,
-							memory: {
-								id: result.value.id,
-								content: result.value.content,
-								type: result.value.type,
-								tags: result.value.tags,
-							},
-							message: "Memory updated",
-						},
-					};
-				}
-				case "stats": {
-					const result = this.getEngine().stats();
-					if (!result.ok) {
-						return {
-							content: [{ type: "text", text: `Error: ${result.error}` }],
-							details: { error: result.error },
-						};
-					}
-					const summary = `Memory Stats:\n- Total: ${result.value.total}\n- By type: ${JSON.stringify(
-						result.value.byType,
-					)}\n- By tags: ${JSON.stringify(result.value.byTags)}`;
-					return {
-						content: [{ type: "text", text: summary }],
-						details: {
-							total: result.value.total,
-							byType: result.value.byType,
-							byTags: result.value.byTags,
-						},
-					};
-				}
-				case "list": {
-					const limit = op.limit ?? 100;
-					const jsonStr = this.getEngine().exportJSON();
-					let memories: any[] = [];
-					try {
-						memories = JSON.parse(jsonStr);
-					} catch {
-						memories = [];
-					}
-					const limitedMemories = memories.slice(0, limit);
-					const summary =
-						limitedMemories.length > 0
-							? `Found ${memories.length} memories (showing ${limitedMemories.length}):\n${limitedMemories
-									.map(
-										(m) =>
-											`- [${m.type}] ID: ${m.id}\n  ${m.content.substring(0, 60)}${
-												m.content.length > 60 ? "..." : ""
-											}\n  Tags: ${m.tags?.join(", ") || "none"}`,
-									)
-									.join("\n\n")}`
-							: "No memories found.";
-					return {
-						content: [{ type: "text", text: summary }],
-						details: {
-							total: memories.length,
-							shown: limitedMemories.length,
-							memories: limitedMemories.map((m) => ({
-								id: m.id,
-								content: m.content,
-								type: m.type,
-								tags: m.tags,
-								created_at: m.created_at,
-							})),
-						},
-					};
-				}
-				default:
-					return {
-						content: [{ type: "text", text: `Unknown op: ${(op as any).op}` }],
-						details: { error: `Unknown op: ${(op as any).op}` },
-					};
+					],
+					details: {
+						saved: { id: result.value.id, type: result.value.type },
+					},
+				};
 			}
+
+			// === FIND ===
+			if (params.find !== undefined) {
+				const result = this.getEngine().find(params.find, { limit: 10 });
+				if (!result.ok) {
+					return {
+						content: [{ type: "text", text: `Error: ${result.error}` }],
+						details: { error: result.error },
+					};
+				}
+				const summary =
+					result.value.memories.length > 0
+						? `Found ${result.value.total} memories:\n${result.value.memories
+								.map((m) => `- [${m.type}] ${m.id}: ${m.content.substring(0, 60)}`)
+								.join("\n")}`
+						: `No memories found for "${params.find}"`;
+				return {
+					content: [{ type: "text", text: summary }],
+					details: {
+						total: result.value.total,
+						memories: result.value.memories.map((m) => ({
+							id: m.id,
+							content: m.content,
+							type: m.type,
+							tags: m.tags,
+							created_at: m.created_at,
+						})),
+					},
+				};
+			}
+
+			// === GET ===
+			if (params.get !== undefined) {
+				const result = this.getEngine().get(params.get);
+				if (!result.ok) {
+					return {
+						content: [{ type: "text", text: `Error: ${result.error}` }],
+						details: { error: result.error },
+					};
+				}
+				if (!result.value) {
+					return {
+						content: [{ type: "text", text: `Memory not found: ${params.get}` }],
+						details: { message: "Memory not found" },
+					};
+				}
+				const m = result.value;
+				return {
+					content: [
+						{
+							type: "text",
+							text: `[${m.type}] ${m.id}:\n${m.content}\n\nTags: ${m.tags?.join(", ") || "none"}`,
+						},
+					],
+					details: {
+						memory: {
+							id: m.id,
+							content: m.content,
+							type: m.type,
+							tags: m.tags,
+						},
+					},
+				};
+			}
+
+			// === DELETE ===
+			if (params.delete !== undefined) {
+				const result = this.getEngine().delete(params.delete);
+				if (!result.ok) {
+					return {
+						content: [{ type: "text", text: `Error: ${result.error}` }],
+						details: { error: result.error },
+					};
+				}
+				if (!result.value) {
+					return {
+						content: [{ type: "text", text: `Memory not found: ${params.delete}` }],
+						details: { deleted: false, message: "Memory not found" },
+					};
+				}
+				return {
+					content: [{ type: "text", text: "Memory deleted" }],
+					details: { deleted: true },
+				};
+			}
+
+			// === UPDATE ===
+			if (params.update !== undefined) {
+				const result = this.getEngine().update(params.update.id, {
+					content: params.update.content,
+					tags: this.normalizeTags(params.update.tags),
+					weight: params.update.weight,
+				});
+				if (!result.ok) {
+					return {
+						content: [{ type: "text", text: `Error: ${result.error}` }],
+						details: { error: result.error },
+					};
+				}
+				if (!result.value) {
+					return {
+						content: [{ type: "text", text: `Memory not found: ${params.update.id}` }],
+						details: { updated: false, message: "Memory not found" },
+					};
+				}
+				return {
+					content: [{ type: "text", text: "Memory updated" }],
+					details: {
+						updated: true,
+						memory: {
+							id: result.value.id,
+							content: result.value.content,
+							type: result.value.type,
+							tags: result.value.tags,
+						},
+					},
+				};
+			}
+
+			// === STATS ===
+			if (params.stats !== undefined) {
+				const result = this.getEngine().stats();
+				if (!result.ok) {
+					return {
+						content: [{ type: "text", text: `Error: ${result.error}` }],
+						details: { error: result.error },
+					};
+				}
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Total: ${result.value.total}\nBy type: ${JSON.stringify(result.value.byType)}\nBy tags: ${JSON.stringify(result.value.byTags)}`,
+						},
+					],
+					details: {
+						total: result.value.total,
+						byType: result.value.byType,
+						byTags: result.value.byTags,
+					},
+				};
+			}
+
+			// === LIST ===
+			if (params.list !== undefined) {
+				const jsonStr = this.getEngine().exportJSON();
+				let memories: any[] = [];
+				try {
+					memories = JSON.parse(jsonStr);
+				} catch {
+					memories = [];
+				}
+				const limited: Array<{id: string; content: string; type: string; tags: string[]; created_at: number}> = memories.slice(0, params.list);
+				const summary =
+					limited.length > 0
+						? `${memories.length} memories (showing ${limited.length}):\n${limited
+								.map((m) => `[${m.type}] ${m.id}: ${m.content.substring(0, 50)}`)
+								.join("\n")}`
+						: "No memories.";
+				return {
+					content: [{ type: "text", text: summary }],
+					details: {
+						total: memories.length,
+						shown: limited.length,
+						memories: limited.map((m) => ({
+							id: m.id,
+							content: m.content,
+							type: m.type,
+							tags: m.tags,
+							created_at: m.created_at,
+						})),
+					},
+				};
+			}
+
+			// No operation
+			return {
+				content: [
+					{
+						type: "text",
+						text: 'Use: memory({ save: "content" }) or memory({ find: "query" }) or memory({ stats: true })',
+					},
+				],
+				details: { message: "No operation specified" },
+			};
 		} catch (e) {
 			const error = e as Error;
 			return {
