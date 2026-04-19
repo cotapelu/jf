@@ -14,7 +14,7 @@ import {
 	type SimpleStreamOptions,
 	type StopReason,
 	type ToolCall,
-} from "@mariozechner/pi-ai";
+} from "@quangtynu/pi-ai";
 import { Logger } from "./logger.js";
 
 // Create stream class matching ProxyMessageEventStream

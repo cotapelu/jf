@@ -3,7 +3,7 @@
  * Uses unified schema pattern (like todo-write): one tool with op field
  */
 
-import type { AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
+import type { AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
 import { type Static, Type } from "@sinclair/typebox";
 import type { createMemoryEngine } from "./index.js";
 import type { MemoryType, Result } from "./types.js";

@@ -37,7 +37,9 @@
 		"@types/node": "^25.6.0",
 		"@typescript/native-preview": "^7.0.0-dev.20260412.1",
 		"concurrently": "^9.2.1",
+		"esbuild": "^0.28.0",
 		"husky": "^9.1.7",
+		"pkg": "^5.8.1",
 		"shx": "^0.4.0",
 		"tsx": "^4.21.0",
 		"typescript": "^6.0.2"
@@ -48,7 +50,12 @@
 	"version": "0.0.3",
 	"dependencies": {
 		"@mariozechner/jiti": "^2.6.5",
-		"@mariozechner/pi-coding-agent": "^0.30.2",
+		"@quangtynu/jiti": "file:packages/jiti",
+		"@quangtynu/pi-agent-core": "^0.65.2",
+		"@quangtynu/pi-ai": "^0.65.2",
+		"@quangtynu/pi-coding-agent": "^0.65.2",
+		"@quangtynu/pi-coding-memory": "^0.66.0",
+		"@quangtynu/pi-tui": "^0.65.2",
 		"get-east-asian-width": "^1.4.0"
 	},
 	"overrides": {

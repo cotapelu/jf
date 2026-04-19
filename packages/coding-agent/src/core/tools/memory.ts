@@ -3,9 +3,9 @@
  * Stores and retrieves persistent information across sessions
  */
 
-import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
-import type { MemoryType } from "@mariozechner/pi-coding-memory";
-import { createMemoryEngine, createSQLiteStore } from "@mariozechner/pi-coding-memory";
+import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
+import type { MemoryType } from "@quangtynu/pi-coding-memory";
+import { createMemoryEngine, createSQLiteStore } from "@quangtynu/pi-coding-memory";
 import { type Static, Type } from "@sinclair/typebox";
 import { join } from "path";
 

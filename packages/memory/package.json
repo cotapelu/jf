@@ -1,5 +1,5 @@
 {
-  "name": "@mariozechner/pi-coding-memory",
+  "name": "@quangtynu/pi-coding-memory",
   "version": "0.66.0",
   "description": "SQLite-backed memory store for coding agents - save and recall preferences, project facts, commands, and solutions",
   "type": "module",

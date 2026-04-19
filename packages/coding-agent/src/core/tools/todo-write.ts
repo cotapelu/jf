@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
-import { StringEnum } from "@mariozechner/pi-ai";
-import type { Component } from "@mariozechner/pi-tui";
-import { Text } from "@mariozechner/pi-tui";
+import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
+import { StringEnum } from "@quangtynu/pi-ai";
+import type { Component } from "@quangtynu/pi-tui";
+import { Text } from "@quangtynu/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
 import chalk from "chalk";
 import type { Theme } from "../../modes/interactive/theme/theme.js";

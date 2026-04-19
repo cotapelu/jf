@@ -7,7 +7,7 @@ import {
 	type TextContent,
 	type ThinkingBudgets,
 	type Transport,
-} from "@mariozechner/pi-ai";
+} from "@quangtynu/pi-ai";
 import { runAgentLoop, runAgentLoopContinue } from "./agent-loop.js";
 import { Logger } from "./logger.js";
 import type {
