@@ -45,10 +45,26 @@ const memorySchema = Type.Object({
 		}),
 	),
 
+	// Tags for save operation
+	tags: Type.Optional(
+		Type.Union([Type.Array(Type.String()), Type.String()], {
+			description: "Tags for organizing memories (optional)",
+		}),
+	),
+
 	// Find operation: query string → search memories
 	find: Type.Optional(
 		Type.String({
 			description: "Search query to find memories",
+		}),
+	),
+
+	// Limit for find operation
+	limit: Type.Optional(
+		Type.Number({
+			minimum: 1,
+			maximum: 100,
+			description: "Max results to return (default 10)",
 		}),
 	),
 
@@ -158,10 +174,11 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		try {
 			// === SAVE ===
 			if (params.save !== undefined) {
+				const saveTags = this.normalizeTags(params.tags);
 				const result = this.getEngine().save({
 					content: params.save,
 					type: this.autoDetectType(params.save), // auto-detect type
-					tags: [],
+					tags: saveTags || [],
 					weight: 0.5,
 				});
 				if (!result.ok) {
@@ -185,7 +202,8 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 
 			// === FIND ===
 			if (params.find !== undefined) {
-				const result = this.getEngine().find(params.find, { limit: 10 });
+				const findLimit = params.limit || 10;
+				const result = this.getEngine().find(params.find, { limit: findLimit });
 				if (!result.ok) {
 					return {
 						content: [{ type: "text", text: `Error: ${result.error}` }],
