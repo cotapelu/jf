@@ -42,10 +42,10 @@
 	},
 	"dependencies": {
 		"@mariozechner/jiti": "^2.6.2",
-		"@quangtynu/pi-agent-core": "^0.65.2",
-		"@quangtynu/pi-ai": "^0.65.2",
+		"@quangtynu/pi-agent-core": "file:../agent",
+		"@quangtynu/pi-ai": "file:../ai",
 		"@quangtynu/pi-coding-memory": "file:../memory",
-		"@quangtynu/pi-tui": "^0.65.2",
+		"@quangtynu/pi-tui": "file:../tui",
 		"@silvia-odwyer/photon-node": "^0.3.4",
 		"ajv": "^8.17.1",
 		"chalk": "^5.5.0",
