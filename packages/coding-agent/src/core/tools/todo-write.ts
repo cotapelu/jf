@@ -457,7 +457,8 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		const storage = this.session.sessionFile ? "session" : "memory";
 
 		// Detect which op was used
-		const hasNewOrUpdatedTodos = params.replace !== undefined || params.add_phase !== undefined || params.add_task !== undefined;
+		const hasNewOrUpdatedTodos =
+			params.replace !== undefined || params.add_phase !== undefined || params.add_task !== undefined;
 
 		if (hasNewOrUpdatedTodos && !this.autoTriggerInProgress) {
 			this.autoTriggerInProgress = true;

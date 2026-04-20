@@ -172,7 +172,8 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 	readonly label = "Memory";
 	readonly description =
 		"Store and retrieve persistent information across sessions. Use to remember user preferences, project facts, commands, and solutions.";
-	readonly promptSnippet = "Store/retrieve: { find: { q:'dark' }, save:{ c:'x', type:'preference' }, get:{ id:'x' }, list:{ l:5 }";
+	readonly promptSnippet =
+		"Store/retrieve: { find: { q:'dark' }, save:{ c:'x', type:'preference' }, get:{ id:'x' }, list:{ l:5 }";
 	readonly promptGuidelines = [
 		"Nested format: { op: { params } } e.g., { find: { query: 'dark' } }, { save: { content: 'x', type: 'preference' } }",
 		"Ops: save(content, type[preference|project|command|solution|note], tags?, weight?), find(query, type?, tags?, limit?), get(id), list(limit?), stats(), forget(id), update(id, content?)",
