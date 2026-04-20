@@ -390,9 +390,8 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 // Tool Class
 // =============================================================================
 
-let autoTriggerInProgress = false;
-
 export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWriteToolDetails> {
+  private autoTriggerInProgress = false;
 	readonly name = "todo_write";
 	readonly label = "Todo Write";
 	readonly description =
@@ -447,8 +446,8 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 			(op) => op.op === "replace" || op.op === "add_phase" || op.op === "add_task",
 		);
 
-		if (hasNewOrUpdatedTodos && !autoTriggerInProgress) {
-			autoTriggerInProgress = true;
+		if (hasNewOrUpdatedTodos && !this.autoTriggerInProgress) {
+			this.autoTriggerInProgress = true;
 			this.session.sendCustomMessage(
 				{
 					customType: "todo-auto-continue",
@@ -463,7 +462,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 				this.session.agent.continue().catch(() => {});
 			});
 			setTimeout(() => {
-				autoTriggerInProgress = false;
+				this.autoTriggerInProgress = false;
 			}, 500);
 		}
 
