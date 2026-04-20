@@ -344,7 +344,7 @@ export function getLatestTodoPhasesFromEntries(entries: SessionEntry[]): TodoPha
  * Applies a single operation to the todo file.
  * This is the main operation handler for the nested format.
  */
-function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFile; errors: string[] } {
+export function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFile; errors: string[] } {
 	const errors: string[] = [];
 
 	// Detect which operation is being called
@@ -479,74 +479,6 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 	errors.push("No operation specified");
 	normalizeInProgressTask(file.phases);
 	return { file, errors };
-}
-
-/**
- * Backward compatibility alias for applySingleOp.
- * Used by existing tests that expect the old API format.
- * This function converts the old array-based format to the new nested format.
- */
-export function applyOps(
-	file: TodoFile,
-	ops: Array<{ op: string; [key: string]: unknown }>,
-): { file: TodoFile; errors: string[] } {
-	let currentFile = file;
-	const allErrors: string[] = [];
-
-	for (const op of ops) {
-		// Convert old format to new format
-		const params: TodoWriteParams = {};
-
-		switch (op.op) {
-			case "replace": {
-				params.replace = {
-					phases: op.phases as Array<{ name: string; tasks?: Array<{ content: string }> }>,
-				};
-				break;
-			}
-			case "add_phase": {
-				params.add_phase = {
-					name: op.name as string,
-					tasks: op.tasks as Array<{ content: string }> | undefined,
-				};
-				break;
-			}
-			case "add_task": {
-				params.add_task = {
-					phase: op.phase as string,
-					content: op.content as string,
-					notes: op.notes as string | undefined,
-					details: op.details as string | undefined,
-				};
-				break;
-			}
-			case "update": {
-				params.update = {
-					id: op.id as string,
-					status: op.status as TodoStatus | undefined,
-					content: op.content as string | undefined,
-					notes: op.notes as string | undefined,
-					details: op.details as string | undefined,
-				};
-				break;
-			}
-			case "remove_task": {
-				params.remove_task = {
-					id: op.id as string,
-				};
-				break;
-			}
-			default:
-				allErrors.push(`Unknown operation: ${op.op}`);
-				continue;
-		}
-
-		const result = applySingleOp(currentFile, params);
-		currentFile = result.file;
-		allErrors.push(...result.errors);
-	}
-
-	return { file: currentFile, errors: allErrors };
 }
 
 export function formatSummary(phases: TodoPhase[], errors: string[]): string {
