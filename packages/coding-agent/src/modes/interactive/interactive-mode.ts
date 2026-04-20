@@ -282,7 +282,7 @@ export class InteractiveMode {
 		const autocompleteMaxVisible = this.settingsManager.getAutocompleteMaxVisible();
 
 		// Initialize command history
-		this.commandHistory = createCommandHistory(getAgentDir());
+		this.commandHistory = createCommandHistory(this.sessionManager.getCwd());
 
 		// Load history from file and pass to editor
 		const savedHistory = this.commandHistory.getAllAsText(100);
