@@ -60,3 +60,11 @@
 {"ts":1776659436453,"text":"thế mày kiểm tra code đi. nó ở trong file memory.ts ấy","type":"message"}
 {"ts":1776659513422,"text":"không phải ở đó. nó ở memory.ts","type":"message"}
 {"ts":1776659601486,"text":"thế thì phải sửa file packages/memory/src/tools.ts đi. theo nested chứ nhỉ","type":"message"}
+{"ts":1776660823643,"text":"test memory tool call xem này . cứ thế test xem","type":"message"}
+{"ts":1776660859099,"text":"có lúc gọi sai là do đâu vậy","type":"message"}
+{"ts":1776660893572,"text":"test todo luôn xem nào","type":"message"}
+{"ts":1776660925309,"text":"tạo todo list mà test memory xem nào","type":"message"}
+{"ts":1776661008992,"text":"tạo full todo list mà làm toàn bộ docs/TODO.md đi","type":"message"}
+{"ts":1776663974161,"text":"sau khi tạo todo list xong thì nó có làm luôn không? kiểm tra phân tích code xem?","type":"message"}
+{"ts":1776664152362,"text":"thế sao nó có tình huống chưa làm hết todo list mà llm nó vẫn báo cáo tổng hết hết vào nhiêu task và dừng là sao nhỉ? nó ở chỗ nào vậy?","type":"message"}
+{"ts":1776664377564,"text":"uh. thế làm đi : Fix đề xuất: Thêm update vào điều kiện hasNewOrUpdatedTodos:                                                                                                                           \n                                                                                                                                                                                        \n ```typescript                                                                                                                                                                          \n   const hasNewOrUpdatedTodos =                                                                                                                                                         \n       params.replace !== undefined || params.add_phase !== undefined                                                                                                                   \n       || params.add_task !== undefined || params.update !== undefined;                                                                                                                 \n ```","type":"message"}

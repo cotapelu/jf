@@ -458,7 +458,8 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 		// Detect which op was used
 		const hasNewOrUpdatedTodos =
-			params.replace !== undefined || params.add_phase !== undefined || params.add_task !== undefined;
+			params.replace !== undefined || params.add_phase !== undefined
+			|| params.add_task !== undefined || params.update !== undefined;
 
 		if (hasNewOrUpdatedTodos && !this.autoTriggerInProgress) {
 			this.autoTriggerInProgress = true;
