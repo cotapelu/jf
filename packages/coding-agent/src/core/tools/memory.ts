@@ -1,11 +1,19 @@
 /**
  * Memory Tool for pi coding agent
  * Stores and retrieves persistent information across sessions
+ *
+ * Reuses execute logic from @quangtynu/pi-coding-memory
  */
 
 import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
 import type { MemoryType } from "@quangtynu/pi-coding-memory";
-import { createMemoryEngine, createSQLiteStore } from "@quangtynu/pi-coding-memory";
+import {
+	createMemoryEngine,
+	createSQLiteStore,
+	executeMemoryOperation,
+	normalizeParams,
+	normalizeTags,
+} from "@quangtynu/pi-coding-memory";
 import { type Static, Type } from "@sinclair/typebox";
 import { join } from "path";
 
@@ -34,7 +42,7 @@ export interface MemoryToolDetails {
 }
 
 // =============================================================================
-// Schema - Nested memory operations (like toolcall format)
+// Schema - Nested memory operations
 // =============================================================================
 
 const SaveOp = Type.Object({
@@ -164,113 +172,6 @@ export const memorySchema = memoryOpsSchema;
 type MemoryParams = Static<typeof memorySchema>;
 
 // =============================================================================
-// Input normalization - Handle string fallback and common LLM errors
-// =============================================================================
-
-/**
- * Normalizes input parameters to handle common LLM errors:
- * - Stringified JSON objects
- * - Missing required fields
- * - Wrong data types
- */
-export function normalizeParams(params: unknown): MemoryParams {
-	// If params is a string, try to parse it
-	if (typeof params === "string") {
-		try {
-			params = JSON.parse(params);
-		} catch (e) {
-			throw new Error(`Invalid JSON string: ${e instanceof Error ? e.message : String(e)}`);
-		}
-	}
-
-	// Ensure params is an object
-	if (typeof params !== "object" || params === null) {
-		throw new Error("Parameters must be an object");
-	}
-
-	const normalized = params as Record<string, unknown>;
-
-	// Handle save being a string instead of object
-	if (normalized.save && typeof normalized.save === "string") {
-		try {
-			normalized.save = JSON.parse(normalized.save);
-		} catch (e) {
-			throw new Error(
-				`save must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	// Handle find being a string instead of object
-	if (normalized.find && typeof normalized.find === "string") {
-		try {
-			normalized.find = JSON.parse(normalized.find);
-		} catch (e) {
-			throw new Error(
-				`find must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	// Handle update being a string instead of object
-	if (normalized.update && typeof normalized.update === "string") {
-		try {
-			normalized.update = JSON.parse(normalized.update);
-		} catch (e) {
-			throw new Error(
-				`update must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	// Handle get being a string instead of object
-	if (normalized.get && typeof normalized.get === "string") {
-		try {
-			normalized.get = JSON.parse(normalized.get);
-		} catch (e) {
-			throw new Error(
-				`get must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	// Handle forget being a string instead of object
-	if (normalized.forget && typeof normalized.forget === "string") {
-		try {
-			normalized.forget = JSON.parse(normalized.forget);
-		} catch (e) {
-			throw new Error(
-				`forget must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	// Handle list being a string instead of object
-	if (normalized.list && typeof normalized.list === "string") {
-		try {
-			normalized.list = JSON.parse(normalized.list);
-		} catch (e) {
-			throw new Error(
-				`list must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	// Handle stats being a string instead of object
-	if (normalized.stats && typeof normalized.stats === "string") {
-		try {
-			normalized.stats = JSON.parse(normalized.stats);
-		} catch (e) {
-			throw new Error(
-				`stats must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
-	}
-
-	return normalized as MemoryParams;
-}
-
-// =============================================================================
 // Tool Class
 // =============================================================================
 
@@ -312,21 +213,6 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		return this._engine;
 	}
 
-	// Helper to normalize tags (handle both array and JSON string)
-	private normalizeTags(tags: string[] | string | undefined): string[] | undefined {
-		if (!tags) return undefined;
-		if (Array.isArray(tags)) return tags;
-		if (typeof tags === "string") {
-			try {
-				const parsed = JSON.parse(tags);
-				return Array.isArray(parsed) ? parsed : undefined;
-			} catch {
-				return undefined;
-			}
-		}
-		return undefined;
-	}
-
 	async execute(
 		_toolCallId: string,
 		params: MemoryParams,
@@ -334,8 +220,8 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		_onUpdate?: AgentToolUpdateCallback<MemoryToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<MemoryToolDetails>> {
-		// Normalize params to handle common LLM errors
 		try {
+			// Normalize params to handle common LLM errors
 			params = normalizeParams(params);
 		} catch (e) {
 			return {
@@ -344,230 +230,67 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 			};
 		}
 
-		// params is now nested: { save: {...} } or { find: {...} } or { get: {...} }
+		const engine = this.getEngine();
+
 		try {
-			// Detect which operation is being called
+			// Route to reusable execute function
 			if (params.save) {
-				const op = params.save;
-				const normalizedTags = this.normalizeTags(op.tags);
-				const result = this.getEngine().save({
-					content: op.content,
-					type: op.type as MemoryType,
-					tags: normalizedTags,
-					weight: op.weight,
-					expires_at: op.expires_at,
-				});
-				if (!result.ok) {
-					return {
-						content: [{ type: "text", text: `Error: ${result.error}` }],
-						details: { error: result.error },
-					};
-				}
-				return {
-					content: [
-						{
-							type: "text",
-							text: `Saved to ${op.type}: ${op.content.substring(0, 100)}`,
-						},
-					],
-					details: {
-						saved: { id: result.value.id, type: result.value.type },
+				const result = executeMemoryOperation(engine, {
+					save: {
+						content: params.save.content,
+						type: params.save.type as MemoryType,
+						tags: normalizeTags(params.save.tags),
+						weight: params.save.weight,
+						expires_at: params.save.expires_at,
 					},
-				};
+				});
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
 			if (params.find) {
-				const op = params.find;
-				const normalizedTags = this.normalizeTags(op.tags);
-				const result = this.getEngine().find(op.query, {
-					type: op.type as MemoryType | undefined,
-					tags: normalizedTags,
-					limit: op.limit,
-				});
-				if (!result.ok) {
-					return {
-						content: [{ type: "text", text: `Error: ${result.error}` }],
-						details: { error: result.error },
-					};
-				}
-				const summary =
-					result.value.memories.length > 0
-						? `Found ${result.value.total} memories:\n${result.value.memories
-								.map((m) => `- [${m.type}] ID: ${m.id}\n  ${m.content.substring(0, 80)}`)
-								.join("\n")}`
-						: `No memories found for "${op.query}"`;
-				return {
-					content: [{ type: "text", text: summary }],
-					details: {
-						total: result.value.total,
-						memories: result.value.memories.map((m) => ({
-							id: m.id,
-							content: m.content,
-							type: m.type,
-							tags: m.tags,
-							created_at: m.created_at,
-						})),
+				const result = executeMemoryOperation(engine, {
+					find: {
+						query: params.find.query,
+						type: params.find.type as MemoryType | undefined,
+						tags: normalizeTags(params.find.tags),
+						limit: params.find.limit,
 					},
-				};
+				});
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
 			if (params.get) {
-				const result = this.getEngine().get(params.get.id);
-				if (!result.ok) {
-					return {
-						content: [{ type: "text", text: `Error: ${result.error}` }],
-						details: { error: result.error },
-					};
-				}
-				if (!result.value) {
-					return {
-						content: [{ type: "text", text: `Memory not found: ${params.get.id}` }],
-						details: { message: "Memory not found" },
-					};
-				}
-				const memory = result.value;
-				const summary = `Memory [${memory.type}] (ID: ${memory.id}):
-Content: ${memory.content}
-Tags: ${memory.tags?.join(", ") || "none"}
-Weight: ${memory.weight}
-Created: ${new Date(memory.created_at).toISOString()}
-Updated: ${new Date(memory.updated_at).toISOString()}`;
-				return {
-					content: [{ type: "text", text: summary }],
-					details: {
-						memory: {
-							id: memory.id,
-							content: memory.content,
-							type: memory.type,
-							tags: memory.tags,
-						},
-					},
-				};
-			}
-
-			if (params.forget) {
-				const result = this.getEngine().delete(params.forget.id);
-				if (!result.ok) {
-					return {
-						content: [{ type: "text", text: `Error: ${result.error}` }],
-						details: { error: result.error },
-					};
-				}
-				if (!result.value) {
-					return {
-						content: [
-							{
-								type: "text",
-								text: `Memory not found: ${params.forget.id}\n\nTo find available memories, use: memory({ find: { query: "your search term" } })\nor\nmemory({ stats: {} }) to see memory statistics.`,
-							},
-						],
-						details: { deleted: false, message: "Memory not found" },
-					};
-				}
-				return {
-					content: [{ type: "text", text: "Memory deleted" }],
-					details: { deleted: result.value },
-				};
-			}
-
-			if (params.update) {
-				const op = params.update;
-				const normalizedTags = this.normalizeTags(op.tags);
-				const result = this.getEngine().update(op.id, {
-					content: op.content,
-					tags: normalizedTags,
-					weight: op.weight,
-					expires_at: op.expires_at,
-					metadata: op.metadata,
-				});
-				if (!result.ok) {
-					return {
-						content: [{ type: "text", text: `Error: ${result.error}` }],
-						details: { error: result.error },
-					};
-				}
-				if (!result.value) {
-					return {
-						content: [
-							{
-								type: "text",
-								text: `Memory not found: ${op.id}\n\nTo find available memories, use: memory({ find: { query: "your search term" } })\nor\nmemory({ get: { id: "memory_id" } }) to retrieve a specific memory.`,
-							},
-						],
-						details: { updated: false, message: "Memory not found" },
-					};
-				}
-				return {
-					content: [{ type: "text", text: "Memory updated" }],
-					details: {
-						updated: true,
-						memory: {
-							id: result.value.id,
-							content: result.value.content,
-							type: result.value.type,
-							tags: result.value.tags,
-						},
-						message: "Memory updated",
-					},
-				};
-			}
-
-			if (params.stats) {
-				const result = this.getEngine().stats();
-				if (!result.ok) {
-					return {
-						content: [{ type: "text", text: `Error: ${result.error}` }],
-						details: { error: result.error },
-					};
-				}
-				const summary = `Memory Stats:\n- Total: ${result.value.total}\n- By type: ${JSON.stringify(
-					result.value.byType,
-				)}\n- By tags: ${JSON.stringify(result.value.byTags)}`;
-				return {
-					content: [{ type: "text", text: summary }],
-					details: {
-						total: result.value.total,
-						byType: result.value.byType,
-						byTags: result.value.byTags,
-					},
-				};
+				const result = executeMemoryOperation(engine, { get: { id: params.get.id } });
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
 			if (params.list) {
-				const limit = params.list.limit ?? 100;
-				const jsonStr = this.getEngine().exportJSON();
-				let memories: any[] = [];
-				try {
-					memories = JSON.parse(jsonStr);
-				} catch {
-					memories = [];
-				}
-				const limitedMemories = memories.slice(0, limit);
-				const summary =
-					limitedMemories.length > 0
-						? `Found ${memories.length} memories (showing ${limitedMemories.length}):\n${limitedMemories
-								.map(
-									(m) =>
-										`- [${m.type}] ID: ${m.id}\n  ${m.content.substring(0, 60)}${
-											m.content.length > 60 ? "..." : ""
-										}\n  Tags: ${m.tags?.join(", ") || "none"}`,
-								)
-								.join("\n\n")}`
-						: "No memories found.";
-				return {
-					content: [{ type: "text", text: summary }],
-					details: {
-						total: memories.length,
-						shown: limitedMemories.length,
-						memories: limitedMemories.map((m) => ({
-							id: m.id,
-							content: m.content,
-							type: m.type,
-							tags: m.tags,
-							created_at: m.created_at,
-						})),
+				const result = executeMemoryOperation(engine, { list: { limit: params.list.limit } });
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
+			}
+
+			if (params.forget) {
+				const result = executeMemoryOperation(engine, { forget: { id: params.forget.id } });
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
+			}
+
+			if (params.update) {
+				const result = executeMemoryOperation(engine, {
+					update: {
+						id: params.update.id,
+						content: params.update.content,
+						tags: normalizeTags(params.update.tags as string[] | string | undefined),
+						weight: params.update.weight,
+						expires_at: params.update.expires_at,
+						metadata: params.update.metadata,
 					},
-				};
+				});
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
+			}
+
+			if (params.stats) {
+				const result = executeMemoryOperation(engine, { stats: {} });
+				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
 			// No operation specified
