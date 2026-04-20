@@ -1,6 +1,6 @@
 /**
  * Memory Tool Definition for pi coding agent
- * Uses unified schema pattern (like todo-write): one tool with op field
+ * Uses nested schema format (like memory tool in coding-agent): { save: {...} }, { find: {...} }, { list:{...} }
  */
 
 import type { AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
@@ -9,11 +9,10 @@ import type { createMemoryEngine } from "./index.js";
 import type { MemoryType, Result } from "./types.js";
 
 // =============================================================================
-// Schema - Unified memory operations
+// Schema - Nested memory operations (matching coding-agent format)
 // =============================================================================
 
 const SaveOp = Type.Object({
-	op: Type.Literal("save"),
 	content: Type.String({ description: "The information to save (max 10000 chars)" }),
 	type: Type.Union(
 		[
@@ -34,7 +33,6 @@ const SaveOp = Type.Object({
 });
 
 const FindOp = Type.Object({
-	op: Type.Literal("find"),
 	query: Type.String({ description: "Search query (e.g., 'python indentation', 'database')" }),
 	type: Type.Optional(
 		Type.Union(
@@ -52,13 +50,15 @@ const FindOp = Type.Object({
 	limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100, description: "Max results, default 10" })),
 });
 
+const GetOp = Type.Object({
+	id: Type.String({ description: "Memory ID to retrieve" }),
+});
+
 const ForgetOp = Type.Object({
-	op: Type.Literal("forget"),
 	id: Type.String({ description: "Memory ID to delete" }),
 });
 
 const UpdateOp = Type.Object({
-	op: Type.Literal("update"),
 	id: Type.String({ description: "Memory ID to update" }),
 	content: Type.Optional(Type.String({ minLength: 1, maxLength: 10000 })),
 	tags: Type.Optional(Type.Array(Type.String({ maxLength: 50 }), { max: 20 })),
@@ -67,13 +67,24 @@ const UpdateOp = Type.Object({
 	metadata: Type.Optional(Type.Any()),
 });
 
-const StatsOp = Type.Object({
-	op: Type.Literal("stats"),
+const ListOp = Type.Object({
+	limit: Type.Optional(Type.Number({ minimum: 1, maximum: 1000, description: "Max memories to list, default 100" })),
 });
 
-const memoryOpsSchema = Type.Union([SaveOp, FindOp, ForgetOp, UpdateOp, StatsOp]);
+const StatsOp = Type.Object({});
 
-// Flat schema (direct union, not nested in object)
+// Nested schema: object with optional keys for each operation
+const memoryOpsSchema = Type.Object({
+	save: Type.Optional(SaveOp),
+	find: Type.Optional(FindOp),
+	get: Type.Optional(GetOp),
+	list: Type.Optional(ListOp),
+	forget: Type.Optional(ForgetOp),
+	update: Type.Optional(UpdateOp),
+	stats: Type.Optional(StatsOp),
+});
+
+// Nested schema (matching coding-agent format)
 export const memorySchema = memoryOpsSchema;
 
 type MemoryParams = Static<typeof memorySchema>;
@@ -97,123 +108,189 @@ export const memoryToolDefinition = {
 		_onUpdate: AgentToolUpdateCallback<any> | undefined,
 		ctx: { engine: ReturnType<typeof createMemoryEngine> },
 	): Promise<AgentToolResult<any>> {
-		// params is now the direct op object (save | find | forget | stats)
-		const op = params;
-
+		// params is now nested: { save: {...} } or { find: {...} } or { list: {...} }
 		try {
-			switch (op.op) {
-				case "save": {
-					const result = ctx.engine.save({
-						content: op.content,
-						type: op.type as MemoryType,
-						tags: op.tags,
-						weight: op.weight,
-						expires_at: op.expires_at,
-					});
+			if (params.save) {
+				const op = params.save;
+				const result = ctx.engine.save({
+					content: op.content,
+					type: op.type as MemoryType,
+					tags: op.tags,
+					weight: op.weight,
+					expires_at: op.expires_at,
+				});
 
-					if (!result.ok) {
-						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-					}
-					return {
-						content: [{ type: "text", text: `Saved to ${op.type}: ${op.content.substring(0, 100)}` }],
-						details: {
-							id: result.value.id,
-							type: result.value.type,
-							message: `Saved to ${op.type}`,
-						},
-					};
+				if (!result.ok) {
+					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
 				}
-
-				case "find": {
-					const result = ctx.engine.find(op.query, {
-						type: op.type as MemoryType | undefined,
-						tags: op.tags,
-						limit: op.limit,
-					});
-
-					if (!result.ok) {
-						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-					}
-					return {
-						content: [{ type: "text", text: `Found ${result.value.total} memories` }],
-						details: {
-							total: result.value.total,
-							memories: result.value.memories.map((m) => ({
-								id: m.id,
-								content: m.content,
-								type: m.type,
-								tags: m.tags,
-								created_at: m.created_at,
-							})),
-						},
-					};
-				}
-
-				case "forget": {
-					const result = ctx.engine.delete(op.id);
-
-					if (!result.ok) {
-						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-					}
-					return {
-						content: [{ type: "text", text: result.value ? "Memory deleted" : "Memory not found" }],
-						details: {
-							deleted: result.value,
-							message: result.value ? "Memory deleted" : "Memory not found",
-						},
-					};
-				}
-
-				case "update": {
-					const result = ctx.engine.update(op.id, {
-						content: op.content,
-						tags: op.tags,
-						weight: op.weight,
-						expires_at: op.expires_at,
-						metadata: op.metadata,
-					});
-
-					if (!result.ok) {
-						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-					}
-					if (!result.value) {
-						return {
-							content: [{ type: "text", text: "Memory not found" }],
-							details: { updated: false, message: "Memory not found" },
-						};
-					}
-					return {
-						content: [{ type: "text", text: "Memory updated" }],
-						details: {
-							updated: true,
-							memory: {
-								id: result.value.id,
-								content: result.value.content,
-								type: result.value.type,
-								tags: result.value.tags,
-							},
-							message: "Memory updated",
-						},
-					};
-				}
-				case "stats": {
-					const result = ctx.engine.stats();
-
-					if (!result.ok) {
-						return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-					}
-					return {
-						content: [{ type: "text", text: `Total: ${result.value.total} memories` }],
-						details: result.value,
-					};
-				}
-
-				default:
-					return {
-						content: [{ type: "text", text: `Unknown op: ${(op as any).op}` }],
-						details: { error: `Unknown op: ${(op as any).op}` },
-					};
+				return {
+					content: [{ type: "text", text: `Saved to ${op.type}: ${op.content.substring(0, 100)}` }],
+					details: {
+						id: result.value.id,
+						type: result.value.type,
+						message: `Saved to ${op.type}`,
+					},
+				};
 			}
+
+			if (params.find) {
+				const op = params.find;
+				const result = ctx.engine.find(op.query, {
+					type: op.type as MemoryType | undefined,
+					tags: op.tags,
+					limit: op.limit,
+				});
+
+				if (!result.ok) {
+					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+				}
+				return {
+					content: [{ type: "text", text: `Found ${result.value.total} memories` }],
+					details: {
+						total: result.value.total,
+						memories: result.value.memories.map((m) => ({
+							id: m.id,
+							content: m.content,
+							type: m.type,
+							tags: m.tags,
+							created_at: m.created_at,
+						})),
+					},
+				};
+			}
+
+			if (params.get) {
+				const result = ctx.engine.get(params.get.id);
+				if (!result.ok) {
+					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+				}
+				if (!result.value) {
+					return {
+						content: [{ type: "text", text: `Memory not found: ${params.get.id}` }],
+						details: { message: "Memory not found" },
+					};
+				}
+				const memory = result.value;
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Memory [${memory.type}] (ID: ${memory.id}):\nContent: ${memory.content}\nTags: ${memory.tags?.join(", ") || "none"}`,
+						},
+					],
+					details: {
+						memory: {
+							id: memory.id,
+							content: memory.content,
+							type: memory.type,
+							tags: memory.tags,
+						},
+					},
+				};
+			}
+
+			if (params.list) {
+				const limit = params.list.limit ?? 100;
+				const jsonStr = ctx.engine.exportJSON();
+				let memories: any[] = [];
+				try {
+					memories = JSON.parse(jsonStr);
+				} catch {
+					memories = [];
+				}
+				const limitedMemories = memories.slice(0, limit);
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Found ${memories.length} memories (showing ${limitedMemories.length})`,
+						},
+					],
+					details: {
+						total: memories.length,
+						shown: limitedMemories.length,
+						memories: limitedMemories.map((m) => ({
+							id: m.id,
+							content: m.content,
+							type: m.type,
+							tags: m.tags,
+							created_at: m.created_at,
+						})),
+					},
+				};
+			}
+
+			if (params.forget) {
+				const result = ctx.engine.delete(params.forget.id);
+
+				if (!result.ok) {
+					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+				}
+				return {
+					content: [{ type: "text", text: result.value ? "Memory deleted" : "Memory not found" }],
+					details: {
+						deleted: result.value,
+						message: result.value ? "Memory deleted" : "Memory not found",
+					},
+				};
+			}
+
+			if (params.update) {
+				const op = params.update;
+				const result = ctx.engine.update(op.id, {
+					content: op.content,
+					tags: op.tags,
+					weight: op.weight,
+					expires_at: op.expires_at,
+					metadata: op.metadata,
+				});
+
+				if (!result.ok) {
+					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+				}
+				if (!result.value) {
+					return {
+						content: [{ type: "text", text: "Memory not found" }],
+						details: { updated: false, message: "Memory not found" },
+					};
+				}
+				return {
+					content: [{ type: "text", text: "Memory updated" }],
+					details: {
+						updated: true,
+						memory: {
+							id: result.value.id,
+							content: result.value.content,
+							type: result.value.type,
+							tags: result.value.tags,
+						},
+						message: "Memory updated",
+					},
+				};
+			}
+
+			if (params.stats) {
+				const result = ctx.engine.stats();
+
+				if (!result.ok) {
+					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+				}
+				return {
+					content: [{ type: "text", text: `Total: ${result.value.total} memories` }],
+					details: result.value,
+				};
+			}
+
+			// No operation specified
+			return {
+				content: [
+					{
+						type: "text",
+						text: "Missing operation. Use nested format like: { find: { query: '...' } }, { save: { content: '...', type: 'preference' } }, { get: { id: '...' } }, { list: { limit: 10 } }, { stats: {} }",
+					},
+				],
+				details: { error: "No operation specified" },
+			};
 		} catch (e) {
 			const error = e as Error;
 			return { content: [{ type: "text", text: error.message }], details: { error: error.message } };
