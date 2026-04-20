@@ -172,11 +172,11 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 	readonly label = "Memory";
 	readonly description =
 		"Store and retrieve persistent information across sessions. Use to remember user preferences, project facts, commands, and solutions.";
-	readonly promptSnippet = "memory: store and retrieve persistent info";
+	readonly promptSnippet = "Store/retrieve persistent info across sessions.";
 	readonly promptGuidelines = [
-		"Use memory to save important information when user shares preferences, project details, or solutions",
-		"Recall information from memory BEFORE making assumptions about user's setup",
-		"Never save API keys or sensitive data to memory",
+		"Ops: save(content, type[preference|project|command|solution|note], tags?, weight?), find(query, type?, tags?, limit?), get(id), list(limit?), stats(), forget(id), update(id, content?)",
+		"Types: preference (user style), project (facts), command (workflows), solution (bug fixes), note (general)",
+		"Search memory before assuming user setup. Never save API keys.",
 	];
 	readonly parameters = memorySchema;
 	readonly concurrency = "parallel";

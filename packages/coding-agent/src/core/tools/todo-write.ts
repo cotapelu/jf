@@ -36,7 +36,7 @@ export interface TodoWriteToolDetails {
 }
 
 // =============================================================================
-// Schema
+// Schema - Flat union (like memory tool)
 // =============================================================================
 
 const StatusEnum = StringEnum(["pending", "in_progress", "completed", "abandoned"] as const, {
@@ -55,40 +55,37 @@ const InputPhase = Type.Object({
 	tasks: Type.Optional(Type.Array(InputTask)),
 });
 
-const todoWriteSchema = Type.Object({
-	ops: Type.Array(
-		Type.Union([
-			Type.Object({
-				op: Type.Literal("replace"),
-				phases: Type.Array(InputPhase),
-			}),
-			Type.Object({
-				op: Type.Literal("add_phase"),
-				name: Type.String({ description: "Phase name" }),
-				tasks: Type.Optional(Type.Array(InputTask)),
-			}),
-			Type.Object({
-				op: Type.Literal("add_task"),
-				phase: Type.String({ description: "Phase ID, e.g. phase-1" }),
-				content: Type.String({ description: "Task description" }),
-				notes: Type.Optional(Type.String({ description: "Additional context or notes" })),
-				details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics" })),
-			}),
-			Type.Object({
-				op: Type.Literal("update"),
-				id: Type.String({ description: "Task ID, e.g. task-3" }),
-				status: Type.Optional(StatusEnum),
-				content: Type.Optional(Type.String({ description: "Updated task description" })),
-				notes: Type.Optional(Type.String({ description: "Additional context or notes" })),
-				details: Type.Optional(Type.String({ description: "Updated details" })),
-			}),
-			Type.Object({
-				op: Type.Literal("remove_task"),
-				id: Type.String({ description: "Task ID, e.g. task-3" }),
-			}),
-		]),
-	),
-});
+// Flat schema - direct union, no wrapper { ops: [...] }
+const todoWriteSchema = Type.Union([
+	Type.Object({
+		op: Type.Literal("replace"),
+		phases: Type.Array(InputPhase),
+	}),
+	Type.Object({
+		op: Type.Literal("add_phase"),
+		name: Type.String({ description: "Phase name" }),
+		tasks: Type.Optional(Type.Array(InputTask)),
+	}),
+	Type.Object({
+		op: Type.Literal("add_task"),
+		phase: Type.String({ description: "Phase ID, e.g. phase-1" }),
+		content: Type.String({ description: "Task description" }),
+		notes: Type.Optional(Type.String({ description: "Additional context or notes" })),
+		details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics" })),
+	}),
+	Type.Object({
+		op: Type.Literal("update"),
+		id: Type.String({ description: "Task ID, e.g. task-3" }),
+		status: Type.Optional(StatusEnum),
+		content: Type.Optional(Type.String({ description: "Updated task description" })),
+		notes: Type.Optional(Type.String({ description: "Updated notes" })),
+		details: Type.Optional(Type.String({ description: "Updated details" })),
+	}),
+	Type.Object({
+		op: Type.Literal("remove_task"),
+		id: Type.String({ description: "Task ID, e.g. task-3" }),
+	}),
+]);
 
 type TodoWriteParams = Static<typeof todoWriteSchema>;
 
@@ -249,73 +246,75 @@ export function getLatestTodoPhasesFromEntries(entries: SessionEntry[]): TodoPha
 	return [];
 }
 
-export function applyOps(file: TodoFile, ops: TodoWriteParams["ops"]): { file: TodoFile; errors: string[] } {
+// =============================================================================
+// Apply single op (flatten - no loop)
+// =============================================================================
+
+function applySingleOp(file: TodoFile, op: TodoWriteParams): { file: TodoFile; errors: string[] } {
 	const errors: string[] = [];
 
-	for (const op of ops) {
-		switch (op.op) {
-			case "replace": {
-				const next = makeEmptyFile();
-				for (const inputPhase of op.phases) {
-					const phaseId = `phase-${next.nextPhaseId++}`;
-					const { phase, nextTaskId } = buildPhaseFromInput(inputPhase, phaseId, next.nextTaskId);
-					next.phases.push(phase);
-					next.nextTaskId = nextTaskId;
-				}
-				file = next;
+	switch (op.op) {
+		case "replace": {
+			const next = makeEmptyFile();
+			for (const inputPhase of op.phases) {
+				const phaseId = `phase-${next.nextPhaseId++}`;
+				const { phase, nextTaskId } = buildPhaseFromInput(inputPhase, phaseId, next.nextTaskId);
+				next.phases.push(phase);
+				next.nextTaskId = nextTaskId;
+			}
+			file = next;
+			break;
+		}
+
+		case "add_phase": {
+			const phaseId = `phase-${file.nextPhaseId++}`;
+			const { phase, nextTaskId } = buildPhaseFromInput(op, phaseId, file.nextTaskId);
+			file.phases.push(phase);
+			file.nextTaskId = nextTaskId;
+			break;
+		}
+
+		case "add_task": {
+			const target = file.phases.find((p) => p.id === op.phase);
+			if (!target) {
+				errors.push(`Phase "${op.phase}" not found`);
 				break;
 			}
+			target.tasks.push({
+				id: `task-${file.nextTaskId++}`,
+				content: op.content,
+				status: "pending",
+				notes: op.notes,
+				details: op.details,
+			});
+			break;
+		}
 
-			case "add_phase": {
-				const phaseId = `phase-${file.nextPhaseId++}`;
-				const { phase, nextTaskId } = buildPhaseFromInput(op, phaseId, file.nextTaskId);
-				file.phases.push(phase);
-				file.nextTaskId = nextTaskId;
+		case "update": {
+			const task = findTask(file.phases, op.id);
+			if (!task) {
+				errors.push(`Task "${op.id}" not found`);
 				break;
 			}
+			if (op.status !== undefined) task.status = op.status;
+			if (op.content !== undefined) task.content = op.content;
+			if (op.notes !== undefined) task.notes = op.notes;
+			if (op.details !== undefined) task.details = op.details;
+			break;
+		}
 
-			case "add_task": {
-				const target = file.phases.find((p) => p.id === op.phase);
-				if (!target) {
-					errors.push(`Phase "${op.phase}" not found`);
+		case "remove_task": {
+			let removed = false;
+			for (const phase of file.phases) {
+				const idx = phase.tasks.findIndex((t) => t.id === op.id);
+				if (idx !== -1) {
+					phase.tasks.splice(idx, 1);
+					removed = true;
 					break;
 				}
-				target.tasks.push({
-					id: `task-${file.nextTaskId++}`,
-					content: op.content,
-					status: "pending",
-					notes: op.notes,
-					details: op.details,
-				});
-				break;
 			}
-
-			case "update": {
-				const task = findTask(file.phases, op.id);
-				if (!task) {
-					errors.push(`Task "${op.id}" not found`);
-					break;
-				}
-				if (op.status !== undefined) task.status = op.status;
-				if (op.content !== undefined) task.content = op.content;
-				if (op.notes !== undefined) task.notes = op.notes;
-				if (op.details !== undefined) task.details = op.details;
-				break;
-			}
-
-			case "remove_task": {
-				let removed = false;
-				for (const phase of file.phases) {
-					const idx = phase.tasks.findIndex((t) => t.id === op.id);
-					if (idx !== -1) {
-						phase.tasks.splice(idx, 1);
-						removed = true;
-						break;
-					}
-				}
-				if (!removed) errors.push(`Task "${op.id}" not found`);
-				break;
-			}
+			if (!removed) errors.push(`Task "${op.id}" not found`);
+			break;
 		}
 	}
 
@@ -396,15 +395,11 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly label = "Todo Write";
 	readonly description =
 		"Manages a structured todo list that persists across turns. NEVER create TODO.md files - always use this tool for task tracking. View progress with /todos command.";
-	readonly promptSnippet =
-		"Use todo_write for task management. NEVER create TODO.md files. Tracks progress across turns with phases and tasks. View with /todos.";
+	readonly promptSnippet = "Manage todo list with phases and tasks. NEVER create TODO.md. View with /todos.";
 	readonly promptGuidelines = [
-		"Always use todo_write for multi-step tasks - do NOT create TODO.md or any markdown file",
-		"Keep exactly ONE task in_progress at a time - enforce this strictly",
-		"Mark tasks in_progress BEFORE work, completed IMMEDIATELY after",
-		"Prefer structured phases (Analysis, Implementation, Review) for complex tasks",
-		"After todo_write call, explicitly state: '✅ Todo updated: X remaining, Y completed'",
-		"Suggest next action based on current in_progress task",
+		"Ops: add_phase(name, tasks[]), add_task(phase, content), update(id, status|content), remove_task(id), replace(phases[])",
+		"Status: pending, in_progress, completed, abandoned. Keep ONE in_progress at a time.",
+		"After todo_write, state: 'Todo updated: X remaining, Y completed'. Suggest next action.",
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
@@ -432,7 +427,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		}
 
 		const current = fileFromPhases(previousPhases);
-		const { file: updated, errors } = applyOps(current, params.ops);
+		const { file: updated, errors } = applySingleOp(current, params);
 		this.session.setTodoPhases(updated.phases);
 
 		// Save to file if session is being persisted
@@ -442,9 +437,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 		const storage = this.session.sessionFile ? "session" : "memory";
 
-		const hasNewOrUpdatedTodos = params.ops.some(
-			(op) => op.op === "replace" || op.op === "add_phase" || op.op === "add_task",
-		);
+		const hasNewOrUpdatedTodos = params.op === "replace" || params.op === "add_phase" || params.op === "add_task";
 
 		if (hasNewOrUpdatedTodos && !this.autoTriggerInProgress) {
 			this.autoTriggerInProgress = true;
@@ -478,7 +471,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 // =============================================================================
 
 interface TodoWriteRenderArgs {
-	ops?: Array<{ op: string }>;
+	op?: string;
 }
 
 function formatTodoLine(item: TodoItem, theme: Theme, prefix: string): string {
@@ -500,8 +493,7 @@ function formatTodoLine(item: TodoItem, theme: Theme, prefix: string): string {
 
 export const todoWriteToolRenderer = {
 	renderCall(args: TodoWriteRenderArgs, _options: unknown, theme: Theme): Component {
-		const count = args.ops?.length ?? 0;
-		const label = count === 1 ? (args.ops?.[0]?.op ?? "update") : `${count} ops`;
+		const label = args.op ?? "update";
 		const text = `Todo Write: ${label}`;
 		return new Text(theme.fg("toolTitle", text), 0, 0);
 	},
