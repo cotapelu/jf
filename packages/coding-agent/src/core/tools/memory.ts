@@ -164,6 +164,113 @@ export const memorySchema = memoryOpsSchema;
 type MemoryParams = Static<typeof memorySchema>;
 
 // =============================================================================
+// Input normalization - Handle string fallback and common LLM errors
+// =============================================================================
+
+/**
+ * Normalizes input parameters to handle common LLM errors:
+ * - Stringified JSON objects
+ * - Missing required fields
+ * - Wrong data types
+ */
+export function normalizeParams(params: unknown): MemoryParams {
+	// If params is a string, try to parse it
+	if (typeof params === "string") {
+		try {
+			params = JSON.parse(params);
+		} catch (e) {
+			throw new Error(`Invalid JSON string: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	}
+
+	// Ensure params is an object
+	if (typeof params !== "object" || params === null) {
+		throw new Error("Parameters must be an object");
+	}
+
+	const normalized = params as Record<string, unknown>;
+
+	// Handle save being a string instead of object
+	if (normalized.save && typeof normalized.save === "string") {
+		try {
+			normalized.save = JSON.parse(normalized.save);
+		} catch (e) {
+			throw new Error(
+				`save must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle find being a string instead of object
+	if (normalized.find && typeof normalized.find === "string") {
+		try {
+			normalized.find = JSON.parse(normalized.find);
+		} catch (e) {
+			throw new Error(
+				`find must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle update being a string instead of object
+	if (normalized.update && typeof normalized.update === "string") {
+		try {
+			normalized.update = JSON.parse(normalized.update);
+		} catch (e) {
+			throw new Error(
+				`update must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle get being a string instead of object
+	if (normalized.get && typeof normalized.get === "string") {
+		try {
+			normalized.get = JSON.parse(normalized.get);
+		} catch (e) {
+			throw new Error(
+				`get must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle forget being a string instead of object
+	if (normalized.forget && typeof normalized.forget === "string") {
+		try {
+			normalized.forget = JSON.parse(normalized.forget);
+		} catch (e) {
+			throw new Error(
+				`forget must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle list being a string instead of object
+	if (normalized.list && typeof normalized.list === "string") {
+		try {
+			normalized.list = JSON.parse(normalized.list);
+		} catch (e) {
+			throw new Error(
+				`list must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle stats being a string instead of object
+	if (normalized.stats && typeof normalized.stats === "string") {
+		try {
+			normalized.stats = JSON.parse(normalized.stats);
+		} catch (e) {
+			throw new Error(
+				`stats must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	return normalized as MemoryParams;
+}
+
+// =============================================================================
 // Tool Class
 // =============================================================================
 
@@ -173,12 +280,21 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 	readonly description =
 		"Store and retrieve persistent information across sessions. Use to remember user preferences, project facts, commands, and solutions.";
 	readonly promptSnippet =
-		"Store/retrieve: { find: { q:'dark' }, save:{ c:'x', type:'preference' }, get:{ id:'x' }, list:{ l:5 }";
+		"Store/retrieve: { find: { query:'dark' } }, save:{ content:'x', type:'preference' }, get:{ id:'x' }, list:{ limit:5 }";
 	readonly promptGuidelines = [
+		"IMPORTANT: All parameters must be OBJECTS, not strings. Do not JSON.stringify any values.",
 		"Nested format: { op: { params } } e.g., { find: { query: 'dark' } }, { save: { content: 'x', type: 'preference' } }",
 		"Ops: save(content, type[preference|project|command|solution|note], tags?, weight?), find(query, type?, tags?, limit?), get(id), list(limit?), stats(), forget(id), update(id, content?)",
 		"Types: preference (user style), project (facts), command (workflows), solution (bug fixes), note (general)",
 		"Search memory before assuming user setup. Never save API keys.",
+		"Examples:",
+		"  - Save: { save: { content: 'User prefers dark mode', type: 'preference', tags: ['ui', 'theme'] } }",
+		"  - Find: { find: { query: 'dark mode', type: 'preference' } }",
+		"  - Get: { get: { id: 'mem-123' } }",
+		"  - Update: { update: { id: 'mem-123', content: 'Updated content' } }",
+		"  - Forget: { forget: { id: 'mem-123' } }",
+		"  - List: { list: { limit: 10 } }",
+		"  - Stats: { stats: {} }",
 	];
 	readonly parameters = memorySchema;
 	readonly concurrency = "parallel";
@@ -218,6 +334,16 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		_onUpdate?: AgentToolUpdateCallback<MemoryToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<MemoryToolDetails>> {
+		// Normalize params to handle common LLM errors
+		try {
+			params = normalizeParams(params);
+		} catch (e) {
+			return {
+				content: [{ type: "text", text: `❌ Error: ${e instanceof Error ? e.message : String(e)}` }],
+				details: { error: e instanceof Error ? e.message : String(e) },
+			};
+		}
+
 		// params is now nested: { save: {...} } or { find: {...} } or { get: {...} }
 		try {
 			// Detect which operation is being called
