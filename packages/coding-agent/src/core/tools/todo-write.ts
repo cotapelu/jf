@@ -40,18 +40,18 @@ export interface TodoWriteToolDetails {
 // =============================================================================
 
 const StatusEnum = StringEnum(["pending", "in_progress", "completed", "abandoned"] as const, {
-	description: "Task status",
+	description: "Task status: pending, in_progress, completed, or abandoned",
 });
 
 const InputTask = Type.Object({
-	content: Type.String({ description: "Task description" }),
+	content: Type.String({ description: "Task description (required)" }),
 	status: Type.Optional(StatusEnum),
-	notes: Type.Optional(Type.String({ description: "Additional context or notes" })),
-	details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics" })),
+	notes: Type.Optional(Type.String({ description: "Additional context or notes (optional)" })),
+	details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics (optional)" })),
 });
 
 const InputPhase = Type.Object({
-	name: Type.String({ description: "Phase name" }),
+	name: Type.String({ description: "Phase name (required)" }),
 	tasks: Type.Optional(Type.Array(InputTask)),
 });
 
@@ -61,27 +61,27 @@ const ReplaceOp = Type.Object({
 });
 
 const AddPhaseOp = Type.Object({
-	name: Type.String({ description: "Phase name" }),
+	name: Type.String({ description: "Phase name (required) - must be a string, not an object" }),
 	tasks: Type.Optional(Type.Array(InputTask)),
 });
 
 const AddTaskOp = Type.Object({
-	phase: Type.String({ description: "Phase ID, e.g. phase-1" }),
-	content: Type.String({ description: "Task description" }),
-	notes: Type.Optional(Type.String({ description: "Additional context or notes" })),
-	details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics" })),
+	phase: Type.String({ description: "Phase ID, e.g. phase-1 (required)" }),
+	content: Type.String({ description: "Task description (required)" }),
+	notes: Type.Optional(Type.String({ description: "Additional context or notes (optional)" })),
+	details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics (optional)" })),
 });
 
 const UpdateOp = Type.Object({
-	id: Type.String({ description: "Task ID, e.g. task-3" }),
+	id: Type.String({ description: "Task ID, e.g. task-3 (required)" }),
 	status: Type.Optional(StatusEnum),
-	content: Type.Optional(Type.String({ description: "Updated task description" })),
-	notes: Type.Optional(Type.String({ description: "Updated notes" })),
-	details: Type.Optional(Type.String({ description: "Updated details" })),
+	content: Type.Optional(Type.String({ description: "Updated task description (optional)" })),
+	notes: Type.Optional(Type.String({ description: "Updated notes (optional)" })),
+	details: Type.Optional(Type.String({ description: "Updated details (optional)" })),
 });
 
 const RemoveTaskOp = Type.Object({
-	id: Type.String({ description: "Task ID, e.g. task-3" }),
+	id: Type.String({ description: "Task ID, e.g. task-3 (required)" }),
 });
 
 // Nested schema - object with optional keys for each operation
@@ -94,6 +94,90 @@ const todoWriteSchema = Type.Object({
 });
 
 type TodoWriteParams = Static<typeof todoWriteSchema>;
+
+// =============================================================================
+// Input normalization - Handle string fallback and common LLM errors
+// =============================================================================
+
+/**
+ * Normalizes input parameters to handle common LLM errors:
+ * - Stringified JSON objects
+ * - Missing required fields
+ * - Wrong data types
+ */
+export function normalizeParams(params: unknown): TodoWriteParams {
+	// If params is a string, try to parse it
+	if (typeof params === "string") {
+		try {
+			params = JSON.parse(params);
+		} catch (e) {
+			throw new Error(`Invalid JSON string: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	}
+
+	// Ensure params is an object
+	if (typeof params !== "object" || params === null) {
+		throw new Error("Parameters must be an object");
+	}
+
+	const normalized = params as Record<string, unknown>;
+
+	// Handle add_phase being a string instead of object
+	if (normalized.add_phase && typeof normalized.add_phase === "string") {
+		try {
+			normalized.add_phase = JSON.parse(normalized.add_phase);
+		} catch (e) {
+			throw new Error(
+				`add_phase must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle add_phase.name being a stringified object
+	if (normalized.add_phase && typeof normalized.add_phase === "object") {
+		const addPhase = normalized.add_phase as Record<string, unknown>;
+		if (addPhase.name && typeof addPhase.name === "string" && addPhase.name.startsWith("{")) {
+			try {
+				const parsed = JSON.parse(addPhase.name);
+				if (typeof parsed === "object" && parsed !== null) {
+					// LLM put the whole object in name field
+					normalized.add_phase = parsed;
+				}
+			} catch {
+				// Keep original if parse fails
+			}
+		}
+	}
+
+	// Handle tasks being a string instead of array
+	if (normalized.add_phase && typeof normalized.add_phase === "object") {
+		const addPhase = normalized.add_phase as Record<string, unknown>;
+		if (addPhase.tasks && typeof addPhase.tasks === "string") {
+			try {
+				addPhase.tasks = JSON.parse(addPhase.tasks);
+			} catch {
+				// If it's a comma-separated string, split it
+				addPhase.tasks = (addPhase.tasks as string).split(",").map((s) => ({ content: s.trim() }));
+			}
+		}
+	}
+
+	// Handle replace.phases being a string
+	if (normalized.replace && typeof normalized.replace === "object") {
+		const replace = normalized.replace as Record<string, unknown>;
+		if (replace.phases && typeof replace.phases === "string") {
+			try {
+				replace.phases = JSON.parse(replace.phases);
+			} catch (e) {
+				throw new Error(
+					`replace.phases must be an array, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+				);
+			}
+		}
+	}
+
+	return normalized as TodoWriteParams;
+}
 
 // =============================================================================
 // File format
@@ -256,14 +340,30 @@ export function getLatestTodoPhasesFromEntries(entries: SessionEntry[]): TodoPha
 // Apply single op (nested format detection)
 // =============================================================================
 
+/**
+ * Applies a single operation to the todo file.
+ * This is the main operation handler for the nested format.
+ */
 function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFile; errors: string[] } {
 	const errors: string[] = [];
 
 	// Detect which operation is being called
 	if (params.replace) {
 		const op = params.replace;
+		if (!Array.isArray(op.phases)) {
+			errors.push("replace.phases must be an array");
+			return { file, errors };
+		}
 		const next = makeEmptyFile();
 		for (const inputPhase of op.phases) {
+			if (!inputPhase || typeof inputPhase !== "object") {
+				errors.push("Each phase must be an object");
+				continue;
+			}
+			if (!inputPhase.name || typeof inputPhase.name !== "string") {
+				errors.push("Each phase must have a name (string)");
+				continue;
+			}
 			const phaseId = `phase-${next.nextPhaseId++}`;
 			const { phase, nextTaskId } = buildPhaseFromInput(inputPhase, phaseId, next.nextTaskId);
 			next.phases.push(phase);
@@ -276,6 +376,18 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 
 	if (params.add_phase) {
 		const op = params.add_phase;
+		if (!op || typeof op !== "object") {
+			errors.push("add_phase must be an object");
+			return { file, errors };
+		}
+		if (!op.name || typeof op.name !== "string") {
+			errors.push("add_phase.name must be a string (not an object or array)");
+			return { file, errors };
+		}
+		if (op.tasks && !Array.isArray(op.tasks)) {
+			errors.push("add_phase.tasks must be an array");
+			return { file, errors };
+		}
 		const phaseId = `phase-${file.nextPhaseId++}`;
 		const { phase, nextTaskId } = buildPhaseFromInput(op, phaseId, file.nextTaskId);
 		file.phases.push(phase);
@@ -286,6 +398,18 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 
 	if (params.add_task) {
 		const op = params.add_task;
+		if (!op || typeof op !== "object") {
+			errors.push("add_task must be an object");
+			return { file, errors };
+		}
+		if (!op.phase || typeof op.phase !== "string") {
+			errors.push("add_task.phase must be a string (e.g., 'phase-1')");
+			return { file, errors };
+		}
+		if (!op.content || typeof op.content !== "string") {
+			errors.push("add_task.content must be a string");
+			return { file, errors };
+		}
 		const target = file.phases.find((p) => p.id === op.phase);
 		if (!target) {
 			errors.push(`Phase "${op.phase}" not found`);
@@ -304,6 +428,14 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 
 	if (params.update) {
 		const op = params.update;
+		if (!op || typeof op !== "object") {
+			errors.push("update must be an object");
+			return { file, errors };
+		}
+		if (!op.id || typeof op.id !== "string") {
+			errors.push("update.id must be a string (e.g., 'task-1')");
+			return { file, errors };
+		}
 		const task = findTask(file.phases, op.id);
 		if (!task) {
 			errors.push(`Task "${op.id}" not found`);
@@ -319,6 +451,14 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 
 	if (params.remove_task) {
 		const op = params.remove_task;
+		if (!op || typeof op !== "object") {
+			errors.push("remove_task must be an object");
+			return { file, errors };
+		}
+		if (!op.id || typeof op.id !== "string") {
+			errors.push("remove_task.id must be a string (e.g., 'task-1')");
+			return { file, errors };
+		}
 		let removed = false;
 		for (const phase of file.phases) {
 			const idx = phase.tasks.findIndex((t) => t.id === op.id);
@@ -328,7 +468,9 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 				break;
 			}
 		}
-		if (!removed) errors.push(`Task "${op.id}" not found`);
+		if (!removed) {
+			errors.push(`Task "${op.id}" not found`);
+		}
 		normalizeInProgressTask(file.phases);
 		return { file, errors };
 	}
@@ -337,6 +479,74 @@ function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFil
 	errors.push("No operation specified");
 	normalizeInProgressTask(file.phases);
 	return { file, errors };
+}
+
+/**
+ * Backward compatibility alias for applySingleOp.
+ * Used by existing tests that expect the old API format.
+ * This function converts the old array-based format to the new nested format.
+ */
+export function applyOps(
+	file: TodoFile,
+	ops: Array<{ op: string; [key: string]: unknown }>,
+): { file: TodoFile; errors: string[] } {
+	let currentFile = file;
+	const allErrors: string[] = [];
+
+	for (const op of ops) {
+		// Convert old format to new format
+		const params: TodoWriteParams = {};
+
+		switch (op.op) {
+			case "replace": {
+				params.replace = {
+					phases: op.phases as Array<{ name: string; tasks?: Array<{ content: string }> }>,
+				};
+				break;
+			}
+			case "add_phase": {
+				params.add_phase = {
+					name: op.name as string,
+					tasks: op.tasks as Array<{ content: string }> | undefined,
+				};
+				break;
+			}
+			case "add_task": {
+				params.add_task = {
+					phase: op.phase as string,
+					content: op.content as string,
+					notes: op.notes as string | undefined,
+					details: op.details as string | undefined,
+				};
+				break;
+			}
+			case "update": {
+				params.update = {
+					id: op.id as string,
+					status: op.status as TodoStatus | undefined,
+					content: op.content as string | undefined,
+					notes: op.notes as string | undefined,
+					details: op.details as string | undefined,
+				};
+				break;
+			}
+			case "remove_task": {
+				params.remove_task = {
+					id: op.id as string,
+				};
+				break;
+			}
+			default:
+				allErrors.push(`Unknown operation: ${op.op}`);
+				continue;
+		}
+
+		const result = applySingleOp(currentFile, params);
+		currentFile = result.file;
+		allErrors.push(...result.errors);
+	}
+
+	return { file: currentFile, errors: allErrors };
 }
 
 export function formatSummary(phases: TodoPhase[], errors: string[]): string {
@@ -413,12 +623,18 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly description =
 		"Manages a structured todo list that persists across turns. NEVER create TODO.md files - always use this tool for task tracking. View progress with /todos command.";
 	readonly promptSnippet =
-		"Todo: { add_phase:{ n:'Phase 1', tasks:[] }, add_task:{ p:'phase-1', c:'task' }, update:{ id:'task-1', status:'completed' }";
+		"Todo: { add_phase:{ name:'Phase 1', tasks:[{content:'Task 1'}] }, add_task:{ phase:'phase-1', content:'Task 2' }, update:{ id:'task-1', status:'completed' } }";
 	readonly promptGuidelines = [
-		"Nested format: { op: { params } } e.g., { add_phase: { name: 'Phase 1' } }, { add_task: { phase: 'phase-1', content: '...' } }",
+		"IMPORTANT: All parameters must be OBJECTS, not strings. Do not JSON.stringify any values.",
+		"Nested format: { op: { params } } e.g., { add_phase: { name: 'Phase 1', tasks: [{ content: 'Task 1' }] } }",
 		"Ops: add_phase(name, tasks[]), add_task(phase, content), update(id, status|content), remove_task(id), replace(phases[])",
 		"Status: pending, in_progress, completed, abandoned. Keep ONE in_progress at a time.",
 		"After todo_write, state: 'Todo updated: X remaining, Y completed'. Suggest next action.",
+		"Examples:",
+		"  - Add phase: { add_phase: { name: 'Build API', tasks: [{ content: 'Design endpoints', status: 'pending' }] } }",
+		"  - Add task: { add_task: { phase: 'phase-1', content: 'Implement auth' } }",
+		"  - Update task: { update: { id: 'task-1', status: 'completed' } }",
+		"  - Remove task: { remove_task: { id: 'task-2' } }",
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
@@ -435,6 +651,16 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		_onUpdate?: AgentToolUpdateCallback<TodoWriteToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<TodoWriteToolDetails>> {
+		try {
+			// Normalize params to handle common LLM errors
+			params = normalizeParams(params);
+		} catch (e) {
+			return {
+				content: [{ type: "text", text: `❌ Error: ${e instanceof Error ? e.message : String(e)}` }],
+				details: { phases: [], storage: "memory" },
+			};
+		}
+
 		// Load persisted todo if not in memory
 		let previousPhases = this.session.getTodoPhases();
 		if (previousPhases.length === 0 && this.session.sessionFile) {
@@ -458,8 +684,10 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 		// Detect which op was used
 		const hasNewOrUpdatedTodos =
-			params.replace !== undefined || params.add_phase !== undefined
-			|| params.add_task !== undefined || params.update !== undefined;
+			params.replace !== undefined ||
+			params.add_phase !== undefined ||
+			params.add_task !== undefined ||
+			params.update !== undefined;
 
 		if (hasNewOrUpdatedTodos && !this.autoTriggerInProgress) {
 			this.autoTriggerInProgress = true;
