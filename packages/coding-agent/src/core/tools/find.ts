@@ -3,7 +3,6 @@ import { Text } from "@quangtynu/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
 import { spawnSync } from "child_process";
 import { existsSync } from "fs";
-import { globSync } from "glob";
 import path from "path";
 import { keyHint } from "../../modes/interactive/components/keybinding-hints.js";
 import { ensureTool } from "../../utils/tools-manager.js";
@@ -205,22 +204,12 @@ export function createFindToolDefinition(
 							"--max-results",
 							String(effectiveLimit),
 						];
-						// Include .gitignore files from the search tree.
-						const gitignoreFiles = new Set<string>();
+						// Only use the root .gitignore to avoid issues with multiple --ignore-file arguments
+						// fd automatically respects .gitignore files in subdirectories
 						const rootGitignore = path.join(searchPath, ".gitignore");
-						if (existsSync(rootGitignore)) gitignoreFiles.add(rootGitignore);
-						try {
-							const nestedGitignores = globSync("**/.gitignore", {
-								cwd: searchPath,
-								dot: true,
-								absolute: true,
-								ignore: ["**/node_modules/**", "**/.git/**"],
-							});
-							for (const file of nestedGitignores) gitignoreFiles.add(file);
-						} catch {
-							// ignore
+						if (existsSync(rootGitignore)) {
+							args.push("--ignore-file", rootGitignore);
 						}
-						for (const gitignorePath of gitignoreFiles) args.push("--ignore-file", gitignorePath);
 						args.push(pattern, searchPath);
 
 						const result = spawnSync(fdPath, args, { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 });
