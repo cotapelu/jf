@@ -391,7 +391,7 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 // =============================================================================
 
 export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWriteToolDetails> {
-  private autoTriggerInProgress = false;
+	private autoTriggerInProgress = false;
 	readonly name = "todo_write";
 	readonly label = "Todo Write";
 	readonly description =
