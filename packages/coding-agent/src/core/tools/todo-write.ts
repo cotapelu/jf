@@ -201,12 +201,20 @@ interface PersistedTodo {
 // Persistence helpers
 // =============================================================================
 
-export function getTodoFilePath(sessionDir: string): string {
-	return join(sessionDir, "todos.json");
+// Project-based storage: store todos in ././.pi/agent/todos.json within the project directory
+function getProjectTodoFilePath(): string {
+	return join(process.cwd(), ".pi", "agent", "todos.json");
 }
 
-export function loadTodoFromFile(sessionDir: string): TodoFile | null {
-	const filePath = getTodoFilePath(sessionDir);
+/**
+ * @deprecated Use project-based storage. This function now returns the project path regardless of sessionDir.
+ */
+export function getTodoFilePath(_sessionDir: string): string {
+	return getProjectTodoFilePath();
+}
+
+export function loadTodoFromFile(_sessionDir: string): TodoFile | null {
+	const filePath = getProjectTodoFilePath();
 	if (!existsSync(filePath)) return null;
 
 	try {
@@ -219,8 +227,11 @@ export function loadTodoFromFile(sessionDir: string): TodoFile | null {
 	}
 }
 
-export function saveTodoToFile(sessionDir: string, todo: TodoFile): void {
-	const filePath = getTodoFilePath(sessionDir);
+/**
+ * Saves todo to the project-local file: ./.pi/agent/todos.json
+ */
+export function saveTodoToFile(_sessionDir: string, todo: TodoFile): void {
+	const filePath = getProjectTodoFilePath();
 	const dir = dirname(filePath);
 	if (!existsSync(dir)) {
 		mkdirSync(dir, { recursive: true });
@@ -607,10 +618,8 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		const { file: updated, errors } = applySingleOp(current, params);
 		this.session.setTodoPhases(updated.phases);
 
-		// Save to file if session is being persisted
-		if (this.session.sessionFile) {
-			saveTodoToFile(this.session.sessionDir, updated);
-		}
+		// Always save to project-local file for persistence
+		saveTodoToFile("", updated);
 
 		const storage = this.session.sessionFile ? "session" : "memory";
 
