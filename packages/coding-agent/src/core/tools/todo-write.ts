@@ -635,7 +635,8 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 			this.session.sendCustomMessage(
 				{
 					customType: "todo-auto-continue",
-					content: "Continue with the next task from the todo list",
+					content:
+						"Continue with the next task. If no tasks remain, validate the work and immediately add new tasks.",
 					display: false,
 					details: { autoTrigger: true, timestamp: Date.now() },
 				},
