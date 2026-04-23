@@ -46,9 +46,13 @@ export function agentLoop(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch((err) => {
+			console.error("Agent loop failed:", err);
+		});
 
 	return stream;
 }
@@ -68,11 +72,11 @@ export function agentLoopContinue(
 	streamFn?: StreamFn,
 ): EventStream<AgentEvent, AgentMessage[]> {
 	if (context.messages.length === 0) {
-		throw new Error("Cannot continue: no messages in context");
+		throw new Error("Cannot continue: context is empty (expected at least one message)");
 	}
 
 	if (context.messages[context.messages.length - 1].role === "assistant") {
-		throw new Error("Cannot continue from message role: assistant");
+		throw new Error("Cannot continue: last message role is 'assistant'; must be 'user' or 'toolResult'");
 	}
 
 	const stream = createAgentStream();
@@ -85,9 +89,13 @@ export function agentLoopContinue(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch((err) => {
+			console.error("Agent loop (continue) failed:", err);
+		});
 
 	return stream;
 }
@@ -125,11 +133,11 @@ export async function runAgentLoopContinue(
 	streamFn?: StreamFn,
 ): Promise<AgentMessage[]> {
 	if (context.messages.length === 0) {
-		throw new Error("Cannot continue: no messages in context");
+		throw new Error("Cannot continue: context is empty (expected at least one message)");
 	}
 
 	if (context.messages[context.messages.length - 1].role === "assistant") {
-		throw new Error("Cannot continue from message role: assistant");
+		throw new Error("Cannot continue: last message role is 'assistant'; must be 'user' or 'toolResult'");
 	}
 
 	const newMessages: AgentMessage[] = [];

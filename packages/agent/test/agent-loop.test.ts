@@ -650,7 +650,9 @@ describe("agentLoopContinue with AgentMessage", () => {
 			convertToLlm: identityConverter,
 		};
 
-		expect(() => agentLoopContinue(context, config)).toThrow("Cannot continue: no messages in context");
+		expect(() => agentLoopContinue(context, config)).toThrow(
+			"Cannot continue: context is empty (expected at least one message)",
+		);
 	});
 
 	it("should continue from existing context without emitting user message events", async () => {

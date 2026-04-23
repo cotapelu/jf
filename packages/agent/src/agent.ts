@@ -347,7 +347,7 @@ export class Agent {
 				return;
 			}
 
-			throw new Error("Cannot continue from message role: assistant");
+			throw new Error("Cannot continue: last message role is 'assistant'; must be 'user' or 'toolResult'");
 		}
 
 		await this.runContinuation();

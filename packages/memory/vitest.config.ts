@@ -4,12 +4,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 30000, // 30 seconds for API calls
+    testTimeout: 30000,
     coverage: {
       enabled: true,
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
-  }
+  },
 });

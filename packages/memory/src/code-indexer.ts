@@ -249,7 +249,7 @@ export function createCodeIndexer(
 		onIndexed: options.onIndexed,
 	};
 
-	const watchers: any[] = [];
+	const watchers: ReturnType<typeof watch>[] = [];
 	const debounceTimers = new Map<string, number>();
 	// File size limit (1MB)
 	const MAX_FILE_SIZE = 1024 * 1024;
@@ -396,7 +396,7 @@ export function createCodeIndexer(
 					recursive: true,
 					ignored: /node_modules|.git|dist|build/,
 					persist: true,
-				} as any);
+				} as Parameters<typeof watch>[1]);
 
 				watcher.on("change", (filePath) => handleFileEvent("change", filePath));
 				watcher.on("add", (filePath) => handleFileEvent("add", filePath));

@@ -538,20 +538,6 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
 	lines.push(
 		`Phase ${currentIdx + 1}/${phases.length} "${current?.name ?? "unknown"}" — ${done}/${current?.tasks.length ?? 0} tasks complete`,
 	);
-	for (const phase of phases) {
-		lines.push(`  ${phase.name}:`);
-		for (const task of phase.tasks) {
-			const sym =
-				task.status === "completed"
-					? "✓"
-					: task.status === "in_progress"
-						? "→"
-						: task.status === "abandoned"
-							? "✗"
-							: "○";
-			lines.push(`    ${sym} ${task.id} ${task.content}`);
-		}
-	}
 	return lines.join("\n");
 }
 
@@ -635,7 +621,8 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 			this.session.sendCustomMessage(
 				{
 					customType: "todo-auto-continue",
-					content: "Continue with the next task from the todo list",
+					content:
+						"Continue with the next task. If no tasks remain, validate the work and immediately add new tasks.",
 					display: false,
 					details: { autoTrigger: true, timestamp: Date.now() },
 				},
