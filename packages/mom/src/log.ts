@@ -1,5 +1,13 @@
 import chalk from "chalk";
 
+const isJsonLogging = process.env.LOG_JSON === "true";
+
+function jsonLog(type: string, data: Record<string, unknown>): void {
+	if (isJsonLogging) {
+		console.error(JSON.stringify({ ts: Date.now(), type, ...data }));
+	}
+}
+
 export interface LogContext {
 	channelId: string;
 	userName?: string;
@@ -71,6 +79,7 @@ function formatToolArgs(args: Record<string, unknown>): string {
 // User messages
 export function logUserMessage(ctx: LogContext, text: string): void {
 	console.log(chalk.green(`${timestamp()} ${formatContext(ctx)} ${text}`));
+	jsonLog("user_message", { context: formatContext(ctx), text });
 }
 
 // Tool execution
@@ -78,13 +87,13 @@ export function logToolStart(ctx: LogContext, toolName: string, label: string, a
 	const formattedArgs = formatToolArgs(args);
 	console.log(chalk.yellow(`${timestamp()} ${formatContext(ctx)} ↳ ${toolName}: ${label}`));
 	if (formattedArgs) {
-		// Indent the args
 		const indented = formattedArgs
 			.split("\n")
 			.map((line) => `           ${line}`)
 			.join("\n");
 		console.log(chalk.dim(indented));
 	}
+	jsonLog("tool_start", { toolName, label, args, context: formatContext(ctx) });
 }
 
 export function logToolSuccess(ctx: LogContext, toolName: string, durationMs: number, result: string): void {

@@ -3708,8 +3708,8 @@ export const MODELS = {
 			contextWindow: 131072,
 			maxTokens: 8192,
 		} satisfies Model<"google-generative-ai">,
-		"gemma-4-26b-it": {
-			id: "gemma-4-26b-it",
+		"gemma-4-26b-a4b-it": {
+			id: "gemma-4-26b-a4b-it",
 			name: "Gemma 4 26B",
 			api: "google-generative-ai",
 			provider: "google",
@@ -16085,6 +16085,23 @@ export const MODELS = {
 			},
 			contextWindow: 262144,
 			maxTokens: 65536,
+		} satisfies Model<"openai-completions">,
+		"tencent/hy3-preview:free": {
+			id: "tencent/hy3-preview:free",
+			name: "Tencent: Hy3 preview (free)",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			input: ["text"],
+			cost: {
+				input: 0,
+				output: 0,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+			contextWindow: 262144,
+			maxTokens: 262144,
 		} satisfies Model<"openai-completions">,
 		"thedrummer/rocinante-12b": {
 			id: "thedrummer/rocinante-12b",

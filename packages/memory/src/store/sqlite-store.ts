@@ -348,10 +348,12 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 			if (autoExpungeInterval) return;
 			const interval = intervalMs ?? 24 * 60 * 60 * 1000; // Default 24 hours
 			autoExpungeInterval = setInterval(() => {
-				// Run expunge silently, ignore errors
 				try {
 					this.expunge();
-				} catch {}
+				} catch (e) {
+					console.error("Auto expunge failed:", e);
+					// Still ignore to avoid stopping interval
+				}
 			}, interval);
 		},
 
@@ -392,7 +394,10 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 							);
 						}
 					}
-				} catch {}
+				} catch (e) {
+					console.error("Auto decay failed:", e);
+					// Continue; shouldn't stop interval
+				}
 			}, interval);
 		},
 

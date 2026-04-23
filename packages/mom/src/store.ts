@@ -177,7 +177,8 @@ export class ChannelStore {
 			const lastLine = lines[lines.length - 1];
 			const message = JSON.parse(lastLine) as LoggedMessage;
 			return message.ts;
-		} catch {
+		} catch (e) {
+			console.error("Failed to parse last log line as JSON:", e);
 			return null;
 		}
 	}

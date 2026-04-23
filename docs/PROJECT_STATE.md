@@ -215,3 +215,11 @@ Based on file timestamps:
 - Identified docs/READING_TODO.md contains TODO content (renamed from READING_REPORT.md)
 - Found 5 Vietnamese BAOCAO_*.md files in reports/ - detailed technical reports, useful reference
 - docs/READING_TODO.md shows ~70/200 tasks completed (reading progress)
+
+2026-04-23 — Type: Bug Fix Sprint
+- Fixed 14 empty catch blocks across codebase (addressing silent failure risk)
+- Replaced `any` types with proper types in core packages: agent/types.ts, mom/agent.ts, memory/code-indexer.ts
+- Fixed non-null assertions in 4 locations: tui components (box, terminal, editor), web-ui ChatPanel
+- Reviewed timer, event listener, and file handle leaks: cleanup methods present and correctly used
+- Improved error message context in agent-loop.ts and memory/tools.ts
+- Overall: 7/17 bug fix tasks completed; code reliability enhanced

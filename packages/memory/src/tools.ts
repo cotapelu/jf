@@ -293,7 +293,8 @@ export const memoryToolDefinition = {
 			};
 		} catch (e) {
 			const error = e as Error;
-			return { content: [{ type: "text", text: error.message }], details: { error: error.message } };
+			const message = `Tool execution failed: ${error.message}`;
+			return { content: [{ type: "text", text: message }], details: { error: message } };
 		}
 	},
 };
@@ -378,7 +379,8 @@ export function createLLMToolInterface(engine: ReturnType<typeof createMemoryEng
 						return { ok: false, error: `Unknown op: ${op}` };
 				}
 			} catch (e) {
-				return { ok: false, error: (e as Error).message };
+				const err = e as Error;
+				return { ok: false, error: `Operation failed: ${err.message}` };
 			}
 		},
 

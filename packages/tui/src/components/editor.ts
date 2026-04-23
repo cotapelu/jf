@@ -51,7 +51,7 @@ function segmentWithMarkers(text: string, validIds: Set<number>): Iterable<Intl.
 
 	for (const seg of baseSegments) {
 		// Skip past markers that are entirely before this segment.
-		while (markerIdx < markers.length && markers[markerIdx]!.end <= seg.index) {
+		while (markerIdx < markers.length && markers[markerIdx] && markers[markerIdx].end <= seg.index) {
 			markerIdx++;
 		}
 
@@ -2026,7 +2026,7 @@ export class Editor implements Component, Focusable {
 		let firstPrefixIndex = -1;
 
 		for (let i = 0; i < items.length; i++) {
-			const value = items[i]!.value;
+			const value = items[i]?.value;
 			if (value === prefix) {
 				return i; // Exact match always wins
 			}

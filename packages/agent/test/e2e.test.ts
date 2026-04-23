@@ -300,7 +300,9 @@ describe("Agent.continue() with faux provider", () => {
 			};
 			agent.state.messages = [assistantMessage];
 
-			await expect(agent.continue()).rejects.toThrow("Cannot continue from message role: assistant");
+			await expect(agent.continue()).rejects.toThrow(
+				"Cannot continue: last message role is 'assistant'; must be 'user' or 'toolResult'",
+			);
 		});
 	});
 

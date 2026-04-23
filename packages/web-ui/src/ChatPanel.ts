@@ -95,7 +95,7 @@ export class ChatPanel extends LitElement {
 		// Runtime providers factory for REPL tools (read-write access)
 		const runtimeProvidersFactory = () => {
 			const attachments: Attachment[] = [];
-			for (const message of this.agent!.state.messages) {
+			for (const message of this.agent?.state?.messages ?? []) {
 				if (message.role === "user-with-attachments") {
 					message.attachments?.forEach((a) => {
 						attachments.push(a);
