@@ -84,11 +84,14 @@ const RemoveTaskOp = Type.Object({
 	id: Type.String({ description: "Task ID, e.g. task-3 (required)" }),
 });
 
-const ListOp = Type.Object({
-	// No parameters needed - just list current todos
-}, {
-	description: "List current todo list without modification",
-});
+const ListOp = Type.Object(
+	{
+		// No parameters needed - just list current todos
+	},
+	{
+		description: "List current todo list without modification",
+	},
+);
 
 // Nested schema - object with optional keys for each operation
 const todoWriteSchema = Type.Object({
