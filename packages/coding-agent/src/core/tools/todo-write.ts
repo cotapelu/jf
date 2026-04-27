@@ -84,6 +84,12 @@ const RemoveTaskOp = Type.Object({
 	id: Type.String({ description: "Task ID, e.g. task-3 (required)" }),
 });
 
+const ListOp = Type.Object({
+	// No parameters needed - just list current todos
+}, {
+	description: "List current todo list without modification",
+});
+
 // Nested schema - object with optional keys for each operation
 const todoWriteSchema = Type.Object({
 	replace: Type.Optional(ReplaceOp),
@@ -91,6 +97,7 @@ const todoWriteSchema = Type.Object({
 	add_task: Type.Optional(AddTaskOp),
 	update: Type.Optional(UpdateOp),
 	remove_task: Type.Optional(RemoveTaskOp),
+	list: Type.Optional(ListOp),
 });
 
 type TodoWriteParams = Static<typeof todoWriteSchema>;
@@ -486,6 +493,11 @@ export function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: 
 		return { file, errors };
 	}
 
+	if (params.list !== undefined) {
+		// List operation - no modification, just return current state
+		return { file, errors };
+	}
+
 	// No operation specified
 	errors.push("No operation specified");
 	normalizeInProgressTask(file.phases);
@@ -552,11 +564,11 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly description =
 		"Manages a structured todo list that persists across turns. NEVER create TODO.md files - always use this tool for task tracking. View progress with /todos command.";
 	readonly promptSnippet =
-		"Todo: { add_phase:{ name:'Phase 1', tasks:[{content:'Task 1'}] }, add_task:{ phase:'phase-1', content:'Task 2' }, update:{ id:'task-1', status:'completed' } }";
+		"Todo: { add_phase:{ name:'Phase 1', tasks:[{content:'Task 1'}] }, add_task:{ phase:'phase-1', content:'Task 2' }, update:{ id:'task-1', status:'completed' }, list:{} }";
 	readonly promptGuidelines = [
 		"IMPORTANT: All parameters must be OBJECTS, not strings. Do not JSON.stringify any values.",
 		"Nested format: { op: { params } } e.g., { add_phase: { name: 'Phase 1', tasks: [{ content: 'Task 1' }] } }",
-		"Ops: add_phase(name, tasks[]), add_task(phase, content), update(id, status|content), remove_task(id), replace(phases[])",
+		"Ops: add_phase(name, tasks[]), add_task(phase, content), update(id, status|content), remove_task(id), replace(phases[]), list()",
 		"Status: pending, in_progress, completed, abandoned. Keep ONE in_progress at a time.",
 		"After todo_write, state: 'Todo updated: X remaining, Y completed'. Suggest next action.",
 		"Examples:",
@@ -564,6 +576,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		"  - Add task: { add_task: { phase: 'phase-1', content: 'Implement auth' } }",
 		"  - Update task: { update: { id: 'task-1', status: 'completed' } }",
 		"  - Remove task: { remove_task: { id: 'task-2' } }",
+		"  - List todos: { list: {} }",
 	];
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
@@ -616,7 +629,10 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 			params.add_task !== undefined ||
 			params.update !== undefined;
 
-		if (hasNewOrUpdatedTodos && !this.autoTriggerInProgress) {
+		// list operation is read-only, don't trigger auto-continue
+		const isListOperation = params.list !== undefined;
+
+		if (hasNewOrUpdatedTodos && !isListOperation && !this.autoTriggerInProgress) {
 			this.autoTriggerInProgress = true;
 			this.session.sendCustomMessage(
 				{
