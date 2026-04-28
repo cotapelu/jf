@@ -1,0 +1,56 @@
+{
+	"name": "@quangtynu/pi-tools",
+	"version": "0.1.0",
+	"description": "Collection of tools for pi coding agent",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./context-compactor": {
+			"types": "./dist/context-compactor-tool.d.ts",
+			"import": "./dist/context-compactor-tool.js"
+		},
+	"./autocompact": {
+			"types": "./dist/autocompact-tool.d.ts",
+			"import": "./dist/autocompact-tool.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"clean": "shx rm -rf dist",
+		"build": "npx tsgo -p tsconfig.build.json",
+		"dev": "npx tsgo -p tsconfig.build.json --watch --preserveWatchOutput",
+		"test": "vitest --run"
+	},
+	"dependencies": {
+		"@quangtynu/pi-agent-core": "file:../agent"
+	},
+	"devDependencies": {
+		"@types/node": "^24.3.0",
+		"shx": "^0.4.0",
+		"@typescript/native-preview": "^7.0.0-dev.20260412.1",
+		"typescript": "^5.7.3",
+		"vitest": "^3.2.4"
+	},
+	"keywords": [
+		"pi",
+		"tools",
+		"coding-agent"
+	],
+	"author": "Mario Zechner",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/badlogic/pi-mono.git",
+		"directory": "packages/tools"
+	},
+	"engines": {
+		"node": ">=20.6.0"
+	}
+}

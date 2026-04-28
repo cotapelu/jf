@@ -111,6 +111,8 @@ export {
 	todoWriteToolRenderer,
 } from "./todo-write.js";
 
+export { ContextCompactTool } from "./context-compact.js";
+
 export type Tool = AgentTool<any>;
 export type ToolDef = ToolDefinition<any, any>;
 
@@ -127,6 +129,7 @@ export const allTools = {
 	ls: lsTool,
 	todo_write: null as any,
 	memory: null as any,
+	context_compact: null as any,
 };
 
 export const allToolDefinitions = {
@@ -139,6 +142,7 @@ export const allToolDefinitions = {
 	ls: lsToolDefinition,
 	todo_write: {} as any,
 	memory: {} as any,
+	context_compact: {} as any,
 };
 
 export type ToolName = keyof typeof allTools;
@@ -177,6 +181,7 @@ export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): R
 		find: createFindToolDefinition(cwd),
 		ls: createLsToolDefinition(cwd),
 		memory: {} as any,
+		context_compact: {} as any,
 	};
 }
 
@@ -204,5 +209,6 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		find: createFindTool(cwd),
 		ls: createLsTool(cwd),
 		memory: null as any,
+		context_compact: null as any,
 	};
 }
