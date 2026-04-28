@@ -8,6 +8,7 @@ import { join } from "node:path";
 import type { AgentTool, AgentToolResult } from "@quangtynu/pi-agent-core";
 import { type CompactOptions, type CompactResult, contextCompact } from "@quangtynu/pi-tools";
 import { type Static, Type } from "@sinclair/typebox";
+import type { ToolDefinition } from "../extensions/types.js";
 
 // =============================================================================
 // Schema
@@ -39,8 +40,59 @@ const ContextCompactSchema = Type.Object({
 type ContextCompactParams = Static<typeof ContextCompactSchema>;
 
 // =============================================================================
-// Tool Class
+// Tool Definition & Factory
 // =============================================================================
+
+/** Create a ToolDefinition for context_compact */
+export function createContextCompactToolDefinition(
+	cwd: string,
+	_options?: Record<string, never>,
+): ToolDefinition<typeof ContextCompactSchema, CompactResult> {
+	return {
+		name: "context_compact",
+		label: "Context Compact",
+		description:
+			"Automatically compacts code directories or chat messages to fit within token limits. Drops tests/docs/examples, removes comments, trims whitespace. Can optionally use LLM to summarize large files.",
+		promptSnippet:
+			"Compact: { type: 'directory', path: './src', tokenLimit: 128000, dropTests: true, removeComments: true }",
+		promptGuidelines: [
+			"Use this tool to reduce context size before hitting token limits.",
+			"Specify type: 'directory' (with path) or 'messages' (with messages array).",
+			"Options: tokenLimit, dropTests, dropDocs, dropExamples, dropTypes, removeComments, trimWhitespace, useLLM, llmProvider, llmModel, maxFileTokensForHeuristic, verbose.",
+			"Returns: tokensBefore, tokensAfter, tokensSaved, actions, droppedFiles/compactedFiles, etc.",
+		],
+		parameters: ContextCompactSchema,
+		async execute(
+			toolCallId: string,
+			params: ContextCompactParams,
+			signal?: AbortSignal,
+			onUpdate?: any,
+			_ctx?: unknown,
+		): Promise<AgentToolResult<CompactResult>> {
+			const tool = new ContextCompactTool(cwd);
+			return tool.execute(toolCallId, params, signal, onUpdate, _ctx);
+		},
+	};
+}
+
+// Pre-built definition for process.cwd()
+export const contextCompactToolDefinition = createContextCompactToolDefinition(process.cwd());
+
+// =============================================================================
+// Tool Instance Factory
+// =============================================================================
+
+/** Create a ContextCompactTool instance for the given cwd */
+export function createContextCompactTool(cwd: string): ContextCompactTool {
+	return new ContextCompactTool(cwd);
+}
+
+/** Pre-built tool instance for process.cwd() */
+export const contextCompactTool = createContextCompactTool(process.cwd());
+
+// =============================================================================
+// Tool Class
+// ===============================================================================
 
 export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema, CompactResult> {
 	readonly name = "context_compact";

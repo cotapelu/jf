@@ -91,6 +91,12 @@ import {
 	createBashTool,
 	createBashToolDefinition,
 } from "./bash.js";
+import {
+	contextCompactTool,
+	contextCompactToolDefinition,
+	createContextCompactTool,
+	createContextCompactToolDefinition,
+} from "./context-compact.js";
 import { createEditTool, createEditToolDefinition, editTool, editToolDefinition } from "./edit.js";
 import { createFindTool, createFindToolDefinition, findTool, findToolDefinition } from "./find.js";
 import { createGrepTool, createGrepToolDefinition, grepTool, grepToolDefinition } from "./grep.js";
@@ -104,7 +110,13 @@ import {
 } from "./read.js";
 import { createWriteTool, createWriteToolDefinition, writeTool, writeToolDefinition } from "./write.js";
 
-export { ContextCompactTool } from "./context-compact.js";
+export {
+	ContextCompactTool,
+	contextCompactTool,
+	contextCompactToolDefinition,
+	createContextCompactTool,
+	createContextCompactToolDefinition,
+} from "./context-compact.js";
 export {
 	getTodoFilePath,
 	loadTodoFromFile as loadTodo,
@@ -128,7 +140,7 @@ export const allTools = {
 	ls: lsTool,
 	todo_write: null as any,
 	memory: null as any,
-	context_compact: null as any,
+	context_compact: contextCompactTool,
 };
 
 export const allToolDefinitions = {
@@ -141,7 +153,7 @@ export const allToolDefinitions = {
 	ls: lsToolDefinition,
 	todo_write: {} as any,
 	memory: {} as any,
-	context_compact: {} as any,
+	context_compact: contextCompactToolDefinition,
 };
 
 export type ToolName = keyof typeof allTools;
@@ -180,7 +192,7 @@ export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): R
 		find: createFindToolDefinition(cwd),
 		ls: createLsToolDefinition(cwd),
 		memory: {} as any,
-		context_compact: {} as any,
+		context_compact: createContextCompactToolDefinition(cwd),
 	};
 }
 
@@ -208,6 +220,6 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		find: createFindTool(cwd),
 		ls: createLsTool(cwd),
 		memory: null as any,
-		context_compact: null as any,
+		context_compact: createContextCompactTool(cwd),
 	};
 }
