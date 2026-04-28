@@ -13,56 +13,56 @@
  *   const result = await contextCompact({ type: 'directory', path: './src', tokenLimit: 128000 })
  */
 export interface ChatMessage {
-    role: 'system' | 'user' | 'assistant';
-    content: string;
+	role: "system" | "user" | "assistant";
+	content: string;
 }
 export interface CompactOptions {
-    /** Maximum tokens allowed (default: 128000) */
-    tokenLimit?: number;
-    /** Drop test files (.test., .spec.) (default: true) */
-    dropTests?: boolean;
-    /** Drop documentation files (.md, README, CHANGELOG) (default: true) */
-    dropDocs?: boolean;
-    /** Drop example files/directories (default: true) */
-    dropExamples?: boolean;
-    /** Drop type definition files (.d.ts) (default: false) */
-    dropTypes?: boolean;
-    /** Remove comments from code (default: true) */
-    removeComments?: boolean;
-    /** Trim excessive whitespace (default: true) */
-    trimWhitespace?: boolean;
-    /** Use LLM to summarize large files (requires API key) (default: false) */
-    useLLM?: boolean;
-    /** LLM API key (OpenAI or Anthropic) */
-    apiKey?: string;
-    /** LLM provider: 'openai' | 'anthropic' (default: 'openai') */
-    llmProvider?: 'openai' | 'anthropic';
-    /** Model for summarization (default: 'gpt-4-turbo') */
-    llmModel?: string;
-    /** Max file size (in tokens) before using LLM summarization (default: 5000) */
-    maxFileTokensForHeuristic?: number;
-    /** Verbose logging */
-    verbose?: boolean;
+	/** Maximum tokens allowed (default: 128000) */
+	tokenLimit?: number;
+	/** Drop test files (.test., .spec.) (default: true) */
+	dropTests?: boolean;
+	/** Drop documentation files (.md, README, CHANGELOG) (default: true) */
+	dropDocs?: boolean;
+	/** Drop example files/directories (default: true) */
+	dropExamples?: boolean;
+	/** Drop type definition files (.d.ts) (default: false) */
+	dropTypes?: boolean;
+	/** Remove comments from code (default: true) */
+	removeComments?: boolean;
+	/** Trim excessive whitespace (default: true) */
+	trimWhitespace?: boolean;
+	/** Use LLM to summarize large files (requires API key) (default: false) */
+	useLLM?: boolean;
+	/** LLM API key (OpenAI or Anthropic) */
+	apiKey?: string;
+	/** LLM provider: 'openai' | 'anthropic' (default: 'openai') */
+	llmProvider?: "openai" | "anthropic";
+	/** Model for summarization (default: 'gpt-4-turbo') */
+	llmModel?: string;
+	/** Max file size (in tokens) before using LLM summarization (default: 5000) */
+	maxFileTokensForHeuristic?: number;
+	/** Verbose logging */
+	verbose?: boolean;
 }
 export interface CompactResult {
-    /** Tokens before compaction */
-    tokensBefore: number;
-    /** Tokens after compaction */
-    tokensAfter: number;
-    /** Tokens saved */
-    tokensSaved: number;
-    /** Whether compaction was needed */
-    wasCompacted: boolean;
-    /** Actions performed */
-    actions: string[];
-    /** Files dropped (if any) */
-    droppedFiles?: string[];
-    /** For directory compaction */
-    compactedFiles?: string[];
-    /** For message compaction */
-    compactedMessages?: ChatMessage[];
-    /** Error if any */
-    error?: string;
+	/** Tokens before compaction */
+	tokensBefore: number;
+	/** Tokens after compaction */
+	tokensAfter: number;
+	/** Tokens saved */
+	tokensSaved: number;
+	/** Whether compaction was needed */
+	wasCompacted: boolean;
+	/** Actions performed */
+	actions: string[];
+	/** Files dropped (if any) */
+	droppedFiles?: string[];
+	/** For directory compaction */
+	compactedFiles?: string[];
+	/** For message compaction */
+	compactedMessages?: ChatMessage[];
+	/** Error if any */
+	error?: string;
 }
 /**
  * Rough token estimation: 1 token ≈ 4 characters for English/code.
@@ -80,10 +80,14 @@ export declare function trimWhitespace(text: string): string;
 /**
  * Compact a single file's content
  */
-export declare function compactFileContent(content: string, filePath: string, opts?: CompactOptions): Promise<{
-    compacted: string;
-    tokensBefore: number;
-    tokensAfter: number;
+export declare function compactFileContent(
+	content: string,
+	filePath: string,
+	opts?: CompactOptions,
+): Promise<{
+	compacted: string;
+	tokensBefore: number;
+	tokensAfter: number;
 }>;
 /**
  * Compact a directory recursively
@@ -99,11 +103,16 @@ export declare function contextCompactMessages(messages: ChatMessage[], opts?: C
  * @param input { type: 'directory', path: string } OR { type: 'messages', messages: ChatMessage[] }
  * @param options CompactOptions
  */
-export declare function contextCompact(input: {
-    type: 'directory';
-    path: string;
-} | {
-    type: 'messages';
-    messages: ChatMessage[];
-}, options?: CompactOptions): Promise<CompactResult>;
+export declare function contextCompact(
+	input:
+		| {
+				type: "directory";
+				path: string;
+		  }
+		| {
+				type: "messages";
+				messages: ChatMessage[];
+		  },
+	options?: CompactOptions,
+): Promise<CompactResult>;
 //# sourceMappingURL=context-compactor-tool.d.ts.map

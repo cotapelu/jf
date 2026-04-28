@@ -71,10 +71,10 @@ import type { SlashCommandInfo } from "./slash-commands.js";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.js";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.js";
+import { ContextCompactTool } from "./tools/context-compact.js";
 import { createAllToolDefinitions } from "./tools/index.js";
 import { MemoryTool } from "./tools/memory.js";
 import { loadTodoFromFile, type TodoPhase, TodoWriteTool } from "./tools/todo-write.js";
-import { ContextCompactTool } from "./tools/context-compact.js";
 import { createToolDefinitionFromAgentTool, wrapToolDefinition } from "./tools/tool-definition-wrapper.js";
 
 // ============================================================================

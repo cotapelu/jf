@@ -12,98 +12,101 @@
  *   const result = await autoCompact('/path/to/file.js')
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from "fs";
+import * as path from "path";
 
 export interface AutoCompactOptions {
 	/** Remove console.* statements (default: true) */
-	removeConsole?: boolean
+	removeConsole?: boolean;
 	/** Remove empty lines (default: false) */
-	removeEmptyLines?: boolean
+	removeEmptyLines?: boolean;
 	/** Trim trailing whitespace (default: true) */
-	trimTrailing?: boolean
+	trimTrailing?: boolean;
 	/** Custom patterns to remove (regex strings) */
-	removePatterns?: readonly string[]
+	removePatterns?: readonly string[];
 }
 
 export interface AutoCompactResult {
 	/** Path to the file */
-	path: string
+	path: string;
 	/** Original content length */
-	originalSize: number
+	originalSize: number;
 	/** New content length */
-	newSize: number
+	newSize: number;
 	/** Bytes saved */
-	delta: number
+	delta: number;
 	/** Whether file was modified */
-	changed: boolean
+	changed: boolean;
 	/** Error message if any */
-	error?: string
+	error?: string;
 }
 
 /**
  * Compacts a JavaScript/TypeScript file
  */
-export async function autoCompactFile(
-	filePath: string,
-	options: AutoCompactOptions = {}
-): Promise<AutoCompactResult> {
+export async function autoCompactFile(filePath: string, options: AutoCompactOptions = {}): Promise<AutoCompactResult> {
 	const defaults: AutoCompactOptions = {
 		removeConsole: true,
 		removeEmptyLines: false,
 		trimTrailing: true,
-		removePatterns: []
-	} as Required<Pick<AutoCompactOptions, 'removePatterns'>> & AutoCompactOptions
-	const opts = { ...defaults, ...options }
+		removePatterns: [],
+	} as Required<Pick<AutoCompactOptions, "removePatterns">> & AutoCompactOptions;
+	const opts = { ...defaults, ...options };
 
 	try {
-		const content = await fs.promises.readFile(filePath, 'utf-8')
-		let compacted = content
+		const content = await fs.promises.readFile(filePath, "utf-8");
+		let compacted = content;
 
 		// Remove console statements
 		if (opts.removeConsole) {
-			compacted = compacted.replace(/console\.(log|debug|info|warn|error)\s*\([^;]*\);\s*/g, '')
+			compacted = compacted.replace(/console\.(log|debug|info|warn|error)\s*\([^;]*\);\s*/g, "");
 		}
 
 		// Remove custom patterns
-		const patterns = opts.removePatterns || []
-	for (const pattern of patterns) {
+		const patterns = opts.removePatterns || [];
+		for (const pattern of patterns) {
 			try {
-				const regex = new RegExp(pattern, 'g')
-				compacted = compacted.replace(regex, '')
-			} catch (e) {
+				const regex = new RegExp(pattern, "g");
+				compacted = compacted.replace(regex, "");
+			} catch (_e) {
 				// skip invalid regex
 			}
 		}
 
 		// Trim trailing whitespace on each line
 		if (opts.trimTrailing) {
-			compacted = compacted.split('\n').map(line => line.replace(/\s+$/, '')).join('\n')
+			compacted = compacted
+				.split("\n")
+				.map((line) => line.replace(/\s+$/, ""))
+				.join("\n");
 		}
 
 		// Remove empty lines if requested
 		if (opts.removeEmptyLines) {
-			compacted = compacted.split('\n').filter(line => line.trim() !== '').join('\n')
+			compacted = compacted
+				.split("\n")
+				.filter((line) => line.trim() !== "")
+				.join("\n");
 		}
 
 		// Ensure ends with newline
-		if (!compacted.endsWith('\n')) {
-			compacted += '\n'
+		if (!compacted.endsWith("\n")) {
+			compacted += "\n";
 		}
 
-		const changed = compacted !== content
+		const changed = compacted !== content;
 
 		if (changed) {
-			await fs.promises.writeFile(filePath, compacted, 'utf-8')
+			await fs.promises.writeFile(filePath, compacted, "utf-8");
 		}
 
 		return {
 			path: filePath,
-			originalSize: Buffer.byteLength(content, 'utf-8'),
-			newSize: Buffer.byteLength(compacted, 'utf-8'),
-			delta: Buffer.byteLength(content, 'utf-8') - Buffer.byteLength(compacted, 'utf-8'),
-			changed
-		}
+			originalSize: Buffer.byteLength(content, "utf-8"),
+			newSize: Buffer.byteLength(compacted, "utf-8"),
+			delta: Buffer.byteLength(content, "utf-8") - Buffer.byteLength(compacted, "utf-8"),
+			changed,
+		};
 	} catch (error: any) {
 		return {
 			path: filePath,
@@ -111,8 +114,8 @@ export async function autoCompactFile(
 			newSize: 0,
 			delta: 0,
 			changed: false,
-			error: error.message
-		}
+			error: error.message,
+		};
 	}
 }
 
@@ -123,30 +126,30 @@ export async function autoCompactDirectory(
 	dirPath: string,
 	options: AutoCompactOptions & {
 		/** File extensions to process (default: ['.ts', '.js', '.tsx', '.jsx']) */
-		extensions?: string[]
+		extensions?: string[];
 		/** Maximum file size in bytes (default: 1MB) */
-		maxFileSize?: number
-	} = {}
+		maxFileSize?: number;
+	} = {},
 ): Promise<AutoCompactResult[]> {
 	const defaults = {
-		extensions: ['.ts', '.js', '.tsx', '.jsx', '.mjs', '.cjs'],
-		maxFileSize: 1024 * 1024 // 1MB
-	}
-	const opts = { ...defaults, ...options }
-	const results: AutoCompactResult[] = []
+		extensions: [".ts", ".js", ".tsx", ".jsx", ".mjs", ".cjs"],
+		maxFileSize: 1024 * 1024, // 1MB
+	};
+	const opts = { ...defaults, ...options };
+	const results: AutoCompactResult[] = [];
 
 	async function walk(dir: string) {
-		const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+		const entries = await fs.promises.readdir(dir, { withFileTypes: true });
 		for (const entry of entries) {
-			const fullPath = path.join(dir, entry.name)
+			const fullPath = path.join(dir, entry.name);
 
 			if (entry.isDirectory()) {
-				await walk(fullPath)
+				await walk(fullPath);
 			} else if (entry.isFile()) {
-				const ext = path.extname(entry.name)
+				const ext = path.extname(entry.name);
 				if (opts.extensions!.includes(ext)) {
 					// Check file size
-					const stat = await fs.promises.stat(fullPath)
+					const stat = await fs.promises.stat(fullPath);
 					if (stat.size > opts.maxFileSize!) {
 						results.push({
 							path: fullPath,
@@ -154,20 +157,20 @@ export async function autoCompactDirectory(
 							newSize: stat.size,
 							delta: 0,
 							changed: false,
-							error: 'File too large'
-						})
-						continue
+							error: "File too large",
+						});
+						continue;
 					}
 
-					const result = await autoCompactFile(fullPath, options)
-					results.push(result)
+					const result = await autoCompactFile(fullPath, options);
+					results.push(result);
 				}
 			}
 		}
 	}
 
-	await walk(dirPath)
-	return results
+	await walk(dirPath);
+	return results;
 }
 
 /**
@@ -177,15 +180,15 @@ export async function autoCompactDirectory(
 export async function autoCompact(
 	target: string,
 	options: AutoCompactOptions & {
-		extensions?: string[]
-		maxFileSize?: number
-	} = {}
+		extensions?: string[];
+		maxFileSize?: number;
+	} = {},
 ): Promise<AutoCompactResult[]> {
-	const stat = await fs.promises.stat(target)
+	const stat = await fs.promises.stat(target);
 
 	if (stat.isDirectory()) {
-		return await autoCompactDirectory(target, options)
+		return await autoCompactDirectory(target, options);
 	} else {
-		return [await autoCompactFile(target, options)]
+		return [await autoCompactFile(target, options)];
 	}
 }

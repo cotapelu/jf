@@ -104,14 +104,13 @@ import {
 } from "./read.js";
 import { createWriteTool, createWriteToolDefinition, writeTool, writeToolDefinition } from "./write.js";
 
+export { ContextCompactTool } from "./context-compact.js";
 export {
 	getTodoFilePath,
 	loadTodoFromFile as loadTodo,
 	saveTodoToFile as saveTodo,
 	todoWriteToolRenderer,
 } from "./todo-write.js";
-
-export { ContextCompactTool } from "./context-compact.js";
 
 export type Tool = AgentTool<any>;
 export type ToolDef = ToolDefinition<any, any>;

@@ -6,8 +6,8 @@
 
 import { join } from "node:path";
 import type { AgentTool, AgentToolResult } from "@quangtynu/pi-agent-core";
-import { Type, type Static } from "@sinclair/typebox";
-import { contextCompact, type CompactResult, type CompactOptions } from "@quangtynu/pi-tools";
+import { type CompactOptions, type CompactResult, contextCompact } from "@quangtynu/pi-tools";
+import { type Static, Type } from "@sinclair/typebox";
 
 // =============================================================================
 // Schema
@@ -79,7 +79,9 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 			}
 
 			// Narrow and validate inputs
-			let input: { type: "directory"; path: string } | { type: "messages"; messages: NonNullable<ContextCompactParams["messages"]> };
+			let input:
+				| { type: "directory"; path: string }
+				| { type: "messages"; messages: NonNullable<ContextCompactParams["messages"]> };
 			if (params.type === "directory") {
 				if (!params.path) throw new Error("path is required when type is 'directory'");
 				input = { type: "directory", path: resolvedPath! };
