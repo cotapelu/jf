@@ -1,0 +1,184 @@
+/**
+ * Context Compact Tool
+ *
+ * Thin wrapper around @quangtynu/pi-tools/context-compactor.
+ */
+
+import { join } from "node:path";
+import type { AgentTool, AgentToolResult } from "@quangtynu/pi-agent-core";
+import { type CompactOptions, type CompactResult, contextCompact } from "@quangtynu/pi-tools";
+import { type Static, Type } from "@sinclair/typebox";
+import type { ToolDefinition } from "../extensions/types.js";
+
+// =============================================================================
+// Schema
+// =============================================================================
+
+const ChatMessageSchema = Type.Object({
+	role: Type.Union([Type.Literal("system"), Type.Literal("user"), Type.Literal("assistant")]),
+	content: Type.String(),
+});
+
+const ContextCompactSchema = Type.Object({
+	type: Type.Union([Type.Literal("directory"), Type.Literal("messages")]),
+	path: Type.Optional(Type.String()),
+	messages: Type.Optional(Type.Array(ChatMessageSchema)),
+	tokenLimit: Type.Optional(Type.Number()),
+	dropTests: Type.Optional(Type.Boolean()),
+	dropDocs: Type.Optional(Type.Boolean()),
+	dropExamples: Type.Optional(Type.Boolean()),
+	dropTypes: Type.Optional(Type.Boolean()),
+	removeComments: Type.Optional(Type.Boolean()),
+	trimWhitespace: Type.Optional(Type.Boolean()),
+	useLLM: Type.Optional(Type.Boolean()),
+	llmProvider: Type.Optional(Type.Union([Type.Literal("openai"), Type.Literal("anthropic")])),
+	llmModel: Type.Optional(Type.String()),
+	maxFileTokensForHeuristic: Type.Optional(Type.Number()),
+	verbose: Type.Optional(Type.Boolean()),
+});
+
+type ContextCompactParams = Static<typeof ContextCompactSchema>;
+
+// =============================================================================
+// Tool Definition & Factory
+// =============================================================================
+
+/** Create a ToolDefinition for context_compact */
+export function createContextCompactToolDefinition(
+	cwd: string,
+	_options?: Record<string, never>,
+): ToolDefinition<typeof ContextCompactSchema, CompactResult> {
+	return {
+		name: "context_compact",
+		label: "Context Compact",
+		description:
+			"Automatically compacts code directories or chat messages to fit within token limits. Drops tests/docs/examples, removes comments, trims whitespace. Can optionally use LLM to summarize large files.",
+		promptSnippet:
+			"Compact: { type: 'directory', path: './src', tokenLimit: 128000, dropTests: true, removeComments: true }",
+		promptGuidelines: [
+			"Use this tool to reduce context size before hitting token limits.",
+			"Specify type: 'directory' (with path) or 'messages' (with messages array).",
+			"Options: tokenLimit, dropTests, dropDocs, dropExamples, dropTypes, removeComments, trimWhitespace, useLLM, llmProvider, llmModel, maxFileTokensForHeuristic, verbose.",
+			"Returns: tokensBefore, tokensAfter, tokensSaved, actions, droppedFiles/compactedFiles, etc.",
+		],
+		parameters: ContextCompactSchema,
+		async execute(
+			toolCallId: string,
+			params: ContextCompactParams,
+			signal?: AbortSignal,
+			onUpdate?: any,
+			_ctx?: unknown,
+		): Promise<AgentToolResult<CompactResult>> {
+			const tool = new ContextCompactTool(cwd);
+			return tool.execute(toolCallId, params, signal, onUpdate, _ctx);
+		},
+	};
+}
+
+// Pre-built definition for process.cwd()
+export const contextCompactToolDefinition = createContextCompactToolDefinition(process.cwd());
+
+// =============================================================================
+// Tool Instance Factory
+// =============================================================================
+
+/** Create a ContextCompactTool instance for the given cwd */
+export function createContextCompactTool(cwd: string): ContextCompactTool {
+	return new ContextCompactTool(cwd);
+}
+
+/** Pre-built tool instance for process.cwd() */
+export const contextCompactTool = createContextCompactTool(process.cwd());
+
+// =============================================================================
+// Tool Class
+// ===============================================================================
+
+export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema, CompactResult> {
+	readonly name = "context_compact";
+	readonly label = "Context Compact";
+	readonly description =
+		"Automatically compacts code directories or chat messages to fit within token limits. Drops tests/docs/examples, removes comments, trims whitespace.";
+	readonly promptSnippet = "Compact: { type: 'directory', path: './src', tokenLimit: 128000 }";
+	readonly promptGuidelines = [
+		"Use this tool to reduce context size before hitting token limits.",
+		"Specify type: 'directory' (with path) or 'messages' (with messages array).",
+		"Options: tokenLimit, dropTests, dropDocs, dropExamples, dropTypes, removeComments, trimWhitespace, useLLM, llmProvider, llmModel, maxFileTokensForHeuristic, verbose.",
+		"Returns: tokensBefore, tokensAfter, tokensSaved, actions, droppedFiles/compactedFiles, etc.",
+	];
+	readonly parameters = ContextCompactSchema;
+	readonly concurrency = "safe";
+	readonly strict = true;
+
+	constructor(private cwd: string) {}
+
+	async execute(
+		_toolCallId: string,
+		params: ContextCompactParams,
+		_signal?: AbortSignal,
+		_onUpdate?: any,
+		_context?: unknown,
+	): Promise<AgentToolResult<CompactResult>> {
+		try {
+			// Resolve path relative to cwd if provided
+			let resolvedPath: string | undefined;
+			if (params.path) {
+				if (params.path.startsWith("/") || /^[a-zA-Z]:\\/.test(params.path)) {
+					resolvedPath = params.path;
+				} else {
+					resolvedPath = join(this.cwd, params.path);
+				}
+			}
+
+			// Narrow and validate inputs
+			let input:
+				| { type: "directory"; path: string }
+				| { type: "messages"; messages: NonNullable<ContextCompactParams["messages"]> };
+			if (params.type === "directory") {
+				if (!params.path) throw new Error("path is required when type is 'directory'");
+				input = { type: "directory", path: resolvedPath! };
+			} else {
+				if (!params.messages) throw new Error("messages is required when type is 'messages'");
+				input = { type: "messages", messages: params.messages! };
+			}
+
+			// Build options (undef fields are fine)
+			const options: CompactOptions = {
+				tokenLimit: params.tokenLimit,
+				dropTests: params.dropTests,
+				dropDocs: params.dropDocs,
+				dropExamples: params.dropExamples,
+				dropTypes: params.dropTypes,
+				removeComments: params.removeComments,
+				trimWhitespace: params.trimWhitespace,
+				useLLM: params.useLLM,
+				llmProvider: params.llmProvider,
+				llmModel: params.llmModel,
+				maxFileTokensForHeuristic: params.maxFileTokensForHeuristic,
+				verbose: params.verbose,
+			};
+
+			const result = await contextCompact(input, options);
+
+			const message = `✅ Compacted: ${result.tokensBefore}→${result.tokensAfter} tokens (saved ${result.tokensSaved})`;
+			return {
+				content: [{ type: "text", text: message }],
+				details: result,
+			};
+		} catch (error: any) {
+			// Return a valid CompactResult with error field
+			const emptyResult: CompactResult = {
+				tokensBefore: 0,
+				tokensAfter: 0,
+				tokensSaved: 0,
+				wasCompacted: false,
+				actions: [],
+				error: error.message,
+			};
+			return {
+				content: [{ type: "text", text: `❌ Error: ${error.message}` }],
+				details: emptyResult,
+			};
+		}
+	}
+}

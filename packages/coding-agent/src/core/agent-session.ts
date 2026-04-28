@@ -71,6 +71,7 @@ import type { SlashCommandInfo } from "./slash-commands.js";
 import { createSyntheticSourceInfo, type SourceInfo } from "./source-info.js";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.js";
+import { ContextCompactTool } from "./tools/context-compact.js";
 import { createAllToolDefinitions } from "./tools/index.js";
 import { MemoryTool } from "./tools/memory.js";
 import { loadTodoFromFile, type TodoPhase, TodoWriteTool } from "./tools/todo-write.js";
@@ -2320,6 +2321,10 @@ export class AgentSession {
 		const memoryTool = new MemoryTool();
 		this._baseToolDefinitions.set("memory", createToolDefinitionFromAgentTool(memoryTool));
 
+		// Add context_compact tool
+		const contextCompactTool = new ContextCompactTool(this._cwd);
+		this._baseToolDefinitions.set("context_compact", createToolDefinitionFromAgentTool(contextCompactTool));
+
 		const extensionsResult = this._resourceLoader.getExtensions();
 		if (options.flagValues) {
 			for (const [name, value] of options.flagValues) {
@@ -2349,7 +2354,7 @@ export class AgentSession {
 
 		const defaultActiveToolNames = this._baseToolsOverride
 			? Object.keys(this._baseToolsOverride)
-			: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo_write", "memory"];
+			: ["read", "bash", "edit", "write", "grep", "find", "ls", "todo_write", "memory", "context_compact"];
 		const baseActiveToolNames = options.activeToolNames ?? defaultActiveToolNames;
 		this._refreshToolRegistry({
 			activeToolNames: baseActiveToolNames,

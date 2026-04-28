@@ -136,6 +136,33 @@ describe("applySingleOp", () => {
 		expect(result.errors).toContain("No operation specified");
 	});
 
+	it("should list current todos without modification", () => {
+		// First add some data
+		let result = applySingleOp(file, {
+			add_phase: { name: "Phase 1", tasks: [{ content: "Task 1" }, { content: "Task 2" }] },
+		});
+		file = result.file;
+
+		// Now list
+		result = applySingleOp(file, {
+			list: {},
+		});
+
+		expect(result.errors).toHaveLength(0);
+		expect(result.file.phases).toHaveLength(1);
+		expect(result.file.phases[0].tasks).toHaveLength(2);
+		expect(result.file.phases[0].name).toBe("Phase 1");
+	});
+
+	it("should list empty todos", () => {
+		const result = applySingleOp(file, {
+			list: {},
+		});
+
+		expect(result.errors).toHaveLength(0);
+		expect(result.file.phases).toHaveLength(0);
+	});
+
 	it("should handle add_phase with tasks", () => {
 		const result = applySingleOp(file, {
 			add_phase: {

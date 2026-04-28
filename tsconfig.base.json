@@ -18,6 +18,10 @@
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"useDefineForClassFields": false,
-		"types": ["node"]
+		"types": ["node"],
+		"paths": {
+			"@quangtynu/pi-tools": ["./packages/tools/src/index.ts"],
+			"@quangtynu/pi-tools/*": ["./packages/tools/src/*"]
+		}
 	}
 }
