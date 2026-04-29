@@ -445,7 +445,9 @@ export class SlackBot {
 			try {
 				const entry = JSON.parse(line);
 				if (entry.ts) timestamps.add(entry.ts);
-			} catch {}
+			} catch {
+				// Skip malformed log lines - this is benign
+			}
 		}
 		return timestamps;
 	}

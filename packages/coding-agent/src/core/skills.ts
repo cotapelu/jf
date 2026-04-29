@@ -60,7 +60,9 @@ function addIgnoreRules(ig: IgnoreMatcher, dir: string, rootDir: string): void {
 			if (patterns.length > 0) {
 				ig.add(patterns);
 			}
-		} catch {}
+		} catch {
+			// Skip if ignore file is missing - continue without ignore patterns
+		}
 	}
 }
 
@@ -273,7 +275,9 @@ function loadSkillsFromDirInternal(
 			}
 			diagnostics.push(...result.diagnostics);
 		}
-	} catch {}
+	} catch {
+		// Skip files that fail to parse - continue with other skills
+	}
 
 	return { skills, diagnostics };
 }

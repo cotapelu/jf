@@ -163,7 +163,7 @@ export class ProcessTerminal implements Terminal {
 
 		// Handler that pipes stdin data through the buffer
 		this.stdinDataHandler = (data: string) => {
-			this.stdinBuffer!.process(data);
+			this.stdinBuffer?.process(data);
 		};
 	}
 

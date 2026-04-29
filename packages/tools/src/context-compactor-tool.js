@@ -323,14 +323,14 @@ export async function contextCompactMessages(messages, opts = {}) {
                         messages: [{ role: "user", content: prompt }],
                     }),
                 });
-                const data = await res.json();
+                const data = (await res.json());
                 return data.content?.[0]?.text || null;
             }
             else {
                 const res = await fetch("https://api.openai.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${options.apiKey}`,
+                        Authorization: `Bearer ${options.apiKey}`,
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
@@ -339,7 +339,7 @@ export async function contextCompactMessages(messages, opts = {}) {
                         messages: [{ role: "user", content: prompt }],
                     }),
                 });
-                const data = await res.json();
+                const data = (await res.json());
                 return data.choices?.[0]?.message?.content || null;
             }
         }
@@ -351,8 +351,7 @@ export async function contextCompactMessages(messages, opts = {}) {
     }
     // Check Q-A pair
     function isPair(a, b) {
-        return ((a.role === "user" && b.role === "assistant") ||
-            (a.role === "assistant" && b.role === "user"));
+        return (a.role === "user" && b.role === "assistant") || (a.role === "assistant" && b.role === "user");
     }
     const defaults = {
         tokenLimit: 128000,
@@ -365,7 +364,7 @@ export async function contextCompactMessages(messages, opts = {}) {
     };
     const options = { ...defaults, ...opts };
     const actions = [];
-    const cloned = messages.map(m => ({ ...m }));
+    const cloned = messages.map((m) => ({ ...m }));
     // Initial token count
     const estimate = (txt) => Math.ceil(txt.length / 4);
     let totalTokens = cloned.reduce((sum, m) => sum + estimate(m.content), 0);
@@ -382,7 +381,7 @@ export async function contextCompactMessages(messages, opts = {}) {
         };
     }
     // PHASE 1: Clean each message (whitespace, comments, LLM summarize if large)
-    const targetPerMsg = options.maxTokensPerMessage || Math.floor(options.tokenLimit / messages.length * 1.2);
+    const targetPerMsg = options.maxTokensPerMessage || Math.floor((options.tokenLimit / messages.length) * 1.2);
     for (let i = 0; i < cloned.length; i++) {
         let content = cloned[i].content;
         if (options.trimWhitespace)
@@ -415,7 +414,7 @@ export async function contextCompactMessages(messages, opts = {}) {
     // PHASE 2: Smart dropping with scoring and pair preservation
     const scores = cloned.map((msg, i) => scoreMessage(msg, i, cloned.length, options));
     const keepRecent = options.keepRecent;
-    let keepIndices = new Set();
+    const keepIndices = new Set();
     // Always keep system messages
     for (let i = 0; i < cloned.length; i++) {
         if (cloned[i].role === "system")
@@ -438,7 +437,7 @@ export async function contextCompactMessages(messages, opts = {}) {
     // If still over, drop lowest scored non-system messages
     if (keptTokens > options.tokenLimit) {
         const sortedByScore = Array.from(keepIndices)
-            .filter(i => cloned[i].role !== "system")
+            .filter((i) => cloned[i].role !== "system")
             .sort((a, b) => scores[a] - scores[b]); // low score first
         for (const idx of sortedByScore) {
             if (keptTokens <= options.tokenLimit)
@@ -457,7 +456,9 @@ export async function contextCompactMessages(messages, opts = {}) {
         }
     }
     // Build result array ordered
-    const compacted = Array.from(keepIndices).sort((a, b) => a - b).map(i => cloned[i]);
+    const compacted = Array.from(keepIndices)
+        .sort((a, b) => a - b)
+        .map((i) => cloned[i]);
     const finalTokens = compacted.reduce((sum, m) => sum + estimate(m.content), 0);
     return {
         tokensBefore: originalTokens,

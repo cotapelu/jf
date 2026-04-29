@@ -435,7 +435,9 @@ async function* parseSSE(response: Response): AsyncGenerator<Record<string, unkn
 					if (data && data !== "[DONE]") {
 						try {
 							yield JSON.parse(data);
-						} catch {}
+						} catch {
+							// Skip malformed JSON in stream
+						}
 					}
 				}
 				idx = buffer.indexOf("\n\n");
@@ -444,10 +446,14 @@ async function* parseSSE(response: Response): AsyncGenerator<Record<string, unkn
 	} finally {
 		try {
 			await reader.cancel();
-		} catch {}
+		} catch {
+			// Reader may already be cancelled
+		}
 		try {
 			reader.releaseLock();
-		} catch {}
+		} catch {
+			// Reader lock may already be released
+		}
 	}
 }
 
@@ -509,7 +515,9 @@ function isWebSocketReusable(socket: WebSocketLike): boolean {
 function closeWebSocketSilently(socket: WebSocketLike, code = 1000, reason = "done"): void {
 	try {
 		socket.close(code, reason);
-	} catch {}
+	} catch {
+		// Socket may already be closed
+	}
 }
 
 function scheduleSessionWebSocketExpiry(sessionId: string, entry: CachedWebSocketConnection): void {
@@ -727,7 +735,9 @@ async function* parseWebSocket(socket: WebSocketLike, signal?: AbortSignal): Asy
 				}
 				queue.push(parsed);
 				wake();
-			} catch {}
+			} catch {
+				// Skip malformed WebSocket messages
+			}
 		})();
 	};
 
@@ -844,7 +854,9 @@ async function parseErrorResponse(response: Response): Promise<{ message: string
 			}
 			message = err.message || friendlyMessage || message;
 		}
-	} catch {}
+	} catch {
+			// Keep original error message if parsing fails
+			}
 
 	return { message, friendlyMessage };
 }

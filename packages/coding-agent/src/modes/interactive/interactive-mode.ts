@@ -2455,7 +2455,7 @@ export class InteractiveMode {
 			case "tool_execution_update": {
 				const component = this.pendingTools.get(event.toolCallId);
 				if (component) {
-					component.updateResult({ ...event.partialResult, isError: false }, true);
+					component.updateResult(event.partialResult as never, true);
 					this.ui.requestRender();
 				}
 				break;
@@ -2464,7 +2464,7 @@ export class InteractiveMode {
 			case "tool_execution_end": {
 				const component = this.pendingTools.get(event.toolCallId);
 				if (component) {
-					component.updateResult({ ...event.result, isError: event.isError });
+					component.updateResult(event.result as never, event.isError);
 					this.pendingTools.delete(event.toolCallId);
 					this.ui.requestRender();
 				}

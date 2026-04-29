@@ -502,7 +502,9 @@ function streamCustomAnthropic(
 						(block as any).partialJson += event.delta.partial_json;
 						try {
 							block.arguments = JSON.parse((block as any).partialJson);
-						} catch {}
+						} catch {
+							// Keep partial JSON until complete
+						}
 						stream.push({
 							type: "toolcall_delta",
 							contentIndex: index,
@@ -524,8 +526,10 @@ function streamCustomAnthropic(
 						stream.push({ type: "thinking_end", contentIndex: index, content: block.thinking, partial: output });
 					} else if (block.type === "toolCall") {
 						try {
-							block.arguments = JSON.parse((block as any).partialJson);
-						} catch {}
+						block.arguments = JSON.parse((block as any).partialJson);
+						} catch {
+							// Keep partial JSON on parse error
+						}
 						delete (block as any).partialJson;
 						stream.push({ type: "toolcall_end", contentIndex: index, toolCall: block, partial: output });
 					}

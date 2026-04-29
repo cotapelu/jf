@@ -97,7 +97,7 @@ export class Box implements Component {
 
 		// Check cache validity
 		if (this.matchCache(width, childLines, bgSample)) {
-			return this.cache!.lines;
+			return this.cache?.lines ?? [];
 		}
 
 		// Apply background and padding

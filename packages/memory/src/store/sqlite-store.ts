@@ -351,7 +351,9 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 				// Run expunge silently, ignore errors
 				try {
 					this.expunge();
-				} catch {}
+				} catch {
+					// Expunge errors are non-critical, skip
+				}
 			}, interval);
 		},
 
@@ -392,7 +394,9 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 							);
 						}
 					}
-				} catch {}
+				} catch {
+						// Decay errors are non-critical, skip
+						}
 			}, interval);
 		},
 

@@ -554,7 +554,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 		} else if (event.type === "message_end") {
 			const agentEvent = event as AgentEvent & { type: "message_end" };
 			if (agentEvent.message.role === "assistant") {
-				const assistantMsg = agentEvent.message as any;
+				const assistantMsg = agentEvent.message;
 
 				if (assistantMsg.stopReason) {
 					runState.stopReason = assistantMsg.stopReason;
@@ -580,9 +580,9 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 				const textParts: string[] = [];
 				for (const part of content) {
 					if (part.type === "thinking") {
-						thinkingParts.push((part as any).thinking);
+						thinkingParts.push(part.thinking);
 					} else if (part.type === "text") {
-						textParts.push((part as any).text);
+						textParts.push(part.text);
 					}
 				}
 
@@ -831,7 +831,7 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 				const lastAssistantMessage = messages
 					.slice()
 					.reverse()
-					.find((m) => m.role === "assistant" && (m as any).stopReason !== "aborted") as any;
+					.find((m) => m.role === "assistant" && m.stopReason !== "aborted");
 
 				const contextTokens = lastAssistantMessage
 					? lastAssistantMessage.usage.input +
