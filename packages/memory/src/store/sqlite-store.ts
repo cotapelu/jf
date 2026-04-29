@@ -395,8 +395,8 @@ export function createSQLiteStore(dbPath: string): IMemoryStore {
 						}
 					}
 				} catch {
-						// Decay errors are non-critical, skip
-						}
+					// Decay errors are non-critical, skip
+				}
 			}, interval);
 		},
 

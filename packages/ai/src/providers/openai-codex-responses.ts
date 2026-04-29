@@ -855,8 +855,8 @@ async function parseErrorResponse(response: Response): Promise<{ message: string
 			message = err.message || friendlyMessage || message;
 		}
 	} catch {
-			// Keep original error message if parsing fails
-			}
+		// Keep original error message if parsing fails
+	}
 
 	return { message, friendlyMessage };
 }

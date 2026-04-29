@@ -526,7 +526,7 @@ function streamCustomAnthropic(
 						stream.push({ type: "thinking_end", contentIndex: index, content: block.thinking, partial: output });
 					} else if (block.type === "toolCall") {
 						try {
-						block.arguments = JSON.parse((block as any).partialJson);
+							block.arguments = JSON.parse((block as any).partialJson);
 						} catch {
 							// Keep partial JSON on parse error
 						}
