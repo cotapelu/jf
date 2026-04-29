@@ -21,7 +21,10 @@ const ChatMessageSchema = Type.Object({
 
 const ContextCompactSchema = Type.Object({
 	// type và messages không cần thiết nếu tool được bind với session (auto-get messages)
-	// messages: Type.Optional(Type.Array(ChatMessageSchema)), // optional fallback
+	// nhưng giữ lại để backward compatibility
+	type: Type.Optional(Type.Union([Type.Literal("directory"), Type.Literal("messages")])),
+	path: Type.Optional(Type.String()),
+	messages: Type.Optional(Type.Array(ChatMessageSchema)),
 	tokenLimit: Type.Optional(Type.Number({ minimum: 1, description: "Target token limit after compaction (default: 128000)" })),
 	dropTests: Type.Optional(Type.Boolean()),
 	dropDocs: Type.Optional(Type.Boolean()),
@@ -121,7 +124,7 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 				} else {
 					resolvedPath = join(this.cwd, params.path);
 				}
-			// Get messages: from session state (auto) or from params (explicit)
+			}
 			let messagesForCompact: NonNullable<ContextCompactParams["messages"]>;
 			if (this.session && this.session.agent && this.session.agent.state) {
 				// Auto-bind: use current conversation messages from agent state
@@ -140,9 +143,16 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 			if (params.type === "directory") {
 				throw new Error("Directory compaction not supported; use messages only");
 			}
-			const input = { type: "messages", messages: messagesForCompact };
+			const input = { type: "messages" as const, messages: messagesForCompact };
 
-			// Build options (undef fields are fine)
+			// Build options
+			const options: CompactOptions = {
+				tokenLimit: params.tokenLimit,
+				dropTests: params.dropTests,
+				dropDocs: params.dropDocs,
+				dropExamples: params.dropExamples,
+				dropTypes: params.dropTypes,
+				removeComments: params.removeComments,
 				trimWhitespace: params.trimWhitespace,
 				useLLM: params.useLLM,
 				llmProvider: params.llmProvider,
