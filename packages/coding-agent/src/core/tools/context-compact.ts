@@ -75,9 +75,6 @@ export function createContextCompactToolDefinition(
 	};
 }
 
-// Pre-built definition for process.cwd()
-export const contextCompactToolDefinition = createContextCompactToolDefinition(process.cwd());
-
 // =============================================================================
 // Tool Instance Factory
 // =============================================================================
@@ -86,9 +83,6 @@ export const contextCompactToolDefinition = createContextCompactToolDefinition(p
 export function createContextCompactTool(cwd: string): ContextCompactTool {
 	return new ContextCompactTool(cwd);
 }
-
-/** Pre-built tool instance for process.cwd() */
-export const contextCompactTool = createContextCompactTool(process.cwd());
 
 // =============================================================================
 // Tool Class
@@ -182,3 +176,7 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 		}
 	}
 }
+
+// Pre-built definitions (avoid TDZ by placing after class)
+export const contextCompactTool = createContextCompactTool(process.cwd());
+export const contextCompactToolDefinition = createContextCompactToolDefinition(process.cwd());

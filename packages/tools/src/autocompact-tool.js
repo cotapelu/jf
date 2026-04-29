@@ -11,8 +11,8 @@
  *   import { autoCompact } from '@quangtynu/pi-tools/autocompact'
  *   const result = await autoCompact('/path/to/file.js')
  */
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 /**
  * Compacts a JavaScript/TypeScript file
  */
@@ -21,49 +21,55 @@ export async function autoCompactFile(filePath, options = {}) {
         removeConsole: true,
         removeEmptyLines: false,
         trimTrailing: true,
-        removePatterns: []
+        removePatterns: [],
     };
     const opts = { ...defaults, ...options };
     try {
-        const content = await fs.promises.readFile(filePath, 'utf-8');
+        const content = await fs.promises.readFile(filePath, "utf-8");
         let compacted = content;
         // Remove console statements
         if (opts.removeConsole) {
-            compacted = compacted.replace(/console\.(log|debug|info|warn|error)\s*\([^;]*\);\s*/g, '');
+            compacted = compacted.replace(/console\.(log|debug|info|warn|error)\s*\([^;]*\);\s*/g, "");
         }
         // Remove custom patterns
         const patterns = opts.removePatterns || [];
         for (const pattern of patterns) {
             try {
-                const regex = new RegExp(pattern, 'g');
-                compacted = compacted.replace(regex, '');
+                const regex = new RegExp(pattern, "g");
+                compacted = compacted.replace(regex, "");
             }
-            catch (e) {
+            catch (_e) {
                 // skip invalid regex
             }
         }
         // Trim trailing whitespace on each line
         if (opts.trimTrailing) {
-            compacted = compacted.split('\n').map(line => line.replace(/\s+$/, '')).join('\n');
+            compacted = compacted
+                .split("\n")
+                .map((line) => line.replace(/\s+$/, ""))
+                .join("\n");
         }
         // Remove empty lines if requested
         if (opts.removeEmptyLines) {
-            compacted = compacted.split('\n').filter(line => line.trim() !== '').join('\n');
+            compacted = compacted
+                .split("\n")
+                .filter((line) => line.trim() !== "")
+                .join("\n");
         }
         // Ensure ends with newline
-        if (!compacted.endsWith('\n')) {
-            compacted += '\n';
+        if (!compacted.endsWith("\n")) {
+            compacted += "\n";
         }
         const changed = compacted !== content;
         if (changed) {
-            await fs.promises.writeFile(filePath, compacted, 'utf-8');
+            await fs.promises.writeFile(filePath, compacted, "utf-8");
         }
         return {
             path: filePath,
-            originalSize: Buffer.byteLength(content, 'utf-8'),
-            newSize: Buffer.byteLength(compacted, 'utf-8'),
-            delta: Buffer.byteLength(content, 'utf-8') - Buffer.byteLength(compacted, 'utf-8'),
-            changed
+            originalSize: Buffer.byteLength(content, "utf-8"),
+            newSize: Buffer.byteLength(compacted, "utf-8"),
+            delta: Buffer.byteLength(content, "utf-8") - Buffer.byteLength(compacted, "utf-8"),
+            changed,
         };
     }
     catch (error) {
@@ -73,7 +79,7 @@ export async function autoCompactFile(filePath, options = {}) {
             newSize: 0,
             delta: 0,
             changed: false,
-            error: error.message
+            error: error.message,
         };
     }
 }
@@ -82,8 +88,8 @@ export async function autoCompactFile(filePath, options = {}) {
  */
 export async function autoCompactDirectory(dirPath, options = {}) {
     const defaults = {
-        extensions: ['.ts', '.js', '.tsx', '.jsx', '.mjs', '.cjs'],
-        maxFileSize: 1024 * 1024 // 1MB
+        extensions: [".ts", ".js", ".tsx", ".jsx", ".mjs", ".cjs"],
+        maxFileSize: 1024 * 1024, // 1MB
     };
     const opts = { ...defaults, ...options };
     const results = [];
@@ -106,7 +112,7 @@ export async function autoCompactDirectory(dirPath, options = {}) {
                             newSize: stat.size,
                             delta: 0,
                             changed: false,
-                            error: 'File too large'
+                            error: "File too large",
                         });
                         continue;
                     }

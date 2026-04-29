@@ -12,8 +12,8 @@
  *   import { contextCompact } from '@quangtynu/pi-tools/context-compactor'
  *   const result = await contextCompact({ type: 'directory', path: './src', tokenLimit: 128000 })
  */
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 // ============ Token Utilities ============
 /**
  * Rough token estimation: 1 token ≈ 4 characters for English/code.
@@ -31,28 +31,31 @@ function shouldDropFile(filePath, opts) {
     const relative = filePath.toLowerCase();
     // Drop tests
     if (opts.dropTests !== false) {
-        if (name.includes('.test.') || name.includes('.spec.') || name.endsWith('.test') || name.endsWith('.spec')) {
+        if (name.includes(".test.") || name.includes(".spec.") || name.endsWith(".test") || name.endsWith(".spec")) {
             return true;
         }
-        if (relative.includes('/__tests__/') || relative.includes('/test/') || relative.includes('/tests/')) {
+        if (relative.includes("/__tests__/") || relative.includes("/test/") || relative.includes("/tests/")) {
             return true;
         }
     }
     // Drop docs
     if (opts.dropDocs !== false) {
-        if (name === 'readme' || name.startsWith('changelog') || name.endsWith('.md') || ext === '.md') {
+        if (name === "readme" || name.startsWith("changelog") || name.endsWith(".md") || ext === ".md") {
             return true;
         }
     }
     // Drop examples
     if (opts.dropExamples !== false) {
-        if (relative.includes('/example') || relative.includes('/demo') || relative.includes('/examples/') || relative.includes('/demos/')) {
+        if (relative.includes("/example") ||
+            relative.includes("/demo") ||
+            relative.includes("/examples/") ||
+            relative.includes("/demos/")) {
             return true;
         }
     }
     // Drop types
     if (opts.dropTypes === true) {
-        if (ext === '.d.ts' || ext === '.d.cts' || ext === '.d.mts') {
+        if (ext === ".d.ts" || ext === ".d.cts" || ext === ".d.mts") {
             return true;
         }
     }
@@ -63,25 +66,25 @@ function shouldDropFile(filePath, opts) {
  */
 export function stripCodeComments(code) {
     // Remove single-line comments
-    let result = code.replace(/\/\/.*$/gm, '');
+    let result = code.replace(/\/\/.*$/gm, "");
     // Remove multi-line comments (non-greedy)
-    result = result.replace(/\/\*[\s\S]*?\*\//g, '');
+    result = result.replace(/\/\*[\s\S]*?\*\//g, "");
     return result;
 }
 /**
  * Trim whitespace: remove trailing spaces, collapse multiple blank lines
  */
 export function trimWhitespace(text) {
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     // Trim trailing spaces on each line
-    const trimmed = lines.map(line => line.replace(/\s+$/, ''));
+    const trimmed = lines.map((line) => line.replace(/\s+$/, ""));
     // Remove consecutive empty lines (keep max 1)
     const collapsed = [];
     let lastEmpty = false;
     for (const line of trimmed) {
-        if (line.trim() === '') {
+        if (line.trim() === "") {
             if (!lastEmpty) {
-                collapsed.push('');
+                collapsed.push("");
                 lastEmpty = true;
             }
         }
@@ -90,14 +93,14 @@ export function trimWhitespace(text) {
             lastEmpty = false;
         }
     }
-    return collapsed.join('\n').trim();
+    return collapsed.join("\n").trim();
 }
 /**
  * LLM summarization (stub: in real implementation, call OpenAI/Anthropic API)
  */
 async function summarizeWithLLM(content, opts) {
     if (!opts.apiKey) {
-        throw new Error('LLM summarization requested but no apiKey provided');
+        throw new Error("LLM summarization requested but no apiKey provided");
     }
     const maxTokens = opts.maxFileTokensForHeuristic || 5000;
     const currentTokens = estimateTokens(content);
@@ -110,9 +113,9 @@ async function summarizeWithLLM(content, opts) {
         return content;
     }
     // Construct prompt
-    const prompt = `Summarize the following code to preserve its core functionality while reducing its length as much as possible. Keep function and class signatures, but you can shorten implementations if they are straightforward. Return ONLY the compacted code, no explanations.\n\n\`\`\`\n${content}\n\`\`\``;
+    const _prompt = `Summarize the following code to preserve its core functionality while reducing its length as much as possible. Keep function and class signatures, but you can shorten implementations if they are straightforward. Return ONLY the compacted code, no explanations.\n\n\`\`\`\n${content}\n\`\`\``;
     // Call LLM (simplified — you would integrate openai/anthropic SDKs)
-    if (opts.llmProvider === 'anthropic') {
+    if (opts.llmProvider === "anthropic") {
         // ... anthropic call
     }
     else {
@@ -137,18 +140,18 @@ export async function compactFileContent(content, filePath, opts = {}) {
     // Step 1: Remove comments
     if (opts.removeComments !== false) {
         compacted = stripCodeComments(compacted);
-        actions.push('Removed comments');
+        actions.push("Removed comments");
     }
     // Step 2: Trim whitespace
     if (opts.trimWhitespace !== true) {
         compacted = trimWhitespace(compacted);
-        actions.push('Trimmed whitespace');
+        actions.push("Trimmed whitespace");
     }
     // Step 3: If still large and LLM enabled, summarize
     if (opts.useLLM && estimateTokens(compacted) > (opts.maxFileTokensForHeuristic || 5000)) {
         try {
             compacted = await summarizeWithLLM(compacted, opts);
-            actions.push('LLM summarized');
+            actions.push("LLM summarized");
         }
         catch (e) {
             // LLM failed, continue with heuristic only
@@ -172,10 +175,10 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
         removeComments: true,
         trimWhitespace: true,
         useLLM: false,
-        llmProvider: 'openai',
-        llmModel: 'gpt-4-turbo',
+        llmProvider: "openai",
+        llmModel: "gpt-4-turbo",
         maxFileTokensForHeuristic: 5000,
-        verbose: false
+        verbose: false,
     };
     const options = { ...defaults, ...opts };
     const actions = [];
@@ -191,7 +194,11 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
             if (entry.isDirectory()) {
                 // Skip certain directories
                 const dirName = entry.name.toLowerCase();
-                if (dirName === 'node_modules' || dirName === 'dist' || dirName === 'build' || dirName === '.git' || dirName === '__pycache__') {
+                if (dirName === "node_modules" ||
+                    dirName === "dist" ||
+                    dirName === "build" ||
+                    dirName === ".git" ||
+                    dirName === "__pycache__") {
                     continue;
                 }
                 await walk(fullPath);
@@ -205,7 +212,7 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
                 }
                 // Read file
                 try {
-                    const content = await fs.promises.readFile(fullPath, 'utf-8');
+                    const content = await fs.promises.readFile(fullPath, "utf-8");
                     const fileTokens = estimateTokens(content);
                     tokensBefore += fileTokens;
                     // If small, keep as-is
@@ -215,7 +222,7 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
                         continue;
                     }
                     // Otherwise, compact file
-                    const { compacted, tokensBefore: _, tokensAfter: newTokens } = await compactFileContent(content, relative, options);
+                    const { compacted: _compacted, tokensBefore: _, tokensAfter: newTokens, } = await compactFileContent(content, relative, options);
                     tokensAfter += newTokens;
                     keptFiles.push(relative);
                     actions.push(`Compacted ${relative} (${fileTokens}→${newTokens} tokens)`);
@@ -235,7 +242,7 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
         const fileSizes = new Map();
         for (const rel of keptFiles) {
             const fullPath = path.join(dirPath, rel);
-            const content = await fs.promises.readFile(fullPath, 'utf-8');
+            const content = await fs.promises.readFile(fullPath, "utf-8");
             fileSizes.set(rel, estimateTokens(content));
         }
         // Sort by size descending
@@ -256,7 +263,7 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
         wasCompacted,
         actions,
         droppedFiles,
-        compactedFiles: keptFiles
+        compactedFiles: keptFiles,
     };
 }
 /**
@@ -268,11 +275,11 @@ export async function contextCompactMessages(messages, opts = {}) {
         removeComments: true,
         trimWhitespace: true,
         useLLM: false,
-        verbose: false
+        verbose: false,
     };
     const options = { ...defaults, ...opts };
     const actions = [];
-    const cloned = messages.map(m => ({ ...m }));
+    const cloned = messages.map((m) => ({ ...m }));
     // Count tokens
     let totalTokens = cloned.reduce((sum, m) => sum + estimateTokens(m.content), 0);
     const originalTokens = totalTokens;
@@ -283,14 +290,14 @@ export async function contextCompactMessages(messages, opts = {}) {
             tokensAfter: originalTokens,
             tokensSaved: 0,
             wasCompacted: false,
-            actions: ['No compaction needed'],
-            compactedMessages: cloned
+            actions: ["No compaction needed"],
+            compactedMessages: cloned,
         };
     }
     // Strategy: first, try to truncate System/User/Assistant messages proportionally
     // We'll keep the most recent messages full, and summarize/truncate older ones
     const targetTokens = options.tokenLimit;
-    const keepRatio = targetTokens / totalTokens;
+    const _keepRatio = targetTokens / totalTokens;
     // We'll apply heuristic to each message: strip whitespace/comments, and if still large, truncate or summarize
     for (let i = 0; i < cloned.length; i++) {
         const msg = cloned[i];
@@ -301,7 +308,7 @@ export async function contextCompactMessages(messages, opts = {}) {
             newContent = trimWhitespace(newContent);
         }
         // Remove lines that look like comments (for code snippets in chat)
-        if (options.removeComments && msg.content.includes('//')) {
+        if (options.removeComments && msg.content.includes("//")) {
             newContent = stripCodeComments(newContent);
         }
         // If still too many tokens, truncate to a summary
@@ -312,10 +319,10 @@ export async function contextCompactMessages(messages, opts = {}) {
                 // In real implementation, call LLM here
                 // For now, just truncate with indicator
                 const truncateAt = Math.floor((targetTokens / totalTokens) * originalLen);
-                newContent = newContent.substring(0, truncateAt) + '\n... [truncated]';
+                newContent = `${newContent.substring(0, truncateAt)}\n... [truncated]`;
                 actions.push(`Truncated message ${i} (${tokensNow}→${estimateTokens(newContent)} tokens)`);
             }
-            catch (e) {
+            catch (_e) {
                 // ignore
             }
         }
@@ -330,7 +337,7 @@ export async function contextCompactMessages(messages, opts = {}) {
         for (let i = cloned.length - 1; i >= 0; i--) {
             const msg = cloned[i];
             // Always keep system and the last few assistant/user
-            if (msg.role === 'system' || toKeep.length < 3) {
+            if (msg.role === "system" || toKeep.length < 3) {
                 toKeep.unshift(msg);
             }
             else {
@@ -340,7 +347,7 @@ export async function contextCompactMessages(messages, opts = {}) {
                 // ok
             }
             else {
-                if (msg.role !== 'system' && toKeep.length > 3) {
+                if (msg.role !== "system" && toKeep.length > 3) {
                     // Remove this one and continue
                     toKeep.shift();
                 }
@@ -356,7 +363,7 @@ export async function contextCompactMessages(messages, opts = {}) {
         tokensSaved: originalTokens - totalTokens,
         wasCompacted: cloned.length < messages.length || totalTokens < originalTokens,
         actions,
-        compactedMessages: cloned
+        compactedMessages: cloned,
     };
 }
 // ============ Main Entry ============
@@ -367,7 +374,7 @@ export async function contextCompactMessages(messages, opts = {}) {
  * @param options CompactOptions
  */
 export async function contextCompact(input, options = {}) {
-    if (input.type === 'directory') {
+    if (input.type === "directory") {
         return await contextCompactDirectory(input.path, options);
     }
     else {
