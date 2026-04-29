@@ -615,6 +615,15 @@ export interface ToolExecutionEndEvent {
 	isError: boolean;
 }
 
+/** Fired when LLM uses context_compact tool to compact messages */
+export interface LLMContextCompactedEvent {
+	type: "llm_context_compacted";
+	toolCallId: string;
+	tokensBefore: number;
+	tokensAfter: number;
+	tokensSaved: number;
+}
+
 // ============================================================================
 // Model Events
 // ============================================================================
@@ -867,6 +876,7 @@ export type ExtensionEvent =
 	| ToolExecutionStartEvent
 	| ToolExecutionUpdateEvent
 	| ToolExecutionEndEvent
+	| LLMContextCompactedEvent
 	| ModelSelectEvent
 	| UserBashEvent
 	| InputEvent

@@ -20,10 +20,9 @@ const ChatMessageSchema = Type.Object({
 });
 
 const ContextCompactSchema = Type.Object({
-	type: Type.Union([Type.Literal("directory"), Type.Literal("messages")]),
-	path: Type.Optional(Type.String()),
-	messages: Type.Optional(Type.Array(ChatMessageSchema)),
-	tokenLimit: Type.Optional(Type.Number()),
+	// type và messages không cần thiết nếu tool được bind với session (auto-get messages)
+	// messages: Type.Optional(Type.Array(ChatMessageSchema)), // optional fallback
+	tokenLimit: Type.Optional(Type.Number({ minimum: 1, description: "Target token limit after compaction (default: 128000)" })),
 	dropTests: Type.Optional(Type.Boolean()),
 	dropDocs: Type.Optional(Type.Boolean()),
 	dropExamples: Type.Optional(Type.Boolean()),
@@ -54,11 +53,11 @@ export function createContextCompactToolDefinition(
 		description:
 			"Compacts chat message history to fit within token limits before calling LLM. Preserves important messages.",
 		promptSnippet:
-			"Compact conversation: { type: 'messages', tokenLimit: 128000 }",
+			"Compact context: { tokenLimit: 128000 }",
 		promptGuidelines: [
 			"Use this tool to compact conversation history when approaching token limits.",
-			"Provide full messages array with role ('system'|'user'|'assistant') and content.",
-			"Set tokenLimit (default 128000). Other options rarely needed.",
+			"When bound to a session, automatically uses current conversation messages.",
+			"Set tokenLimit (default 128000). Other options: removeComments, trimWhitespace, etc.",
 			"Returns: tokensBefore, tokensAfter, tokensSaved, and compactedMessages.",
 		],
 		parameters: ContextCompactSchema,
@@ -93,18 +92,18 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 	readonly label = "Context Compact";
 	readonly description =
 		"Compacts chat message history to fit within token limits before calling LLM. Preserves important messages.";
-	readonly promptSnippet = "Compact conversation: { type: 'messages', tokenLimit: 128000 }";
+	readonly promptSnippet = "Compact context: { tokenLimit: 128000 }";
 	readonly promptGuidelines = [
 		"Use this tool to compact conversation history when approaching token limits.",
-		"Provide full messages array with role ('system'|'user'|'assistant') and content.",
-		"Set tokenLimit (default 128000). Other options rarely needed.",
+		"When bound to a session, automatically uses current conversation messages.",
+		"Set tokenLimit (default 128000). Other options: removeComments, trimWhitespace, etc.",
 		"Returns: tokensBefore, tokensAfter, tokensSaved, and compactedMessages.",
 	];
 	readonly parameters = ContextCompactSchema;
 	readonly concurrency = "safe";
 	readonly strict = true;
 
-	constructor(private cwd: string) {}
+	constructor(private cwd: string, private session?: any) {}
 
 	async execute(
 		_toolCallId: string,
@@ -122,28 +121,28 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 				} else {
 					resolvedPath = join(this.cwd, params.path);
 				}
+			// Get messages: from session state (auto) or from params (explicit)
+			let messagesForCompact: NonNullable<ContextCompactParams["messages"]>;
+			if (this.session && this.session.agent && this.session.agent.state) {
+				// Auto-bind: use current conversation messages from agent state
+				const agentMsgs = this.session.agent.state.messages;
+				messagesForCompact = agentMsgs.map((m: any) => ({
+					role: m.role === "toolResult" ? "user" : (m.role === "system" ? "system" : m.role) as "system" | "user" | "assistant",
+					content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+				}));
+			} else if (params.messages) {
+				messagesForCompact = params.messages;
+			} else {
+				throw new Error("No messages: bind tool to session or provide messages param");
 			}
 
-			// Narrow and validate inputs
-			let input:
-				| { type: "directory"; path: string }
-				| { type: "messages"; messages: NonNullable<ContextCompactParams["messages"]> };
+			// Only messages type supported (directory deprecated)
 			if (params.type === "directory") {
-				if (!params.path) throw new Error("path is required when type is 'directory'");
-				input = { type: "directory", path: resolvedPath! };
-			} else {
-				if (!params.messages) throw new Error("messages is required when type is 'messages'");
-				input = { type: "messages", messages: params.messages! };
+				throw new Error("Directory compaction not supported; use messages only");
 			}
+			const input = { type: "messages", messages: messagesForCompact };
 
 			// Build options (undef fields are fine)
-			const options: CompactOptions = {
-				tokenLimit: params.tokenLimit,
-				dropTests: params.dropTests,
-				dropDocs: params.dropDocs,
-				dropExamples: params.dropExamples,
-				dropTypes: params.dropTypes,
-				removeComments: params.removeComments,
 				trimWhitespace: params.trimWhitespace,
 				useLLM: params.useLLM,
 				llmProvider: params.llmProvider,

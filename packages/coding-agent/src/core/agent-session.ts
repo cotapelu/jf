@@ -381,6 +381,27 @@ export class AgentSession {
 		};
 
 		this.agent.afterToolCall = async ({ toolCall, args, result, isError }) => {
+			// Special handling: if context_compact succeeded, replace messages with compactedMessages
+			if (
+				toolCall.name === "context_compact" &&
+				!isError &&
+				result.details &&
+				result.details.compactedMessages
+			) {
+				// Replace entire message history with the compacted version
+				// This removes the old context + the tool call/result itself, giving LLM a fresh compact context
+				this.agent.state.messages = result.details.compactedMessages;
+				
+				// Emit a dedicated event for tracking
+				await this._extensionRunner?.emit({
+					type: "llm_context_compacted",
+					toolCallId: toolCall.id,
+					tokensBefore: result.details.tokensBefore,
+					tokensAfter: result.details.tokensAfter,
+					tokensSaved: result.details.tokensSaved,
+				});
+			}
+
 			const runner = this._extensionRunner;
 			if (!runner?.hasHandlers("tool_result")) {
 				return undefined;
@@ -2322,7 +2343,7 @@ export class AgentSession {
 		this._baseToolDefinitions.set("memory", createToolDefinitionFromAgentTool(memoryTool));
 
 		// Add context_compact tool
-		const contextCompactTool = new ContextCompactTool(this._cwd);
+		const contextCompactTool = new ContextCompactTool(this._cwd, this);
 		this._baseToolDefinitions.set("context_compact", createToolDefinitionFromAgentTool(contextCompactTool));
 
 		const extensionsResult = this._resourceLoader.getExtensions();
