@@ -370,47 +370,47 @@ export async function contextCompactMessages(
 	opts: CompactOptions = {},
 ): Promise<CompactResult> {
 	// Advanced智能 compaction with Q&A preservation and LLM summarization
-	
+
 	// Helper: score message importance
 	function scoreMessage(msg: ChatMessage, idx: number, total: number, options: any): number {
 		// Recency score (newer = higher)
 		const recency = (idx / total) * 100;
-		
+
 		// Role base
 		let roleScore = 0;
 		if (msg.role === "system") roleScore = 100;
 		else if (msg.role === "assistant") roleScore = 50;
 		else if (msg.role === "user") roleScore = 30;
-		
+
 		// Content heuristics
 		let contentScore = 0;
 		const content = msg.content;
-		
+
 		// Questions
 		if (msg.role === "user" && /\?$/.test(content.trim())) contentScore += 25;
-		
+
 		// Code blocks
 		const codeBlocks = (content.match(/```/g) || []).length;
 		contentScore += codeBlocks * 15;
-		
+
 		// File paths
 		if (/\.(ts|js|py|java|cpp|h|json|yaml|yml|md|txt|csv)\b/.test(content)) contentScore += 10;
-		
+
 		// Commands in assistant
 		if (msg.role === "assistant" && content.includes("$ ") && content.length > 2000) contentScore += 20;
-		
+
 		// Very short (likely trivial)
 		if (content.length < 50) contentScore -= 10;
-		
+
 		return recency + roleScore + contentScore;
 	}
-	
+
 	// LLM summarization
 	async function summarizeWithLLM(content: string, targetTokens: number, options: any): Promise<string | null> {
 		if (!options.apiKey) return null;
-		
+
 		const prompt = `Summarize concisely preserving key information, questions, and technical details. Target: ~${targetTokens} tokens.\n\n${content}`;
-		
+
 		try {
 			if (options.llmProvider === "anthropic") {
 				const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -426,13 +426,13 @@ export async function contextCompactMessages(
 						messages: [{ role: "user", content: prompt }],
 					}),
 				});
-				const data = await res.json() as any;
+				const data = (await res.json()) as any;
 				return data.content?.[0]?.text || null;
 			} else {
 				const res = await fetch("https://api.openai.com/v1/chat/completions", {
 					method: "POST",
 					headers: {
-						"Authorization": `Bearer ${options.apiKey}`,
+						Authorization: `Bearer ${options.apiKey}`,
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
@@ -441,7 +441,7 @@ export async function contextCompactMessages(
 						messages: [{ role: "user", content: prompt }],
 					}),
 				});
-				const data = await res.json() as any;
+				const data = (await res.json()) as any;
 				return data.choices?.[0]?.message?.content || null;
 			}
 		} catch (e) {
@@ -449,15 +449,12 @@ export async function contextCompactMessages(
 			return null;
 		}
 	}
-	
+
 	// Check Q-A pair
 	function isPair(a: ChatMessage, b: ChatMessage): boolean {
-		return (
-			(a.role === "user" && b.role === "assistant") ||
-			(a.role === "assistant" && b.role === "user")
-		);
+		return (a.role === "user" && b.role === "assistant") || (a.role === "assistant" && b.role === "user");
 	}
-	
+
 	const defaults: CompactOptions = {
 		tokenLimit: 128000,
 		trimWhitespace: true,
@@ -469,13 +466,13 @@ export async function contextCompactMessages(
 	};
 	const options = { ...defaults, ...opts };
 	const actions: string[] = [];
-	const cloned = messages.map(m => ({ ...m }));
-	
+	const cloned = messages.map((m) => ({ ...m }));
+
 	// Initial token count
 	const estimate = (txt: string) => Math.ceil(txt.length / 4);
 	let totalTokens = cloned.reduce((sum, m) => sum + estimate(m.content), 0);
 	const originalTokens = totalTokens;
-	
+
 	// Under limit? return as-is
 	if (totalTokens <= options.tokenLimit!) {
 		return {
@@ -487,16 +484,16 @@ export async function contextCompactMessages(
 			compactedMessages: cloned,
 		};
 	}
-	
+
 	// PHASE 1: Clean each message (whitespace, comments, LLM summarize if large)
-	const targetPerMsg = options.maxTokensPerMessage || Math.floor(options.tokenLimit! / messages.length * 1.2);
-	
+	const targetPerMsg = options.maxTokensPerMessage || Math.floor((options.tokenLimit! / messages.length) * 1.2);
+
 	for (let i = 0; i < cloned.length; i++) {
 		let content = cloned[i].content;
-		
+
 		if (options.trimWhitespace) content = trimWhitespace(content);
 		if (options.removeComments && content.includes("//")) content = stripCodeComments(content);
-		
+
 		const tokensNow = estimate(content);
 		if (tokensNow > 5000 && options.useLLM && options.apiKey) {
 			const summarized = await summarizeWithLLM(content, Math.min(targetPerMsg, 3000), options);
@@ -505,10 +502,10 @@ export async function contextCompactMessages(
 				if (options.verbose) actions.push(`LLM-summarized message ${i} (${tokensNow}→${estimate(content)} tokens)`);
 			}
 		}
-		
+
 		cloned[i].content = content;
 	}
-	
+
 	// Re-count after cleaning
 	totalTokens = cloned.reduce((sum, m) => sum + estimate(m.content), 0);
 	if (totalTokens <= options.tokenLimit!) {
@@ -521,46 +518,47 @@ export async function contextCompactMessages(
 			compactedMessages: cloned,
 		};
 	}
-	
+
 	// PHASE 2: Smart dropping with scoring and pair preservation
 	const scores = cloned.map((msg, i) => scoreMessage(msg, i, cloned.length, options));
 	const keepRecent = options.keepRecent!;
-	let keepIndices = new Set<number>();
-	
+	const keepIndices = new Set<number>();
+
 	// Always keep system messages
 	for (let i = 0; i < cloned.length; i++) {
 		if (cloned[i].role === "system") keepIndices.add(i);
 	}
-	
+
 	// Keep recent messages
 	for (let i = cloned.length - keepRecent; i < cloned.length; i++) {
 		if (i >= 0) keepIndices.add(i);
 	}
-	
+
 	// Preserve Q-A pairs: if assistant kept, ensure preceding user is kept
 	for (let i = cloned.length - 1; i >= 0; i--) {
 		if (cloned[i].role === "assistant" && keepIndices.has(i)) {
-			if (i > 0 && cloned[i-1].role === "user") keepIndices.add(i-1);
+			if (i > 0 && cloned[i - 1].role === "user") keepIndices.add(i - 1);
 		}
 	}
-	
+
 	// Current kept tokens
 	let keptTokens = Array.from(keepIndices).reduce((sum, i) => sum + estimate(cloned[i].content), 0);
-	
+
 	// If still over, drop lowest scored non-system messages
 	if (keptTokens > options.tokenLimit!) {
 		const sortedByScore = Array.from(keepIndices)
-			.filter(i => cloned[i].role !== "system")
+			.filter((i) => cloned[i].role !== "system")
 			.sort((a, b) => scores[a] - scores[b]); // low score first
-		
+
 		for (const idx of sortedByScore) {
 			if (keptTokens <= options.tokenLimit!) break;
-			
+
 			// Don't break pairs
 			let canDrop = true;
-			if (idx > 0 && keepIndices.has(idx-1) && isPair(cloned[idx-1], cloned[idx])) canDrop = false;
-			if (idx < cloned.length-1 && keepIndices.has(idx+1) && isPair(cloned[idx], cloned[idx+1])) canDrop = false;
-			
+			if (idx > 0 && keepIndices.has(idx - 1) && isPair(cloned[idx - 1], cloned[idx])) canDrop = false;
+			if (idx < cloned.length - 1 && keepIndices.has(idx + 1) && isPair(cloned[idx], cloned[idx + 1]))
+				canDrop = false;
+
 			if (canDrop) {
 				keepIndices.delete(idx);
 				keptTokens -= estimate(cloned[idx].content);
@@ -568,11 +566,13 @@ export async function contextCompactMessages(
 			}
 		}
 	}
-	
+
 	// Build result array ordered
-	const compacted = Array.from(keepIndices).sort((a,b)=>a-b).map(i => cloned[i]);
+	const compacted = Array.from(keepIndices)
+		.sort((a, b) => a - b)
+		.map((i) => cloned[i]);
 	const finalTokens = compacted.reduce((sum, m) => sum + estimate(m.content), 0);
-	
+
 	return {
 		tokensBefore: originalTokens,
 		tokensAfter: finalTokens,

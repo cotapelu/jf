@@ -25,7 +25,9 @@ const ContextCompactSchema = Type.Object({
 	type: Type.Optional(Type.Union([Type.Literal("directory"), Type.Literal("messages")])),
 	path: Type.Optional(Type.String()),
 	messages: Type.Optional(Type.Array(ChatMessageSchema)),
-	tokenLimit: Type.Optional(Type.Number({ minimum: 1, description: "Target token limit after compaction (default: 128000)" })),
+	tokenLimit: Type.Optional(
+		Type.Number({ minimum: 1, description: "Target token limit after compaction (default: 128000)" }),
+	),
 	dropTests: Type.Optional(Type.Boolean()),
 	dropDocs: Type.Optional(Type.Boolean()),
 	dropExamples: Type.Optional(Type.Boolean()),
@@ -55,8 +57,7 @@ export function createContextCompactToolDefinition(
 		label: "Context Compact",
 		description:
 			"Compacts chat message history to fit within token limits before calling LLM. Preserves important messages.",
-		promptSnippet:
-			"Compact context: { tokenLimit: 128000 }",
+		promptSnippet: "Compact context: { tokenLimit: 128000 }",
 		promptGuidelines: [
 			"Use this tool to compact conversation history when approaching token limits.",
 			"When bound to a session, automatically uses current conversation messages.",
@@ -106,7 +107,10 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 	readonly concurrency = "safe";
 	readonly strict = true;
 
-	constructor(private cwd: string, private session?: any) {}
+	constructor(
+		private cwd: string,
+		private session?: any,
+	) {}
 
 	async execute(
 		_toolCallId: string,
@@ -130,7 +134,10 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 				// Auto-bind: use current conversation messages from agent state
 				const agentMsgs = this.session.agent.state.messages;
 				messagesForCompact = agentMsgs.map((m: any) => ({
-					role: m.role === "toolResult" ? "user" : (m.role === "system" ? "system" : m.role) as "system" | "user" | "assistant",
+					role:
+						m.role === "toolResult"
+							? "user"
+							: ((m.role === "system" ? "system" : m.role) as "system" | "user" | "assistant"),
 					content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
 				}));
 			} else if (params.messages) {
