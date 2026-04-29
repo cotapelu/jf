@@ -144,7 +144,7 @@ export interface AgentSessionConfig {
 	customTools?: ToolDefinition[];
 	/** Model registry for API key resolution and model discovery */
 	modelRegistry: ModelRegistry;
-	/** Initial active built-in tool names. Default: [read, bash, edit, write, grep, find, ls, todo_write, memory] */
+	/** Initial active built-in tool names. Default: [read, bash, edit, write, grep, find, ls, todo_write, memory, context_compact] */
 	initialActiveToolNames?: string[];
 	/**
 	 * Override base tools (useful for custom runtimes).

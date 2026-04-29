@@ -505,7 +505,7 @@ cat README.md | pi -p "Summarize this text"
 | `--tools <list>` | Enable specific built-in tools (default: `read,bash,edit,write`) |
 | `--no-tools` | Disable all built-in tools (extension tools still work) |
 
-Available built-in tools: `read`, `bash`, `edit`, `write`, `grep`, `find`, `ls`, `todo_write`, `memory`
+Available built-in tools: `read`, `bash`, `edit`, `write`, `grep`, `find`, `ls`, `todo_write`, `memory`, `context_compact`
 
 ### Resource Options
 

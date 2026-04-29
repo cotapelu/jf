@@ -52,14 +52,14 @@ export function createContextCompactToolDefinition(
 		name: "context_compact",
 		label: "Context Compact",
 		description:
-			"Automatically compacts code directories or chat messages to fit within token limits. Drops tests/docs/examples, removes comments, trims whitespace. Can optionally use LLM to summarize large files.",
+			"Compacts chat message history to fit within token limits before calling LLM. Preserves important messages.",
 		promptSnippet:
-			"Compact: { type: 'directory', path: './src', tokenLimit: 128000, dropTests: true, removeComments: true }",
+			"Compact conversation: { type: 'messages', tokenLimit: 128000 }",
 		promptGuidelines: [
-			"Use this tool to reduce context size before hitting token limits.",
-			"Specify type: 'directory' (with path) or 'messages' (with messages array).",
-			"Options: tokenLimit, dropTests, dropDocs, dropExamples, dropTypes, removeComments, trimWhitespace, useLLM, llmProvider, llmModel, maxFileTokensForHeuristic, verbose.",
-			"Returns: tokensBefore, tokensAfter, tokensSaved, actions, droppedFiles/compactedFiles, etc.",
+			"Use this tool to compact conversation history when approaching token limits.",
+			"Provide full messages array with role ('system'|'user'|'assistant') and content.",
+			"Set tokenLimit (default 128000). Other options rarely needed.",
+			"Returns: tokensBefore, tokensAfter, tokensSaved, and compactedMessages.",
 		],
 		parameters: ContextCompactSchema,
 		async execute(
@@ -92,13 +92,13 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 	readonly name = "context_compact";
 	readonly label = "Context Compact";
 	readonly description =
-		"Automatically compacts code directories or chat messages to fit within token limits. Drops tests/docs/examples, removes comments, trims whitespace.";
-	readonly promptSnippet = "Compact: { type: 'directory', path: './src', tokenLimit: 128000 }";
+		"Compacts chat message history to fit within token limits before calling LLM. Preserves important messages.";
+	readonly promptSnippet = "Compact conversation: { type: 'messages', tokenLimit: 128000 }";
 	readonly promptGuidelines = [
-		"Use this tool to reduce context size before hitting token limits.",
-		"Specify type: 'directory' (with path) or 'messages' (with messages array).",
-		"Options: tokenLimit, dropTests, dropDocs, dropExamples, dropTypes, removeComments, trimWhitespace, useLLM, llmProvider, llmModel, maxFileTokensForHeuristic, verbose.",
-		"Returns: tokensBefore, tokensAfter, tokensSaved, actions, droppedFiles/compactedFiles, etc.",
+		"Use this tool to compact conversation history when approaching token limits.",
+		"Provide full messages array with role ('system'|'user'|'assistant') and content.",
+		"Set tokenLimit (default 128000). Other options rarely needed.",
+		"Returns: tokensBefore, tokensAfter, tokensSaved, and compactedMessages.",
 	];
 	readonly parameters = ContextCompactSchema;
 	readonly concurrency = "safe";
