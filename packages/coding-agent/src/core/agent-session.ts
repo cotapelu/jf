@@ -1807,6 +1807,14 @@ export class AgentSession {
 			return;
 		}
 
+		// [AUTO-COMPACT BY FOOTER COLOR] Trigger khi footer hiển thị màu đỏ (>90%)
+		// Sử dụng getContextUsage().percent thay vì usage tokens để đồng bộ với footer
+		// Thêm ngày 2025-12-13 bởi coding assistant
+		if ((this.getContextUsage()?.percent ?? 0) > 90) {
+			await this._runAutoCompaction("threshold", false);
+			return;
+		}
+
 		// Case 2: Threshold - context is getting large
 		// For error messages (no usage data), estimate from last successful response.
 		// This ensures sessions that hit persistent API errors (e.g. 529) can still compact.
