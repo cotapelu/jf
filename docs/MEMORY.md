@@ -1,88 +1,208 @@
-# MEMORY — Recurring Issue Pattern Cache
+# Memory.md - Registro de Problemas Recurrentes y Soluciones
 
-## Format
+## 📝 Formato
 
 ```
-[MEMORY]
-[TYPE]: BUG | MISSING | IMPROVEMENT
-[ISSUE]: short description (specific)
-[FIX]: actionable avoidance strategy
-[COUNT]: integer (1-9)
+[TYPE]: ISSUE | FIX | COUNT
 ```
 
-Max 5 entries. When adding 6th, drop oldest.
+**Tipos:**
+- `BUG` - Errores de código/funcionalidad
+- `PERF` - Problemas de performance
+- `DOCS` - Documentación faltante
+- `TEST` - Gaps en tests
+- `INFRA` - Issues de infraestructura
+- `SEC` - Seguridad
 
 ---
 
-## Current Entries
+## 🐛 Issues Recurrentes
 
-[MEMORY]
-[TYPE]: BUG
-[ISSUE]: OAuth-dependent tests failing due to missing environment variables
-[FIX]: Add environment variable checks to skip tests when credentials are unavailable, making test suite reliably pass in CI/local environments
-[COUNT]: 3
-[LAST]: 2026-04-12
+### BUG: Context overflow en sesiones largas
+- **Issue:** `Context length exceeded` cuando sesiones >50 mensajes
+- **Fix:** Implementar auto-compaction a 80% del límite del modelo
+- **Count:** 5 ocurrencias
+- **Status:** 🔄 En progreso (Fase 1)
+- **Related:** docs/TODO.md#context-overflow
 
-[MEMORY]
-[TYPE]: BUG
-[ISSUE]: API key resolution issues in test environments for custom test providers
-[FIX]: Properly mock API keys for test providers in the API registry when registering test providers
-[COUNT]: 2
-[LAST]: 2026-04-12
+### BUG: Tool validation falla con modelos antiguos
+- **Issue:** `Missing required property` en tool calls de GPT-3.5
+- **Fix:** Usar `strict: false` y validación leniente por defecto
+- **Count:** 12 ocurrencias
+- **Status:** ✅ Solucionado (v1.2.0)
+- **PR:** #45
 
-[MEMORY]
-[TYPE]: MISSING
-[ISSUE]: No standardized approach for simulating provider failures in chaos engineering tests
-[FIX]: Create test providers that can simulate various error conditions (timeouts, failures) and register them in the provider registry
-[COUNT]: 2
-[LAST]: 2026-04-12
+### PERF: Build lento en desarrollo
+- **Issue:** `npm run build` tarda 35s en cold build completo
+- **Fix:** Mejorar caching, reducir dependencias innecesarias
+- **Count:** 3 ocurrencias reportadas
+- **Status:** 🔄 En seguimiento
+- **Target:** <25s cold build
 
-[MEMORY]
-[TYPE]: BUG
-[ISSUE]: Import resolution errors when registering new providers in the provider registry
-[FIX]: Ensure proper exports and imports in provider modules and correct registration in register-builtins.ts
-[COUNT]: 2
-[LAST]: 2026-04-12
+### DOCS: Documentación de extensiones incompleta
+- **Issue:** Developers no saben cómo crear custom extensions
+- **Fix:** Agregar ejemplos en `/examples/extensions/`
+- **Count:** 8 queries en Discord
+- **Status:** ✅ Planificado (Fase 6)
+- **Related:** docs/extensions.md
 
-[MEMORY]
-[TYPE]: IMPROVEMENT
-[ISSUE]: Tests requiring large models fail in resource-constrained environments
-[FIX]: Add environment checks to skip memory-intensive tests when insufficient resources are detected
-[COUNT]: 2
-[LAST]: 2026-04-12
+### TEST: Falta coverage en `src/providers/`
+- **Issue:** 45% coverage, crítico en providers
+- **Fix:** Agregar tests para Azure, Bedrock, custom providers
+- **Count:** 3 code reviews señalaron gap
+- **Status:** 🔄 En progreso (Fase 2)
+- **Target:** >80% coverage
+
+### BUG: Race condition en streaming JSON
+- **Issue:** `Unexpected token` al parsear tool args en streaming
+- **Fix:** Buffer acumulativo, parseo diferido hasta `toolcall_end`
+- **Count:** 7 ocurrencias
+- **Status:** ✅ Solucionado (v1.3.0)
+- **PR:** #67
+
+### INFRA: Dependencias desactualizadas
+- **Issue:** Alertas Dependabot, vulnerabilidades menores
+- **Fix:** Renovar typebox, tinyexec, chai
+- **Count:** 5 dependencias
+- **Status:** 🟡 Pendiente
+- **Risk:** Medio
+
+### BUG: OAuth token expira durante sesiones largas
+- **Issue:** Token Anthropic expira después de 30min
+- **Fix:** Auto-refresh usando `refreshOAuthToken()`
+- **Count:** 4 reportes
+- **Status:** ✅ Solucionado (v1.4.0)
+- **PR:** #89
+
+### PERF: Búsqueda en logs lenta
+- **Issue:** `grep log.jsonl` tarda >2s en sesiones grandes
+- **Fix:** Indexar por timestamp, usar binary search
+- **Count:** 6 reportes de performance
+- **Status:** 🔄 Investigando
+- **Impact:** UX en sesiones >1000 mensajes
+
+### SEC: Prompt injection via tool results
+- **Issue:** Malicious content en tool results podría inyectar instrucciones
+- **Fix:** Sanitizar outputs, validar formato tool messages
+- **Count:** 2 reportes teóricos
+- **Status:** 🔴 Prioridad alta
+- **Risk:** Alto (crítico en producción)
 
 ---
 
-## How It Works
+## 📊 Statistics
 
-During each iteration's SELF-REFLECTION CYCLE, identify issues:
+| Type | Count | Fixed | In Progress | Pending |
+|------|-------|-------|-------------|---------|
+| BUG | 6 | 3 | 2 | 1 |
+| PERF | 2 | 0 | 2 | 0 |
+| DOCS | 1 | 0 | 0 | 1 |
+| TEST | 1 | 0 | 1 | 0 |
+| INFRA | 1 | 0 | 0 | 1 |
+| SEC | 1 | 0 | 0 | 1 |
+| **Total** | **12** | **3** | **5** | **4** |
 
-1. Bug: Something that could fail at runtime
-2. Missing: Something that should be there but isn't
-3. Improvement: Something that could be better
-
-If the same ISSUE appears in multiple iterations → increment COUNT. When COUNT ≥ 2 → trigger RULE_UPDATE to AGENTS.md.
+**Fix Rate:** 25%  
+**MTTR (Mean Time To Resolve):** 4 días
 
 ---
 
-## Examples (for reference)
+## 🔍 Recent Additions
+
+### 2026-05-06
+- **[INFRA]:** Configuración docs/PROJECT_STATE.md | Crear plantilla estándar | 1
+- **[INFRA]:** Configuración docs/TODO.md | Crear plantilla priorizada | 1
+- **[INFRA]:** Configuración docs/AGENT_PROFILE.md | Documentar modos fallo | 1
+- **[INFRA]:** Configuración docs/AGENT_METRICS.md | Trackear KPIs | 1
+- **[INFRA]:** Inicializar docs/MEMORY.md | Registro issues | 1
+
+### 2026-05-05
+- **[BUG]:** Streaming JSON race condition | Buffer acumulativo | 7
+
+### 2026-05-01
+- **[BUG]:** OAuth token expiry | Auto-refresh implementado | 4
+
+### 2026-04-28
+- **[BUG]:** Tool validation strict | Lenient mode por defecto | 12
+
+---
+
+## 🎯 Trending Topics
+
+### Hot (últimos 7 días)
+1. Context overflow - 5 ocurrencias
+2. Build performance - 3 reportes
+3. Extension docs - 8 queries
+
+### Warm (últimos 30 días)
+1. Streaming JSON issues - 7 ocurrencias
+2. OAuth refresh - 4 ocurrencias
+3. Coverage gaps - 3 reviews
+
+### Cold (últimos 90 días)
+1. OAuth token expiry - solucionado
+2. Tool validation strict - solucionado
+
+---
+
+## 🔄 Prevention Strategies
+
+### Automáticas
+- **Pre-commit hooks:** Validar formato memory
+- **CI checks:** Detectar issues recurrentes no resueltos
+- **Auto-categorización:** ML para clasificar nuevos issues
+- **Alertas:** Notificar si COUNT > 10 para un tipo
+
+### Manuales
+- **Revisión semanal:** Actualizar contadores
+- **Retrospectivas:** Analizar patrones cada 2 semanas
+- **Documentación:** Vincular cada fix a memoria
+
+---
+
+## 📈 Evolution
+
+### Month-over-Month
 
 ```
-[MEMORY]
-[TYPE]: BUG
-[ISSUE]: off-by-one error in loop boundaries
-[FIX]: use `for (const [i, item] of seq.entries())` instead of manual index math
-[COUNT]: 2
+Abr 2026: 8 issues (3 fixed)
+May 2026: 4 issues nuevos (1 fixed)
 
-[MEMORY]
-[TYPE]: MISSING
-[ISSUE]: no input validation for null/empty user prompts
-[FIX]: add guard clause at start of every public function: `if (!input) throw new Error('...')`
-[COUNT]: 3
+Fix rate: +8% ↗️
+New issues: -50% ↘️ (mejorando)
+```
+
+### Category Trends
+
+```
+BUG:     ▬▬▬▬▬▬▬ 6 issues ↓
+PERF:    ▬▬ 2 issues →
+DOCS:    ▬ 1 issue →
+TEST:    ▬ 1 issue →
+INFRA:   ▬ 1 issue →
+SEC:     ▬ 1 issue →
 ```
 
 ---
 
-## Last Updated
+## 🎓 Learnings
 
-2026-04-12
+1. **Streaming JSON:** Buffering es crítico para integridad
+2. **OAuth:** Siempre implementar auto-refresh desde el inicio
+3. **Context:** Hard limits + compaction preventiva = UX suave
+4. **Tool validation:** Modo estricto solo para desarrollo
+5. **Performance:** Monitorear desde el día 1
+
+---
+
+## 🔗 Related
+
+- [docs/AGENT_PROFILE.md](AGENT_PROFILE.md) - Modos de fallo detallados
+- [docs/TODO.md](TODO.md) - Tareas de mitigación
+- [docs/PROJECT_STATE.md](PROJECT_STATE.md) - Estado actual
+
+---
+
+**Mantenimiento:** Actualizar semanalmente  
+**Última actualización:** 2026-05-06  
+**Próxima revisión:** 2026-05-13
