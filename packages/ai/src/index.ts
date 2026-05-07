@@ -37,5 +37,6 @@ export type {
 	OAuthProviderInterface,
 } from "./utils/oauth/types.js";
 export * from "./utils/overflow.js";
+export * from "./utils/retry.js";
 export * from "./utils/typebox-helpers.js";
 export * from "./utils/validation.js";
