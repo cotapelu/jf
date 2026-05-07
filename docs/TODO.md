@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 14
-> **Pending**: 73
+> **Completed**: 15
+> **Pending**: 72
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 6 | 22 |
+| P2 - Medium | 28 | 7 | 21 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -249,8 +249,15 @@
   - CompactionSummaryMessageComponent
 - **Location**: `packages/coding-agent/src/modes/interactive/`
 
-#### [P2-022] Interactive Mode and Editor - TUI Integration
-- **Status**: 📋 Pending (verify in progress)
+#### [P2-022] Interactive Mode and Editor - TUI Integration ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Verification**: All 519 TUI tests pass
+- **Integration**:
+  - InteractiveMode properly integrates with pi-tui
+  - Editor components (CustomEditor, extension editors)
+  - Keybinding system working
+  - Unicode/regional indicator rendering correct
+- **Location**: `packages/coding-agent/src/modes/interactive/`
 
 ### TUI Package
 
