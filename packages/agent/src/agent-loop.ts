@@ -3,7 +3,6 @@
  * Transforms to Message[] only at the LLM call boundary.
  */
 
-import { Watchdog, createAgentWatchdog } from "./watchdog.js";
 import {
 	type AssistantMessage,
 	type Context,
@@ -22,6 +21,8 @@ import type {
 	AgentToolResult,
 	StreamFn,
 } from "./types.js";
+import { createAgentWatchdog } from "./watchdog.js";
+import { sanitizeToolResultContent } from "./security.js";
 
 export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
 
@@ -173,13 +174,15 @@ async function runLoop(
 	while (true) {
 		// Check watchdog before each iteration
 		if (watchdog.getTimeRemaining() < 1000) {
-			await emit({ 
-				type: "tool_result", 
-				toolName: "watchdog", 
-				content: [{ 
-					type: "text", 
-					text: "Operation timeout - stopping to prevent infinite loop" 
-				}]
+			await emit({
+				type: "tool_result",
+				toolName: "watchdog",
+				content: [
+					{
+						type: "text",
+						text: "Operation timeout - stopping to prevent infinite loop",
+					},
+				],
 			});
 			await emit({ type: "agent_end", messages: newMessages });
 			watchdog.stop();
@@ -645,7 +648,7 @@ async function emitToolCallOutcome(
 		role: "toolResult",
 		toolCallId: toolCall.id,
 		toolName: toolCall.name,
-		content: result.content,
+		content: sanitizeToolResultContent(result.content),
 		details: result.details,
 		isError,
 		timestamp: Date.now(),
