@@ -1,6 +1,6 @@
+import type { Options } from "ajv";
 import AjvModule from "ajv";
 import addFormatsModule from "ajv-formats";
-import type { Options } from "ajv";
 
 // Handle both default and named exports
 const Ajv = (AjvModule as any).default || AjvModule;

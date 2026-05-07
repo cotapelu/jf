@@ -121,16 +121,16 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 	): Promise<AgentToolResult<CompactResult>> {
 		try {
 			// Resolve path relative to cwd if provided
-			let resolvedPath: string | undefined;
+			let _resolvedPath: string | undefined;
 			if (params.path) {
 				if (params.path.startsWith("/") || /^[a-zA-Z]:\\/.test(params.path)) {
-					resolvedPath = params.path;
+					_resolvedPath = params.path;
 				} else {
-					resolvedPath = join(this.cwd, params.path);
+					_resolvedPath = join(this.cwd, params.path);
 				}
 			}
 			let messagesForCompact: NonNullable<ContextCompactParams["messages"]>;
-			if (this.session && this.session.agent && this.session.agent.state) {
+			if (this.session?.agent?.state) {
 				// Auto-bind: use current conversation messages from agent state
 				const agentMsgs = this.session.agent.state.messages;
 				messagesForCompact = agentMsgs.map((m: any) => ({

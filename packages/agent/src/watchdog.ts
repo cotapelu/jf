@@ -1,6 +1,6 @@
 /**
  * Watchdog Timer for Agent Session Timeout Protection
- * 
+ *
  * Prevents infinite loops and runaway agent execution by enforcing
  * time limits on agent operations.
  */
@@ -38,7 +38,7 @@ export class Watchdog {
 		this.checkIntervalMs = options.checkIntervalMs || 1000;
 		this.onTimeoutWarning = options.onTimeoutWarning;
 		this.onTimeout = options.onTimeout;
-		this.name = options.name || 'Watchdog';
+		this.name = options.name || "Watchdog";
 		this.startTime = Date.now();
 	}
 
@@ -137,9 +137,9 @@ export class Watchdog {
 	 */
 	private handleTimeout(): void {
 		this.isRunning = false;
-		
+
 		console.error(`[${this.name}] Watchdog timeout after ${this.timeoutMs}ms`);
-		
+
 		if (this.onTimeout) {
 			this.onTimeout();
 		}
@@ -173,13 +173,13 @@ export function createAgentWatchdog(timeoutMs: number = 30000): Watchdog {
 	return new Watchdog({
 		timeoutMs,
 		checkIntervalMs: 1000,
-		name: 'AgentSession',
+		name: "AgentSession",
 		onTimeoutWarning: (remaining) => {
 			console.warn(`[AgentSession] Timeout warning: ${Math.round(remaining / 1000)}s remaining`);
 		},
 		onTimeout: () => {
-			console.error('[AgentSession] Execution timeout - stopping agent');
-		}
+			console.error("[AgentSession] Execution timeout - stopping agent");
+		},
 	});
 }
 
@@ -190,12 +190,12 @@ export function createToolWatchdog(timeoutMs: number = 10000): Watchdog {
 	return new Watchdog({
 		timeoutMs,
 		checkIntervalMs: 500,
-		name: 'ToolExecution',
+		name: "ToolExecution",
 		onTimeoutWarning: (remaining) => {
 			console.warn(`[ToolExecution] Tool timeout warning: ${Math.round(remaining / 1000)}s remaining`);
 		},
 		onTimeout: () => {
-			console.error('[ToolExecution] Tool execution timeout');
-		}
+			console.error("[ToolExecution] Tool execution timeout");
+		},
 	});
 }

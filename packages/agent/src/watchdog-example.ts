@@ -2,7 +2,7 @@
  * Example usage of Watchdog in Agent Session
  */
 
-import { Watchdog, createAgentWatchdog, createToolWatchdog } from "./watchdog.js";
+import { createAgentWatchdog, createToolWatchdog, Watchdog } from "./watchdog.js";
 
 // ============================================================================
 // Example 1: Basic Watchdog Usage
@@ -19,7 +19,7 @@ export function basicExample() {
 		},
 		onTimeout: () => {
 			console.log("Timeout occurred!");
-		}
+		},
 	});
 
 	watchdog.start();
@@ -75,7 +75,7 @@ export async function longRunningOperationExample() {
 		},
 		onTimeout: () => {
 			console.log("Operation timeout - cancelling");
-		}
+		},
 	});
 
 	watchdog.start();
@@ -83,7 +83,7 @@ export async function longRunningOperationExample() {
 	// Simulate work that needs more time
 	for (let i = 0; i < 3; i++) {
 		await simulateThinking(2000);
-		
+
 		if (watchdog.getTimeRemaining() < 3000) {
 			console.log("Extending timeout...");
 			watchdog.extend(5000); // Extend by 5 seconds
@@ -109,7 +109,7 @@ export async function concurrentOperationsExample() {
 		await Promise.all([
 			executeToolWithTimeout("download", 3000),
 			executeToolWithTimeout("process", 4000),
-			executeToolWithTimeout("upload", 5000)
+			executeToolWithTimeout("upload", 5000),
 		]);
 
 		console.log("All tools completed");
@@ -147,7 +147,7 @@ export async function toolExecutionExample() {
 // ============================================================================
 
 async function simulateThinking(ms: number): Promise<void> {
-	return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function executeWithToolWatchdog(): Promise<void> {
@@ -198,15 +198,15 @@ async function executeLongRunningTool(watchdog: Watchdog): Promise<string> {
 
 if (require.main === module) {
 	console.log("\n🚀 Watchdog Examples\n");
-	
+
 	basicExample();
-	
+
 	setTimeout(async () => {
 		await agentSessionExample();
 		await longRunningOperationExample();
 		await concurrentOperationsExample();
 		await toolExecutionExample();
-		
+
 		console.log("\n✅ All examples completed\n");
 	}, 6000);
 }

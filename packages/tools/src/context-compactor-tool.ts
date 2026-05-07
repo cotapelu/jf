@@ -372,7 +372,7 @@ export async function contextCompactMessages(
 	// Advanced智能 compaction with Q&A preservation and LLM summarization
 
 	// Helper: score message importance
-	function scoreMessage(msg: ChatMessage, idx: number, total: number, options: any): number {
+	function scoreMessage(msg: ChatMessage, idx: number, total: number, _options: any): number {
 		// Recency score (newer = higher)
 		const recency = (idx / total) * 100;
 
