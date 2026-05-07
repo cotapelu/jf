@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 18
-> **Pending**: 69
+> **Completed**: 19
+> **Pending**: 68
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 10 | 18 |
+| P2 - Medium | 28 | 11 | 17 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -194,8 +194,18 @@
 - **Includes**: Rate limits, error handling, best practices, monitoring
 - **Last Updated**: 2026-05-07
 
-#### [P2-009] Add More Faux Provider Fixtures
-- **Status**: 📋 Pending
+#### [P2-009] Add More Faux Provider Fixtures ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Files Created**:
+  - `packages/ai/test/faux-fixtures.ts` - Comprehensive fixture library
+  - `packages/ai/test/faux-fixtures.test.ts` - Tests for fixtures
+- **Features**:
+  - Pre-configured test providers (standard, reasoning, error-prone, tool-testing)
+  - Response factories (echo, thinking, tool-using, multi-step, persona, error)
+  - Common response patterns (simple, thinking, toolCall, multiStep, error, etc.)
+  - Conversation sequences for flow testing
+  - Utility functions for test setup
+- **Update TODO.md [P2-009]
 
 #### [P2-010] Cross-Provider Handoff Improvements
 - **Issue**: Thinking block transformation may lose reasoning context
