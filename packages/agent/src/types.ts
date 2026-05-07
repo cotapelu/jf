@@ -211,6 +211,13 @@ export interface AgentLoopConfig extends SimpleStreamOptions {
 	 * The hook receives the agent abort signal and is responsible for honoring it.
 	 */
 	afterToolCall?: (context: AfterToolCallContext, signal?: AbortSignal) => Promise<AfterToolCallResult | undefined>;
+
+	/**
+	 * Watchdog timeout in milliseconds to prevent infinite loops.
+	 * If the agent runs longer than this, it will stop automatically.
+	 * Default: 30000 (30 seconds)
+	 */
+	watchdogTimeoutMs?: number;
 }
 
 /**

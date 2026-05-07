@@ -3,6 +3,7 @@
  * Transforms to Message[] only at the LLM call boundary.
  */
 
+import { Watchdog, createAgentWatchdog } from "./watchdog.js";
 import {
 	type AssistantMessage,
 	type Context,
@@ -160,12 +161,31 @@ async function runLoop(
 	emit: AgentEventSink,
 	streamFn?: StreamFn,
 ): Promise<void> {
+	// Create watchdog to prevent infinite loops
+	const watchdog = createAgentWatchdog(config.watchdogTimeoutMs || 30000);
+	watchdog.start();
+
 	let firstTurn = true;
 	// Check for steering messages at start (user may have typed while waiting)
 	let pendingMessages: AgentMessage[] = (await config.getSteeringMessages?.()) || [];
 
 	// Outer loop: continues when queued follow-up messages arrive after agent would stop
 	while (true) {
+		// Check watchdog before each iteration
+		if (watchdog.getTimeRemaining() < 1000) {
+			await emit({ 
+				type: "tool_result", 
+				toolName: "watchdog", 
+				content: [{ 
+					type: "text", 
+					text: "Operation timeout - stopping to prevent infinite loop" 
+				}]
+			});
+			await emit({ type: "agent_end", messages: newMessages });
+			watchdog.stop();
+			return;
+		}
+
 		let hasMoreToolCalls = true;
 
 		// Inner loop: process tool calls and steering messages
@@ -194,6 +214,7 @@ async function runLoop(
 			if (message.stopReason === "error" || message.stopReason === "aborted") {
 				await emit({ type: "turn_end", message, toolResults: [] });
 				await emit({ type: "agent_end", messages: newMessages });
+				watchdog.stop();
 				return;
 			}
 
@@ -219,6 +240,10 @@ async function runLoop(
 		// Agent would stop here. Check for follow-up messages.
 		const followUpMessages = (await config.getFollowUpMessages?.()) || [];
 		if (followUpMessages.length > 0) {
+			// Extend watchdog for continued operations
+			if (watchdog.getTimeRemaining() < 5000) {
+				watchdog.extend(10000); // Extend by 10 seconds
+			}
 			// Set as pending so inner loop processes them
 			pendingMessages = followUpMessages;
 			continue;
@@ -229,6 +254,7 @@ async function runLoop(
 	}
 
 	await emit({ type: "agent_end", messages: newMessages });
+	watchdog.stop();
 }
 
 /**

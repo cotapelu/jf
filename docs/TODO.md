@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 20
-> **Pending**: 67
+> **Completed**: 21
+> **Pending**: 66
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 12 | 16 |
+| P2 - Medium | 28 | 13 | 15 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -244,8 +244,19 @@
 #### [P2-015] Circuit Breaker Per Provider
 - **Status**: 📋 Pending
 
-#### [P2-016] Watchdog Timeout Agent Loop
-- **Status**: 📋 Pending
+#### [P2-016] Watchdog Timeout Agent Loop ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Implementation**:
+  - `packages/agent/src/watchdog.ts` - Watchdog timer class
+  - `packages/agent/src/watchdog-example.ts` - Usage examples
+  - `packages/agent/src/agent-loop.ts` - Integrated watchdog into agent loop
+  - `packages/agent/src/types.ts` - Added `watchdogTimeoutMs` config option
+- **Features**:
+  - Prevents infinite loops and runaway execution
+  - Configurable timeout (default 30s)
+  - Warning callbacks at 80% threshold
+  - Auto-extension for follow-up messages
+  - Per-operation and session-level timeouts
 
 ### Coding Agent Package
 
