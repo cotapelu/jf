@@ -14,8 +14,8 @@
 | P0 - Critical | 3 | 2 | 1 |
 | P1 - High | 16 | 13 | 3 |
 | P2 - Medium | 35 | 28 | 7 |
-| P3 - Low | 19 | 14 | 5 |
-| **Total** | **73** | **56** | **17** |
+| P3 - Low | 19 | 15 | 4 |
+| **Total** | **73** | **57** | **16** |
 
 ---
 
@@ -541,8 +541,10 @@
 - **Features**: JSON logging, log duration tracking, Timer utility
 - **Usage**: enableJsonLogging(true) for structured output
 
-#### [O-002] Token Usage & Cost Tracking Per Session
-- **Status**: 📋 In Progress
+#### [O-002] Token Usage & Cost Tracking Per Session ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Files**: packages/ai/src/utils/token-tracker.ts, packages/ai/test/token-tracker.test.ts
+- **Features**: Session tracking, cost calculation with pricing support
 
 #### [O-003] Diagnostics Report (/diagnostics command)
 - **Status**: ✅ Done (2026-05-07)
