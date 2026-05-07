@@ -1,5 +1,58 @@
 import { eastAsianWidth } from "get-east-asian-width";
 
+// Fallback for CJK detection since eastAsianWidth package might not cover all cases
+function isCJKCodePoint(cp: number): boolean {
+	// CJK Unified Ideographs
+	if (cp >= 0x4e00 && cp <= 0x9fff) return true;
+	// CJK Unified Ideographs Extension A
+	if (cp >= 0x3400 && cp <= 0x4dbf) return true;
+	// CJK Unified Ideographs Extension B
+	if (cp >= 0x20000 && cp <= 0x2a6df) return true;
+	// CJK Unified Ideographs Extension C
+	if (cp >= 0x2a700 && cp <= 0x2b73f) return true;
+	// CJK Unified Ideographs Extension D
+	if (cp >= 0x2b740 && cp <= 0x2b81f) return true;
+	// CJK Unified Ideographs Extension E
+	if (cp >= 0x2b820 && cp <= 0x2ceaf) return true;
+	// CJK Compatibility Ideographs
+	if (cp >= 0xf900 && cp <= 0xfaff) return true;
+	// CJK Strokes
+	if (cp >= 0x31c0 && cp <= 0x31ef) return true;
+	// CJK Radicals Supplement
+	if (cp >= 0x2e80 && cp <= 0x2eff) return true;
+	// Kangxi Radicals
+	if (cp >= 0x2f00 && cp <= 0x2fdf) return true;
+	// Hiragana
+	if (cp >= 0x3040 && cp <= 0x309f) return true;
+	// Katakana
+	if (cp >= 0x30a0 && cp <= 0x30ff) return true;
+	// Halfwidth and Fullwidth Forms (includes full-width punctuation)
+	if (cp >= 0xff00 && cp <= 0xffef) return true;
+	// Hangul Syllables
+	if (cp >= 0xac00 && cp <= 0xd7af) return true;
+	// Hangul Jamo
+	if (cp >= 0x1100 && cp <= 0x11ff) return true;
+	// Hangul Compatibility Jamo
+	if (cp >= 0x3130 && cp <= 0x318f) return true;
+	// Enclosed CJK Letters and Months
+	if (cp >= 0x3200 && cp <= 0x32ff) return true;
+	// CJK Compatibility Forms
+	if (cp >= 0xfe30 && cp <= 0xfe4f) return true;
+
+	return false;
+}
+
+function isWideCodePoint(cp: number): boolean {
+	// Use the package if available
+	const width = eastAsianWidth(cp);
+	if (width === 2) {
+		return true;
+	}
+
+	// Fallback to our own CJK detection
+	return isCJKCodePoint(cp);
+}
+
 // Grapheme segmenter (shared instance)
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
@@ -134,7 +187,7 @@ function finalizeTruncatedResult(
 	ellipsisWidth: number,
 	maxWidth: number,
 	pad: boolean,
-): string {
+): { text: string; width: number } {
 	const reset = "\x1b[0m";
 	const visibleWidth = prefixWidth + ellipsisWidth;
 	let result: string;
@@ -145,7 +198,8 @@ function finalizeTruncatedResult(
 		result = `${prefix}${reset}`;
 	}
 
-	return pad ? result + " ".repeat(Math.max(0, maxWidth - visibleWidth)) : result;
+	const finalText = pad ? result + " ".repeat(Math.max(0, maxWidth - visibleWidth)) : result;
+	return { text: finalText, width: Math.min(visibleWidth, maxWidth) };
 }
 
 /**
@@ -178,19 +232,23 @@ function graphemeWidth(segment: string): number {
 		return 2;
 	}
 
-	let width = eastAsianWidth(cp);
+	// Check for wide characters (CJK, etc.)
+	if (isWideCodePoint(cp)) {
+		return 2;
+	}
 
 	// Trailing halfwidth/fullwidth forms
 	if (segment.length > 1) {
 		for (const char of segment.slice(1)) {
 			const c = char.codePointAt(0)!;
-			if (c >= 0xff00 && c <= 0xffef) {
-				width += eastAsianWidth(c);
+			if (isWideCodePoint(c)) {
+				return 2;
 			}
 		}
 	}
 
-	return width;
+	// Default width for other characters
+	return 1;
 }
 
 /**
@@ -817,7 +875,7 @@ export function truncateToWidth(
 		if (clippedEllipsis.width === 0) {
 			return pad ? " ".repeat(maxWidth) : "";
 		}
-		return finalizeTruncatedResult("", 0, clippedEllipsis.text, clippedEllipsis.width, maxWidth, pad);
+		return finalizeTruncatedResult("", 0, clippedEllipsis.text, clippedEllipsis.width, maxWidth, pad).text;
 	}
 
 	if (isPrintableAscii(text)) {
@@ -825,7 +883,8 @@ export function truncateToWidth(
 			return pad ? text + " ".repeat(maxWidth - text.length) : text;
 		}
 		const targetWidth = maxWidth - ellipsisWidth;
-		return finalizeTruncatedResult(text.slice(0, targetWidth), targetWidth, ellipsis, ellipsisWidth, maxWidth, pad);
+		return finalizeTruncatedResult(text.slice(0, targetWidth), targetWidth, ellipsis, ellipsisWidth, maxWidth, pad)
+			.text;
 	}
 
 	const targetWidth = maxWidth - ellipsisWidth;
@@ -927,7 +986,7 @@ export function truncateToWidth(
 		return pad ? text + " ".repeat(Math.max(0, maxWidth - visibleSoFar)) : text;
 	}
 
-	return finalizeTruncatedResult(result, keptWidth, ellipsis, ellipsisWidth, maxWidth, pad);
+	return finalizeTruncatedResult(result, keptWidth, ellipsis, ellipsisWidth, maxWidth, pad).text;
 }
 
 /**
