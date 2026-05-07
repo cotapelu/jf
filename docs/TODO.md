@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 16
-> **Pending**: 71
+> **Completed**: 17
+> **Pending**: 70
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 8 | 20 |
+| P2 - Medium | 28 | 9 | 19 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -187,8 +187,12 @@
 #### [P2-007] Implement Tests for Google Provider Specifics
 - **Status**: 📋 Pending
 
-#### [P2-008] Document Rate Limits by Provider
-- **Status**: 📋 Pending
+#### [P2-008] Document Rate Limits by Provider ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Document**: `docs/RATE_LIMITS.md` created
+- **Coverage**: OpenAI, Anthropic, Google, Mistral, Ollama
+- **Includes**: Rate limits, error handling, best practices, monitoring
+- **Last Updated**: 2026-05-07
 
 #### [P2-009] Add More Faux Provider Fixtures
 - **Status**: 📋 Pending
