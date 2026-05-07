@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 17
-> **Pending**: 70
+> **Completed**: 18
+> **Pending**: 69
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 9 | 19 |
+| P2 - Medium | 28 | 10 | 18 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -272,8 +272,16 @@
 #### [P2-024] Validate IME Positioning - CJK Locales
 - **Status**: 📋 Pending
 
-#### [P2-025] Add More Custom Component Examples
-- **Status**: 📋 Pending
+#### [P2-025] Add More Custom Component Examples ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Examples Created**:
+  - `examples/custom-components/progress-bar.ts` - Animated progress bar
+  - `examples/custom-components/status-indicator.ts` - Animated status indicator with 5 states
+  - `examples/custom-components/README.md` - Comprehensive guide with 5 example components
+- **Features**: Progress bars, status indicators, data tables, notifications, command palettes
+- **Documentation**: Full usage examples and integration guide
+- **Location**: `examples/custom-components/`
+
 
 #### [P2-026] Fix visibleWidth for Unicode ✅ DONE
 - **Status**: ✅ Verified (2026-05-07)
