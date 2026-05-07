@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 19
-> **Pending**: 68
+> **Completed**: 20
+> **Pending**: 67
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 11 | 17 |
+| P2 - Medium | 28 | 12 | 16 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -213,8 +213,20 @@
 
 ### Agent Core Package
 
-#### [P2-011] Custom Message Types - Examples
-- **Status**: 📋 Pending
+#### [P2-011] Custom Message Types - Examples ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Files Created**:
+  - `examples/custom-messages/README.md` - Complete guide with 5 message types
+  - `examples/custom-messages/custom-tool-result.ts` - Enhanced tool results with metadata
+  - `examples/custom-messages/structured-thinking.ts` - Step-by-step reasoning
+- **Features**:
+  - Custom tool results with execution time and validation
+  - Annotated user messages with semantic metadata
+  - Structured thinking with reasoning steps
+  - Enhanced image messages with regions of interest
+  - Workflow state tracking
+- **Integration**: Type guards, validators, formatters included
+- **Update TODO.md [P2-011]
 
 #### [P2-012] Add More Performance Metrics
 - **Status**: 📋 Pending
