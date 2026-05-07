@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 73
-> **Completed**: 72
-> **Pending**: 1
+> **Completed**: 55
+> **Pending**: 18
 
 ---
 
@@ -105,12 +105,12 @@
   - Fixed validation.ts types (Ajv, return types)
   - Added security.ts with proper types
   - Enabled stricter tsconfig.json
-- **Status**: 🟡 In Progress (2026-05-07)
-- **Progress**: Fixed 5+ occurrences in validation and env-api-keys
+- **Status**: ✅ Fixed (2026-05-07)
 - **Changes**:
-  - `env-api-keys.ts`: Fixed `getEnvApiKey` parameter type
-  - `utils/validation.ts`: Typed `ajv` as `Ajv | null`, function return types as `Record<string, unknown>`, error type as `ErrorObject`
-- **Next**: Audit OAuth and provider response types, enable stricter TS config
+  - `env-api-keys.ts`: Fixed overload signature, Changed ProviderId to KnownProvider
+  - `security.ts`: Import types from `@quangtynu/pi-ai` package
+  - `context-compactor-tool.ts`: Changed `any` to `CompactOptions`, fixed catch blocks
+  - `retry.ts`: Fixed Object.assign type error
 
 #### [P1-010] OAuth Error Handling Swallows Original Error ✅ FIXED
 - **Status**: ✅ Fixed (2025-04-09)
