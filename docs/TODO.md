@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 25
-> **Pending**: 62
+> **Completed**: 26
+> **Pending**: 61
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 17 | 11 |
+| P2 - Medium | 28 | 18 | 10 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -209,11 +209,11 @@
 - **Tools**: fast-check/vitest
 
 #### [P2-004] Chaos Engineering Tests
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Focus**: Distributed components
 
 #### [P2-005] Edge Case Testing for Error Conditions
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-006] Test Coverage Gaps - Edge Cases
 - **Issue**: 14/1588 tests failing (0.88%)
@@ -267,7 +267,7 @@
 
 #### [P2-010] Cross-Provider Handoff Improvements
 - **Issue**: Thinking block transformation may lose reasoning context
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 ### Agent Core Package
 
@@ -287,10 +287,10 @@
 - **Update TODO.md [P2-011]
 
 #### [P2-012] Add More Performance Metrics
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-013] Document Recommended Retry Patterns
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-014] Implement Exponential Backoff Global ✅ DONE
 - **Status**: ✅ Done (2026-05-07)
@@ -300,7 +300,7 @@
 - **Related**: docs/AGENT_PROFILE.md
 
 #### [P2-015] Circuit Breaker Per Provider
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-016] Watchdog Timeout Agent Loop ✅ DONE
 - **Status**: ✅ Done (2026-05-07)
@@ -319,13 +319,13 @@
 ### Coding Agent Package
 
 #### [P2-017] Skills Discovery - SKILL.md Parsing
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-018] Test Package System - npm/git install
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-019] Validate Prompt Templates - Variable Expansion
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-020] Extension System - registerTool, registerCommand ✅ DONE
 - **Status**: ✅ Done (2026-05-07)
@@ -357,11 +357,11 @@
 ### TUI Package
 
 #### [P2-023] Test Components with Edge Cases
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Focus**: Very long text, unicode
 
 #### [P2-024] Validate IME Positioning - CJK Locales
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-025] Add More Custom Component Examples ✅ DONE
 - **Status**: ✅ Done (2026-05-07)
@@ -398,15 +398,15 @@
 - **Testing**: Automated/manual recommendations
 
 #### [P2-028] Test Docker Sandbox Isolation
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [P2-029] Validate Event System - Cron, One-shot
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 ### Code Quality
 
 #### [P2-030] Audit Event Listener Cleanup
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Risk**: Memory leaks in extensions, TUI components
 - **Locations**:
   - [ ] packages/coding-agent/src/core/extensions/
@@ -414,7 +414,7 @@
   - [ ] Verify `Disposable` pattern usage
 
 #### [P2-031] Race Conditions in State Management
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Location**: packages/agent/src/ (Agent state)
 - **Tasks**:
   - [ ] Check if Agent.run() is reentrant
@@ -424,11 +424,11 @@
 ### Error Handling
 
 #### [P2-032] Improved JSON Streaming Validation
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Related**: docs/AGENT_PROFILE.md - JSON parse errors
 
 #### [P2-033] Rate Limiting Local + Request Queue
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 ---
 
@@ -437,36 +437,36 @@
 ### Documentation
 
 #### [D-001] Add More Integration Guides
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [D-002] Update Changelogs (unreleased sections)
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [D-003] Create Pi-packages Examples
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [D-004] Document omp-legacy/ Directory
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Issue**: Old Rust/TypeScript code, unclear if deprecated
 
 ### UX/UI
 
 #### [U-001] Additional Themes
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [U-002] Configurable Keybindings Improvements
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [U-003] Advanced Extension Examples
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 #### [U-004] Progress Bar Visualization
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 ### Technical Debt
 
 #### [T-001] Inconsistent Tool Parameter Validation
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Location**: packages/coding-agent/src/core/tools/
 - **Tasks**:
   - [ ] Audit all tools (read, write, edit, grep, find, ls, bash)
@@ -474,20 +474,20 @@
   - [ ] Create validation utility functions
 
 #### [T-002] Missing TypeScript Strict Checks
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Tasks**:
   - [ ] Ensure all tsconfig.json have strict: true
   - [ ] Enforce via CI
 
 #### [T-003] Build Time Optimization (~17s)
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Tasks**:
   - [ ] Profile TypeScript compilation
   - [ ] Check for circular dependencies
   - [ ] Consider incremental builds
 
 #### [T-004] Configuration & Environment Variable Validation
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 - **Tasks**:
   - [ ] Audit all process.env access
   - [ ] Add validation with clear error messages
@@ -537,7 +537,7 @@
 - **Status**: 📋 In Progress
 
 #### [O-003] Diagnostics Report (/diagnostics command)
-- **Status**: 📋 Pending
+- **Status**: ✅ Done (2026-05-07)
 
 ---
 
