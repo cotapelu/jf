@@ -57,13 +57,16 @@ export function logError(
 	error: Error | unknown,
 	context?: Record<string, unknown>,
 ): void {
+	const errorMessage = error instanceof Error ? error.message : String(error);
+	const errorStack = error instanceof Error ? error.stack : undefined;
+
 	const entry: LogEntry = {
 		level: "error",
 		message,
 		timestamp: new Date().toISOString(),
 		error: {
-			message: error instanceof Error ? error.message : String(error),
-			...(error instanceof Error && { stack: error.stack }),
+			message: errorMessage,
+			...(errorStack && { stack: errorStack }),
 		},
 		...(context && { context }),
 	};
@@ -71,7 +74,7 @@ export function logError(
 	if (jsonLoggingEnabled) {
 		console.log(JSON.stringify(entry));
 	} else {
-		console.error(`❌ ${message}`, { error: entry.error.message, ...context });
+		console.error(`❌ ${message}`, { error: errorMessage, ...context });
 	}
 }
 
