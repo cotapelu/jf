@@ -14,8 +14,8 @@
 | P0 - Critical | 3 | 2 | 1 |
 | P1 - High | 16 | 13 | 3 |
 | P2 - Medium | 35 | 28 | 7 |
-| P3 - Low | 19 | 13 | 6 |
-| **Total** | **73** | **55** | **18** |
+| P3 - Low | 19 | 14 | 5 |
+| **Total** | **73** | **56** | **17** |
 
 ---
 
@@ -535,9 +535,11 @@
 
 ### Observability
 
-#### [O-001] Structured Logging
-- **Status**: 📋 In Progress
-- **Goal**: JSON logging option
+#### [O-001] Structured Logging ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Files**: packages/ai/src/utils/logger.ts, packages/ai/test/logger.test.ts
+- **Features**: JSON logging, log duration tracking, Timer utility
+- **Usage**: enableJsonLogging(true) for structured output
 
 #### [O-002] Token Usage & Cost Tracking Per Session
 - **Status**: 📋 In Progress
