@@ -1587,7 +1587,7 @@ export const MODELS = {
 			maxTokens: 101376,
 		} satisfies Model<"bedrock-converse-stream">,
 	},
-	anthropic: {
+	"anthropic": {
 		"claude-3-5-haiku-20241022": {
 			id: "claude-3-5-haiku-20241022",
 			name: "Claude Haiku 3.5",
@@ -2559,7 +2559,7 @@ export const MODELS = {
 			contextWindow: 1050000,
 			maxTokens: 128000,
 		} satisfies Model<"azure-openai-responses">,
-		o1: {
+		"o1": {
 			id: "o1",
 			name: "o1",
 			api: "azure-openai-responses",
@@ -2593,7 +2593,7 @@ export const MODELS = {
 			contextWindow: 200000,
 			maxTokens: 100000,
 		} satisfies Model<"azure-openai-responses">,
-		o3: {
+		"o3": {
 			id: "o3",
 			name: "o3",
 			api: "azure-openai-responses",
@@ -2696,7 +2696,7 @@ export const MODELS = {
 			maxTokens: 100000,
 		} satisfies Model<"azure-openai-responses">,
 	},
-	cerebras: {
+	"cerebras": {
 		"gpt-oss-120b": {
 			id: "gpt-oss-120b",
 			name: "GPT OSS 120B",
@@ -2773,12 +2773,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2796,12 +2791,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2819,12 +2809,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2842,12 +2827,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2865,12 +2845,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2888,12 +2863,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2911,12 +2881,7 @@ export const MODELS = {
 			api: "anthropic-messages",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2934,13 +2899,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: false,
 			input: ["text", "image"],
 			cost: {
@@ -2958,13 +2918,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -2982,13 +2937,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3006,13 +2956,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3030,13 +2975,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: false,
 			input: ["text", "image"],
 			cost: {
@@ -3054,13 +2994,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: false,
 			input: ["text", "image"],
 			cost: {
@@ -3078,12 +3013,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3101,12 +3031,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3124,12 +3049,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3147,12 +3067,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3170,12 +3085,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3193,12 +3103,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3216,12 +3121,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3239,12 +3139,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3262,12 +3157,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3285,12 +3175,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3308,12 +3193,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3331,12 +3211,7 @@ export const MODELS = {
 			api: "openai-responses",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -3354,13 +3229,8 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "github-copilot",
 			baseUrl: "https://api.individual.githubcopilot.com",
-			headers: {
-				"User-Agent": "GitHubCopilotChat/0.35.0",
-				"Editor-Version": "vscode/1.107.0",
-				"Editor-Plugin-Version": "copilot-chat/0.35.0",
-				"Copilot-Integration-Id": "vscode-chat",
-			},
-			compat: { supportsStore: false, supportsDeveloperRole: false, supportsReasoningEffort: false },
+			headers: {"User-Agent":"GitHubCopilotChat/0.35.0","Editor-Version":"vscode/1.107.0","Editor-Plugin-Version":"copilot-chat/0.35.0","Copilot-Integration-Id":"vscode-chat"},
+			compat: {"supportsStore":false,"supportsDeveloperRole":false,"supportsReasoningEffort":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -3373,7 +3243,7 @@ export const MODELS = {
 			maxTokens: 64000,
 		} satisfies Model<"openai-completions">,
 	},
-	google: {
+	"google": {
 		"gemini-1.5-flash": {
 			id: "gemini-1.5-flash",
 			name: "Gemini 1.5 Flash",
@@ -4316,7 +4186,7 @@ export const MODELS = {
 			maxTokens: 65536,
 		} satisfies Model<"google-vertex">,
 	},
-	groq: {
+	"groq": {
 		"deepseek-r1-distill-llama-70b": {
 			id: "deepseek-r1-distill-llama-70b",
 			name: "DeepSeek R1 Distill Llama 70B",
@@ -4624,14 +4494,14 @@ export const MODELS = {
 			maxTokens: 40960,
 		} satisfies Model<"openai-completions">,
 	},
-	huggingface: {
+	"huggingface": {
 		"MiniMaxAI/MiniMax-M2.1": {
 			id: "MiniMaxAI/MiniMax-M2.1",
 			name: "MiniMax-M2.1",
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4649,7 +4519,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4667,7 +4537,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4685,7 +4555,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4703,7 +4573,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
 			input: ["text"],
 			cost: {
@@ -4721,7 +4591,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
 			input: ["text"],
 			cost: {
@@ -4739,7 +4609,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
 			input: ["text"],
 			cost: {
@@ -4757,7 +4627,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
 			input: ["text"],
 			cost: {
@@ -4775,7 +4645,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -4793,7 +4663,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4811,7 +4681,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4829,7 +4699,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4847,7 +4717,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4865,7 +4735,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
 			input: ["text"],
 			cost: {
@@ -4883,7 +4753,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: false,
 			input: ["text"],
 			cost: {
@@ -4901,7 +4771,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4919,7 +4789,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -4937,7 +4807,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
@@ -4955,7 +4825,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4973,7 +4843,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -4991,7 +4861,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -5009,7 +4879,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "huggingface",
 			baseUrl: "https://router.huggingface.co/v1",
-			compat: { supportsDeveloperRole: false },
+			compat: {"supportsDeveloperRole":false},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -9212,7 +9082,7 @@ export const MODELS = {
 			provider: "kilo-gateway",
 			baseUrl: "https://api.kilo.ai/api/gateway",
 			reasoning: true,
-			input: ["text"],
+			input: ["text", "image"],
 			cost: {
 				input: 0.4,
 				output: 2,
@@ -9237,7 +9107,7 @@ export const MODELS = {
 				cacheWrite: 0,
 			},
 			contextWindow: 1048576,
-			maxTokens: 128000,
+			maxTokens: 131072,
 		} satisfies Model<"openai-completions">,
 		"z-ai/glm-4-32b": {
 			id: "z-ai/glm-4-32b",
@@ -9581,7 +9451,7 @@ export const MODELS = {
 		} satisfies Model<"openai-completions">,
 	},
 	"kimi-coding": {
-		k2p5: {
+		"k2p5": {
 			id: "k2p5",
 			name: "Kimi K2.5",
 			api: "anthropic-messages",
@@ -9598,7 +9468,7 @@ export const MODELS = {
 			contextWindow: 262144,
 			maxTokens: 32768,
 		} satisfies Model<"anthropic-messages">,
-		k2p6: {
+		"k2p6": {
 			id: "k2p6",
 			name: "Kimi K2.6",
 			api: "anthropic-messages",
@@ -9633,7 +9503,7 @@ export const MODELS = {
 			maxTokens: 32768,
 		} satisfies Model<"anthropic-messages">,
 	},
-	minimax: {
+	"minimax": {
 		"MiniMax-M2.7": {
 			id: "MiniMax-M2.7",
 			name: "MiniMax-M2.7",
@@ -9705,7 +9575,7 @@ export const MODELS = {
 			maxTokens: 131072,
 		} satisfies Model<"anthropic-messages">,
 	},
-	mistral: {
+	"mistral": {
 		"codestral-latest": {
 			id: "codestral-latest",
 			name: "Codestral (latest)",
@@ -10166,7 +10036,7 @@ export const MODELS = {
 			maxTokens: 128000,
 		} satisfies Model<"mistral-conversations">,
 	},
-	nvidia: {
+	"nvidia": {
 		"deepseek-ai/deepseek-coder-6.7b-instruct": {
 			id: "deepseek-ai/deepseek-coder-6.7b-instruct",
 			name: "Deepseek Coder 6.7b Instruct",
@@ -11307,7 +11177,7 @@ export const MODELS = {
 			maxTokens: 131000,
 		} satisfies Model<"openai-completions">,
 	},
-	openai: {
+	"openai": {
 		"gpt-4": {
 			id: "gpt-4",
 			name: "GPT-4",
@@ -11886,7 +11756,7 @@ export const MODELS = {
 			contextWindow: 1050000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-responses">,
-		o1: {
+		"o1": {
 			id: "o1",
 			name: "o1",
 			api: "openai-responses",
@@ -11920,7 +11790,7 @@ export const MODELS = {
 			contextWindow: 200000,
 			maxTokens: 100000,
 		} satisfies Model<"openai-responses">,
-		o3: {
+		"o3": {
 			id: "o3",
 			name: "o3",
 			api: "openai-responses",
@@ -12178,13 +12048,13 @@ export const MODELS = {
 			maxTokens: 128000,
 		} satisfies Model<"openai-codex-responses">,
 	},
-	opencode: {
+	"opencode": {
 		"big-pickle": {
 			id: "big-pickle",
 			name: "Big Pickle",
-			api: "anthropic-messages",
+			api: "openai-completions",
 			provider: "opencode",
-			baseUrl: "https://opencode.ai/zen",
+			baseUrl: "https://opencode.ai/zen/v1",
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -12195,7 +12065,7 @@ export const MODELS = {
 			},
 			contextWindow: 200000,
 			maxTokens: 128000,
-		} satisfies Model<"anthropic-messages">,
+		} satisfies Model<"openai-completions">,
 		"claude-haiku-4-5": {
 			id: "claude-haiku-4-5",
 			name: "Claude Haiku 4.5",
@@ -12443,9 +12313,9 @@ export const MODELS = {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
-				input: 0,
-				output: 0,
-				cacheRead: 0,
+				input: 0.05,
+				output: 0.4,
+				cacheRead: 0.005,
 				cacheWrite: 0,
 			},
 			contextWindow: 400000,
@@ -12929,40 +12799,6 @@ export const MODELS = {
 			contextWindow: 262144,
 			maxTokens: 65536,
 		} satisfies Model<"openai-completions">,
-		"mimo-v2-omni": {
-			id: "mimo-v2-omni",
-			name: "MiMo V2 Omni",
-			api: "openai-completions",
-			provider: "opencode-go",
-			baseUrl: "https://opencode.ai/zen/go/v1",
-			reasoning: true,
-			input: ["text", "image"],
-			cost: {
-				input: 0.4,
-				output: 2,
-				cacheRead: 0.08,
-				cacheWrite: 0,
-			},
-			contextWindow: 262144,
-			maxTokens: 128000,
-		} satisfies Model<"openai-completions">,
-		"mimo-v2-pro": {
-			id: "mimo-v2-pro",
-			name: "MiMo V2 Pro",
-			api: "openai-completions",
-			provider: "opencode-go",
-			baseUrl: "https://opencode.ai/zen/go/v1",
-			reasoning: true,
-			input: ["text"],
-			cost: {
-				input: 1,
-				output: 3,
-				cacheRead: 0.2,
-				cacheWrite: 0,
-			},
-			contextWindow: 1048576,
-			maxTokens: 128000,
-		} satisfies Model<"openai-completions">,
 		"mimo-v2.5": {
 			id: "mimo-v2.5",
 			name: "MiMo V2.5",
@@ -13066,7 +12902,7 @@ export const MODELS = {
 			maxTokens: 65536,
 		} satisfies Model<"anthropic-messages">,
 	},
-	openrouter: {
+	"openrouter": {
 		"ai21/jamba-large-1.7": {
 			id: "ai21/jamba-large-1.7",
 			name: "AI21: Jamba Large 1.7",
@@ -13100,23 +12936,6 @@ export const MODELS = {
 			},
 			contextWindow: 131072,
 			maxTokens: 131072,
-		} satisfies Model<"openai-completions">,
-		"allenai/olmo-3.1-32b-instruct": {
-			id: "allenai/olmo-3.1-32b-instruct",
-			name: "AllenAI: Olmo 3.1 32B Instruct",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: false,
-			input: ["text"],
-			cost: {
-				input: 0.19999999999999998,
-				output: 0.6,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 65536,
-			maxTokens: 16384,
 		} satisfies Model<"openai-completions">,
 		"amazon/nova-2-lite-v1": {
 			id: "amazon/nova-2-lite-v1",
@@ -13509,7 +13328,7 @@ export const MODELS = {
 			contextWindow: 131072,
 			maxTokens: 64000,
 		} satisfies Model<"openai-completions">,
-		auto: {
+		"auto": {
 			id: "auto",
 			name: "Auto",
 			api: "openai-completions",
@@ -14019,6 +13838,23 @@ export const MODELS = {
 			contextWindow: 1048576,
 			maxTokens: 65536,
 		} satisfies Model<"openai-completions">,
+		"google/gemini-3.1-flash-lite": {
+			id: "google/gemini-3.1-flash-lite",
+			name: "Google: Gemini 3.1 Flash Lite",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			input: ["text", "image"],
+			cost: {
+				input: 0.25,
+				output: 1.5,
+				cacheRead: 0.024999999999999998,
+				cacheWrite: 0.08333333333333334,
+			},
+			contextWindow: 1048576,
+			maxTokens: 65536,
+		} satisfies Model<"openai-completions">,
 		"google/gemini-3.1-flash-lite-preview": {
 			id: "google/gemini-3.1-flash-lite-preview",
 			name: "Google: Gemini 3.1 Flash Lite Preview",
@@ -14206,18 +14042,18 @@ export const MODELS = {
 			contextWindow: 128000,
 			maxTokens: 50000,
 		} satisfies Model<"openai-completions">,
-		"inclusionai/ling-2.6-1t:free": {
-			id: "inclusionai/ling-2.6-1t:free",
-			name: "inclusionAI: Ling-2.6-1T (free)",
+		"inclusionai/ling-2.6-1t": {
+			id: "inclusionai/ling-2.6-1t",
+			name: "inclusionAI: Ling-2.6-1T",
 			api: "openai-completions",
 			provider: "openrouter",
 			baseUrl: "https://openrouter.ai/api/v1",
 			reasoning: false,
 			input: ["text"],
 			cost: {
-				input: 0,
-				output: 0,
-				cacheRead: 0,
+				input: 0.3,
+				output: 2.5,
+				cacheRead: 0.06,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
@@ -14256,23 +14092,6 @@ export const MODELS = {
 			},
 			contextWindow: 256000,
 			maxTokens: 80000,
-		} satisfies Model<"openai-completions">,
-		"meta-llama/llama-3-8b-instruct": {
-			id: "meta-llama/llama-3-8b-instruct",
-			name: "Meta: Llama 3 8B Instruct",
-			api: "openai-completions",
-			provider: "openrouter",
-			baseUrl: "https://openrouter.ai/api/v1",
-			reasoning: false,
-			input: ["text"],
-			cost: {
-				input: 0.03,
-				output: 0.04,
-				cacheRead: 0,
-				cacheWrite: 0,
-			},
-			contextWindow: 8192,
-			maxTokens: 16384,
 		} satisfies Model<"openai-completions">,
 		"meta-llama/llama-3.1-70b-instruct": {
 			id: "meta-llama/llama-3.1-70b-instruct",
@@ -16816,13 +16635,13 @@ export const MODELS = {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
-				input: 0.15,
+				input: 0.14,
 				output: 1,
 				cacheRead: 0.049999999999999996,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 262144,
+			maxTokens: 81920,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3.5-397b-a17b": {
 			id: "qwen/qwen3.5-397b-a17b",
@@ -16850,13 +16669,13 @@ export const MODELS = {
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {
-				input: 0.09999999999999999,
+				input: 0.04,
 				output: 0.15,
 				cacheRead: 0,
 				cacheWrite: 0,
 			},
 			contextWindow: 262144,
-			maxTokens: 4096,
+			maxTokens: 81920,
 		} satisfies Model<"openai-completions">,
 		"qwen/qwen3.5-flash-02-23": {
 			id: "qwen/qwen3.5-flash-02-23",
@@ -20533,7 +20352,7 @@ export const MODELS = {
 			maxTokens: 128000,
 		} satisfies Model<"anthropic-messages">,
 	},
-	xai: {
+	"xai": {
 		"grok-2": {
 			id: "grok-2",
 			name: "Grok 2",
@@ -20960,14 +20779,14 @@ export const MODELS = {
 			maxTokens: 4096,
 		} satisfies Model<"openai-completions">,
 	},
-	zai: {
+	"zai": {
 		"glm-4.5-air": {
 			id: "glm-4.5-air",
 			name: "GLM-4.5-Air",
 			api: "openai-completions",
 			provider: "zai",
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
-			compat: { supportsDeveloperRole: false, thinkingFormat: "zai" },
+			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai"},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -20985,7 +20804,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "zai",
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
-			compat: { supportsDeveloperRole: false, thinkingFormat: "zai", zaiToolStream: true },
+			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -21003,7 +20822,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "zai",
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
-			compat: { supportsDeveloperRole: false, thinkingFormat: "zai", zaiToolStream: true },
+			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -21021,7 +20840,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "zai",
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
-			compat: { supportsDeveloperRole: false, thinkingFormat: "zai", zaiToolStream: true },
+			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
 			input: ["text"],
 			cost: {
@@ -21039,7 +20858,7 @@ export const MODELS = {
 			api: "openai-completions",
 			provider: "zai",
 			baseUrl: "https://api.z.ai/api/coding/paas/v4",
-			compat: { supportsDeveloperRole: false, thinkingFormat: "zai", zaiToolStream: true },
+			compat: {"supportsDeveloperRole":false,"thinkingFormat":"zai","zaiToolStream":true},
 			reasoning: true,
 			input: ["text", "image"],
 			cost: {

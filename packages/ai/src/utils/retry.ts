@@ -168,7 +168,7 @@ export async function fetchWithRetry(
 		if (!response.ok) {
 			const errorText = await response.text().catch(() => "");
 			const error = new Error(`HTTP ${response.status}: ${errorText}`);
-			(Object as Record<string, unknown>).assign(error, {
+			Object.assign(error, {
 				status: response.status,
 				statusText: response.statusText,
 			});

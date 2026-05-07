@@ -234,9 +234,10 @@ export async function compactFileContent(
 		try {
 			compacted = await summarizeWithLLM(compacted, opts);
 			actions.push("LLM summarized");
-		} catch (e: any) {
+		} catch (e: unknown) {
+			const msg = e instanceof Error ? e.message : String(e);
 			// LLM failed, continue with heuristic only
-			if (opts.verbose) console.warn(`LLM summarization failed for ${filePath}: ${e.message}`);
+			if (opts.verbose) console.warn(`LLM summarization failed for ${filePath}: ${msg}`);
 		}
 	}
 
@@ -319,9 +320,10 @@ export async function contextCompactDirectory(dirPath: string, opts: CompactOpti
 					tokensAfter += newTokens;
 					keptFiles.push(relative);
 					actions.push(`Compacted ${relative} (${fileTokens}→${newTokens} tokens)`);
-				} catch (e: any) {
+				} catch (e: unknown) {
+			const msg = e instanceof Error ? e.message : String(e);
 					// Skip unreadable files
-					if (options.verbose) console.warn(`Cannot read ${relative}: ${e.message}`);
+					if (options.verbose) console.warn(`Cannot read ${relative}: ${msg}`);
 				}
 			}
 		}
@@ -372,7 +374,7 @@ export async function contextCompactMessages(
 	// Advanced智能 compaction with Q&A preservation and LLM summarization
 
 	// Helper: score message importance
-	function scoreMessage(msg: ChatMessage, idx: number, total: number, _options: any): number {
+	function scoreMessage(msg: ChatMessage, idx: number, total: number, _options: CompactOptions): number {
 		// Recency score (newer = higher)
 		const recency = (idx / total) * 100;
 
@@ -406,7 +408,7 @@ export async function contextCompactMessages(
 	}
 
 	// LLM summarization
-	async function summarizeWithLLM(content: string, targetTokens: number, options: any): Promise<string | null> {
+	async function summarizeWithLLM(content: string, targetTokens: number, options: CompactOptions): Promise<string | null> {
 		if (!options.apiKey) return null;
 
 		const prompt = `Summarize concisely preserving key information, questions, and technical details. Target: ~${targetTokens} tokens.\n\n${content}`;

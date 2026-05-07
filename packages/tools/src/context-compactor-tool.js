@@ -154,9 +154,10 @@ export async function compactFileContent(content, filePath, opts = {}) {
             actions.push("LLM summarized");
         }
         catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
             // LLM failed, continue with heuristic only
             if (opts.verbose)
-                console.warn(`LLM summarization failed for ${filePath}: ${e.message}`);
+                console.warn(`LLM summarization failed for ${filePath}: ${msg}`);
         }
     }
     const tokensAfter = estimateTokens(compacted);
@@ -228,9 +229,10 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
                     actions.push(`Compacted ${relative} (${fileTokens}→${newTokens} tokens)`);
                 }
                 catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e);
                     // Skip unreadable files
                     if (options.verbose)
-                        console.warn(`Cannot read ${relative}: ${e.message}`);
+                        console.warn(`Cannot read ${relative}: ${msg}`);
                 }
             }
         }
@@ -272,7 +274,7 @@ export async function contextCompactDirectory(dirPath, opts = {}) {
 export async function contextCompactMessages(messages, opts = {}) {
     // Advanced智能 compaction with Q&A preservation and LLM summarization
     // Helper: score message importance
-    function scoreMessage(msg, idx, total, options) {
+    function scoreMessage(msg, idx, total, _options) {
         // Recency score (newer = higher)
         const recency = (idx / total) * 100;
         // Role base

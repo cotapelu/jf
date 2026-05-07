@@ -175,14 +175,11 @@ async function runLoop(
 		// Check watchdog before each iteration
 		if (watchdog.getTimeRemaining() < 1000) {
 			await emit({
-				type: "tool_result",
+				type: "tool_execution_end",
+				toolCallId: "watchdog",
 				toolName: "watchdog",
-				content: [
-					{
-						type: "text",
-						text: "Operation timeout - stopping to prevent infinite loop",
-					},
-				],
+				result: { content: [{ type: "text", text: "Operation timeout - stopping to prevent infinite loop" }], details: {} },
+				isError: false,
 			});
 			await emit({ type: "agent_end", messages: newMessages });
 			watchdog.stop();
