@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 12
-> **Pending**: 75
+> **Completed**: 13
+> **Pending**: 74
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 6 | 16 |
-| P2 - Medium | 28 | 4 | 24 |
+| P2 - Medium | 28 | 5 | 23 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -233,8 +233,12 @@
 #### [P2-019] Validate Prompt Templates - Variable Expansion
 - **Status**: 📋 Pending
 
-#### [P2-020] Extension System - registerTool, registerCommand
-- **Status**: 📋 Pending (verify in progress)
+#### [P2-020] Extension System - registerTool, registerCommand ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Created**: `examples/custom-extension/advanced-extension.ts`
+- **Features**: Project file manager tool, analyze command, lifecycle events, custom widgets, session state
+- **Documentation**: Updated README with basic + advanced examples
+- **Co-authored-by**: Auto-Commit <auto@commit.com>
 
 #### [P2-021] Session/Tree Management - /tree, /fork, compaction
 - **Status**: 📋 Pending (verify in progress)

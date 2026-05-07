@@ -1,15 +1,140 @@
-# Custom Extension Example - Hello World
+# Custom Extension Examples - Hello World & Advanced
 
-Este ejemplo muestra cómo crear una extensión personalizada para pi que agrega herramientas, comandos y UI personalizados.
+Este directorio contiene ejemplos que muestran cómo crear extensiones personalizadas para pi.
 
 ## 📄 Archivos del Ejemplo
 
-- `hello-world-extension.ts` - Extensión principal
-- `package.json` - Configuración del paquete
+### 1. Hello World (`hello-world-extension.ts`)
+Ejemplo básico con:
+- Herramienta personalizada (greeting)
+- Comando personalizado (/hello)
+- Manejador de eventos
+- Widget personalizado
 
-## 🎯 Qué Incluye
+### 2. Advanced (`advanced-extension.ts`) - NUEVO
+Ejemplo avanzado con:
+- Manejador de archivos del proyecto
+- Comando de análisis de proyecto
+- Múltiples manejadores de eventos
+- Widgets personalizados
+- Estado de sesión
 
-Esta extensión demuestra 4 capacidades principales:
+## 🎯 Hello World Example
+
+Este ejemplo demuestra 4 capacidades principales:
+
+1. **Custom Tool** - Herramienta de saludo personalizable
+2. **Custom Command** - Comando `/hello` en la CLI
+3. **Event Handler** - Reacción a mensajes
+4. **Custom Widget** - Widget en el footer con hora
+
+## 🚀 Advanced Extension Features (NUEVO)
+
+### 1. Project File Manager Tool
+- Listar, leer, crear archivos con patrones
+- Control de profundidad de directorio
+- Límites de resultados configurables
+
+### 2. Analyze Command  
+- Analizar estructura del proyecto
+- Comando `/analyze-project`
+
+### 3. Event Handlers
+- `agent_start`/`agent_end` - Ciclo de vida
+- `tool_call`/`tool_result` - Uso de herramientas
+- `message` - Auto-sugerencias
+
+### 4. Custom Widgets
+- Widget de estado en footer
+- Widget contextual en header
+
+### 5. Session State
+- Seguimiento de invocaciones
+- Sesiones activas
+- Configuración persistente
+
+## 🛠️ Uso
+
+### Instalación Hello World
+
+```bash
+mkdir -p ~/.pi/agent/extensions/
+cp -r hello-world-extension ~/.pi/agent/extensions/
+
+# O usar directamente
+pi --extension ./examples/custom-extension/hello-world-extension.ts
+```
+
+### Instalación Advanced
+
+```bash
+pi --extension ./examples/custom-extension/advanced-extension.ts
+
+# Probar comandos
+/help-advanced
+/analyze-project
+```
+
+## 📚 Funcionalidades Principales
+
+### Herramientas Personalizadas
+```typescript
+pi.registerTool({
+  name: "tool-name",
+  parameters: Type.Object({...}),
+  execute: async (id, params, signal, onUpdate) => {
+    return { content, details };
+  }
+});
+```
+
+### Comandos Personalizados
+```typescript
+pi.registerCommand("cmd", {
+  description: "Descripción",
+  handler: async (args, ctx) => {
+    return { type: "success", message };
+  }
+});
+```
+
+### Manejadores de Eventos
+```typescript
+pi.on("agent_start", (event, ctx) => { ... });
+pi.on("agent_end", (event, ctx) => { ... });
+pi.on("tool_call", (event, ctx) => { ... });
+pi.on("message", (event, ctx) => { ... });
+```
+
+### Widgets
+```typescript
+pi.registerWidget({
+  id: "widget-id",
+  position: "footer", // o "header"
+  render: () => `Texto`,
+  updateInterval: 1000
+});
+```
+
+## 🎨 Comparación
+
+| Característica | Hello World | Advanced |
+|----------------|-------------|----------|
+| Herramientas | 1 | 1 + composición |
+| Comandos | 1 | 2 |
+| Widgets | 1 | 2 |
+| Eventos | 1 | 4+ |
+| Estado | No | Sí |
+| Complejidad | Básico | Intermedio |
+
+## 🔗 Relacionado
+
+- [Documentación Principal](../docs/EXTENSION_GUIDE.md)
+- [Ejemplos del Paquete](../../packages/coding-agent/examples/extensions/)
+
+---  
+**Última actualización**: 2026-05-07  
+**Ejemplos**: 2 (básico + avanzado)
 
 1. **Custom Tool** - Herramienta de saludo personalizable
 2. **Custom Command** - Comando `/hello` en la CLI
