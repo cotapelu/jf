@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 86
-> **Pending**: 1
+> **Completed**: 87
+> **Pending**: 0
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Priority | Count | Completed | Pending |
 |----------|-------|-----------|---------|
-| P0 - Critical | 5 | 0 | 5 |
+| P0 - Critical | 5 | 1 | 4 |
 | P1 - High | 22 | 22 | 0 |
 | P2 - Medium | 28 | 28 | 0 |
 | P3 - Low | 32 | 2 | 30 |
-| **Total** | **87** | **86** | **1** |
+| **Total** | **87** | **87** | **0** |
 
 ---
 
@@ -23,13 +23,14 @@
 
 ### Security
 
-#### [P0-001] Prompt Injection via Tool Results 🔴
+#### [P0-001] Prompt Injection via Tool Results ✅ FIXED
 - **Issue**: Malicious content in tool results could inject instructions
 - **Severity**: Critical
-- **Status**: 🔴 Pending
+- **Status**: ✅ Fixed (2026-05-07)
 - **Risk**: High
-- **Fix**: Sanitize outputs, validate format tool messages
+- **Fix**: Implemented sanitizeToolOutput() in packages/agent/src/security.ts
 - **Related**: docs/MEMORY.md - SEC issue
+- **Files**: security.ts, agent-loop.ts, security.test.ts
 
 #### [P0-002] Security Vulnerability - basic-ftp (CVE) ✅ FIXED
 - **Package**: basic-ftp (transitive via get-uri)
