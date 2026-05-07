@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 22
-> **Pending**: 65
+> **Completed**: 23
+> **Pending**: 64
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 14 | 14 |
+| P2 - Medium | 28 | 15 | 13 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -156,8 +156,25 @@
 - **Status**: 📋 Pending
 - **Goal**: Test message transformation between providers
 
-#### [P2-002] End-to-End Tests for Common Workflows
-- **Status**: 📋 Pending
+#### [P2-002] End-to-End Tests for Common Workflows ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **File**: `packages/ai/test/e2e-workflows.test.ts`
+- **Coverage**: 12 end-to-end workflow tests
+- **Workflows Tested**:
+  - Simple Q&A conversations
+  - Multi-turn conversations
+  - Context-aware follow-ups
+  - Tool call execution
+  - Multi-step tool workflows
+  - Error handling in tool workflows
+  - Thinking and reasoning workflows
+  - Mixed content workflows (text + thinking)
+  - Long context workflows (20+ messages)
+  - Stream event workflows
+  - Context accumulation across operations
+  - Error recovery workflows
+
+- **Scenarios**: 12 comprehensive E2E test scenarios
 - **Focus**: Edit-compile-run loop
 
 #### [P2-003] Property-Based Testing ✅ DONE
