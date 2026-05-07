@@ -1,5 +1,6 @@
 import AjvModule from "ajv";
 import addFormatsModule from "ajv-formats";
+import type { Options } from "ajv";
 
 // Handle both default and named exports
 const Ajv = (AjvModule as any).default || AjvModule;
@@ -25,14 +26,14 @@ function canUseRuntimeCodegen(): boolean {
 }
 
 // Create a singleton AJV instance with formats only when runtime code generation is available.
-let ajv: any = null;
+let ajv: import("ajv").Ajv | null = null;
 if (canUseRuntimeCodegen()) {
 	try {
 		ajv = new Ajv({
 			allErrors: true,
 			strict: false,
 			coerceTypes: true,
-		});
+		} as Options);
 		addFormats(ajv);
 	} catch (_e) {
 		console.warn("AJV validation disabled due to CSP restrictions");
@@ -46,7 +47,7 @@ if (canUseRuntimeCodegen()) {
  * @returns The validated arguments
  * @throws Error if tool is not found or validation fails
  */
-export function validateToolCall(tools: Tool[], toolCall: ToolCall): any {
+export function validateToolCall(tools: Tool[], toolCall: ToolCall): Record<string, unknown> {
 	const tool = tools.find((t) => t.name === toolCall.name);
 	if (!tool) {
 		throw new Error(`Tool "${toolCall.name}" not found`);
@@ -61,7 +62,7 @@ export function validateToolCall(tools: Tool[], toolCall: ToolCall): any {
  * @returns The validated (and potentially coerced) arguments
  * @throws Error with formatted message if validation fails
  */
-export function validateToolArguments(tool: Tool, toolCall: ToolCall): any {
+export function validateToolArguments(tool: Tool, toolCall: ToolCall): Record<string, unknown> {
 	// Skip validation in environments where runtime code generation is unavailable.
 	if (!ajv || !canUseRuntimeCodegen()) {
 		return toolCall.arguments;
@@ -81,7 +82,7 @@ export function validateToolArguments(tool: Tool, toolCall: ToolCall): any {
 	// Format validation errors nicely
 	const errors =
 		validate.errors
-			?.map((err: any) => {
+			?.map((err: import("ajv").ErrorObject) => {
 				const path = err.instancePath ? err.instancePath.substring(1) : err.params.missingProperty || "root";
 				return `  - ${path}: ${err.message}`;
 			})

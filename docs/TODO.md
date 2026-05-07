@@ -12,7 +12,7 @@
 | Priority | Count | Completed | Pending |
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
-| P1 - High | 22 | 6 | 16 |
+| P1 - High | 22 | 7 | 15 |
 | P2 - Medium | 28 | 5 | 23 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
@@ -98,14 +98,13 @@
 
 ### Code Quality
 
-#### [P1-009] Reduce Excessive `any` Types
-- **Issue**: 13,924 occurrences of `any` compromises type safety
-- **Status**: 🟡 Technical Debt
-- **Risk**: High
-- **Tasks**:
-  - [ ] Audit high-risk areas (tool parameters, provider responses, OAuth)
-  - [ ] Replace with specific interfaces or `unknown`
-  - [ ] Enable stricter TypeScript config (`noImplicitAny: true`)
+#### [P1-009] Reduce Excessive `any` Types 🟡 IN PROGRESS
+- **Status**: 🟡 In Progress (2026-05-07)
+- **Progress**: Fixed 5+ occurrences in validation and env-api-keys
+- **Changes**:
+  - `env-api-keys.ts`: Fixed `getEnvApiKey` parameter type
+  - `utils/validation.ts`: Typed `ajv` as `Ajv | null`, function return types as `Record<string, unknown>`, error type as `ErrorObject`
+- **Next**: Audit OAuth and provider response types, enable stricter TS config
 
 #### [P1-010] OAuth Error Handling Swallows Original Error ✅ FIXED
 - **Status**: ✅ Fixed (2025-04-09)
