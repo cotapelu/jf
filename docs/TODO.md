@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 13
-> **Pending**: 74
+> **Completed**: 14
+> **Pending**: 73
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 5 | 23 |
+| P2 - Medium | 28 | 6 | 22 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -239,8 +239,15 @@
 - **Documentation**: Updated README with basic + advanced examples
 - **Co-authored-by**: Auto-Commit <auto@commit.com>
 
-#### [P2-021] Session/Tree Management - /tree, /fork, compaction
-- **Status**: 📋 Pending (verify in progress)
+#### [P2-021] Session/Tree Management - /tree, /fork, compaction ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Features**:
+  - `/tree` command - Navigate session tree (switch branches)
+  - `/fork` command - Create new fork from previous message
+  - `/compact` command - Manual session compaction
+  - TreeSelectorComponent for visual tree navigation
+  - CompactionSummaryMessageComponent
+- **Location**: `packages/coding-agent/src/modes/interactive/`
 
 #### [P2-022] Interactive Mode and Editor - TUI Integration
 - **Status**: 📋 Pending (verify in progress)
