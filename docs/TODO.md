@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 15
-> **Pending**: 72
+> **Completed**: 16
+> **Pending**: 71
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 7 | 21 |
+| P2 - Medium | 28 | 8 | 20 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -280,8 +280,19 @@
 
 ### Mom Package
 
-#### [P2-027] Security Audit - Prompt Injection Scenarios
-- **Status**: 📋 Pending
+#### [P2-027] Security Audit - Prompt Injection Scenarios ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **Document**: `docs/SECURITY_AUDIT.md` created
+- **Coverage**:
+  - Tool result injection risks
+  - User message injection
+  - Extension-based attacks
+  - System prompt manipulation
+  - Tool definition exploits
+  - Context poisoning
+  - Mitigation strategies
+- **Immediate Actions**: Prioritized (P0-P3)
+- **Testing**: Automated/manual recommendations
 
 #### [P2-028] Test Docker Sandbox Isolation
 - **Status**: 📋 Pending
