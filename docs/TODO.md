@@ -2,8 +2,8 @@
 
 > **Status**: 📋 Last Updated: 2026-05-07
 > **Total Tasks**: 87
-> **Completed**: 21
-> **Pending**: 66
+> **Completed**: 22
+> **Pending**: 65
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|-----------|---------|
 | P0 - Critical | 5 | 0 | 5 |
 | P1 - High | 22 | 7 | 15 |
-| P2 - Medium | 28 | 13 | 15 |
+| P2 - Medium | 28 | 14 | 14 |
 | P3 - Low | 32 | 2 | 30 |
 | **Total** | **87** | **11** | **76** |
 
@@ -160,8 +160,22 @@
 - **Status**: 📋 Pending
 - **Focus**: Edit-compile-run loop
 
-#### [P2-003] Property-Based Testing
-- **Status**: 📋 Pending
+#### [P2-003] Property-Based Testing ✅ DONE
+- **Status**: ✅ Done (2026-05-07)
+- **File**: `packages/ai/test/property-based.test.ts`
+- **Coverage**: 10 comprehensive property tests
+- **Features**:
+  - Context size handling (0-20 messages)
+  - Message ordering preservation
+  - Thinking/reasoning flag validation
+  - Thinking block serialization
+  - Various thinking levels
+  - Model ID generation patterns
+  - Concurrent stream operations
+  - API consistency across model types
+  - Stream event validity
+  - Fast-check integration (20-50 runs per test)
+- **Invariants Tested**: 15+ critical properties
 - **Tools**: fast-check/vitest
 
 #### [P2-004] Chaos Engineering Tests
