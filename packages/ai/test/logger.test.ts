@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { createTimer, enableJsonLogging, isJsonLoggingEnabled, log, logDuration, logError } from "../src/utils/logger.js";
+import {
+	createTimer,
+	enableJsonLogging,
+	isJsonLoggingEnabled,
+	log,
+	logDuration,
+	logError,
+} from "../src/utils/logger.js";
 
 describe("structured logging", () => {
 	it("log outputs formatted message in human mode", () => {

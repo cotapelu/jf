@@ -11,6 +11,7 @@ import {
 	type ToolResultMessage,
 	validateToolArguments,
 } from "@quangtynu/pi-ai";
+import { sanitizeToolResultContent } from "./security.js";
 import type {
 	AgentContext,
 	AgentEvent,
@@ -22,7 +23,6 @@ import type {
 	StreamFn,
 } from "./types.js";
 import { createAgentWatchdog } from "./watchdog.js";
-import { sanitizeToolResultContent } from "./security.js";
 
 export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
 
@@ -178,7 +178,10 @@ async function runLoop(
 				type: "tool_execution_end",
 				toolCallId: "watchdog",
 				toolName: "watchdog",
-				result: { content: [{ type: "text", text: "Operation timeout - stopping to prevent infinite loop" }], details: {} },
+				result: {
+					content: [{ type: "text", text: "Operation timeout - stopping to prevent infinite loop" }],
+					details: {},
+				},
 				isError: false,
 			});
 			await emit({ type: "agent_end", messages: newMessages });

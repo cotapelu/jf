@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PRICING, formatCost, getSessionTokenTracker, resetSessionTokenTracker, TokenTracker } from "../src/utils/token-tracker.js";
+import {
+	DEFAULT_PRICING,
+	formatCost,
+	getSessionTokenTracker,
+	resetSessionTokenTracker,
+	TokenTracker,
+} from "../src/utils/token-tracker.js";
 
 describe("token tracking", () => {
 	it("TokenTracker tracks usage correctly", () => {

@@ -27,11 +27,7 @@ export function isJsonLoggingEnabled(): boolean {
 	return jsonLoggingEnabled;
 }
 
-export function log(
-	level: LogLevel,
-	message: string,
-	context?: Record<string, unknown>,
-): void {
+export function log(level: LogLevel, message: string, context?: Record<string, unknown>): void {
 	const entry: LogEntry = {
 		level,
 		message,
@@ -52,11 +48,7 @@ export function log(
 	}
 }
 
-export function logError(
-	message: string,
-	error: Error | unknown,
-	context?: Record<string, unknown>,
-): void {
+export function logError(message: string, error: Error | unknown, context?: Record<string, unknown>): void {
 	const errorMessage = error instanceof Error ? error.message : String(error);
 	const errorStack = error instanceof Error ? error.stack : undefined;
 
@@ -78,16 +70,8 @@ export function logError(
 	}
 }
 
-export function logDuration<T>(
-	message: string,
-	fn: () => T,
-	context?: Record<string, unknown>,
-): T;
-export function logDuration<T>(
-	message: string,
-	fn: () => Promise<T>,
-	context?: Record<string, unknown>,
-): Promise<T>;
+export function logDuration<T>(message: string, fn: () => T, context?: Record<string, unknown>): T;
+export function logDuration<T>(message: string, fn: () => Promise<T>, context?: Record<string, unknown>): Promise<T>;
 export function logDuration<T>(
 	message: string,
 	fn: () => T | Promise<T>,
@@ -97,15 +81,17 @@ export function logDuration<T>(
 	const result = fn();
 
 	if (result instanceof Promise) {
-		return result.then((value) => {
-			const duration = performance.now() - start;
-			log("info", message, { ...context, duration: Math.round(duration) });
-			return value;
-		}).catch((error) => {
-			const duration = performance.now() - start;
-			logError(message, error, { ...context, duration: Math.round(duration) });
-			throw error;
-		});
+		return result
+			.then((value) => {
+				const duration = performance.now() - start;
+				log("info", message, { ...context, duration: Math.round(duration) });
+				return value;
+			})
+			.catch((error) => {
+				const duration = performance.now() - start;
+				logError(message, error, { ...context, duration: Math.round(duration) });
+				throw error;
+			});
 	}
 
 	const duration = performance.now() - start;

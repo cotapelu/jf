@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeToolOutput, sanitizeToolResultContent, detectInjectionPatterns } from "../src/security.js";
+import { detectInjectionPatterns, sanitizeToolOutput, sanitizeToolResultContent } from "../src/security.js";
 
 describe("security sanitization", () => {
 	describe("sanitizeToolOutput", () => {

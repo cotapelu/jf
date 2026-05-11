@@ -61,7 +61,7 @@ export class TokenTracker {
 
 	calculateCost(model: string, customPricing?: ModelPricing): TokenUsageSummary {
 		const pricing = customPricing ?? DEFAULT_PRICING[model] ?? { promptCostPer1k: 0, completionCostPer1k: 0 };
-		const estimatedCost = 
+		const estimatedCost =
 			(this.usage.promptTokens / 1000) * pricing.promptCostPer1k +
 			(this.usage.completionTokens / 1000) * pricing.completionCostPer1k;
 

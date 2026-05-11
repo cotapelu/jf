@@ -321,7 +321,7 @@ export async function contextCompactDirectory(dirPath: string, opts: CompactOpti
 					keptFiles.push(relative);
 					actions.push(`Compacted ${relative} (${fileTokens}→${newTokens} tokens)`);
 				} catch (e: unknown) {
-			const msg = e instanceof Error ? e.message : String(e);
+					const msg = e instanceof Error ? e.message : String(e);
 					// Skip unreadable files
 					if (options.verbose) console.warn(`Cannot read ${relative}: ${msg}`);
 				}
@@ -408,7 +408,11 @@ export async function contextCompactMessages(
 	}
 
 	// LLM summarization
-	async function summarizeWithLLM(content: string, targetTokens: number, options: CompactOptions): Promise<string | null> {
+	async function summarizeWithLLM(
+		content: string,
+		targetTokens: number,
+		options: CompactOptions,
+	): Promise<string | null> {
 		if (!options.apiKey) return null;
 
 		const prompt = `Summarize concisely preserving key information, questions, and technical details. Target: ~${targetTokens} tokens.\n\n${content}`;

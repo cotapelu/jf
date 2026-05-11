@@ -20,6 +20,7 @@ export * from "./stream.js";
 export * from "./types.js";
 export * from "./utils/event-stream.js";
 export * from "./utils/json-parse.js";
+export * from "./utils/logger.js";
 export type { SimpleApiKeyProvider } from "./utils/oauth/index.js";
 export {
 	getSimpleApiKeyProvider,
@@ -38,7 +39,6 @@ export type {
 } from "./utils/oauth/types.js";
 export * from "./utils/overflow.js";
 export * from "./utils/retry.js";
-export * from "./utils/logger.js";
 export * from "./utils/token-tracker.js";
 export * from "./utils/typebox-helpers.js";
 export * from "./utils/validation.js";

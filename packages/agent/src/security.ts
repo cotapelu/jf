@@ -56,9 +56,7 @@ export function sanitizeToolOutput(text: string): string {
  * @param content - Array of text/image content from tool result
  * @returns Sanitized content array
  */
-export function sanitizeToolResultContent(
-	content: (TextContent | ImageContent)[],
-): (TextContent | ImageContent)[] {
+export function sanitizeToolResultContent(content: (TextContent | ImageContent)[]): (TextContent | ImageContent)[] {
 	return content.map((item) => {
 		if (item.type === "text" && item.text.length > 10) {
 			return {
@@ -120,10 +118,7 @@ export interface SanitizationConfig {
  * @param config - Sanitization configuration
  * @returns Sanitized text
  */
-export function sanitizeToolOutputWithConfig(
-	text: string,
-	config: SanitizationConfig = {},
-): string {
+export function sanitizeToolOutputWithConfig(text: string, config: SanitizationConfig = {}): string {
 	const { enabled = true, logDetections = false } = config;
 
 	if (!enabled) {
