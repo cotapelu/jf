@@ -16,6 +16,10 @@ export interface WatchdogOptions {
 	onTimeout?: () => void;
 	/** Name for debugging */
 	name?: string;
+	/** Enable warning log output (default: true) */
+	enableWarningLog?: boolean;
+	/** Only warn once when threshold is reached (default: true) */
+	warnOnlyOnce?: boolean;
 }
 
 /**
@@ -32,6 +36,10 @@ export class Watchdog {
 	private intervalId: NodeJS.Timeout | null = null;
 	private timeoutId: NodeJS.Timeout | null = null;
 	private readonly WARNING_THRESHOLD = 0.8; // Warn at 80% of timeout
+	private hasWarned: boolean = false;
+	private enableWarningLog: boolean = true;
+	private warnOnlyOnce: boolean = true;
+	private hasTimedOut: boolean = false;
 
 	constructor(options: WatchdogOptions) {
 		this.timeoutMs = options.timeoutMs;
@@ -40,6 +48,8 @@ export class Watchdog {
 		this.onTimeout = options.onTimeout;
 		this.name = options.name || "Watchdog";
 		this.startTime = Date.now();
+		this.enableWarningLog = options.enableWarningLog !== false;
+		this.warnOnlyOnce = options.warnOnlyOnce !== false;
 	}
 
 	/**
@@ -52,6 +62,7 @@ export class Watchdog {
 
 		this.isRunning = true;
 		this.startTime = Date.now();
+		this.hasWarned = false;
 
 		// Set main timeout
 		this.timeoutId = setTimeout(() => {
@@ -128,7 +139,14 @@ export class Watchdog {
 		const warningTime = this.timeoutMs - warningThreshold;
 
 		if (remaining <= warningTime && this.onTimeoutWarning) {
-			this.onTimeoutWarning(remaining);
+			if (this.warnOnlyOnce && this.hasWarned) {
+				return; // Already warned, skip
+			}
+			this.hasWarned = true;
+			// Only call callback if warning log is enabled
+			if (this.enableWarningLog && this.onTimeoutWarning) {
+				this.onTimeoutWarning(remaining);
+			}
 		}
 	}
 
@@ -137,6 +155,7 @@ export class Watchdog {
 	 */
 	private handleTimeout(): void {
 		this.isRunning = false;
+		this.hasTimedOut = true;
 
 		console.error(`[${this.name}] Watchdog timeout after ${this.timeoutMs}ms`);
 
@@ -146,16 +165,57 @@ export class Watchdog {
 	}
 
 	/**
-	 * Extend the timeout by additional milliseconds
+	 * Check if watchdog has timed out
+	 */
+	isTimedOut(): boolean {
+		return this.hasTimedOut;
+	}
+
+	/**
+	 * Check if watchdog is in warning zone (time running out)
+	 */
+	isInWarningZone(warningThreshold: number = 0.2): boolean {
+		const remaining = this.getTimeRemaining();
+		return remaining > 0 && remaining <= this.timeoutMs * warningThreshold;
+	}
+
+	/**
+	 * Extend the timeout by additional milliseconds.
+	 * Note: This extends the absolute timeout, not the remaining time.
+	 * The elapsed time is preserved, so the remaining time increases.
 	 */
 	extend(additionalMs: number): void {
 		if (!this.isRunning) {
 			return;
 		}
 
+		// Cancel existing timeout
+		if (this.timeoutId) {
+			clearTimeout(this.timeoutId);
+			this.timeoutId = null;
+		}
+
+		// Extend the timeout - don't reset startTime, just increase the total timeout
 		this.timeoutMs += additionalMs;
-		this.reset();
-		console.log(`[${this.name}] Watchdog extended by ${additionalMs}ms`);
+		this.hasTimedOut = false; // Reset timeout flag when extending
+
+		// Set new timeout with the updated timeout value
+		this.timeoutId = setTimeout(() => {
+			this.handleTimeout();
+		}, this.timeoutMs - this.getElapsedTime());
+
+		console.log(
+			`[${this.name}] Watchdog extended by ${additionalMs}ms (total: ${this.timeoutMs}ms, elapsed: ${this.getElapsedTime()}ms)`,
+		);
+	}
+
+	/**
+	 * Force trigger timeout immediately (for external control)
+	 */
+	triggerTimeout(): void {
+		if (this.isRunning) {
+			this.handleTimeout();
+		}
 	}
 
 	/**
@@ -174,8 +234,12 @@ export function createAgentWatchdog(timeoutMs: number = 30000): Watchdog {
 		timeoutMs,
 		checkIntervalMs: 1000,
 		name: "AgentSession",
+		warnOnlyOnce: true,
+		enableWarningLog: false, // Default off to avoid spam
 		onTimeoutWarning: (remaining) => {
-			console.warn(`[AgentSession] Timeout warning: ${Math.round(remaining / 1000)}s remaining`);
+			if (process.env.DEBUG_WATCHDOG === "true") {
+				console.warn(`[AgentSession] Timeout warning: ${Math.round(remaining / 1000)}s remaining`);
+			}
 		},
 		onTimeout: () => {
 			console.error("[AgentSession] Execution timeout - stopping agent");

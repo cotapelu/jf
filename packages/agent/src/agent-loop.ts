@@ -193,6 +193,23 @@ async function runLoop(
 
 		// Inner loop: process tool calls and steering messages
 		while (hasMoreToolCalls || pendingMessages.length > 0) {
+			// Check watchdog at the start of inner loop iteration
+			if (watchdog.isTimedOut() || watchdog.getTimeRemaining() < 1000) {
+				await emit({
+					type: "tool_execution_end",
+					toolCallId: "watchdog",
+					toolName: "watchdog",
+					result: {
+						content: [{ type: "text", text: "Operation timeout - stopping to prevent infinite loop" }],
+						details: {},
+					},
+					isError: false,
+				});
+				await emit({ type: "agent_end", messages: newMessages });
+				watchdog.stop();
+				return;
+			}
+
 			if (!firstTurn) {
 				await emit({ type: "turn_start" });
 			} else {

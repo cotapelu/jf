@@ -382,7 +382,7 @@ export class AgentSession {
 
 		this.agent.afterToolCall = async ({ toolCall, args, result, isError }) => {
 			// Special handling: if context_compact succeeded, replace messages with compactedMessages
-			if (toolCall.name === "context_compact" && !isError && result.details && result.details.compactedMessages) {
+			if (toolCall.name === "context_compact" && !isError && result.details?.compactedMessages) {
 				// Replace entire message history with the compacted version
 				// This removes the old context + the tool call/result itself, giving LLM a fresh compact context
 				this.agent.state.messages = result.details.compactedMessages;
