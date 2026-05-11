@@ -5,12 +5,15 @@
 import { describe, expect, it } from "vitest";
 import { complete } from "../src/index.js";
 import {
-	conversationSequences,
+	CONVERSATION_SEQUENCES,
 	createTestContext,
 	echoResponseFactory,
+	fauxAssistantMessage,
+	fauxText,
+	fauxThinking,
 	registerReasoningProvider,
 	registerTestProvider,
-	testResponses,
+	TEST_RESPONSES,
 	thinkingResponseFactory,
 	toolUsingResponseFactory,
 } from "./faux-fixtures.js";
@@ -42,7 +45,7 @@ describe("faux provider fixtures", () => {
 
 		expect(response.content).toHaveLength(1);
 		expect(response.content[0].type).toBe("text");
-		expect(response.content[0].text).toContain("Echo:");
+		expect((response.content[0] as any).text).toContain("Echo:");
 	});
 
 	it("should create thinking response", async () => {
@@ -68,66 +71,71 @@ describe("faux provider fixtures", () => {
 
 		expect(response.content).toHaveLength(2);
 		expect(response.content[1].type).toBe("toolCall");
-		expect(response.content[1].name).toBe("search");
+		expect((response.content[1] as any).name).toBe("search");
 	});
 
 	it("should cycle through multi-step responses", async () => {
 		const provider = registerTestProvider();
 		const steps = ["Step 1", "Step 2", "Step 3"];
-		provider.setResponses(steps.map((s) => () => ({ content: [{ type: "text", text: s }] })));
+		provider.setResponses(steps.map((s) => () => fauxAssistantMessage(s)));
 
 		const model = provider.getModel("test-fast")!;
 		const context = {
-			messages: [{ role: "user", content: [{ type: "text", text: "test" }], timestamp: Date.now() }],
+			messages: [
+				{ role: "user" as const, content: [{ type: "text" as const, text: "test" }], timestamp: Date.now() },
+			],
 		};
 
 		const response1 = await complete(model, context);
-		expect(response1.content[0].text).toBe("Step 1");
+		expect((response1.content[0] as any).text).toBe("Step 1");
 
 		const response2 = await complete(model, context);
-		expect(response2.content[0].text).toBe("Step 2");
+		expect((response2.content[0] as any).text).toBe("Step 2");
 
 		const response3 = await complete(model, context);
-		expect(response3.content[0].text).toBe("Step 3");
+		expect((response3.content[0] as any).text).toBe("Step 3");
 	});
 
 	it("should use predefined test response", async () => {
 		const provider = registerTestProvider();
-		provider.setResponses(testResponses.simple);
+		provider.setResponses([...TEST_RESPONSES.simple]);
 
 		const response = await complete(provider.getModel("test-fast")!, {
-			messages: [{ role: "user", content: [{ type: "text", text: "test" }], timestamp: Date.now() }],
+			messages: [
+				{ role: "user" as const, content: [{ type: "text" as const, text: "test" }], timestamp: Date.now() },
+			],
 		});
 
-		expect(response.content[0].text).toBe("This is a test response");
+		expect((response.content[0] as any).text).toBe("This is a test response");
 	});
 
 	it("should handle conversation sequences", async () => {
 		const provider = registerTestProvider();
-		provider.setResponses(conversationSequences.questionAnswer);
+		provider.setResponses([...CONVERSATION_SEQUENCES.questionAnswer]);
 
 		const model = provider.getModel("test-fast")!;
 		const context = {
-			messages: [{ role: "user", content: [{ type: "text", text: "question" }], timestamp: Date.now() }],
+			messages: [
+				{ role: "user" as const, content: [{ type: "text" as const, text: "question" }], timestamp: Date.now() },
+			],
 		};
 
 		const response1 = await complete(model, context);
-		expect(response1.content[0].text).toBe("I can help with that.");
+		expect((response1.content[0] as any).text).toBe("I can help with that.");
 
 		const response2 = await complete(model, context);
-		expect(response2.content[0].text).toBe("Here's what I found:");
+		expect((response2.content[0] as any).text).toBe("Here's what I found:");
 	});
 
 	it("should track call count in state", async () => {
 		const provider = registerTestProvider();
-		provider.setResponses([
-			() => ({ content: [{ type: "text", text: "First" }] }),
-			() => ({ content: [{ type: "text", text: "Second" }] }),
-		]);
+		provider.setResponses([() => fauxAssistantMessage("First"), () => fauxAssistantMessage("Second")]);
 
 		const model = provider.getModel("test-fast")!;
 		const context = {
-			messages: [{ role: "user", content: [{ type: "text", text: "test" }], timestamp: Date.now() }],
+			messages: [
+				{ role: "user" as const, content: [{ type: "text" as const, text: "test" }], timestamp: Date.now() },
+			],
 		};
 
 		expect(provider.state.callCount).toBe(0);
@@ -141,14 +149,16 @@ describe("faux provider fixtures", () => {
 
 	it("should handle empty response", async () => {
 		const provider = registerTestProvider();
-		provider.setResponses(testResponses.empty);
+		provider.setResponses([...TEST_RESPONSES.empty]);
 
 		const response = await complete(provider.getModel("test-fast")!, {
-			messages: [{ role: "user", content: [{ type: "text", text: "test" }], timestamp: Date.now() }],
+			messages: [
+				{ role: "user" as const, content: [{ type: "text" as const, text: "test" }], timestamp: Date.now() },
+			],
 		});
 
 		expect(response.content).toHaveLength(1);
-		expect(response.content[0].text).toBe("");
+		expect((response.content[0] as any).text).toBe("");
 	});
 
 	it("should handle reasoning model", async () => {
@@ -156,10 +166,16 @@ describe("faux provider fixtures", () => {
 		provider.setResponses([fauxAssistantMessage([fauxThinking("Deep thoughts..."), fauxText("Final answer")])]);
 
 		const response = await complete(provider.getModel("reasoner-basic")!, {
-			messages: [{ role: "user", content: [{ type: "text", text: "Complex question" }], timestamp: Date.now() }],
+			messages: [
+				{
+					role: "user" as const,
+					content: [{ type: "text" as const, text: "Complex question" }],
+					timestamp: Date.now(),
+				},
+			],
 		});
 
 		expect(response.content).toHaveLength(2);
-		expect(response.content[0].type).toBe("thinking");
+		expect((response.content[0] as any).type).toBe("thinking");
 	});
 });

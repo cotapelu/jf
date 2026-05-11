@@ -327,7 +327,7 @@ describe("totalTokens field", () => {
 			retry: 3,
 			timeout: 60000,
 		}, async () => {
-			const llm = getModel("zai", "glm-4.5-flash");
+			const llm = getModel("zai", "glm-5.1");
 
 			console.log(`\nz.ai / ${llm.id}:`);
 			const { first, second } = await testTotalTokensWithCache(llm, { apiKey: process.env.ZAI_API_KEY });
@@ -540,7 +540,7 @@ describe("totalTokens field", () => {
 			"claude-sonnet-4 - should return totalTokens equal to sum of components",
 			{ retry: 3, timeout: 60000 },
 			async () => {
-				const llm = getModel("github-copilot", "claude-sonnet-4");
+				const llm = getModel("github-copilot", "claude-sonnet-4.5");
 
 				console.log(`\nGitHub Copilot / ${llm.id}:`);
 				const { first, second } = await testTotalTokensWithCache(llm, { apiKey: githubCopilotToken });

@@ -61,7 +61,7 @@ describe("google provider specific", () => {
 
 		// Gemini xhigh should produce substantial reasoning
 		expect(thinkingBlocks.length).toBeGreaterThanOrEqual(2);
-		expect(response.content[response.content.length - 1].text).toContain("comprehensive");
+		expect((response.content[response.content.length - 1] as any).text).toContain("comprehensive");
 	});
 
 	it("should handle large context windows specific to Gemini", async () => {
@@ -76,15 +76,15 @@ describe("google provider specific", () => {
 					role: "user" as const,
 					content: [
 						{
-							type: "text",
+							type: "text" as const,
 							text: `Document section ${i + 1}: ${"Lorem ipsum dolor sit amet. ".repeat(50)}`,
 						},
 					],
 					timestamp: Date.now() + i * 1000,
 				})),
 				{
-					role: "user",
-					content: [{ type: "text", text: "Summarize the key points" }],
+					role: "user" as const,
+					content: [{ type: "text" as const, text: "Summarize the key points" }],
 					timestamp: Date.now(),
 				},
 			],
@@ -93,7 +93,7 @@ describe("google provider specific", () => {
 		const response = await complete(testModel, context);
 
 		// Gemini should handle large context
-		expect(response.content[0].text).toContain("process");
+		expect((response.content[0] as any).text).toContain("process");
 		expect(response.api).toBe("google");
 	});
 
@@ -119,11 +119,11 @@ describe("google provider specific", () => {
 		const context: Context = {
 			messages: [
 				{
-					role: "user",
+					role: "user" as const,
 					content: [
-						{ type: "text", text: "Describe this image:" },
+						{ type: "text" as const, text: "Describe this image:" },
 						{
-							type: "image",
+							type: "image" as const,
 							data: "base64_encoded_image_data_here",
 							mimeType: "image/jpeg",
 							annotations: [
@@ -135,7 +135,7 @@ describe("google provider specific", () => {
 									height: 100,
 								},
 							],
-						},
+						} as any,
 					],
 					timestamp: Date.now(),
 				},
@@ -146,7 +146,7 @@ describe("google provider specific", () => {
 
 		// Gemini should process multimodal input
 		expect(response.api).toBe("google");
-		expect(response.content[0].text).toContain("analyze");
+		expect((response.content[0] as any).text).toContain("analyze");
 		expect(response.provider).toBe("google");
 
 		multimodalModel.unregister();
@@ -218,7 +218,7 @@ describe("google provider specific", () => {
 		// Should handle safety violations gracefully
 		expect(response.stopReason).toBe("error");
 		expect(response.errorMessage).toBeDefined();
-		expect(response.content[0].text).toContain("cannot help");
+		expect((response.content[0] as any).text).toContain("cannot help");
 	});
 
 	// =========================================================================
@@ -264,7 +264,7 @@ describe("google provider specific", () => {
 
 		// Gemini should handle large context
 		expect(response.api).toBe("google");
-		expect(response.content[0].text).toBeDefined();
+		expect((response.content[0] as any).text).toBeDefined();
 	});
 
 	it("should support code generation with Gemini", async () => {
@@ -276,7 +276,7 @@ describe("google provider specific", () => {
 					type: "text",
 					text: "```python\ndef hello_world():\n    print('Hello, World!')\n```",
 					language: "python" as const,
-				},
+				} as any,
 				fauxText("This code demonstrates basic Python syntax."),
 			]),
 		]);
@@ -296,7 +296,7 @@ describe("google provider specific", () => {
 
 		// Gemini should include code blocks
 		expect(codeBlocks.length).toBeGreaterThan(0);
-		expect(codeBlocks[0].language).toBe("python");
+		expect((codeBlocks[0] as any).language).toBe("python");
 	});
 
 	it("should handle Gemini's function calling capabilities", async () => {

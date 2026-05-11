@@ -5,7 +5,7 @@
  * Ensures consistency when switching between providers mid-conversation.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { complete, type ThinkingContent, type ToolCall, type ToolResultMessage } from "../src/index.js";
 import {
 	type AssistantMessage,
@@ -156,7 +156,7 @@ describe("cross-provider handoffs", () => {
 		const response2 = await complete(anthropic.model, context2);
 
 		expect(response2.api).toBe("anthropic");
-		expect(response2.content[0].text).toContain("Building");
+		expect((response2.content[0] as any).text).toContain("Building");
 	});
 
 	it("should preserve thinking blocks across provider handoffs", async () => {
@@ -340,7 +340,7 @@ describe("cross-provider handoffs", () => {
 		const response2 = await complete(google.model, context2);
 
 		expect(response2.api).toBe("google");
-		expect(response2.content[0].text).toContain("processed");
+		expect((response2.content[0] as any).text).toContain("processed");
 	});
 
 	// =========================================================================
@@ -395,7 +395,7 @@ describe("cross-provider handoffs", () => {
 		for (let i = 0; i < providers.length; i++) {
 			const response = await complete(providers[i].model, context);
 
-			expect(response.content[0].text).toContain(`provider ${i + 1}`);
+			expect((response.content[0] as any).text).toContain(`provider ${i + 1}`);
 
 			context.messages.push(response);
 			context.messages.push({
@@ -650,7 +650,7 @@ describe("cross-provider handoffs", () => {
 
 			// Tool result processing step
 			const response2 = await complete(providers[i].model, context);
-			expect(response2.content[0].text).toContain(`Step ${i + 1} complete`);
+			expect((response2.content[0] as any).text).toContain(`Step ${i + 1} complete`);
 
 			context.messages.push(response2);
 			context.messages.push({

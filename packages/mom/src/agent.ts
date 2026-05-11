@@ -833,12 +833,8 @@ function createRunner(sandboxConfig: SandboxConfig, channelId: string, channelDi
 					.reverse()
 					.find((m) => m.role === "assistant" && m.stopReason !== "aborted");
 
-				const contextTokens = lastAssistantMessage
-					? lastAssistantMessage.usage.input +
-						lastAssistantMessage.usage.output +
-						lastAssistantMessage.usage.cacheRead +
-						lastAssistantMessage.usage.cacheWrite
-					: 0;
+				const usage = (lastAssistantMessage as any)?.usage as any;
+				const contextTokens = usage ? usage.input + usage.output + usage.cacheRead + usage.cacheWrite : 0;
 				const contextWindow = model.contextWindow || 200000;
 
 				const summary = log.logUsageSummary(runState.logCtx!, runState.totalUsage, contextTokens, contextWindow);

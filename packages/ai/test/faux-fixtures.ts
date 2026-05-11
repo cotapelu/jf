@@ -13,6 +13,10 @@ import {
 	fauxToolCall,
 	registerFauxProvider,
 } from "../src/providers/faux.js";
+
+// Re-export for test files
+export { fauxAssistantMessage, fauxText, fauxThinking, fauxToolCall, registerFauxProvider };
+
 import type { Context, Tool } from "../src/types.js";
 
 // ============================================================================
@@ -103,7 +107,7 @@ export function registerToolTestProvider(_tools: Tool[], options: RegisterFauxPr
 export function echoResponseFactory() {
 	return (context: Context) => {
 		const lastMessage = context.messages[context.messages.length - 1];
-		const text = lastMessage?.content?.[0]?.text || "No input";
+		const text = (lastMessage?.content?.[0] as any)?.text || "No input";
 		return fauxAssistantMessage(`Echo: ${text}`);
 	};
 }

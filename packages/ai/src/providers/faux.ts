@@ -15,6 +15,10 @@ import type {
 	ToolResultMessage,
 	Usage,
 } from "../types.js";
+
+// Re-export types for test files
+export type { AssistantMessage, Context };
+
 import { createAssistantMessageEventStream } from "../utils/event-stream.js";
 
 const DEFAULT_API = "faux";

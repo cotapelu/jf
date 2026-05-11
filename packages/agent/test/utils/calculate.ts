@@ -11,7 +11,7 @@ export function calculate(expression: string): CalculateResult {
 		const result = new Function(`return ${expression}`)();
 		return { content: [{ type: "text", text: `${expression} = ${result}` }], details: undefined };
 	} catch (e: unknown) {
-		throw new Error(e.message || String(e));
+		throw new Error(e instanceof Error ? e.message : String(e));
 	}
 }
 

@@ -7,7 +7,13 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type Context, complete, stream } from "../src/index.js";
-import { fauxAssistantMessage, fauxText, fauxToolCall, registerFauxProvider } from "../src/providers/faux.js";
+import {
+	fauxAssistantMessage,
+	fauxText,
+	fauxThinking,
+	fauxToolCall,
+	registerFauxProvider,
+} from "../src/providers/faux.js";
 
 describe("end-to-end workflows", () => {
 	let provider: any;
@@ -46,7 +52,7 @@ describe("end-to-end workflows", () => {
 
 		// Verification
 		expect(response.role).toBe("assistant");
-		expect(response.content[0].text).toContain("Paris");
+		expect((response.content[0] as any).text).toContain("Paris");
 	});
 
 	it("should handle multi-turn conversation", async () => {
@@ -79,22 +85,30 @@ describe("end-to-end workflows", () => {
 			],
 		};
 		const response1 = await complete(testModel, context1);
-		expect(response1.content[0].text).toContain("calculate");
+		expect((response1.content[0] as any).text).toContain("calculate");
 
 		// Second turn
 		const context2: Context = {
 			messages: [
-				{ role: "user", content: [{ type: "text", text: "Can you help me with math?" }], timestamp: Date.now() },
 				{
-					role: "assistant",
-					content: [{ type: "text", text: "I can help you calculate that." }],
+					role: "user" as const,
+					content: [{ type: "text" as const, text: "Can you help me with math?" }],
 					timestamp: Date.now(),
 				},
-				{ role: "user", content: [{ type: "text", text: "What is 6 times 7?" }], timestamp: Date.now() },
+				{
+					role: "assistant" as const,
+					content: [{ type: "text" as const, text: "I can help you calculate that." }],
+					timestamp: Date.now(),
+				},
+				{
+					role: "user" as const,
+					content: [{ type: "text" as const, text: "What is 6 times 7?" }],
+					timestamp: Date.now(),
+				},
 			],
-		};
+		} as any;
 		const response2 = await complete(testModel, context2);
-		expect(response2.content[0].text).toContain("numbers");
+		expect((response2.content[0] as any).text).toContain("numbers");
 	});
 
 	it("should handle follow-up questions with context", async () => {
@@ -119,14 +133,26 @@ describe("end-to-end workflows", () => {
 		// Follow-up with context
 		const context2: Context = {
 			messages: [
-				{ role: "user", content: [{ type: "text", text: "Who are you?" }], timestamp: Date.now() },
-				{ role: "assistant", content: [{ type: "text", text: "I am an AI assistant." }], timestamp: Date.now() },
-				{ role: "user", content: [{ type: "text", text: "What can you help me with?" }], timestamp: Date.now() },
+				{
+					role: "user" as const,
+					content: [{ type: "text" as const, text: "Who are you?" }],
+					timestamp: Date.now(),
+				},
+				{
+					role: "assistant" as const,
+					content: [{ type: "text" as const, text: "I am an AI assistant." }],
+					timestamp: Date.now(),
+				},
+				{
+					role: "user" as const,
+					content: [{ type: "text" as const, text: "What can you help me with?" }],
+					timestamp: Date.now(),
+				},
 			],
-		};
+		} as any;
 		const response = await complete(testModel, context2);
 
-		expect(response.content[0].text).toContain("help");
+		expect((response.content[0] as any).text).toContain("help");
 	});
 
 	// =========================================================================
@@ -156,7 +182,7 @@ describe("end-to-end workflows", () => {
 		const response = await complete(testModel, context);
 
 		// Verification
-		expect(response.content[0].text).toContain("information");
+		expect((response.content[0] as any).text).toContain("information");
 	});
 
 	it("should handle multi-step tool workflows", async () => {
@@ -191,8 +217,8 @@ describe("end-to-end workflows", () => {
 
 		const response = await complete(testModel, context);
 
-		expect(response.content[0].text).toContain("Analysis");
-		expect(response.content[0].text).toContain("complete");
+		expect((response.content[0] as any).text).toContain("Analysis");
+		expect((response.content[0] as any).text).toContain("complete");
 	});
 
 	it("should handle error conditions in tool workflows", async () => {
@@ -218,7 +244,7 @@ describe("end-to-end workflows", () => {
 
 		const response = await complete(testModel, context);
 
-		expect(response.content[0].text).toContain("Success");
+		expect((response.content[0] as any).text).toContain("Success");
 	});
 
 	// =========================================================================
@@ -252,7 +278,7 @@ describe("end-to-end workflows", () => {
 		);
 
 		expect(thinkingBlocks.length).toBe(3);
-		expect(response.content[response.content.length - 1].text).toContain("solution");
+		expect((response.content[response.content.length - 1] as any).text).toContain("solution");
 	});
 
 	it("should handle mixed content workflows", async () => {
@@ -296,23 +322,23 @@ describe("end-to-end workflows", () => {
 				role: i % 2 === 0 ? "user" : "assistant",
 				content: [
 					{
-						type: "text",
+						type: "text" as const,
 						text: `Message ${i + 1} in the conversation`,
 					},
 				],
 				timestamp: Date.now() + i * 1000,
 			})),
-		};
+		} as any;
 		// Add final user message
 		longContext.messages.push({
-			role: "user",
-			content: [{ type: "text", text: "What did we discuss?" }],
+			role: "user" as const,
+			content: [{ type: "text" as const, text: "What did we discuss?" }],
 			timestamp: Date.now(),
 		});
 
 		const response = await complete(testModel, longContext);
 
-		expect(response.content[0].text).toContain("context");
+		expect((response.content[0] as any).text).toContain("context");
 	});
 
 	// =========================================================================
@@ -416,10 +442,10 @@ describe("end-to-end workflows", () => {
 			const response = await complete(model, currentContext);
 
 			currentContext.messages.push({
-				role: "assistant",
+				role: "assistant" as const,
 				content: response.content,
 				timestamp: Date.now(),
-			});
+			} as any);
 
 			p.unregister();
 		}
@@ -438,13 +464,13 @@ describe("end-to-end workflows", () => {
 				role: i % 2 === 0 ? "user" : "assistant",
 				content: [
 					{
-						type: "text",
+						type: "text" as const,
 						text: `Message ${i}: Lorem ipsum dolor sit amet`,
 					},
 				],
 				timestamp: Date.now() + i * 1000,
 			})).slice(0, 20), // Take first 20 to keep test manageable
-		};
+		} as any;
 		context.messages.push({
 			role: "user",
 			content: [{ type: "text", text: "Latest query" }],
@@ -453,7 +479,7 @@ describe("end-to-end workflows", () => {
 
 		const response = await complete(testModel, context);
 
-		expect(response.content[0].text).toBeDefined();
+		expect((response.content[0] as any).text).toBeDefined();
 	});
 
 	// =========================================================================
@@ -526,7 +552,7 @@ describe("end-to-end workflows", () => {
 		};
 		const response2 = await complete(providers[1].getModel("step2")!, context2);
 
-		expect(response2.content[0].text).toContain("Recovered");
+		expect((response2.content[0] as any).text).toContain("Recovered");
 
 		providers.forEach((p) => {
 			p.unregister();

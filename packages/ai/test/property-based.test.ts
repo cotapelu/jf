@@ -76,7 +76,7 @@ describe("property-based tests", () => {
 				};
 
 				const response = await complete(model, context);
-				const responseText = response.content[0].text;
+				const responseText = (response.content[0] as any).text;
 
 				// Invariant: Should echo the last message
 				expect(responseText).toContain(lastText);
@@ -278,7 +278,7 @@ describe("property-based tests", () => {
 
 				expect(results).toHaveLength(concurrentCount);
 				results.forEach((response, i) => {
-					expect(response.content[0].text).toContain(`model ${i}`);
+					expect((response.content[0] as any).text).toContain(`model ${i}`);
 				});
 			}),
 			{ numRuns: 10 },
