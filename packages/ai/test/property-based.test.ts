@@ -299,9 +299,10 @@ describe("property-based tests", () => {
 				),
 				async (modelDefs) => {
 					const provider = registerFauxProvider({
+						api: "faux",
+						provider: "faux",
 						models: modelDefs as FauxModelDefinition[],
 					});
-
 					// Set same response for all models
 					provider.setResponses([fauxAssistantMessage("Consistent response")]);
 
@@ -339,6 +340,8 @@ describe("property-based tests", () => {
 		await fc.assert(
 			fc.asyncProperty(fc.array(fc.string(), { minLength: 1, maxLength: 5 }), async (texts) => {
 				const provider = registerFauxProvider({
+					api: "faux",
+					provider: "faux",
 					models: [{ id: "stream-test", name: "Stream Test" }],
 				});
 
@@ -366,15 +369,15 @@ describe("property-based tests", () => {
 				expect(events.length).toBeGreaterThan(0);
 
 				// Should have message_start and message_end events
-				const hasMessageStart = events.some((e) => e.type === "message_start");
-				const hasMessageEnd = events.some((e) => e.type === "message_end");
+				const hasMessageStart = events.some((e) => e.type === "start");
+				const hasMessageEnd = events.some((e) => e.type === "done");
 
 				expect(hasMessageStart).toBe(true);
 				expect(hasMessageEnd).toBe(true);
 
 				// Final event should be message_end
 				const lastEvent = events[events.length - 1];
-				expect(lastEvent.type).toBe("message_end");
+				expect(lastEvent.type).toBe("done");
 			}),
 			{ numRuns: 20 },
 		);

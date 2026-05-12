@@ -544,16 +544,23 @@ describe("Context overflow error handling", () => {
 
 	// Check if ollama is installed and local LLM tests are enabled
 	let ollamaInstalled = false;
+	let ollamaModelAvailable = false;
 	if (!process.env.PI_NO_LOCAL_LLM) {
 		try {
 			execSync("which ollama", { stdio: "ignore" });
 			ollamaInstalled = true;
+			try {
+				execSync("ollama list | grep -q 'gpt-oss:20b'", { stdio: "ignore" });
+				ollamaModelAvailable = true;
+			} catch {
+				ollamaModelAvailable = false;
+			}
 		} catch {
 			ollamaInstalled = false;
 		}
 	}
 
-	describe.skipIf(!ollamaInstalled)("Ollama (local)", () => {
+	describe.skipIf(!(ollamaInstalled && ollamaModelAvailable))("Ollama (local)", () => {
 		let ollamaProcess: ChildProcess | null = null;
 		let model: Model<"openai-completions">;
 

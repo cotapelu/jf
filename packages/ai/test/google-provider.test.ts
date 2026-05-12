@@ -186,7 +186,7 @@ describe("google provider specific", () => {
 		}
 
 		// Should have thinking blocks in stream
-		const allContent = events.filter((e) => e.type === "message_end").flatMap((e) => e.message?.content || []);
+		const allContent = events.filter((e) => e.type === "done").flatMap((e) => e.message?.content || []);
 
 		const thinkingBlocks = allContent.filter((c: any): c is ThinkingContent => c.type === "thinking");
 
