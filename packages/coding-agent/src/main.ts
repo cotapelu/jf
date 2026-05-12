@@ -148,34 +148,45 @@ type ResolvedSession =
 	| { type: "global"; path: string; cwd: string } // Found in different project
 	| { type: "not_found"; arg: string }; // Not found anywhere
 
+function isPathLikeSessionArg(arg: string): boolean {
+	return arg.includes("/") || arg.includes("\\") || arg.endsWith(".jsonl");
+}
+
+async function findLocalSession(
+	sessionArg: string,
+	cwd: string,
+	sessionDir: string | undefined,
+): Promise<ResolvedSession | null> {
+	const localSessions = await SessionManager.list(cwd, sessionDir);
+	const localMatches = localSessions.filter((s) => s.id.startsWith(sessionArg));
+	if (localMatches.length >= 1) {
+		return { type: "local", path: localMatches[0].path };
+	}
+	return null;
+}
+
+async function findGlobalSession(sessionArg: string): Promise<ResolvedSession | null> {
+	const allSessions = await SessionManager.listAll();
+	const globalMatches = allSessions.filter((s) => s.id.startsWith(sessionArg));
+	if (globalMatches.length >= 1) {
+		const match = globalMatches[0];
+		return { type: "global", path: match.path, cwd: match.cwd };
+	}
+	return null;
+}
+
 /**
  * Resolve a session argument to a file path.
  * If it looks like a path, use as-is. Otherwise try to match as session ID prefix.
  */
 async function resolveSessionPath(sessionArg: string, cwd: string, sessionDir?: string): Promise<ResolvedSession> {
-	// If it looks like a file path, use as-is
-	if (sessionArg.includes("/") || sessionArg.includes("\\") || sessionArg.endsWith(".jsonl")) {
+	if (isPathLikeSessionArg(sessionArg)) {
 		return { type: "path", path: sessionArg };
 	}
-
-	// Try to match as session ID in current project first
-	const localSessions = await SessionManager.list(cwd, sessionDir);
-	const localMatches = localSessions.filter((s) => s.id.startsWith(sessionArg));
-
-	if (localMatches.length >= 1) {
-		return { type: "local", path: localMatches[0].path };
-	}
-
-	// Try global search across all projects
-	const allSessions = await SessionManager.listAll();
-	const globalMatches = allSessions.filter((s) => s.id.startsWith(sessionArg));
-
-	if (globalMatches.length >= 1) {
-		const match = globalMatches[0];
-		return { type: "global", path: match.path, cwd: match.cwd };
-	}
-
-	// Not found anywhere
+	const local = await findLocalSession(sessionArg, cwd, sessionDir);
+	if (local) return local;
+	const global = await findGlobalSession(sessionArg);
+	if (global) return global;
 	return { type: "not_found", arg: sessionArg };
 }
 
@@ -193,26 +204,32 @@ async function promptConfirm(message: string): Promise<boolean> {
 	});
 }
 
-function validateForkFlags(parsed: Args): void {
-	if (!parsed.fork) return;
-
-	const conflictingFlags = [
+function getConflictingForkFlags(parsed: Args): string[] {
+	return [
 		parsed.session ? "--session" : undefined,
 		parsed.continue ? "--continue" : undefined,
 		parsed.resume ? "--resume" : undefined,
 		parsed.noSession ? "--no-session" : undefined,
 	].filter((flag): flag is string => flag !== undefined);
+}
 
-	if (conflictingFlags.length > 0) {
-		console.error(
-			`
+function printForkFlagError(flags: string[]): void {
+	console.error(
+		`
 ${chalk.red.bold("✗ Invalid Argument Combination")}
 ${chalk.dim("The --fork flag cannot be used with:")}
-  ${conflictingFlags.map((flag) => chalk.yellow(`  • ${flag}`)).join("\n")}
+  ${flags.map((flag) => chalk.yellow(`  • ${flag}`)).join("\n")}
 ${chalk.dim("Please remove one of the conflicting flags and try again.")}
 		`.trim(),
-		);
-		process.exit(1);
+	);
+	process.exit(1);
+}
+
+function validateForkFlags(parsed: Args): void {
+	if (!parsed.fork) return;
+	const conflictingFlags = getConflictingForkFlags(parsed);
+	if (conflictingFlags.length > 0) {
+		printForkFlagError(conflictingFlags);
 	}
 }
 
@@ -471,37 +488,41 @@ function resolveCliPaths(cwd: string, paths: string[] | undefined): string[] | u
 	return paths?.map((value) => (isLocalPath(value) ? resolve(cwd, value) : value));
 }
 
+function createPromptUI(settingsManager: SettingsManager): TUI {
+	initTheme(settingsManager.getTheme());
+	setKeybindings(KeybindingsManager.create());
+	const ui = new TUI(new ProcessTerminal(), settingsManager.getShowHardwareCursor());
+	ui.setClearOnShrink(settingsManager.getClearOnShrink());
+	return ui;
+}
+
+function runSessionCwdSelector(ui: TUI, issue: SessionCwdIssue, finish: (result: string | undefined) => void): void {
+	const selector = new ExtensionSelectorComponent(
+		formatMissingSessionCwdPrompt(issue),
+		["Continue", "Cancel"],
+		(option) => finish(option === "Continue" ? issue.fallbackCwd : undefined),
+		() => finish(undefined),
+		{ tui: ui },
+	);
+	ui.addChild(selector);
+	ui.setFocus(selector);
+	ui.start();
+}
+
 async function promptForMissingSessionCwd(
 	issue: SessionCwdIssue,
 	settingsManager: SettingsManager,
 ): Promise<string | undefined> {
-	initTheme(settingsManager.getTheme());
-	setKeybindings(KeybindingsManager.create());
-
 	return new Promise((resolve) => {
-		const ui = new TUI(new ProcessTerminal(), settingsManager.getShowHardwareCursor());
-		ui.setClearOnShrink(settingsManager.getClearOnShrink());
-
+		const ui = createPromptUI(settingsManager);
 		let settled = false;
 		const finish = (result: string | undefined) => {
-			if (settled) {
-				return;
-			}
+			if (settled) return;
 			settled = true;
 			ui.stop();
 			resolve(result);
 		};
-
-		const selector = new ExtensionSelectorComponent(
-			formatMissingSessionCwdPrompt(issue),
-			["Continue", "Cancel"],
-			(option) => finish(option === "Continue" ? issue.fallbackCwd : undefined),
-			() => finish(undefined),
-			{ tui: ui },
-		);
-		ui.addChild(selector);
-		ui.setFocus(selector);
-		ui.start();
+		runSessionCwdSelector(ui, issue, finish);
 	});
 }
 
