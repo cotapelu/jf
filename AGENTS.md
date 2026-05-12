@@ -1,168 +1,80 @@
-# SYSTEM.md - Workflow & Governance Reference
+# SELF-OPTIMIZING PROMPT ENGINE - v1.5
 
-> **Note**: This file contains **workflow and governance guidance only**. For full agent rules, see `CLAUDE.md` (primary) and `AGENTS.md` (code generation mindset).
+## TOP 5 (ALWAYS)
+1. Functions ≤20 lines 2. Complexity ≤10 3. Error handling 100% 4. Validate ALL inputs 5. Self-score ≥90
 
----
-
-## 🚦 WORKFLOW LOOP (Per Turn)
-
+## TEMPLATE
 ```
-READ → PLAN → IMPLEMENT → VERIFY → REFLECT → LEARN → DOCUMENT → COMMIT
-```
-
-**Step-by-step**:
-1. **Read**: Load `docs/PROJECT_STATE.md`, `docs/TODO.md`, relevant code
-2. **Plan**: Form internal plan; if complex, write to `docs/plan/`
-3. **Implement**: Make coherent, complete changes (not tiny patches)
-4. **Verify**: Run builds/tests, capture output, fix failures
-5. **Reflect**: Perform SELF-REFLECTION CYCLE (assess quality, hunt bugs, simulate failures)
-6. **Learn**: Log issues to `docs/MEMORY.md`; if COUNT ≥ 2 → trigger RULE EVOLUTION
-7. **Document**: Update `docs/PROJECT_STATE.md`, `docs/TODO.md`, `docs/AGENT_METRICS.md`, `docs/MEMORY.md`
-8. **Commit**: `git add <files> && git commit -m "descriptive message"`
-
----
-
-## 📋 BOOTSTRAP PROTOCOL
-
-**First-time repository encounter** (no `docs/PROJECT_STATE.md`):
-
-**MUST** create (all required for self-awareness):
-- `docs/PROJECT_STATE.md` — current state, what works, what's broken
-- `docs/TODO.md` — prioritized engineering tasks
-- `docs/AGENT_PROFILE.md` — frequent failure modes, stack-specific errors
-- `docs/AGENT_METRICS.md` — iterations per task, test failure rate, rollback count
-- `docs/MEMORY.md` — recurring issues (format: `[TYPE]: ISSUE | FIX | COUNT`)
-- `docs/EVOLUTION.md` — 3–6 month technical roadmap
-
----
-
-## 📊 PROJECT STATE MANAGEMENT
-
-**Single Source of Truth**: `docs/PROJECT_STATE.md`
-
-**Must contain**:
-- What the project is & does
-- Current capabilities & limitations
-- Architectural decisions (with rationale)
-- Known technical debt
-- Change history (append-only)
-
-**Update rule**: After every meaningful change, update this file to reflect:
-- What changed, why, new capabilities, remaining issues
-
----
-
-## ⚖️ CHANGE RISK MODEL
-
-Every Feature/Refactor/Migration in `PROJECT_STATE.md` must include:
-
-| Field | Values |
-|-------|--------|
-| **Cost** | Low / Medium / High (engineering hours) |
-| **Risk** | Low / Medium / High (breakage likelihood) |
-| **Rollback** | Time estimate (e.g., "2h") |
-
-**Priority order**: Low-risk/high-impact → Medium-risk/medium-impact → High-risk only if blocking
-
----
-
-## 🧠 SELF-REFLECTION & LEARNING SYSTEM
-
-After every code generation/implementation, perform structured self-analysis:
-
-1. **Requirements Check**: Task objectives → Code coverage (ĐỦ/THIẾU)
-2. **Bug Hunt**: Find hidden bugs, missing validation, error handling, security issues
-3. **Failure Simulation**: Assume production runtime → potential failure points & why
-4. **Quality Dimensions** (self-score 0-10): Simplicity, Clarity, Robustness, Efficiency, Maintainability
-5. **Self-Score**: If score < 8 → **mandatory** learning update & rule evolution
-
-**Output**: Internal notes only (unless user asks for SELF_ANALYSIS mode).
-
----
-
-## 🛡️ GOVERNANCE RULES
-
-### Anti-Amnesia
-- Never treat codebase as disposable
-- Do not reintroduce deleted concepts without explicit reason
-- Repository is a **living organism** — maintain coherence
-
-### Blast Radius Limit
-- Change **only one major subsystem** at a time
-- Exceptions: emergency security fix (document why)
-
-### Anti-Thrash
-- Recently refactored systems **do not** get rewritten again unless broken
-- Wait ≥7 days before reconsidering major refactor (unless urgent) — allows time for issues to surface naturally
-
-### Prime Invariant
-**System must always be more correct than before** — never degrade quality.
-
----
-
-## 🔍 UI WORKFLOW
-
-UI changes driven by **visual evidence**:
-
-User provides: screenshot / design / vague command
-
-You must:
-1. Locate UI code
-2. Make change
-3. Rebuild
-4. Show result to user (describe differences or attach updated screenshot)
-
----
-
-## 🤔 ORACLE MODE (Deep Research)
-
-When stuck:
-1. Dump all known facts, files, questions into `docs/oracle/{timestamp}.md`
-2. Perform deep research/brainstorming pass
-3. Output: hypotheses, ideas, possible explanations **marked as unverified**
-4. Verify via: code analysis, tests, runtime behavior
-
-Oracle output **never** modifies codebase without verification.
-
----
-
-## ⏹️ STOP CONDITION
-
-Stop when:
-- ✅ All tests pass
-- ✅ No critical issues
-- ✅ No obvious high-impact improvements
-- ✅ System is buildable & runnable
-
-**Never** stop for aesthetic reasons alone.
-
-**Measurable stop criteria**: No TODOs with risk ≤ Medium remain, or all tests pass with zero critical issues.
-
----
-
-## 📝 CHANGE CLASSIFICATION
-
-Record every meaningful change in `PROJECT_STATE.md`:
-
-```markdown
-## [Date] — Type: Bugfix/Feature/Refactor/Debt/Migration
-
-**What**: One-line summary
-**Why**: Rationale
-**Impact**: Areas affected
-**Risk/Cost**: From risk model
-**Verification**: Tests passed / manual confirmed
+Expert engineer. Production code:
+QUALITY: Functions<=20, complexity<=10, no dup>5, 100% error handling, validation, no secrets.
+STRUCTURE: TL;DR, Code, Tests, Verification, Gotchas.
 ```
 
----
+## CHECKS
+Functions ≤20; Complexity ≤10; No 5+ dup; Error handling (all public); Input validation (all external); No hardcoded secrets; Testable (no direct DB/network in business logic).
+Self-Score: R30+M25+S20+T15+P10=100
 
-## 🔗 Related Files
+## ANTI-PATTERNS (12)
+God Object; Arrow Code; Magic Constants; Shotgun Surgery; Circular Dep; Deep Inheritance; Feature Envy; N+1 Queries; Blocking I/O; O(n²); Unbounded Cache; Sync Rate Limit.
+Fix: Extract; Guard clauses; Named constant; Single module; Interface; Composition; Move function; JOIN/batch; Async; Hashmaps; TTL/limit; Token bucket.
 
-- `CLAUDE.md` — Full system rules (PRIMARY)
-- `AGENTS.md` — Code generation mindset
-- `SKILL.md` — Development rules & commands
-- `APPEND_SYSTEM.md` — AI-Native vision & paradigm
+## SECURITY
+Validate inputs; parameterized queries; no eval/crypto; KMS; TLS 1.2+; Auth on ALL state-changing endpoints; HttpOnly cookies; No PII logs; JWT RS256; Rate limiting (IP/user); CSP headers; SQL/XSS/CSRF prevention; Password hashing (bcrypt/Argon2); Command injection prevention (execFile); Threat model for security-critical (STRIDE+DREAD).
 
----
+## PERFORMANCE
+Targets: p50<100ms, p99<200ms, 1000+ RPS, O(n). Include PERFORMANCE BENCHMARK section: Scenario (10k+ records, 1MB+ payload); Baseline (old approach, metrics); Optimization (new approach, metrics); Targets (p50/p99/throughput/memory); Assertions (expect(...).toBeLessThan(...)); Real-world (warm cache, 50ms latency); Profiling (flamegraph/heap findings). No O(n²), N+1, blocking I/O.
 
-**Mantra**: *Read. Plan. Ship. Verify. Reflect. Learn. Document. Evolve.*
+## OBSERVABILITY
+Structured JSON logs (pino/winston); Correlation IDs (X-Request-ID); Levels: ERROR/WARN/INFO/DEBUG; Metrics endpoint (/metrics, Prometheus); Track: http_requests_total, http_request_duration_seconds, errors_total, business_metrics; SLOs: availability 99.9%, p99<200ms, error rate <0.1%; Tracing: OpenTelemetry; Alerting: Alertmanager for SLO breaches.
+
+## RESILIENCE (External services)
+Retry: exp backoff+jitter, max 3-5; Timeout: all I/O (10s default); Circuit breaker: threshold=5, timeout=60s; Bulkhead: isolate pools; Fallback: cache/default/degraded; Health: /health (ready, live, db, cache); Graceful shutdown. Checklist: 5/7 required (retry, timeout, circuit breaker, bulkhead, fallback, health, shutdown).
+
+## ERROR MESSAGES
+Format: `[ERROR] Component Action - Reason - Suggestion`. Categories: ValidationError, NotFoundError, ConflictError, PermissionError, ExternalError, TimeoutError, QuotaExceededError. User: clear, actionable, NO stack/SQL/internal. Dev/Log: full context (request ID, user ID, stack, payload, correlation IDs). i18n-ready (error codes). Recovery hints included.
+
+## CONCURRENCY (shared state/parallelism)
+Provide analysis section: Shared variables; Synchronization (mutex/lock/atomic); Safety proof (happens-before); Deadlock avoidance (lock ordering); Performance (contention, lock-free). Prevent race conditions, deadlocks. Async safety: handle all rejections, no callback+promise mix. Use atomic ops/immutables.
+
+## VERIFICATION & COLLABORATION
+Pre-commit (husky): lint, type-check, test --coverage, fail on high npm audit. CI (GitHub Actions): lint, type-check, test --coverage (≥80%), security scan. Danger.js: warn PR>500 lines, fail if new code without tests, fail if potential secrets. Makefile: `make quality`. VERIFICATION_STEPS.md.
+
+PR template: description, quality checklist (self-score, mandatory, security, tests, benchmarks, compliance, docs, verification). CODEOWNERS by directory. SLA: initial <24h, follow-up <12h, critical security <4h. Escalation: blocked 48h → tech lead → manager. Branch: main protected, feature branches, PR required.
+
+## VERSIONING & DEPRECATION
+SemVer 2.0: MAJOR (breaking), MINOR (features), PATCH (fixes). Conventional Commits: `feat:`→minor, `fix:`→patch, `BREAKING CHANGE:`→major, `docs:`/`chore:`. Git tagging: `git tag -a v1.2.3 -m "Release" && git push origin v1.2.3`. Changelog: [Unreleased], [1.2.3]-date, Added/Fixed/Removed. Dependencies: pin exact for apps (commit package-lock), caret/tilde for libraries. Lockfiles committed.
+
+Deprecation: Detect via CHANGELOG, linter, runtime logs. Fallback: polyfill/feature detection. Log warnings, telemetry, alert high usage. Migration: TODOs with deadline, test both paths in CI. Version pinning: lock to non-deprecated, `npm outdated` before upgrade.
+
+## REVIEW GATE
+**Before outputting code:**
+
+### PHASE 1: METRICS
+- [ ] Self-score ≥90
+- [ ] All TOP 5 passed
+- [ ] Security 100%
+- [ ] Coverage ≥80% (measured)
+- [ ] Tests pass
+
+### PHASE 2: ANTI-PATTERNS
+Check 12 patterns. If any → refactor, repeat.
+
+### PHASE 3: DEVIL'S ADVOCATE
+- [ ] Failure: timeout, deadlock, OOM, unhandled exceptions?
+- [ ] Scale: O(n), memory linear, DB indexes, 1M+ users?
+- [ ] Security: SQL/XSS/command injection, privilege escalation?
+- [ ] Senior: over-engineering?, missing edge cases?, poor naming?
+- [ ] On-call: alert storms, retry storms, cascading failures?
+- [ ] SLOs: p99<200ms?, error rate <0.1%?, availability 99.9%?
+
+**OUTPUT GATE**: ALL must pass. Else revise.
+
+## TEST GENERATION
+Mock external deps; test pure logic only; tests <100ms; deterministic. Include: valid, null/undefined, boundaries, malformed. Verify effects and side effects. Coverage: CI branch ≥80%. All error paths covered. Each public API ≥1 test. Structure: `describe` → `it` (AAA). Unit=business logic; Integration=service contracts; E2E <10%.
+
+## COMPLIANCE & COST (if applicable)
+**Compliance** (GDPR/HIPAA/PCI/SOX/COPPA/audited): Require COMPLIANCE section with Standards, Status (✅ Compliant/⚠️ Non-compliant), Controls ([x]/[ ]), Gaps with remediation plan, Evidence links, Next Audit date. Penalty -25 if missing.
+
+**Cost Optimization** (cloud/AWS/GCP/Azure/scale/cost): Right-size (60-70% CPU), spot/preemptible, reserved (1-3y, 30-50% off), S3 Intelligent-Tiering, lifecycle, read replicas, auto-scaling, minimize transfer, serverless for spiky, budget alerts, tagging. Penalty -15 if missing.
+
+*v1.5: ≤100 lines. Enhanced from v1.42 (60→95), simpler than v2.0 (709→95). Target: 93+.*

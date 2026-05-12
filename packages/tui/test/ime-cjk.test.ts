@@ -8,7 +8,8 @@
  * - Combining characters and surrogate pairs
  */
 
-import { describe, expect, it } from "vitest";
+import assert from "node:assert";
+import { describe, it } from "node:test";
 import { getSegmenter, truncateToWidth, visibleWidth } from "../src/utils.js";
 
 describe("IME and CJK character positioning", () => {
@@ -18,28 +19,28 @@ describe("IME and CJK character positioning", () => {
 
 	it("should correctly calculate width for CJK characters", () => {
 		// CJK characters are typically full-width (2 columns)
-		expect(visibleWidth("中")).toBe(2); // Chinese
-		expect(visibleWidth("日")).toBe(2); // Japanese
-		expect(visibleWidth("한")).toBe(2); // Korean
+		assert.strictEqual(visibleWidth("中"), 2); // Chinese
+		assert.strictEqual(visibleWidth("日"), 2); // Japanese
+		assert.strictEqual(visibleWidth("한"), 2); // Korean
 
 		// ASCII should be 1 column
-		expect(visibleWidth("a")).toBe(1);
-		expect(visibleWidth("ABC")).toBe(3);
+		assert.strictEqual(visibleWidth("a"), 1);
+		assert.strictEqual(visibleWidth("ABC"), 3);
 	});
 
 	it("should handle mixed ASCII and CJK characters", () => {
 		// "Hello 世界" = 5 (Hello) + 1 (space) + 2 + 2 (世+界) = 10
-		expect(visibleWidth("Hello 世界")).toBe(10);
+		assert.strictEqual(visibleWidth("Hello 世界"), 10);
 		// "Test あいうえお" = 4 (Test) + 1 (space) + 5*2 (5 hiragana) = 15
-		expect(visibleWidth("Test あいうえお")).toBe(15);
+		assert.strictEqual(visibleWidth("Test あいうえお"), 15);
 		// "123 한글 456" = 3 (123) + 1 (space) + 2 + 2 (한글) + 1 (space) + 3 (456) = 12
-		expect(visibleWidth("123 한글 456")).toBe(12);
+		assert.strictEqual(visibleWidth("123 한글 456"), 12);
 	});
 
 	it("should handle emoji and CJK combinations", () => {
 		// Emoji + CJK
-		expect(visibleWidth("😀中")).toBe(4); // 2 + 2 = 4
-		expect(visibleWidth("日本🌸")).toBe(6); // 2 + 2 + 2 = 6
+		assert.strictEqual(visibleWidth("😀中"), 4); // 2 + 2 = 4
+		assert.strictEqual(visibleWidth("日本🌸"), 6); // 2 + 2 + 2 = 6
 	});
 
 	it("should handle surrogate pairs correctly", () => {
@@ -47,23 +48,23 @@ describe("IME and CJK character positioning", () => {
 		// Note: U+1D11E (musical symbol) returns 1 from eastAsianWidth package
 		// This is the correct behavior according to Unicode terminal width standards
 		const musicalSymbol = "𝄞"; // U+1D11E (musical symbol G clef)
-		expect(visibleWidth(musicalSymbol)).toBe(1);
+		assert.strictEqual(visibleWidth(musicalSymbol), 1);
 
 		// Multiple surrogate pairs
-		expect(visibleWidth("𝄞𝄞")).toBe(2);
+		assert.strictEqual(visibleWidth("𝄞𝄞"), 2);
 
 		// Mixed with regular characters
-		expect(visibleWidth("A𝄞B")).toBe(3); // 1 + 1 + 1 = 3
+		assert.strictEqual(visibleWidth("A𝄞B"), 3); // 1 + 1 + 1 = 3
 	});
 
 	it("should handle combining characters correctly", () => {
 		// Latin with combining accents
 		const aWithAcute = "a\u0301"; // á as base + combining acute
-		expect(visibleWidth(aWithAcute)).toBe(1);
+		assert.strictEqual(visibleWidth(aWithAcute), 1);
 
 		// Combining characters don't change width - Thai character with tone mark
 		const thai = "ก\u0301"; // Thai character with tone mark
-		expect(visibleWidth(thai)).toBe(1); // Width stays 1 (Thai is not wide for terminals)
+		assert.strictEqual(visibleWidth(thai), 1); // Width stays 1 (Thai is not wide for terminals)
 	});
 
 	it("should handle half-width Katakana", () => {
@@ -71,7 +72,7 @@ describe("IME and CJK character positioning", () => {
 		const halfWidth = "ｱｲｳｴｵ"; // Half-width Katakana
 		// Implementation may vary - testing current behavior
 		const width = visibleWidth(halfWidth);
-		expect(width).toBeGreaterThan(0);
+		assert.ok(width > 0);
 	});
 
 	// =========================================================================
@@ -84,7 +85,7 @@ describe("IME and CJK character positioning", () => {
 
 		// Segmenter uses grapheme granularity, so each char becomes a segment
 		// "H", "e", "l", "l", "o", " ", "世", "界" = 8 segments
-		expect(segments.length).toBe(8);
+		assert.strictEqual(segments.length, 8);
 	});
 
 	it("should handle surrogate pairs in segmentation", () => {
@@ -93,10 +94,10 @@ describe("IME and CJK character positioning", () => {
 		const segments = [...segmenter.segment(text)];
 
 		// Should segment into individual characters including surrogate pair
-		expect(segments.length).toBe(3);
-		expect(segments[0].segment).toBe("A");
-		expect(segments[1].segment).toBe("𝄞");
-		expect(segments[2].segment).toBe("B");
+		assert.strictEqual(segments.length, 3);
+		assert.strictEqual(segments[0].segment, "A");
+		assert.strictEqual(segments[1].segment, "𝄞");
+		assert.strictEqual(segments[2].segment, "B");
 	});
 
 	// =========================================================================
@@ -108,25 +109,25 @@ describe("IME and CJK character positioning", () => {
 		const result = truncateToWidth("Hello 世界", 8);
 
 		// Check it returns a string
-		expect(typeof result).toBe("string");
+		assert.strictEqual(typeof result, "string");
 		// Result should have visible width <= 8 (ellipsis counts as 3 but gets reset codes)
-		expect(visibleWidth(result)).toBeLessThanOrEqual(8);
+		assert.ok(visibleWidth(result) <= 8);
 	});
 
 	it("should handle truncation with mixed content", () => {
 		const result = truncateToWidth("123 あいうえお 456", 15);
 
-		expect(typeof result).toBe("string");
+		assert.strictEqual(typeof result, "string");
 		// Result should have visible width <= 15
-		expect(visibleWidth(result)).toBeLessThanOrEqual(15);
+		assert.ok(visibleWidth(result) <= 15);
 	});
 
 	it("should not truncate in middle of surrogate pair", () => {
 		const result = truncateToWidth("𝄞𝄞𝄞", 3);
 
-		expect(typeof result).toBe("string");
+		assert.strictEqual(typeof result, "string");
 		// Result should have visible width <= 3
-		expect(visibleWidth(result)).toBeLessThanOrEqual(3);
+		assert.ok(visibleWidth(result) <= 3);
 	});
 
 	// =========================================================================
@@ -137,13 +138,13 @@ describe("IME and CJK character positioning", () => {
 		// Simulate IME composition where user is typing "nihao"
 		// The IME might show: "你" as the composition character
 		const composition = "你";
-		expect(visibleWidth(composition)).toBe(2);
+		assert.strictEqual(visibleWidth(composition), 2);
 	});
 
 	it("should handle partial IME composition", () => {
 		// During IME composition, text might be in intermediate state
 		const partial = "中";
-		expect(visibleWidth(partial)).toBe(2);
+		assert.strictEqual(visibleWidth(partial), 2);
 	});
 
 	// =========================================================================
@@ -151,13 +152,13 @@ describe("IME and CJK character positioning", () => {
 	// =========================================================================
 
 	it("should handle empty string", () => {
-		expect(visibleWidth("")).toBe(0);
+		assert.strictEqual(visibleWidth(""), 0);
 	});
 
 	it("should handle only whitespace", () => {
-		expect(visibleWidth("   ")).toBe(3);
+		assert.strictEqual(visibleWidth("   "), 3);
 		// Tab width is 3 in this implementation (matches tab expansion)
-		expect(visibleWidth("\t")).toBe(3);
+		assert.strictEqual(visibleWidth("\t"), 3);
 	});
 
 	it("should handle mixed scripts robustly", () => {
@@ -165,14 +166,14 @@ describe("IME and CJK character positioning", () => {
 		const width = visibleWidth(mixed);
 
 		// Just ensure it doesn't crash and returns reasonable value
-		expect(width).toBeGreaterThan(0);
-		expect(width).toBeLessThanOrEqual(mixed.length * 2); // Each char max 2 columns
+		assert.ok(width > 0);
+		assert.ok(width <= mixed.length * 2); // Each char max 2 columns
 	});
 
 	it("should handle very long CJK text", () => {
 		// 20 Chinese characters (中国 repeated 10 times), each 2 wide = 40
 		const longCJK = "中国中国中国中国中国中国中国中国中国中国";
-		expect(visibleWidth(longCJK)).toBe(40); // 20 chars * 2 = 40
+		assert.strictEqual(visibleWidth(longCJK), 40); // 20 chars * 2 = 40
 	});
 });
 
@@ -185,11 +186,11 @@ describe("surrogate pair handling", () => {
 
 		// Each character: A=1, 𝄞=1, B=1, 😀=2, C=1 = 6 total
 		const width = visibleWidth(text);
-		expect(width).toBe(6);
+		assert.strictEqual(width, 6);
 	});
 
 	it("should handle text with multiple surrogate pairs", () => {
 		const text = "\u{1F600}\u{1F601}\u{1F602}"; // 😀😁😂
-		expect(visibleWidth(text)).toBe(6); // 3 emoji * 2 = 6
+		assert.strictEqual(visibleWidth(text), 6); // 3 emoji * 2 = 6
 	});
 });
