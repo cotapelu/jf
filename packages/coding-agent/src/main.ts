@@ -346,24 +346,14 @@ async function handleMissingSessionCwd(
 	}
 }
 
-function buildSessionOptions(
+// Helper functions for buildSessionOptions
+function applyCliModel(
 	parsed: Args,
-	scopedModels: ScopedModel[],
-	hasExistingSession: boolean,
 	modelRegistry: ModelRegistry,
-	settingsManager: SettingsManager,
-): {
-	options: CreateAgentSessionOptions;
-	cliThinkingFromModel: boolean;
-	diagnostics: AgentSessionRuntimeDiagnostic[];
-} {
-	const options: CreateAgentSessionOptions = {};
-	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
+	options: CreateAgentSessionOptions,
+	diagnostics: AgentSessionRuntimeDiagnostic[],
+): boolean {
 	let cliThinkingFromModel = false;
-
-	// Model from CLI
-	// - supports --provider <name> --model <pattern>
-	// - supports --model <provider>/<pattern>
 	if (parsed.model) {
 		const resolved = resolveCliModel({
 			cliProvider: parsed.provider,
@@ -378,59 +368,61 @@ function buildSessionOptions(
 		}
 		if (resolved.model) {
 			options.model = resolved.model;
-			// Allow "--model <pattern>:<thinking>" as a shorthand.
-			// Explicit --thinking still takes precedence (applied later).
 			if (!parsed.thinking && resolved.thinkingLevel) {
 				options.thinkingLevel = resolved.thinkingLevel;
 				cliThinkingFromModel = true;
 			}
 		}
 	}
+	return cliThinkingFromModel;
+}
 
-	if (!options.model && scopedModels.length > 0 && !hasExistingSession) {
-		// Check if saved default is in scoped models - use it if so, otherwise first scoped model
-		const savedProvider = settingsManager.getDefaultProvider();
-		const savedModelId = settingsManager.getDefaultModel();
-		const savedModel = savedProvider && savedModelId ? modelRegistry.find(savedProvider, savedModelId) : undefined;
-		const savedInScope = savedModel ? scopedModels.find((sm) => modelsAreEqual(sm.model, savedModel)) : undefined;
+function applyDefaultModel(
+	parsed: Args,
+	scopedModels: ScopedModel[],
+	hasExistingSession: boolean,
+	modelRegistry: ModelRegistry,
+	settingsManager: SettingsManager,
+	options: CreateAgentSessionOptions,
+): void {
+	if (options.model || scopedModels.length === 0 || hasExistingSession) {
+		return;
+	}
+	const savedProvider = settingsManager.getDefaultProvider();
+	const savedModelId = settingsManager.getDefaultModel();
+	const savedModel = savedProvider && savedModelId ? modelRegistry.find(savedProvider, savedModelId) : undefined;
+	const savedInScope = savedModel ? scopedModels.find((sm) => modelsAreEqual(sm.model, savedModel)) : undefined;
 
-		if (savedInScope) {
-			options.model = savedInScope.model;
-			// Use thinking level from scoped model config if explicitly set
-			if (!parsed.thinking && savedInScope.thinkingLevel) {
-				options.thinkingLevel = savedInScope.thinkingLevel;
-			}
-		} else {
-			options.model = scopedModels[0].model;
-			// Use thinking level from first scoped model if explicitly set
-			if (!parsed.thinking && scopedModels[0].thinkingLevel) {
-				options.thinkingLevel = scopedModels[0].thinkingLevel;
-			}
+	if (savedInScope) {
+		options.model = savedInScope.model;
+		if (!parsed.thinking && savedInScope.thinkingLevel) {
+			options.thinkingLevel = savedInScope.thinkingLevel;
+		}
+	} else {
+		options.model = scopedModels[0].model;
+		if (!parsed.thinking && scopedModels[0].thinkingLevel) {
+			options.thinkingLevel = scopedModels[0].thinkingLevel;
 		}
 	}
+}
 
-	// Thinking level from CLI (takes precedence over scoped model thinking levels set above)
+function applyCliThinkingLevel(parsed: Args, options: CreateAgentSessionOptions): void {
 	if (parsed.thinking) {
 		options.thinkingLevel = parsed.thinking;
 	}
+}
 
-	// Scoped models for Ctrl+P cycling
-	// Keep thinking level undefined when not explicitly set in the model pattern.
-	// Undefined means "inherit current session thinking level" during cycling.
+function applyScopedModels(scopedModels: ScopedModel[], options: CreateAgentSessionOptions): void {
 	if (scopedModels.length > 0) {
 		options.scopedModels = scopedModels.map((sm) => ({
 			model: sm.model,
 			thinkingLevel: sm.thinkingLevel,
 		}));
 	}
+}
 
-	// API key from CLI - set in authStorage
-	// (handled by caller before createAgentSession)
-
-	// Tools
+function applyTools(parsed: Args, options: CreateAgentSessionOptions): void {
 	if (parsed.noTools) {
-		// --no-tools: start with no built-in tools
-		// --tools can still add specific ones back
 		if (parsed.tools && parsed.tools.length > 0) {
 			options.tools = parsed.tools.map((name) => allTools[name]);
 		} else {
@@ -439,7 +431,26 @@ function buildSessionOptions(
 	} else if (parsed.tools) {
 		options.tools = parsed.tools.map((name) => allTools[name]);
 	}
+}
 
+function buildSessionOptions(
+	parsed: Args,
+	scopedModels: ScopedModel[],
+	hasExistingSession: boolean,
+	modelRegistry: ModelRegistry,
+	settingsManager: SettingsManager,
+): {
+	options: CreateAgentSessionOptions;
+	cliThinkingFromModel: boolean;
+	diagnostics: AgentSessionRuntimeDiagnostic[];
+} {
+	const options: CreateAgentSessionOptions = {};
+	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
+	const cliThinkingFromModel = applyCliModel(parsed, modelRegistry, options, diagnostics);
+	applyDefaultModel(parsed, scopedModels, hasExistingSession, modelRegistry, settingsManager, options);
+	applyCliThinkingLevel(parsed, options);
+	applyScopedModels(scopedModels, options);
+	applyTools(parsed, options);
 	return { options, cliThinkingFromModel, diagnostics };
 }
 
