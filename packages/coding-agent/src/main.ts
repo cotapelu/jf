@@ -92,6 +92,15 @@ function isTruthyEnvFlag(value: string | undefined): boolean {
 	return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
 
+/** Set up offline mode based on CLI args or env var */
+function setupOfflineMode(args: string[]): void {
+	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.PI_OFFLINE);
+	if (offlineMode) {
+		process.env.PI_OFFLINE = "1";
+		process.env.PI_SKIP_VERSION_CHECK = "1";
+	}
+}
+
 type AppMode = "interactive" | "print" | "json" | "rpc";
 
 function resolveAppMode(parsed: Args, stdinIsTTY: boolean): AppMode {
@@ -290,6 +299,53 @@ async function createSessionManager(
 	return SessionManager.create(cwd, sessionDir);
 }
 
+/** Initialize session manager and handle cwd issues */
+async function initializeSessionManager(
+	parsed: Args,
+	cwd: string,
+	agentDir: string,
+	appMode: AppMode,
+): Promise<SessionManager> {
+	const startupSettingsManager = SettingsManager.create(cwd, agentDir);
+	reportDiagnostics(collectSettingsDiagnostics(startupSettingsManager, "startup session lookup"));
+
+	const sessionDir = parsed.sessionDir ?? startupSettingsManager.getSessionDir();
+	let sessionManager = await createSessionManager(parsed, cwd, sessionDir, startupSettingsManager);
+	const missingSessionCwdIssue = getMissingSessionCwdIssue(sessionManager, cwd);
+	sessionManager = await handleMissingSessionCwd(
+		missingSessionCwdIssue,
+		startupSettingsManager,
+		appMode,
+		sessionDir,
+		sessionManager,
+	);
+	time("createSessionManager");
+	return sessionManager;
+}
+
+/** Handle missing session cwd by prompting or erroring */
+async function handleMissingSessionCwd(
+	issue: SessionCwdIssue | undefined,
+	settingsManager: SettingsManager,
+	appMode: AppMode,
+	sessionDir: string | undefined,
+	sessionManager: SessionManager,
+): Promise<SessionManager> {
+	if (!issue) {
+		return sessionManager;
+	}
+	if (appMode === "interactive") {
+		const selectedCwd = await promptForMissingSessionCwd(issue, settingsManager);
+		if (!selectedCwd) {
+			process.exit(0);
+		}
+		return SessionManager.open(issue.sessionFile!, sessionDir, selectedCwd);
+	} else {
+		console.error(chalk.red(new MissingSessionCwdError(issue).message));
+		process.exit(1);
+	}
+}
+
 function buildSessionOptions(
 	parsed: Args,
 	scopedModels: ScopedModel[],
@@ -427,11 +483,7 @@ async function promptForMissingSessionCwd(
 
 export async function main(args: string[]) {
 	resetTimings();
-	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.PI_OFFLINE);
-	if (offlineMode) {
-		process.env.PI_OFFLINE = "1";
-		process.env.PI_SKIP_VERSION_CHECK = "1";
-	}
+	setupOfflineMode(args);
 
 	if (await handlePackageCommand(args)) {
 		return;
@@ -490,30 +542,7 @@ export async function main(args: string[]) {
 
 	const cwd = process.cwd();
 	const agentDir = getAgentDir();
-	const startupSettingsManager = SettingsManager.create(cwd, agentDir);
-	reportDiagnostics(collectSettingsDiagnostics(startupSettingsManager, "startup session lookup"));
-
-	// Decide the final runtime cwd before creating cwd-bound runtime services.
-	// --session and --resume may select a session from another project, so project-local
-	// settings, resources, provider registrations, and models must be resolved only after
-	// the target session cwd is known. The startup-cwd settings manager is used only for
-	// sessionDir lookup during session selection.
-	const sessionDir = parsed.sessionDir ?? startupSettingsManager.getSessionDir();
-	let sessionManager = await createSessionManager(parsed, cwd, sessionDir, startupSettingsManager);
-	const missingSessionCwdIssue = getMissingSessionCwdIssue(sessionManager, cwd);
-	if (missingSessionCwdIssue) {
-		if (appMode === "interactive") {
-			const selectedCwd = await promptForMissingSessionCwd(missingSessionCwdIssue, startupSettingsManager);
-			if (!selectedCwd) {
-				process.exit(0);
-			}
-			sessionManager = SessionManager.open(missingSessionCwdIssue.sessionFile!, sessionDir, selectedCwd);
-		} else {
-			console.error(chalk.red(new MissingSessionCwdError(missingSessionCwdIssue).message));
-			process.exit(1);
-		}
-	}
-	time("createSessionManager");
+	const sessionManager = await initializeSessionManager(parsed, cwd, agentDir, appMode);
 
 	const resolvedExtensionPaths = resolveCliPaths(cwd, parsed.extensions);
 	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
