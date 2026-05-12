@@ -23,8 +23,8 @@ import type { ChannelInfo, SlackContext, UserInfo } from "./slack.js";
 import type { ChannelStore } from "./store.js";
 import { createMomTools, setUploadFunction } from "./tools/index.js";
 
-// Hardcoded model for now - TODO: make configurable (issue #63)
-const model = getModel("anthropic", "claude-sonnet-4-5");
+// Default model for MoM
+const model = getModel("anthropic", "claude-sonnet-4-6");
 
 export interface PendingMessage {
 	userName: string;
