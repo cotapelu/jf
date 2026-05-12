@@ -226,77 +226,90 @@ function forkSessionOrExit(sourcePath: string, cwd: string, sessionDir?: string)
 	}
 }
 
+// Helper functions for createSessionManager
+function handleNoSession(): SessionManager {
+	return SessionManager.inMemory();
+}
+
+async function handleFork(sessionArg: string, cwd: string, sessionDir: string | undefined): Promise<SessionManager> {
+	const resolved = await resolveSessionPath(sessionArg, cwd, sessionDir);
+	switch (resolved.type) {
+		case "path":
+		case "local":
+		case "global":
+			return forkSessionOrExit(resolved.path, cwd, sessionDir);
+		case "not_found":
+			console.error(chalk.red(`No session found matching '${resolved.arg}'`));
+			process.exit(1);
+	}
+}
+
+async function handleSessionArg(
+	sessionArg: string,
+	cwd: string,
+	sessionDir: string | undefined,
+): Promise<SessionManager> {
+	const resolved = await resolveSessionPath(sessionArg, cwd, sessionDir);
+	switch (resolved.type) {
+		case "path":
+		case "local":
+			return SessionManager.open(resolved.path, sessionDir);
+		case "global": {
+			console.log(chalk.yellow(`Session found in different project: ${resolved.cwd}`));
+			const shouldFork = await promptConfirm("Fork this session into current directory?");
+			if (!shouldFork) {
+				console.log(chalk.dim("Aborted."));
+				process.exit(0);
+			}
+			return forkSessionOrExit(resolved.path, cwd, sessionDir);
+		}
+		case "not_found":
+			console.error(chalk.red(`No session found matching '${resolved.arg}'`));
+			process.exit(1);
+	}
+}
+
+async function handleResume(
+	cwd: string,
+	sessionDir: string | undefined,
+	settingsManager: SettingsManager,
+): Promise<SessionManager> {
+	initTheme(settingsManager.getTheme(), true);
+	try {
+		const selectedPath = await selectSession(
+			(onProgress) => SessionManager.list(cwd, sessionDir, onProgress),
+			SessionManager.listAll,
+		);
+		if (!selectedPath) {
+			console.log(chalk.dim("No session selected"));
+			process.exit(0);
+		}
+		return SessionManager.open(selectedPath, sessionDir);
+	} finally {
+		stopThemeWatcher();
+	}
+}
+
+function handleContinue(cwd: string, sessionDir: string | undefined): SessionManager {
+	return SessionManager.continueRecent(cwd, sessionDir);
+}
+
+function createDefaultSession(cwd: string, sessionDir: string | undefined): SessionManager {
+	return SessionManager.create(cwd, sessionDir);
+}
+
 async function createSessionManager(
 	parsed: Args,
 	cwd: string,
 	sessionDir: string | undefined,
 	settingsManager: SettingsManager,
 ): Promise<SessionManager> {
-	if (parsed.noSession) {
-		return SessionManager.inMemory();
-	}
-
-	if (parsed.fork) {
-		const resolved = await resolveSessionPath(parsed.fork, cwd, sessionDir);
-
-		switch (resolved.type) {
-			case "path":
-			case "local":
-			case "global":
-				return forkSessionOrExit(resolved.path, cwd, sessionDir);
-
-			case "not_found":
-				console.error(chalk.red(`No session found matching '${resolved.arg}'`));
-				process.exit(1);
-		}
-	}
-
-	if (parsed.session) {
-		const resolved = await resolveSessionPath(parsed.session, cwd, sessionDir);
-
-		switch (resolved.type) {
-			case "path":
-			case "local":
-				return SessionManager.open(resolved.path, sessionDir);
-
-			case "global": {
-				console.log(chalk.yellow(`Session found in different project: ${resolved.cwd}`));
-				const shouldFork = await promptConfirm("Fork this session into current directory?");
-				if (!shouldFork) {
-					console.log(chalk.dim("Aborted."));
-					process.exit(0);
-				}
-				return forkSessionOrExit(resolved.path, cwd, sessionDir);
-			}
-
-			case "not_found":
-				console.error(chalk.red(`No session found matching '${resolved.arg}'`));
-				process.exit(1);
-		}
-	}
-
-	if (parsed.resume) {
-		initTheme(settingsManager.getTheme(), true);
-		try {
-			const selectedPath = await selectSession(
-				(onProgress) => SessionManager.list(cwd, sessionDir, onProgress),
-				SessionManager.listAll,
-			);
-			if (!selectedPath) {
-				console.log(chalk.dim("No session selected"));
-				process.exit(0);
-			}
-			return SessionManager.open(selectedPath, sessionDir);
-		} finally {
-			stopThemeWatcher();
-		}
-	}
-
-	if (parsed.continue) {
-		return SessionManager.continueRecent(cwd, sessionDir);
-	}
-
-	return SessionManager.create(cwd, sessionDir);
+	if (parsed.noSession) return handleNoSession();
+	if (parsed.fork) return handleFork(parsed.fork, cwd, sessionDir);
+	if (parsed.session) return handleSessionArg(parsed.session, cwd, sessionDir);
+	if (parsed.resume) return handleResume(cwd, sessionDir, settingsManager);
+	if (parsed.continue) return handleContinue(cwd, sessionDir);
+	return createDefaultSession(cwd, sessionDir);
 }
 
 /** Initialize session manager and handle cwd issues */
