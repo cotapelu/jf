@@ -586,6 +586,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 	readonly parameters = todoWriteSchema;
 	readonly concurrency = "exclusive";
 	readonly strict = true;
+	prepareArguments = (args: unknown) => normalizeParams(args as TodoWriteParams);
 
 	constructor(private session: AgentSession) {
 		// Description is set inline
@@ -593,14 +594,16 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 	async execute(
 		_toolCallId: string,
-		params: TodoWriteParams,
+		params: unknown,
 		_signal?: AbortSignal,
 		_onUpdate?: AgentToolUpdateCallback<TodoWriteToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<TodoWriteToolDetails>> {
+		// Validate and cast params using schema
+		let validatedParams = this.prepareArguments?.(params) ?? normalizeParams(params as TodoWriteParams);
 		try {
 			// Normalize params to handle common LLM errors
-			params = normalizeParams(params);
+			validatedParams = normalizeParams(validatedParams);
 		} catch (e) {
 			return {
 				content: [{ type: "text", text: `❌ Error: ${e instanceof Error ? e.message : String(e)}` }],
@@ -619,7 +622,7 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 		}
 
 		const current = fileFromPhases(previousPhases);
-		const { file: updated, errors } = applySingleOp(current, params);
+		const { file: updated, errors } = applySingleOp(current, validatedParams);
 		this.session.setTodoPhases(updated.phases);
 
 		// Always save to project-local file for persistence
@@ -629,13 +632,13 @@ export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWrit
 
 		// Detect which op was used
 		const hasNewOrUpdatedTodos =
-			params.replace !== undefined ||
-			params.add_phase !== undefined ||
-			params.add_task !== undefined ||
-			params.update !== undefined;
+			validatedParams.replace !== undefined ||
+			validatedParams.add_phase !== undefined ||
+			validatedParams.add_task !== undefined ||
+			validatedParams.update !== undefined;
 
 		// list operation is read-only, don't trigger auto-continue
-		const isListOperation = params.list !== undefined;
+		const isListOperation = validatedParams.list !== undefined;
 
 		if (hasNewOrUpdatedTodos && !isListOperation && !this.autoTriggerInProgress) {
 			this.autoTriggerInProgress = true;

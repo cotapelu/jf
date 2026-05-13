@@ -3,7 +3,11 @@
  */
 
 import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
-import { type Api, type KnownProvider, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
+import { type Api, type KnownProvider as BaseKnownProvider, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
+
+// Extend known providers with custom ones
+type KnownProvider = BaseKnownProvider | "kilo-gateway" | "nvidia";
+
 import chalk from "chalk";
 import { minimatch } from "minimatch";
 import { isValidThinkingLevel } from "../cli/args.js";
@@ -11,7 +15,7 @@ import { DEFAULT_THINKING_LEVEL } from "./defaults.js";
 import type { ModelRegistry } from "./model-registry.js";
 
 /** Default model IDs for each known provider */
-export const defaultModelPerProvider: Record<KnownProvider, string> = {
+export const defaultModelPerProvider: Partial<Record<KnownProvider, string>> = {
 	"amazon-bedrock": "us.anthropic.claude-opus-4-6-v1",
 	anthropic: "claude-opus-4-6",
 	openai: "gpt-5.4",

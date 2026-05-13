@@ -200,6 +200,7 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 	readonly parameters = memorySchema;
 	readonly concurrency = "parallel";
 	readonly strict = true;
+	prepareArguments = (args: unknown): MemoryParams => normalizeParams(args as MemoryParams);
 
 	private _engine: ReturnType<typeof createMemoryEngine> | undefined;
 
@@ -220,75 +221,66 @@ export class MemoryTool implements AgentTool<typeof memorySchema, MemoryToolDeta
 		_onUpdate?: AgentToolUpdateCallback<MemoryToolDetails>,
 		_context?: unknown,
 	): Promise<AgentToolResult<MemoryToolDetails>> {
-		try {
-			// Normalize params to handle common LLM errors
-			params = normalizeParams(params);
-		} catch (e) {
-			return {
-				content: [{ type: "text", text: `❌ Error: ${e instanceof Error ? e.message : String(e)}` }],
-				details: { error: e instanceof Error ? e.message : String(e) },
-			};
-		}
-
+		const validatedParams = params;
 		const engine = this.getEngine();
 
 		try {
 			// Route to reusable execute function
-			if (params.save) {
+			if (validatedParams.save) {
 				const result = executeMemoryOperation(engine, {
 					save: {
-						content: params.save.content,
-						type: params.save.type as MemoryType,
-						tags: normalizeTags(params.save.tags),
-						weight: params.save.weight,
-						expires_at: params.save.expires_at,
+						content: validatedParams.save.content,
+						type: validatedParams.save.type as MemoryType,
+						tags: normalizeTags(validatedParams.save.tags),
+						weight: validatedParams.save.weight,
+						expires_at: validatedParams.save.expires_at,
 					},
 				});
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
-			if (params.find) {
+			if (validatedParams.find) {
 				const result = executeMemoryOperation(engine, {
 					find: {
-						query: params.find.query,
-						type: params.find.type as MemoryType | undefined,
-						tags: normalizeTags(params.find.tags),
-						limit: params.find.limit,
+						query: validatedParams.find.query,
+						type: validatedParams.find.type as MemoryType | undefined,
+						tags: normalizeTags(validatedParams.find.tags),
+						limit: validatedParams.find.limit,
 					},
 				});
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
-			if (params.get) {
-				const result = executeMemoryOperation(engine, { get: { id: params.get.id } });
+			if (validatedParams.get) {
+				const result = executeMemoryOperation(engine, { get: { id: validatedParams.get.id } });
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
-			if (params.list) {
-				const result = executeMemoryOperation(engine, { list: { limit: params.list.limit } });
+			if (validatedParams.list) {
+				const result = executeMemoryOperation(engine, { list: { limit: validatedParams.list.limit } });
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
-			if (params.forget) {
-				const result = executeMemoryOperation(engine, { forget: { id: params.forget.id } });
+			if (validatedParams.forget) {
+				const result = executeMemoryOperation(engine, { forget: { id: validatedParams.forget.id } });
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
-			if (params.update) {
+			if (validatedParams.update) {
 				const result = executeMemoryOperation(engine, {
 					update: {
-						id: params.update.id,
-						content: params.update.content,
-						tags: normalizeTags(params.update.tags as string[] | string | undefined),
-						weight: params.update.weight,
-						expires_at: params.update.expires_at,
-						metadata: params.update.metadata,
+						id: validatedParams.update.id,
+						content: validatedParams.update.content,
+						tags: normalizeTags(validatedParams.update.tags as string[] | string | undefined),
+						weight: validatedParams.update.weight,
+						expires_at: validatedParams.update.expires_at,
+						metadata: validatedParams.update.metadata,
 					},
 				});
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}
 
-			if (params.stats) {
+			if (validatedParams.stats) {
 				const result = executeMemoryOperation(engine, { stats: {} });
 				return { content: [{ type: "text", text: result.content }], details: result.details as MemoryToolDetails };
 			}

@@ -106,6 +106,7 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 	readonly parameters = ContextCompactSchema;
 	readonly concurrency = "safe";
 	readonly strict = true;
+	prepareArguments = (args: unknown): ContextCompactParams => args as ContextCompactParams;
 
 	constructor(
 		private cwd: string,
@@ -114,19 +115,20 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 
 	async execute(
 		_toolCallId: string,
-		params: ContextCompactParams,
+		params: unknown,
 		_signal?: AbortSignal,
 		_onUpdate?: any,
 		_context?: unknown,
 	): Promise<AgentToolResult<CompactResult>> {
+		const validatedParams = this.prepareArguments?.(params) ?? (params as ContextCompactParams);
 		try {
 			// Resolve path relative to cwd if provided
 			let _resolvedPath: string | undefined;
-			if (params.path) {
-				if (params.path.startsWith("/") || /^[a-zA-Z]:\\/.test(params.path)) {
-					_resolvedPath = params.path;
+			if (validatedParams.path) {
+				if (validatedParams.path.startsWith("/") || /^[a-zA-Z]:\\/.test(validatedParams.path)) {
+					_resolvedPath = validatedParams.path;
 				} else {
-					_resolvedPath = join(this.cwd, params.path);
+					_resolvedPath = join(this.cwd, validatedParams.path);
 				}
 			}
 			let messagesForCompact: NonNullable<ContextCompactParams["messages"]>;
@@ -140,32 +142,32 @@ export class ContextCompactTool implements AgentTool<typeof ContextCompactSchema
 							: ((m.role === "system" ? "system" : m.role) as "system" | "user" | "assistant"),
 					content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
 				}));
-			} else if (params.messages) {
-				messagesForCompact = params.messages;
+			} else if (validatedParams.messages) {
+				messagesForCompact = validatedParams.messages;
 			} else {
 				throw new Error("No messages: bind tool to session or provide messages param");
 			}
 
 			// Only messages type supported (directory deprecated)
-			if (params.type === "directory") {
+			if (validatedParams.type === "directory") {
 				throw new Error("Directory compaction not supported; use messages only");
 			}
 			const input = { type: "messages" as const, messages: messagesForCompact };
 
 			// Build options
 			const options: CompactOptions = {
-				tokenLimit: params.tokenLimit,
-				dropTests: params.dropTests,
-				dropDocs: params.dropDocs,
-				dropExamples: params.dropExamples,
-				dropTypes: params.dropTypes,
-				removeComments: params.removeComments,
-				trimWhitespace: params.trimWhitespace,
-				useLLM: params.useLLM,
-				llmProvider: params.llmProvider,
-				llmModel: params.llmModel,
-				maxFileTokensForHeuristic: params.maxFileTokensForHeuristic,
-				verbose: params.verbose,
+				tokenLimit: validatedParams.tokenLimit,
+				dropTests: validatedParams.dropTests,
+				dropDocs: validatedParams.dropDocs,
+				dropExamples: validatedParams.dropExamples,
+				dropTypes: validatedParams.dropTypes,
+				removeComments: validatedParams.removeComments,
+				trimWhitespace: validatedParams.trimWhitespace,
+				useLLM: validatedParams.useLLM,
+				llmProvider: validatedParams.llmProvider,
+				llmModel: validatedParams.llmModel,
+				maxFileTokensForHeuristic: validatedParams.maxFileTokensForHeuristic,
+				verbose: validatedParams.verbose,
 			};
 
 			const result = await contextCompact(input, options);

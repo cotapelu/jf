@@ -48,7 +48,6 @@ import {
 } from "../../config.js";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.js";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.js";
-import { type CommandHistory, createCommandHistory } from "../../core/command-history.js";
 import type {
 	ExtensionContext,
 	ExtensionRunner,
@@ -195,9 +194,6 @@ export class InteractiveMode {
 	// Skill commands: command name -> skill file path
 	private skillCommands = new Map<string, string>();
 
-	// Command history for tracking user commands
-	private commandHistory?: CommandHistory;
-
 	// Agent subscription unsubscribe function
 	private unsubscribe?: () => void;
 
@@ -284,13 +280,11 @@ export class InteractiveMode {
 		// Initialize command history
 		this.commandHistory = createCommandHistory(this.sessionManager.getCwd());
 
-		// Load history from file and pass to editor
-		const savedHistory = this.commandHistory.getAllAsText(100);
+		// Load history from file (not passed to editor in current version)
+		// const savedHistory = this.commandHistory.getAllAsText(100);
 		this.defaultEditor = new CustomEditor(this.ui, getEditorTheme(), this.keybindings, {
 			paddingX: editorPaddingX,
 			autocompleteMaxVisible,
-			initialHistory: savedHistory,
-			onHistoryAdd: (text: string) => this.commandHistory?.save(text),
 		});
 		this.editor = this.defaultEditor;
 		this.editorContainer = new Container();
@@ -4030,7 +4024,7 @@ export class InteractiveMode {
 		const simpleProviders = this.session.modelRegistry.authStorage.getSimpleApiKeyProviders();
 		const providerInfo = simpleProviders.find((p) => p.id === providerId);
 		const providerName = providerInfo?.name || providerId;
-		const placeholder = providerInfo?.placeholder || "sk-...";
+		const placeholder = "API key";
 
 		this.editorContainer.clear();
 		const input = new Input();

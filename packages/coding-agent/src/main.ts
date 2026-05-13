@@ -670,7 +670,7 @@ export async function main(args: string[]) {
 			let effectiveThinking = created.session.thinkingLevel;
 			if (!created.session.model.reasoning) {
 				effectiveThinking = "off";
-			} else if (effectiveThinking === "xhigh" && !supportsXhigh(created.session.model)) {
+			} else if (effectiveThinking === "xhigh" && !created.session.model?.thinkingLevelMap?.xhigh) {
 				effectiveThinking = "high";
 			}
 			if (effectiveThinking !== created.session.thinkingLevel) {

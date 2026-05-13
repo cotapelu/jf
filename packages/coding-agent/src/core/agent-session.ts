@@ -2350,11 +2350,11 @@ export class AgentSession {
 
 		// Add memory tool
 		const memoryTool = new MemoryTool();
-		this._baseToolDefinitions.set("memory", createToolDefinitionFromAgentTool(memoryTool));
+		this._baseToolDefinitions.set("memory", createToolDefinitionFromAgentTool(memoryTool as any));
 
 		// Add context_compact tool
 		const contextCompactTool = new ContextCompactTool(this._cwd, this);
-		this._baseToolDefinitions.set("context_compact", createToolDefinitionFromAgentTool(contextCompactTool));
+		this._baseToolDefinitions.set("context_compact", createToolDefinitionFromAgentTool(contextCompactTool as any));
 
 		const extensionsResult = this._resourceLoader.getExtensions();
 		if (options.flagValues) {
