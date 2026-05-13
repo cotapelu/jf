@@ -401,6 +401,41 @@ export async function loadExtensions(paths: string[], cwd: string, eventBus?: Ev
 		}
 	}
 
+	// Detect duplicate tools, commands, and message renderers
+	const seenTools = new Set<string>();
+	const seenCommands = new Set<string>();
+	const seenRenderers = new Set<string>();
+
+	for (const ext of extensions) {
+		// Tools
+		for (const name of ext.tools.keys()) {
+			if (seenTools.has(name)) {
+				ext.tools.delete(name);
+				errors.push({ path: ext.path, error: `duplicate-tool: ${name} conflicts with a previously loaded extension` });
+			} else {
+				seenTools.add(name);
+			}
+		}
+		// Commands
+		for (const name of ext.commands.keys()) {
+			if (seenCommands.has(name)) {
+				ext.commands.delete(name);
+				errors.push({ path: ext.path, error: `duplicate-command: ${name} conflicts with a previously loaded extension` });
+			} else {
+				seenCommands.add(name);
+			}
+		}
+		// Message renderers
+		for (const type of ext.messageRenderers.keys()) {
+			if (seenRenderers.has(type)) {
+				ext.messageRenderers.delete(type);
+				errors.push({ path: ext.path, error: `duplicate-message-renderer: ${type} conflicts with a previously loaded extension` });
+			} else {
+				seenRenderers.add(type);
+			}
+		}
+	}
+
 	return {
 		extensions,
 		errors,
@@ -565,5 +600,54 @@ export async function discoverAndLoadExtensions(
 		addPaths([resolved]);
 	}
 
-	return loadExtensions(allPaths, cwd, eventBus);
+	const result = await loadExtensions(allPaths, cwd, eventBus);
+
+	// Detect duplicate tools, commands, and message renderers across extensions
+	const seenTools = new Set<string>();
+	const seenCommands = new Set<string>();
+	const seenRenderers = new Set<string>();
+
+	for (const ext of result.extensions) {
+		// Tools
+		const toolNames = Array.from(ext.tools.keys());
+		for (const name of toolNames) {
+			if (seenTools.has(name)) {
+				ext.tools.delete(name);
+				result.errors.push({ path: ext.path, error: `duplicate-tool: ${name} conflicts with a previously loaded extension` });
+			} else {
+				seenTools.add(name);
+			}
+		}
+		// Commands
+		const cmdNames = Array.from(ext.commands.keys());
+		for (const name of cmdNames) {
+			if (seenCommands.has(name)) {
+				ext.commands.delete(name);
+				result.errors.push({ path: ext.path, error: `duplicate-command: ${name} conflicts with a previously loaded extension` });
+			} else {
+				seenCommands.add(name);
+			}
+		}
+		// Message renderers
+		const rendererTypes = Array.from(ext.messageRenderers.keys());
+		for (const type of rendererTypes) {
+			if (seenRenderers.has(type)) {
+				ext.messageRenderers.delete(type);
+				result.errors.push({ path: ext.path, error: `duplicate-message-renderer: ${type} conflicts with a previously loaded extension` });
+			} else {
+				seenRenderers.add(type);
+			}
+		}
+	}
+
+	// Prefer explicit extensions: sort extensions so that those that were explicitly configured come first
+	const explicitSet = new Set(configuredPaths.map(p => path.resolve(p)));
+	result.extensions.sort((a, b) => {
+		const aExplicit = explicitSet.has(a.path) || explicitSet.has(a.sourceInfo.path);
+		const bExplicit = explicitSet.has(b.path) || explicitSet.has(b.sourceInfo.path);
+		if (aExplicit === bExplicit) return 0;
+		return aExplicit ? -1 : 1;
+	});
+
+	return result;
 }

@@ -339,6 +339,16 @@ export class DefaultResourceLoader implements ResourceLoader {
 			return resources.filter((r) => r.enabled);
 		};
 
+		// Determine if a path is an explicit extension (not under standard dirs)
+		const standardDirs = [
+			join(this.agentDir, "extensions"),
+			join(this.cwd, ".pi", "extensions"),
+		];
+		const isStandardPath = (p: string) => {
+			const rp = resolve(p);
+			return standardDirs.some(std => rp === std || rp.startsWith(std + sep));
+		};
+
 		const getEnabledPaths = (
 			resources: Array<{ path: string; enabled: boolean; metadata: PathMetadata }>,
 		): string[] => getEnabledResources(resources).map((r) => r.path);
@@ -388,7 +398,22 @@ export class DefaultResourceLoader implements ResourceLoader {
 		const cliEnabledPrompts = getEnabledPaths(cliExtensionPaths.prompts);
 		const cliEnabledThemes = getEnabledPaths(cliExtensionPaths.themes);
 
-		const extensionPaths = this.noExtensions
+		let extensionPaths = this.noExtensions
+		// Prefer explicit extensions (non-standard paths) first
+		const standardDirs = [
+			join(this.agentDir, "extensions"),
+			join(this.cwd, ".pi", "extensions"),
+		];
+		const isStandardPath = (p: string) => {
+			const rp = resolve(p);
+			return standardDirs.some(std => rp === std || rp.startsWith(std + sep));
+		};
+		extensionPaths.sort((a, b) => {
+			const aExplicit = !isStandardPath(a);
+			const bExplicit = !isStandardPath(b);
+			if (aExplicit === bExplicit) return 0;
+			return aExplicit ? -1 : 1;
+		});
 			? cliEnabledExtensions
 			: this.mergePaths(cliEnabledExtensions, enabledExtensions);
 
