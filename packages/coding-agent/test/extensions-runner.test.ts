@@ -90,7 +90,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "conflict.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "conflict.js"), extCode);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -113,7 +113,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "rebinding.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "rebinding.js"), extCode);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -140,7 +140,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "non-reserved.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "non-reserved.js"), extCode);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -165,7 +165,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "rebound-reserved.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "rebound-reserved.js"), extCode);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -189,7 +189,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "multi-reserved.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "multi-reserved.js"), extCode);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -213,7 +213,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "multi-non-reserved.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "multi-non-reserved.js"), extCode);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -248,8 +248,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "ext1.ts"), extCode1);
-			fs.writeFileSync(path.join(extensionsDir, "ext2.ts"), extCode2);
+			fs.writeFileSync(path.join(extensionsDir, "ext1.js"), extCode1);
+			fs.writeFileSync(path.join(extensionsDir, "ext2.js"), extCode2);
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -279,8 +279,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "tool-a.ts"), toolCode("tool_a"));
-			fs.writeFileSync(path.join(extensionsDir, "tool-b.ts"), toolCode("tool_b"));
+			fs.writeFileSync(path.join(extensionsDir, "tool-a.js"), toolCode("tool_a"));
+			fs.writeFileSync(path.join(extensionsDir, "tool-b.js"), toolCode("tool_b"));
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -315,8 +315,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "a-first.ts"), first);
-			fs.writeFileSync(path.join(extensionsDir, "b-second.ts"), second);
+			fs.writeFileSync(path.join(extensionsDir, "a-first.js"), first);
+			fs.writeFileSync(path.join(extensionsDir, "b-second.js"), second);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -337,8 +337,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "cmd-a.ts"), cmdCode("cmd-a"));
-			fs.writeFileSync(path.join(extensionsDir, "cmd-b.ts"), cmdCode("cmd-b"));
+			fs.writeFileSync(path.join(extensionsDir, "cmd-a.js"), cmdCode("cmd-a"));
+			fs.writeFileSync(path.join(extensionsDir, "cmd-b.js"), cmdCode("cmd-b"));
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -358,7 +358,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "cmd.ts"), cmdCode);
+			fs.writeFileSync(path.join(extensionsDir, "cmd.js"), cmdCode);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -382,8 +382,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "cmd-a.ts"), cmdCode("First command"));
-			fs.writeFileSync(path.join(extensionsDir, "cmd-b.ts"), cmdCode("Second command"));
+			fs.writeFileSync(path.join(extensionsDir, "cmd-a.js"), cmdCode("First command"));
+			fs.writeFileSync(path.join(extensionsDir, "cmd-b.js"), cmdCode("Second command"));
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -429,7 +429,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "throws.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "throws.js"), extCode);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -455,7 +455,7 @@ describe("ExtensionRunner", () => {
 					pi.registerMessageRenderer("my-type", (message, options, theme) => null);
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "renderer.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "renderer.js"), extCode);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -478,7 +478,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "with-flag.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "with-flag.js"), extCode);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -506,8 +506,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "a-first.ts"), first);
-			fs.writeFileSync(path.join(extensionsDir, "b-second.ts"), second);
+			fs.writeFileSync(path.join(extensionsDir, "a-first.js"), first);
+			fs.writeFileSync(path.join(extensionsDir, "b-second.js"), second);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -526,7 +526,7 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "flag.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "flag.js"), extCode);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -559,8 +559,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "tool-result-1.ts"), extCode1);
-			fs.writeFileSync(path.join(extensionsDir, "tool-result-2.ts"), extCode2);
+			fs.writeFileSync(path.join(extensionsDir, "tool-result-1.js"), extCode1);
+			fs.writeFileSync(path.join(extensionsDir, "tool-result-2.js"), extCode2);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -607,8 +607,8 @@ describe("ExtensionRunner", () => {
 					});
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "tool-result-partial-1.ts"), extCode1);
-			fs.writeFileSync(path.join(extensionsDir, "tool-result-partial-2.ts"), extCode2);
+			fs.writeFileSync(path.join(extensionsDir, "tool-result-partial-1.js"), extCode1);
+			fs.writeFileSync(path.join(extensionsDir, "tool-result-partial-2.js"), extCode2);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
@@ -641,7 +641,7 @@ describe("ExtensionRunner", () => {
 						throw new Error("should not run");
 					}) as any,
 				},
-				"/tmp/broken-extension.ts",
+				"/tmp/broken-extension.js",
 			);
 
 			const runner = new ExtensionRunner([], runtime, tempDir, sessionManager, modelRegistry);
@@ -702,7 +702,7 @@ describe("ExtensionRunner", () => {
 					pi.on("tool_call", async () => undefined);
 				}
 			`;
-			fs.writeFileSync(path.join(extensionsDir, "handler.ts"), extCode);
+			fs.writeFileSync(path.join(extensionsDir, "handler.js"), extCode);
 
 			const result = await discoverAndLoadExtensions([], tempDir, tempDir);
 			const runner = new ExtensionRunner(result.extensions, result.runtime, tempDir, sessionManager, modelRegistry);
