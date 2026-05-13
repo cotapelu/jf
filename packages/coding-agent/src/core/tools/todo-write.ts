@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
-import { StringEnum } from "@mariozechner/pi-ai";
 import type { Component } from "@mariozechner/pi-tui";
 import { Text } from "@mariozechner/pi-tui";
 import { type Static, Type } from "@sinclair/typebox";
@@ -39,9 +38,12 @@ export interface TodoWriteToolDetails {
 // Schema - Nested format (like memory tool)
 // =============================================================================
 
-const StatusEnum = StringEnum(["pending", "in_progress", "completed", "abandoned"] as const, {
-	description: "Task status: pending, in_progress, completed, or abandoned",
-});
+const StatusEnum = Type.Union(
+	[Type.Literal("pending"), Type.Literal("in_progress"), Type.Literal("completed"), Type.Literal("abandoned")],
+	{
+		description: "Task status: pending, in_progress, completed, or abandoned",
+	},
+);
 
 const InputTask = Type.Object({
 	content: Type.String({ description: "Task description (required)" }),
