@@ -25,7 +25,7 @@
 
 import type { BashToolDetails, EditToolDetails, ExtensionAPI, ReadToolDetails } from "@quangtynu/pi-coding-agent";
 import { createBashTool, createEditTool, createReadTool, createWriteTool } from "@quangtynu/pi-coding-agent";
-import { Text } from "@quangtynu/pi-tui";
+import { Text } from "@mariozechner/pi-tui";
 
 export default function (pi: ExtensionAPI) {
 	const cwd = process.cwd();

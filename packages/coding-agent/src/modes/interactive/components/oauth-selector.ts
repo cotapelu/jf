@@ -1,9 +1,12 @@
-import type { OAuthProviderInterface, SimpleApiKeyProvider } from "@quangtynu/pi-ai";
-import { getOAuthProviders, getSimpleApiKeyProviders } from "@quangtynu/pi-ai/oauth";
-import { Container, getKeybindings, Spacer, Text, TruncatedText } from "@quangtynu/pi-tui";
+import type { OAuthProviderInterface } from "@mariozechner/pi-ai";
+import { getOAuthProviders } from "@mariozechner/pi-ai/oauth";
+import { getProviders } from "@mariozechner/pi-ai";
+import { Container, getKeybindings, Spacer, Text, TruncatedText } from "@mariozechner/pi-tui";
 import type { AuthStorage } from "../../../core/auth-storage.js";
 import { theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
+
+type SimpleApiKeyProvider = { id: string; name: string };
 
 type ProviderEntry =
 	| { type: "oauth"; provider: OAuthProviderInterface }
@@ -52,7 +55,7 @@ export class OAuthSelectorComponent extends Container {
 
 	private loadProviders(): void {
 		const oauthProviders = getOAuthProviders().map((p) => ({ type: "oauth" as const, provider: p }));
-		const simpleProviders = getSimpleApiKeyProviders().map((p) => ({ type: "simple" as const, provider: p }));
+		const simpleProviders = getProviders().map((p) => ({ type: "simple" as const, provider: { id: p, name: p } }));
 
 		if (this.mode === "logout") {
 			this.allProviders = oauthProviders.filter((entry) => {

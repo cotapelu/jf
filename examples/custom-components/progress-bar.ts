@@ -1,4 +1,4 @@
-import { Component, Container, Text } from "@quangtynu/pi-tui";
+import { Component, Container, Text } from "@mariozechner/pi-tui";
 
 /**
  * A customizable progress bar component with percentage display

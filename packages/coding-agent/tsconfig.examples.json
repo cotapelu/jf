@@ -4,10 +4,7 @@
 		"noEmit": true,
 		"paths": {
 			"@quangtynu/pi-coding-agent": ["./src/index.ts"],
-			"@quangtynu/pi-coding-agent/hooks": ["./src/core/hooks/index.ts"],
-			"@quangtynu/pi-tui": ["../tui/src/index.ts"],
-			"@quangtynu/pi-ai": ["../ai/src/index.ts"],
-			"@sinclair/typebox": ["../../node_modules/@sinclair/typebox"]
+			"@quangtynu/pi-coding-agent/hooks": ["./src/core/hooks/index.ts"]
 		},
 		"skipLibCheck": true
 	},

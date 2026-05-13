@@ -1,4 +1,4 @@
-import type { Message, ThinkingContent } from "@quangtynu/pi-ai";
+import type { Message, ThinkingContent } from "@mariozechner/pi-ai";
 
 /**
  * Structured thinking with step-by-step reasoning

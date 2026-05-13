@@ -26,7 +26,7 @@ import {
 	createReadTool,
 	createWriteTool,
 } from "@quangtynu/pi-coding-agent";
-import { Text } from "@quangtynu/pi-tui";
+import { Text } from "@mariozechner/pi-tui";
 import { homedir } from "os";
 
 /**

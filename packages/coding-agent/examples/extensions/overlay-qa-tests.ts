@@ -20,8 +20,8 @@
  */
 
 import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@quangtynu/pi-coding-agent";
-import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@quangtynu/pi-tui";
-import { matchesKey, truncateToWidth, visibleWidth } from "@quangtynu/pi-tui";
+import type { Component, OverlayAnchor, OverlayHandle, OverlayOptions, TUI } from "@mariozechner/pi-tui";
+import { matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { spawn } from "child_process";
 
 // Global handle for toggle demo (in real code, use a more elegant pattern)

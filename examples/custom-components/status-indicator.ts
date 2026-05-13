@@ -1,4 +1,4 @@
-import { Component, Text } from "@quangtynu/pi-tui";
+import { Component, Text } from "@mariozechner/pi-tui";
 
 type Status = 'idle' | 'loading' | 'success' | 'error' | 'warning';
 

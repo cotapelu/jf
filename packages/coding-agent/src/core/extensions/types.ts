@@ -8,7 +8,7 @@
  * - Interact with the user via UI primitives
  */
 
-import type { AgentMessage, AgentToolResult, AgentToolUpdateCallback, ThinkingLevel } from "@quangtynu/pi-agent-core";
+import type { AgentMessage, AgentToolResult, AgentToolUpdateCallback, ThinkingLevel } from "@mariozechner/pi-agent-core";
 import type {
 	Api,
 	AssistantMessageEvent,
@@ -21,7 +21,7 @@ import type {
 	SimpleStreamOptions,
 	TextContent,
 	ToolResultMessage,
-} from "@quangtynu/pi-ai";
+} from "@mariozechner/pi-ai";
 import type {
 	AutocompleteItem,
 	Component,
@@ -31,7 +31,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	TUI,
-} from "@quangtynu/pi-tui";
+} from "@mariozechner/pi-tui";
 import type { Static, TSchema } from "@sinclair/typebox";
 import type { Theme } from "../../modes/interactive/theme/theme.js";
 import type { BashResult } from "../bash-executor.js";

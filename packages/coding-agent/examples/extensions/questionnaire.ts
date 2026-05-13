@@ -6,7 +6,7 @@
  */
 
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { Editor, type EditorTheme, Key, matchesKey, Text, truncateToWidth } from "@quangtynu/pi-tui";
+import { Editor, type EditorTheme, Key, matchesKey, Text, truncateToWidth } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
 // Types

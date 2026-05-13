@@ -42,7 +42,7 @@ import {
 	type Tool,
 	type ToolCall,
 	type ToolResultMessage,
-} from "@quangtynu/pi-ai";
+} from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
 
 // =============================================================================

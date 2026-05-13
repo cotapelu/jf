@@ -4,7 +4,7 @@
  */
 
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { isKeyRelease, Key, matchesKey, visibleWidth } from "@quangtynu/pi-tui";
+import { isKeyRelease, Key, matchesKey, visibleWidth } from "@mariozechner/pi-tui";
 
 const GAME_WIDTH = 60;
 const GAME_HEIGHT = 24;

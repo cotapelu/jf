@@ -2,8 +2,8 @@
  * Model resolution, scoping, and initial selection
  */
 
-import type { ThinkingLevel } from "@quangtynu/pi-agent-core";
-import { type Api, type KnownProvider, type Model, modelsAreEqual } from "@quangtynu/pi-ai";
+import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
+import { type Api, type KnownProvider, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
 import chalk from "chalk";
 import { minimatch } from "minimatch";
 import { isValidThinkingLevel } from "../cli/args.js";
@@ -18,8 +18,6 @@ export const defaultModelPerProvider: Record<KnownProvider, string> = {
 	"azure-openai-responses": "gpt-5.2",
 	"openai-codex": "gpt-5.4",
 	google: "gemini-2.5-pro",
-	"google-gemini-cli": "gemini-2.5-pro",
-	"google-antigravity": "gemini-3.1-pro-high",
 	"google-vertex": "gemini-3-pro-preview",
 	"github-copilot": "gpt-4o",
 	openrouter: "openai/gpt-5.1-codex",

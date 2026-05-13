@@ -8,7 +8,7 @@
  */
 
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { Box, Text } from "@quangtynu/pi-tui";
+import { Box, Text } from "@mariozechner/pi-tui";
 
 export default function (pi: ExtensionAPI) {
 	// Register custom renderer for "status-update" messages

@@ -3,7 +3,7 @@
  * Uses nested schema format (like memory tool in coding-agent): { save: {...} }, { find: {...} }, { list:{...} }
  */
 
-import type { AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
+import type { AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
 import { type Static, Type } from "@sinclair/typebox";
 import type { createMemoryEngine } from "./index.js";
 import type { MemoryType, Result } from "./types.js";

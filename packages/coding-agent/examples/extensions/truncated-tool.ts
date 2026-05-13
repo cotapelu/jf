@@ -24,7 +24,7 @@ import {
 	truncateHead,
 	withFileMutationQueue,
 } from "@quangtynu/pi-coding-agent";
-import { Text } from "@quangtynu/pi-tui";
+import { Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { execSync } from "child_process";
 import { tmpdir } from "os";

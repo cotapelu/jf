@@ -12,7 +12,7 @@
  * The generated prompt appears as a draft in the editor for review/editing.
  */
 
-import { complete, type Message } from "@quangtynu/pi-ai";
+import { complete, type Message } from "@mariozechner/pi-ai";
 import type { ExtensionAPI, SessionEntry } from "@quangtynu/pi-coding-agent";
 import { BorderedLoader, convertToLlm, serializeConversation } from "@quangtynu/pi-coding-agent";
 

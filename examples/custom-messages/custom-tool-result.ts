@@ -1,4 +1,4 @@
-import type { Message, ToolResultContent } from "@quangtynu/pi-ai";
+import type { Message, ToolResultContent } from "@mariozechner/pi-ai";
 
 /**
  * Enhanced tool result with execution metadata and validation

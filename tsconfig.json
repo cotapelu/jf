@@ -3,88 +3,13 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"paths": {
-			"*": [
-				"./*"
-			],
-			"@quangtynu/pi-ai": [
-				"./packages/ai/src/index.ts"
-			],
-			"@quangtynu/pi-ai/oauth": [
-				"./packages/ai/src/oauth.ts"
-			],
-			"@quangtynu/pi-ai/*": [
-				"./packages/ai/src/*.ts",
-				"./packages/ai/src/providers/*.ts"
-			],
-			"@quangtynu/pi-ai/dist/*": [
-				"./packages/ai/src/*"
-			],
-			"@quangtynu/pi-agent-core": [
-				"./packages/agent/src/index.ts"
-			],
-			"@quangtynu/pi-agent-core/*": [
-				"./packages/agent/src/*"
-			],
-			"@quangtynu/pi-coding-agent": [
-				"./packages/coding-agent/src/index.ts"
-			],
-			"@quangtynu/pi-coding-agent/hooks": [
-				"./packages/coding-agent/src/core/hooks/index.ts"
-			],
-			"@quangtynu/pi-coding-agent/*": [
-				"./packages/coding-agent/src/*"
-			],
-			"@quangtynu/pi-coding-memory": [
-				"./packages/memory/src/index.ts"
-			],
-			"@quangtynu/pi-coding-memory/*": [
-				"./packages/memory/src/*"
-			],
-			"@sinclair/typebox": [
-				"./node_modules/@sinclair/typebox"
-			],
-			"@quangtynu/pi-mom": [
-				"./packages/mom/src/index.ts"
-			],
-			"@quangtynu/pi-mom/*": [
-				"./packages/mom/src/*"
-			],
-			"@quangtynu/pi": [
-				"./packages/pods/src/index.ts"
-			],
-			"@quangtynu/pi/*": [
-				"./packages/pods/src/*"
-			],
-			"@quangtynu/pi-tui": [
-				"./packages/tui/src/index.ts"
-			],
-			"@quangtynu/pi-tui/*": [
-				"./packages/tui/src/*"
-			],
-			"@quangtynu/pi-web-ui": [
-				"./packages/web-ui/src/index.ts"
-			],
-			"@quangtynu/pi-web-ui/*": [
-				"./packages/web-ui/src/*"
-			],
-			"@quangtynu/pi-agent-old": [
-				"./packages/agent-old/src/index.ts"
-			],
-			"@quangtynu/pi-agent-old/*": [
-				"./packages/agent-old/src/*"
-			],
-			"@quangtynu/pi-llm-wiki": [
-				"./packages/llm-wiki/src/index.ts"
-			],
-			"@quangtynu/pi-llm-wiki/*": [
-				"./packages/llm-wiki/src/*"
-			],
-			"@quangtynu/pi-tools": [
-				"./packages/tools/src/index.ts"
-			],
-			"@quangtynu/pi-tools/*": [
-				"./packages/tools/src/*"
-			]
+			"@quangtynu/pi-coding-agent": ["./packages/coding-agent/src/index.ts"],
+			"@quangtynu/pi-coding-agent/hooks": ["./packages/coding-agent/src/core/hooks/index.ts"],
+			"@quangtynu/pi-coding-agent/*": ["./packages/coding-agent/src/*"],
+			"@quangtynu/pi-coding-memory": ["./packages/memory/src/index.ts"],
+			"@quangtynu/pi-coding-memory/*": ["./packages/memory/src/*"],
+			"@quangtynu/pi-tools": ["./packages/tools/src/index.ts"],
+			"@quangtynu/pi-tools/*": ["./packages/tools/src/*"]
 		}
 	},
 	"include": [

@@ -5,7 +5,7 @@
  */
 
 import { join } from "node:path";
-import type { AgentTool, AgentToolResult } from "@quangtynu/pi-agent-core";
+import type { AgentTool, AgentToolResult } from "@mariozechner/pi-agent-core";
 import { type CompactOptions, type CompactResult, contextCompact } from "@quangtynu/pi-tools";
 import { type Static, Type } from "@sinclair/typebox";
 import type { ToolDefinition } from "../extensions/types.js";

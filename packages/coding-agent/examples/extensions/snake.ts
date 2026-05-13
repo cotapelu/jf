@@ -3,7 +3,7 @@
  */
 
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { matchesKey, visibleWidth } from "@quangtynu/pi-tui";
+import { matchesKey, visibleWidth } from "@mariozechner/pi-tui";
 
 const GAME_WIDTH = 40;
 const GAME_HEIGHT = 15;

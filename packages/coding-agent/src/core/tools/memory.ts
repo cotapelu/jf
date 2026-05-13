@@ -5,7 +5,7 @@
  * Reuses execute logic from @quangtynu/pi-coding-memory
  */
 
-import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
+import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
 import type { MemoryType } from "@quangtynu/pi-coding-memory";
 import {
 	createMemoryEngine,

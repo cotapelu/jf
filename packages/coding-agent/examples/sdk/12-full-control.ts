@@ -8,7 +8,7 @@
  * paths relative to your cwd.
  */
 
-import { getModel } from "@quangtynu/pi-ai";
+import { getModel } from "@mariozechner/pi-ai";
 import {
 	AuthStorage,
 	createAgentSession,

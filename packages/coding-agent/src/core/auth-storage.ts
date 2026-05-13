@@ -6,14 +6,12 @@
  * try to refresh tokens simultaneously.
  */
 
-import { getEnvApiKey, type OAuthCredentials, type OAuthLoginCallbacks, type OAuthProviderId } from "@quangtynu/pi-ai";
+import { getEnvApiKey, getProviders, type OAuthCredentials, type OAuthLoginCallbacks, type OAuthProviderId } from "@mariozechner/pi-ai";
 import {
 	getOAuthApiKey,
 	getOAuthProvider,
 	getOAuthProviders,
-	getSimpleApiKeyProviders,
-	type SimpleApiKeyProvider,
-} from "@quangtynu/pi-ai/oauth";
+} from "@mariozechner/pi-ai/oauth";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
@@ -32,6 +30,8 @@ export type OAuthCredential = {
 export type AuthCredential = ApiKeyCredential | OAuthCredential;
 
 export type AuthStorageData = Record<string, AuthCredential>;
+
+export type SimpleApiKeyProvider = { id: string; name: string };
 
 type LockResult<T> = {
 	result: T;
@@ -496,7 +496,7 @@ export class AuthStorage {
 	 * Get all simple API key providers (no OAuth, just API key)
 	 */
 	getSimpleApiKeyProviders(): SimpleApiKeyProvider[] {
-		return getSimpleApiKeyProviders();
+		return getProviders().map((p) => ({ id: p, name: p }));
 	}
 
 	/**
