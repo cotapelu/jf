@@ -80,7 +80,7 @@
 		"@types/ms": "^2.1.0",
 		"@types/node": "^24.3.0",
 		"@types/proper-lockfile": "^4.1.4",
-		"@typescript/native-preview": "^7.0.0-dev.20260412.1",
+		"@typescript/native-preview": "^7.0.0-dev.20260513.1",
 		"fast-check": "^3.22.0",
 		"shx": "^0.4.0",
 		"strip-literal": "^3.1.0",
