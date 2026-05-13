@@ -6,12 +6,14 @@
  * try to refresh tokens simultaneously.
  */
 
-import { getEnvApiKey, getProviders, type OAuthCredentials, type OAuthLoginCallbacks, type OAuthProviderId } from "@mariozechner/pi-ai";
 import {
-	getOAuthApiKey,
-	getOAuthProvider,
-	getOAuthProviders,
-} from "@mariozechner/pi-ai/oauth";
+	getEnvApiKey,
+	getProviders,
+	type OAuthCredentials,
+	type OAuthLoginCallbacks,
+	type OAuthProviderId,
+} from "@mariozechner/pi-ai";
+import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from "@mariozechner/pi-ai/oauth";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";

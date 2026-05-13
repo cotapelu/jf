@@ -8,7 +8,12 @@
  * - Interact with the user via UI primitives
  */
 
-import type { AgentMessage, AgentToolResult, AgentToolUpdateCallback, ThinkingLevel } from "@mariozechner/pi-agent-core";
+import type {
+	AgentMessage,
+	AgentToolResult,
+	AgentToolUpdateCallback,
+	ThinkingLevel,
+} from "@mariozechner/pi-agent-core";
 import type {
 	Api,
 	AssistantMessageEvent,
