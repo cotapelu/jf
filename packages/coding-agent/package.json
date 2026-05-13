@@ -44,9 +44,9 @@
 		"@mariozechner/jiti": "^2.6.2",
 		"@mariozechner/pi-agent-core": "^0.73.1",
 		"@mariozechner/pi-ai": "^0.73.1",
+		"@mariozechner/pi-tui": "^0.73.1",
 		"@quangtynu/pi-coding-memory": "file:../memory",
 		"@quangtynu/pi-tools": "file:../tools",
-		"@mariozechner/pi-tui": "^0.73.1",
 		"@silvia-odwyer/photon-node": "^0.3.4",
 		"ajv": "^8.17.1",
 		"chalk": "^5.5.0",
@@ -74,8 +74,8 @@
 		"@mariozechner/clipboard": "^0.3.2"
 	},
 	"devDependencies": {
-		"@types/diff": "^7.0.2",
 		"@fast-check/vitest": "^0.4.0",
+		"@types/diff": "^7.0.2",
 		"@types/hosted-git-info": "^3.0.5",
 		"@types/ms": "^2.1.0",
 		"@types/node": "^24.3.0",
@@ -83,6 +83,7 @@
 		"@typescript/native-preview": "^7.0.0-dev.20260412.1",
 		"fast-check": "^3.22.0",
 		"shx": "^0.4.0",
+		"strip-literal": "^3.1.0",
 		"typescript": "^5.7.3",
 		"vitest": "^3.2.4"
 	},
