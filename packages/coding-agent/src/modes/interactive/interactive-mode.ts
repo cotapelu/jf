@@ -7,8 +7,8 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
-import type { AssistantMessage, ImageContent, Message, Model, OAuthAuthInfo } from "@mariozechner/pi-ai";
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { AssistantMessage, ImageContent, Message, Model, OAuthAuthInfo } from "@earendil-works/pi-ai";
 import type {
 	AutocompleteItem,
 	EditorComponent,
@@ -19,7 +19,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	SlashCommand,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -36,7 +36,7 @@ import {
 	TruncatedText,
 	TUI,
 	visibleWidth,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import { spawn, spawnSync } from "child_process";
 import {
 	APP_NAME,
@@ -183,9 +183,9 @@ export class InteractiveMode {
 	// Render debouncing to prevent flickering during streaming updates
 	// Issue: message_update events fire ~20-50 times/sec during LLM streaming,
 	// causing this.ui.requestRender() to clear/redraw terminal each time → flicker.
-	// Fix: Batch renders within RENDER_DEBOUNCE_MS (50ms = max 20 FPS, smooth).
+	// Fix: Batch renders within RENDER_DEBOUNCE_MS (100ms = max 10 FPS, smoother).
 	private pendingRenderRequest = false;
-	private readonly RENDER_DEBOUNCE_MS = 50; // ms
+	private readonly RENDER_DEBOUNCE_MS = 100; // ms
 	private originalRequestRender?: () => void;
 	private renderDebounceTimers: Set<NodeJS.Timeout> = new Set();
 

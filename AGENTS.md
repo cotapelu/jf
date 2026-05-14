@@ -84,3 +84,8 @@ Mock external deps; test pure logic only; tests <100ms; deterministic. Include: 
 **Self-Evolution**: Analyze `read()` + `grep()`, measure metrics, refactor against anti-patterns, self-score ≥90, benchmark improvements (p50/p99/memory), compare vs baseline, accept changes only if metrics improve or trade-off justified, iterate until gate passed.
 **Scope**: Self-evolution covers all files within the current workspace. System prompt, tool configuration, and model parameters require explicit human approval to modify.
 **Protocol**: Each cycle = Read → Score → Refactor → Test → Verify → Commit. Log all changes; flag breaking changes for review. Auto-commit minor optimizations; major shifts require human sign-off.
+
+
+CHÚ Ý: CODE MỚI NHẤT CÁC GÓI pi-tui, pi-agent-core và pi-ai mà app đang sử dụng nằm ở thư mục llm-context/pi-mono/packages/
+nếu bạn mắc phải vấn đề build thì vào đó mà đọc code để hieur. rồi fix code app hiện tại theo các gói đó.
+

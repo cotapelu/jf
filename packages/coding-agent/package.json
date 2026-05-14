@@ -41,10 +41,10 @@
 		"prepublishOnly": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@mariozechner/jiti": "^2.6.2",
-		"@mariozechner/pi-agent-core": "^0.73.1",
-		"@mariozechner/pi-ai": "^0.73.1",
-		"@mariozechner/pi-tui": "^0.73.1",
+		"@earendil-works/pi-agent-core": "^0.74.0",
+		"@earendil-works/pi-ai": "^0.74.0",
+		"@earendil-works/pi-tui": "^0.74.0",
+		"jiti": "^2.7.0",
 		"@quangtynu/pi-coding-memory": "file:../memory",
 		"@quangtynu/pi-tools": "file:../tools",
 		"@silvia-odwyer/photon-node": "^0.3.4",
@@ -70,9 +70,7 @@
 			"rimraf": "6.1.2"
 		}
 	},
-	"optionalDependencies": {
-		"@mariozechner/clipboard": "^0.3.2"
-	},
+	"optionalDependencies": {},
 	"devDependencies": {
 		"@fast-check/vitest": "^0.4.0",
 		"@types/diff": "^7.0.2",

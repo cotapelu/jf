@@ -2,8 +2,8 @@
  * Model resolution, scoping, and initial selection
  */
 
-import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
-import { type Api, type KnownProvider as BaseKnownProvider, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
+import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
+import { type Api, type KnownProvider as BaseKnownProvider, type Model, modelsAreEqual } from "@earendil-works/pi-ai";
 
 // Extend known providers with custom ones
 type KnownProvider = BaseKnownProvider | "kilo-gateway" | "nvidia";
