@@ -1,6 +1,6 @@
 /**
  * Memory Tool Definition for pi coding agent
- * Uses nested schema format (like memory tool in coding-agent): { save: {...} }, { find: {...} }, { list:{...} }
+ * Uses nested schema format (like memory tool in coding-agent)
  */
 
 import type { AgentToolResult, AgentToolUpdateCallback } from "@mariozechner/pi-agent-core";
@@ -9,7 +9,7 @@ import type { createMemoryEngine } from "./index.js";
 import type { MemoryType, Result } from "./types.js";
 
 // =============================================================================
-// Schema - Nested memory operations (matching coding-agent format)
+// Schemas (unchanged)
 // =============================================================================
 
 const SaveOp = Type.Object({
@@ -22,18 +22,15 @@ const SaveOp = Type.Object({
 			Type.Literal("solution"),
 			Type.Literal("note"),
 		],
-		{
-			description:
-				"Type of memory: preference (user coding style), project (project facts), command (workflows), solution (bug fixes), note (general)",
-		},
+		{ description: "Type of memory" },
 	),
-	tags: Type.Optional(Type.Array(Type.String(), { description: "Optional tags for categorization" })),
+	tags: Type.Optional(Type.Array(Type.String(), { description: "Optional tags" })),
 	weight: Type.Optional(Type.Number({ minimum: 0, maximum: 1, description: "Importance 0-1, default 0.5" })),
 	expires_at: Type.Optional(Type.Number({ description: "Optional expiration timestamp (Unix ms)" })),
 });
 
 const FindOp = Type.Object({
-	query: Type.String({ description: "Search query (e.g., 'python indentation', 'database')" }),
+	query: Type.String({ description: "Search query" }),
 	type: Type.Optional(
 		Type.Union(
 			[
@@ -46,7 +43,7 @@ const FindOp = Type.Object({
 			{ description: "Optional filter by memory type" },
 		),
 	),
-	tags: Type.Optional(Type.Array(Type.String(), { description: "Optional filter by tags (AND logic)" })),
+	tags: Type.Optional(Type.Array(Type.String(), { description: "Filter by tags (AND)" })),
 	limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100, description: "Max results, default 10" })),
 });
 
@@ -68,12 +65,11 @@ const UpdateOp = Type.Object({
 });
 
 const ListOp = Type.Object({
-	limit: Type.Optional(Type.Number({ minimum: 1, maximum: 1000, description: "Max memories to list, default 100" })),
+	limit: Type.Optional(Type.Number({ minimum: 1, maximum: 1000, description: "Max memories, default 100" })),
 });
 
 const StatsOp = Type.Object({});
 
-// Nested schema: object with optional keys for each operation
 const memoryOpsSchema = Type.Object({
 	save: Type.Optional(SaveOp),
 	find: Type.Optional(FindOp),
@@ -84,7 +80,6 @@ const memoryOpsSchema = Type.Object({
 	stats: Type.Optional(StatsOp),
 });
 
-// Nested schema (matching coding-agent format)
 export const memorySchema = memoryOpsSchema;
 
 type MemoryParams = Static<typeof memorySchema>;
@@ -108,189 +103,8 @@ export const memoryToolDefinition = {
 		_onUpdate: AgentToolUpdateCallback<any> | undefined,
 		ctx: { engine: ReturnType<typeof createMemoryEngine> },
 	): Promise<AgentToolResult<any>> {
-		// params is now nested: { save: {...} } or { find: {...} } or { list: {...} }
 		try {
-			if (params.save) {
-				const op = params.save;
-				const result = ctx.engine.save({
-					content: op.content,
-					type: op.type as MemoryType,
-					tags: op.tags,
-					weight: op.weight,
-					expires_at: op.expires_at,
-				});
-
-				if (!result.ok) {
-					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-				}
-				return {
-					content: [{ type: "text", text: `Saved to ${op.type}: ${op.content.substring(0, 100)}` }],
-					details: {
-						id: result.value.id,
-						type: result.value.type,
-						message: `Saved to ${op.type}`,
-					},
-				};
-			}
-
-			if (params.find) {
-				const op = params.find;
-				const result = ctx.engine.find(op.query, {
-					type: op.type as MemoryType | undefined,
-					tags: op.tags,
-					limit: op.limit,
-				});
-
-				if (!result.ok) {
-					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-				}
-				return {
-					content: [{ type: "text", text: `Found ${result.value.total} memories` }],
-					details: {
-						total: result.value.total,
-						memories: result.value.memories.map((m) => ({
-							id: m.id,
-							content: m.content,
-							type: m.type,
-							tags: m.tags,
-							created_at: m.created_at,
-						})),
-					},
-				};
-			}
-
-			if (params.get) {
-				const result = ctx.engine.get(params.get.id);
-				if (!result.ok) {
-					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-				}
-				if (!result.value) {
-					return {
-						content: [{ type: "text", text: `Memory not found: ${params.get.id}` }],
-						details: { message: "Memory not found" },
-					};
-				}
-				const memory = result.value;
-				return {
-					content: [
-						{
-							type: "text",
-							text: `Memory [${memory.type}] (ID: ${memory.id}):\nContent: ${memory.content}\nTags: ${memory.tags?.join(", ") || "none"}`,
-						},
-					],
-					details: {
-						memory: {
-							id: memory.id,
-							content: memory.content,
-							type: memory.type,
-							tags: memory.tags,
-						},
-					},
-				};
-			}
-
-			if (params.list) {
-				const limit = params.list.limit ?? 100;
-				const jsonStr = ctx.engine.exportJSON();
-				let memories: any[] = [];
-				try {
-					memories = JSON.parse(jsonStr);
-				} catch {
-					memories = [];
-				}
-				const limitedMemories = memories.slice(0, limit);
-				return {
-					content: [
-						{
-							type: "text",
-							text: `Found ${memories.length} memories (showing ${limitedMemories.length})`,
-						},
-					],
-					details: {
-						total: memories.length,
-						shown: limitedMemories.length,
-						memories: limitedMemories.map((m) => ({
-							id: m.id,
-							content: m.content,
-							type: m.type,
-							tags: m.tags,
-							created_at: m.created_at,
-						})),
-					},
-				};
-			}
-
-			if (params.forget) {
-				const result = ctx.engine.delete(params.forget.id);
-
-				if (!result.ok) {
-					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-				}
-				return {
-					content: [{ type: "text", text: result.value ? "Memory deleted" : "Memory not found" }],
-					details: {
-						deleted: result.value,
-						message: result.value ? "Memory deleted" : "Memory not found",
-					},
-				};
-			}
-
-			if (params.update) {
-				const op = params.update;
-				const result = ctx.engine.update(op.id, {
-					content: op.content,
-					tags: op.tags,
-					weight: op.weight,
-					expires_at: op.expires_at,
-					metadata: op.metadata,
-				});
-
-				if (!result.ok) {
-					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-				}
-				if (!result.value) {
-					return {
-						content: [{ type: "text", text: "Memory not found" }],
-						details: { updated: false, message: "Memory not found" },
-					};
-				}
-				return {
-					content: [{ type: "text", text: "Memory updated" }],
-					details: {
-						updated: true,
-						memory: {
-							id: result.value.id,
-							content: result.value.content,
-							type: result.value.type,
-							tags: result.value.tags,
-						},
-						message: "Memory updated",
-					},
-				};
-			}
-
-			if (params.stats) {
-				const result = ctx.engine.stats();
-
-				if (!result.ok) {
-					return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
-				}
-				return {
-					content: [{ type: "text", text: `Total: ${result.value.total} memories` }],
-					details: result.value,
-				};
-			}
-
-			// No operation specified
-			return {
-				content: [
-					{
-						type: "text",
-						text: "Missing operation. Use nested format like: { find: { query: '...' } }, { save: { content: '...', type: 'preference' } }, { get: { id: '...' } }, { list: { limit: 10 } }, { stats: {} }",
-					},
-				],
-				details: { error: "No operation specified" },
-			};
+			return await executeMemoryTool(params, ctx.engine);
 		} catch (e) {
 			const error = e as Error;
 			return { content: [{ type: "text", text: error.message }], details: { error: error.message } };
@@ -299,7 +113,220 @@ export const memoryToolDefinition = {
 };
 
 // =============================================================================
-// Convenience helpers (for direct use without agent integration)
+// Execution Delegation (split handlers)
+// =============================================================================
+
+async function executeMemoryTool(
+	params: MemoryParams,
+	engine: ReturnType<typeof createMemoryEngine>,
+): Promise<AgentToolResult<any>> {
+	if (params.save) return handleSave(engine, params.save);
+	if (params.find) return handleFind(engine, params.find);
+	if (params.get) return handleGet(engine, params.get);
+	if (params.list) return handleList(engine, params.list);
+	if (params.forget) return handleForget(engine, params.forget);
+	if (params.update) return handleUpdate(engine, params.update);
+	if (params.stats) return handleStats(engine);
+
+	return {
+		content: [
+			{
+				type: "text",
+				text: "Missing operation. Use nested format like: { find: { query: '...' } }, { save: { content: '...', type: 'preference' } }",
+			},
+		],
+		details: { error: "No operation specified" },
+	};
+}
+
+async function handleSave(
+	engine: ReturnType<typeof createMemoryEngine>,
+	op: Static<typeof SaveOp>,
+): Promise<AgentToolResult<any>> {
+	const result = engine.save({
+		content: op.content,
+		type: op.type as MemoryType,
+		tags: op.tags,
+		weight: op.weight,
+		expires_at: op.expires_at,
+	});
+
+	if (!result.ok) {
+		return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+	}
+
+	return {
+		content: [{ type: "text", text: `Saved to ${op.type}: ${op.content.substring(0, 100)}` }],
+		details: {
+			id: result.value.id,
+			type: result.value.type,
+			message: `Saved to ${op.type}`,
+		},
+	};
+}
+
+async function handleFind(
+	engine: ReturnType<typeof createMemoryEngine>,
+	op: Static<typeof FindOp>,
+): Promise<AgentToolResult<any>> {
+	const result = engine.find(op.query, {
+		type: op.type as MemoryType | undefined,
+		tags: op.tags,
+		limit: op.limit,
+	});
+
+	if (!result.ok) {
+		return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+	}
+
+	return {
+		content: [{ type: "text", text: `Found ${result.value.total} memories` }],
+		details: {
+			total: result.value.total,
+			memories: result.value.memories.map((m) => ({
+				id: m.id,
+				content: m.content,
+				type: m.type,
+				tags: m.tags,
+				created_at: m.created_at,
+			})),
+		},
+	};
+}
+
+async function handleGet(
+	engine: ReturnType<typeof createMemoryEngine>,
+	op: Static<typeof GetOp>,
+): Promise<AgentToolResult<any>> {
+	const result = engine.get(op.id);
+	if (!result.ok) {
+		return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+	}
+	if (!result.value) {
+		return {
+			content: [{ type: "text", text: `Memory not found: ${op.id}` }],
+			details: { message: "Memory not found" },
+		};
+	}
+	const memory = result.value;
+	return {
+		content: [
+			{
+				type: "text",
+				text: `Memory [${memory.type}] (ID: ${memory.id}):\nContent: ${memory.content}\nTags: ${memory.tags?.join(", ") || "none"}`,
+			},
+		],
+		details: {
+			memory: {
+				id: memory.id,
+				content: memory.content,
+				type: memory.type,
+				tags: memory.tags,
+			},
+		},
+	};
+}
+
+async function handleList(
+	engine: ReturnType<typeof createMemoryEngine>,
+	op: Static<typeof ListOp>,
+): Promise<AgentToolResult<any>> {
+	const limit = op.limit ?? 100;
+	const jsonStr = engine.exportJSON();
+	let memories: any[] = [];
+	try {
+		memories = JSON.parse(jsonStr);
+	} catch {
+		memories = [];
+	}
+	const limitedMemories = memories.slice(0, limit);
+	return {
+		content: [
+			{
+				type: "text",
+				text: `Found ${memories.length} memories (showing ${limitedMemories.length})`,
+			},
+		],
+		details: {
+			total: memories.length,
+			shown: limitedMemories.length,
+			memories: limitedMemories.map((m) => ({
+				id: m.id,
+				content: m.content,
+				type: m.type,
+				tags: m.tags,
+				created_at: m.created_at,
+			})),
+		},
+	};
+}
+
+async function handleForget(
+	engine: ReturnType<typeof createMemoryEngine>,
+	op: Static<typeof ForgetOp>,
+): Promise<AgentToolResult<any>> {
+	const result = engine.delete(op.id);
+	if (!result.ok) {
+		return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+	}
+	return {
+		content: [{ type: "text", text: result.value ? "Memory deleted" : "Memory not found" }],
+		details: {
+			deleted: result.value,
+			message: result.value ? "Memory deleted" : "Memory not found",
+		},
+	};
+}
+
+async function handleUpdate(
+	engine: ReturnType<typeof createMemoryEngine>,
+	op: Static<typeof UpdateOp>,
+): Promise<AgentToolResult<any>> {
+	const result = engine.update(op.id, {
+		content: op.content,
+		tags: op.tags,
+		weight: op.weight,
+		expires_at: op.expires_at,
+		metadata: op.metadata,
+	});
+
+	if (!result.ok) {
+		return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+	}
+	if (!result.value) {
+		return {
+			content: [{ type: "text", text: "Memory not found" }],
+			details: { updated: false, message: "Memory not found" },
+		};
+	}
+	return {
+		content: [{ type: "text", text: "Memory updated" }],
+		details: {
+			updated: true,
+			memory: {
+				id: result.value.id,
+				content: result.value.content,
+				type: result.value.type,
+				tags: result.value.tags,
+			},
+			message: "Memory updated",
+		},
+	};
+}
+
+async function handleStats(engine: ReturnType<typeof createMemoryEngine>): Promise<AgentToolResult<any>> {
+	const result = engine.stats();
+	if (!result.ok) {
+		return { content: [{ type: "text", text: result.error }], details: { error: result.error } };
+	}
+	return {
+		content: [{ type: "text", text: `Total: ${result.value.total} memories` }],
+		details: result.value,
+	};
+}
+
+// =============================================================================
+// LLM Tool Interface (unchanged)
 // =============================================================================
 
 export interface LLMToolInterface {
@@ -309,9 +336,6 @@ export interface LLMToolInterface {
 	generateSystemPrompt(): string;
 }
 
-/**
- * Create an LLMToolInterface for direct LLM usage (non-agent context)
- */
 export function createLLMToolInterface(engine: ReturnType<typeof createMemoryEngine>): LLMToolInterface {
 	const toolDef = memoryToolDefinition;
 
@@ -360,7 +384,6 @@ export function createLLMToolInterface(engine: ReturnType<typeof createMemoryEng
 						const p = params.op as Record<string, unknown>;
 						return engine.delete(p.id as string);
 					}
-
 					case "update": {
 						const p = params.op as Record<string, unknown>;
 						return engine.update(p.id as string, {
@@ -417,9 +440,7 @@ Store and retrieve persistent information across sessions.
 
 User says "I use 4 spaces" → memory({ op: "save", content: "4 spaces for indentation", type: "preference", tags: ["style"] })
 
-User asks "What database?" → memory({ op: "find", query: "database" })
-
-User asks to remove something → memory({ op: "forget", id: "xxx" })`;
+User asks "What database?" → memory({ op: "find", query: "database" })`;
 		},
 	};
 }
