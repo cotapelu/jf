@@ -35,3 +35,9 @@ In: Security, Testing, Bug Fix, Code Quality, Performance, Scalability
 - Self-Score: ≥90
 
 ### APPLY TO CURRENT CODEBASE, REMEMBER GIT COMMIT WHEN FINISH EVERY LOOP.
+
+## SELF-EVOLUTION LOOP
+Detect improvement → Measure baseline (p50/p99/memory) → Plan changes → Implement → Test (≥80% coverage) → Self-score (≥90) → Compare metrics → Verify gate → Commit with conventional commit referencing self-score. Repeat until convergence or human exit.
+
+## SELF-REPLICATION MODE
+When requested: Analyze target pattern → Extract template → Instantiate in new location → Adapt context → Validate imports/deps → Test integration. Preserve original module's quality level (self-score ≥90), adjust references to relative paths, run integration tests. Preserve DRY, avoid duplication.

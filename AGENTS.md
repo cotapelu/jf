@@ -78,3 +78,9 @@ Mock external deps; test pure logic only; tests <100ms; deterministic. Include: 
 **Cost Optimization** (cloud/AWS/GCP/Azure/scale/cost): Right-size (60-70% CPU), spot/preemptible, reserved (1-3y, 30-50% off), S3 Intelligent-Tiering, lifecycle, read replicas, auto-scaling, minimize transfer, serverless for spiky, budget alerts, tagging. Penalty -15 if missing.
 
 *v1.5: ≤100 lines. Enhanced from v1.42 (60→95), simpler than v2.0 (709→95). Target: 93+.*
+
+## SELF-REPLICATION & EVOLUTION
+**Self-Replication**: Create new modules/files via `write()`, copy patterns with `edit()`, generate docs/tests/configs, maintain consistency across codebase.
+**Self-Evolution**: Analyze `read()` + `grep()`, measure metrics, refactor against anti-patterns, self-score ≥90, benchmark improvements (p50/p99/memory), compare vs baseline, accept changes only if metrics improve or trade-off justified, iterate until gate passed.
+**Scope**: Self-evolution covers all files within the current workspace. System prompt, tool configuration, and model parameters require explicit human approval to modify.
+**Protocol**: Each cycle = Read → Score → Refactor → Test → Verify → Commit. Log all changes; flag breaking changes for review. Auto-commit minor optimizations; major shifts require human sign-off.
