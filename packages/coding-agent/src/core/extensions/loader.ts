@@ -5,7 +5,6 @@
  */
 
 import * as fs from "node:fs";
-import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,8 +48,6 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@quangtynu/pi-coding-agent": _bundledPiCodingAgent,
 };
 
-const require = createRequire(import.meta.url);
-
 /**
  * Get aliases for jiti (used in Node.js/development mode).
  * In Bun binary mode, virtualModules is used instead.
@@ -64,15 +61,21 @@ function getAliases(): Record<string, string> {
 	const packageRoot = path.resolve(__dirname, "../../.."); // packages/coding-agent
 	_aliases = {
 		"@quangtynu/pi-coding-agent": path.join(packageRoot, "dist", "index.js"),
-		"@mariozechner/pi-agent-core": path.join(projectRoot, "node_modules", "@mariozechner", "pi-agent-core", "dist", "index.js"),
+		"@mariozechner/pi-agent-core": path.join(
+			projectRoot,
+			"node_modules",
+			"@mariozechner",
+			"pi-agent-core",
+			"dist",
+			"index.js",
+		),
 		"@mariozechner/pi-tui": path.join(projectRoot, "node_modules", "@mariozechner", "pi-tui", "dist", "index.js"),
 		"@mariozechner/pi-ai": path.join(projectRoot, "node_modules", "@mariozechner", "pi-ai", "dist", "index.js"),
 		"@mariozechner/pi-ai/oauth": path.join(projectRoot, "node_modules", "@mariozechner", "pi-ai", "dist", "oauth.js"),
-		"typebox": path.join(projectRoot, "node_modules", "typebox", "build", "index.mjs"),
+		typebox: path.join(projectRoot, "node_modules", "typebox", "build", "index.mjs"),
 	};
 	return _aliases;
 }
-
 
 const UNICODE_SPACES = /[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g;
 
