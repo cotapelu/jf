@@ -14,7 +14,7 @@
 		"build": "cd packages/memory && npm run build && cd ../tools && npm run build && cd ../coding-agent && npm run build",
 		"dev": "concurrently --names \"coding-agent,web-ui,tui\" --prefix-colors \"red,green,magenta\" \"cd packages/coding-agent && npm run dev\" \"cd packages/web-ui && npm run dev\" \"cd packages/tui && npm run dev\"",
 		"dev:tsc": "concurrently --names \"web-ui\" --prefix-colors \"green\" \"cd packages/web-ui && npm run dev:tsc\"",
-		"check": "biome check --write --error-on-warnings . && tsgo --noEmit --project packages/coding-agent/tsconfig.build.json",
+		"check": "biome check --write --error-on-warnings . && tsc --noEmit --project packages/memory/tsconfig.build.json && tsgo --noEmit --project packages/tools/tsconfig.build.json && tsgo --noEmit --project packages/coding-agent/tsconfig.build.json",
 		"check:browser-smoke": "node scripts/check-browser-smoke.mjs",
 		"profile:tui": "node scripts/profile-coding-agent-node.mjs --mode tui",
 		"profile:rpc": "node scripts/profile-coding-agent-node.mjs --mode rpc",
