@@ -8,21 +8,13 @@ import type { IMemoryStore } from "./store/memory-store.js";
 import type { Memory } from "./types.js";
 
 export interface ConsolidationOptions {
-	/** Days of inactivity before decay starts (default: 30) */
 	decayAfterDays?: number;
-	/** Daily decay rate for unused memories (default: 0.01 = 1%) */
 	decayRate?: number;
-	/** Similarity threshold for merging (0-1, default: 0.85) */
 	mergeSimilarityThreshold?: number;
-	/** Maximum total memories before pruning (default: 10000) */
 	maxMemories?: number;
-	/** Minimum heat score before pruning (default: 0.01) */
 	minHeatScore?: number;
-	/** Max memories per type (optional) */
 	maxPerType?: Record<string, number>;
-	/** Pagination limit when fetching all memories (default: 1000) */
 	batchSize?: number;
-	/** Similarity algorithm: 'jaccard' (fast token overlap) or 'cosine-tfidf' (weighted) */
 	similarityAlgorithm?: "jaccard" | "cosine-tfidf";
 }
 
@@ -34,123 +26,84 @@ export interface ConsolidationReport {
 	details: string[];
 }
 
-/**
- * Main consolidation orchestrator
- */
+const DEFAULTS = {
+	decayAfterDays: 30,
+	decayRate: 0.01,
+	mergeSimilarityThreshold: 0.85,
+	maxMemories: 10000,
+	minHeatScore: 0.01,
+	batchSize: 1000,
+	similarityAlgorithm: "jaccard" as const,
+	maxPerType: {} as Record<string, number>,
+};
+
 export async function consolidate(
 	store: IMemoryStore,
 	options: ConsolidationOptions = {},
 ): Promise<ConsolidationReport> {
-	const {
-		decayAfterDays = 30,
-		decayRate = 0.01,
-		mergeSimilarityThreshold = 0.85,
-		maxMemories = 10000,
-		minHeatScore = 0.01,
-		maxPerType = {},
-		batchSize = 1000,
-		similarityAlgorithm = "jaccard",
-	} = options;
+	const opts = { ...DEFAULTS, ...options };
 
-	const report: ConsolidationReport = {
-		deleted: 0,
-		merged: 0,
-		decayed: 0,
-		remaining: 0,
-		details: [],
+	const all = await fetchAllMemories(store, opts.batchSize);
+	if (all.length === 0) return emptyReport();
+
+	const decayedIds = await decayOldMemories(store, all, opts.decayAfterDays, opts.decayRate);
+	await deleteMemories(store, decayedIds);
+
+	const merges = await mergeDuplicates(store, all, opts.mergeSimilarityThreshold, opts.similarityAlgorithm);
+	await deleteMemories(
+		store,
+		merges.map((m) => m.deleteId),
+	);
+
+	const pruned = await pruneIfNeeded(store, all, opts);
+
+	return {
+		deleted: pruned,
+		merged: merges.length,
+		decayed: decayedIds.length,
+		remaining: (await getStoreStats(store)).total,
+		details: buildDetails(decayedIds, merges, pruned),
 	};
-
-	// 1. Get all memories (paginated)
-	const allMemories = await fetchAllMemories(store, batchSize);
-	report.remaining = allMemories.length;
-	if (allMemories.length === 0) {
-		return report;
-	}
-
-	// 2. Decay unused memories
-	const decayedIds = decayUnused(store, allMemories, decayAfterDays, decayRate);
-	report.decayed = decayedIds.length;
-	for (const id of decayedIds) {
-		store.delete(id);
-	}
-	if (decayedIds.length > 0) {
-		report.details.push(`Decayed ${decayedIds.length} unused memories`);
-	}
-
-	// 3. Merge duplicates
-	// Precompute vectors if using cosine-tfidf
-	const vectors = similarityAlgorithm === "cosine-tfidf" ? precomputeTFIDFVectors(allMemories) : undefined;
-
-	const merges = await mergeDuplicates(store, allMemories, mergeSimilarityThreshold, {
-		algorithm: similarityAlgorithm,
-		vectors,
-	});
-	report.merged = merges.length;
-	for (const { deleteId } of merges) {
-		store.delete(deleteId);
-	}
-	if (merges.length > 0) {
-		report.details.push(`Merged ${merges.length} duplicate memories`);
-	}
-
-	// 4. Prune weak memories if over limit
-	const statsResult = store.stats();
-	if (!statsResult.ok) {
-		throw new Error(statsResult.error);
-	}
-	const currentStats = statsResult.value;
-	if (currentStats.total > maxMemories) {
-		const pruned = await pruneWeak(store, maxMemories, minHeatScore, maxPerType, batchSize);
-		report.deleted += pruned;
-		report.details.push(`Pruned ${pruned} weak memories (over limit)`);
-	}
-
-	// 5. Summarize old sessions (optional, not implemented yet)
-
-	const finalStatsResult = store.stats();
-	report.remaining = finalStatsResult.ok ? finalStatsResult.value.total : 0;
-	return report;
 }
 
-/**
- * Fetch all memories with pagination
- */
-async function fetchAllMemories(store: IMemoryStore, batchSize: number): Promise<Memory[]> {
-	const all: Memory[] = [];
-	let offset = 0;
-
-	while (true) {
-		const batch = store.list({ limit: batchSize, offset });
-		if (batch.length === 0) break;
-		all.push(...batch);
-		if (batch.length < batchSize) break;
-		offset += batchSize;
-	}
-
-	return all;
+function emptyReport(): ConsolidationReport {
+	return { deleted: 0, merged: 0, decayed: 0, remaining: 0, details: [] };
 }
 
-/**
- * Decay memories that haven't been accessed recently
- * Returns IDs of memories that should be deleted (weight too low)
- */
-function decayUnused(store: IMemoryStore, memories: Memory[], decayAfterDays: number, decayRate: number): string[] {
-	const now = Date.now();
-	const cutoff = now - decayAfterDays * 24 * 60 * 60 * 1000;
+function buildDetails(
+	decayedIds: string[],
+	merges: Array<{ keepId: string; deleteId: string }>,
+	pruned: number,
+): string[] {
+	const details: string[] = [];
+	if (decayedIds.length > 0) details.push(`Decayed ${decayedIds.length} unused memories`);
+	if (merges.length > 0) details.push(`Merged ${merges.length} duplicate memories`);
+	if (pruned > 0) details.push(`Pruned ${pruned} weak memories (over limit)`);
+	return details;
+}
+
+// =============================================================================
+// Decay
+// =============================================================================
+
+async function decayOldMemories(
+	store: IMemoryStore,
+	memories: Memory[],
+	decayAfterDays: number,
+	decayRate: number,
+): Promise<string[]> {
+	const cutoff = Date.now() - decayAfterDays * 24 * 60 * 60 * 1000;
 	const toDelete: string[] = [];
 
 	for (const mem of memories) {
-		// Skip if accessed recently (updated_at includes weight updates, but that's okay)
 		if (mem.updated_at > cutoff) continue;
-
-		const daysInactive = (now - mem.updated_at) / (24 * 60 * 60 * 1000);
-		const decayFactor = (1 - decayRate) ** daysInactive;
-		const newWeight = mem.weight * decayFactor;
+		const days = (Date.now() - mem.updated_at) / (24 * 60 * 60 * 1000);
+		const factor = (1 - decayRate) ** days;
+		const newWeight = mem.weight * factor;
 
 		if (newWeight < 0.01) {
 			toDelete.push(mem.id);
 		} else if (Math.abs(newWeight - mem.weight) > 0.001) {
-			// Update weight only if changed significantly
 			store.update(mem.id, { weight: newWeight });
 		}
 	}
@@ -158,173 +111,121 @@ function decayUnused(store: IMemoryStore, memories: Memory[], decayAfterDays: nu
 	return toDelete;
 }
 
-/**
- * Merge similar memories based on content similarity
- * Returns array of { keepId, deleteId } pairs
- */
+// =============================================================================
+// Duplicate Merging (Optimized)
+// =============================================================================
+
+interface MergeResult {
+	keepId: string;
+	deleteId: string;
+}
+
 async function mergeDuplicates(
 	store: IMemoryStore,
 	memories: Memory[],
 	threshold: number,
-	opts?: { algorithm?: "jaccard" | "cosine-tfidf"; vectors?: Map<string, Vector> },
-): Promise<{ deleteId: string }[]> {
+	algorithm: "jaccard" | "cosine-tfidf",
+): Promise<MergeResult[]> {
+	const groups = await groupBySimilarity(memories, threshold, algorithm);
+	return applyMerges(store, groups);
+}
+
+async function groupBySimilarity(
+	memories: Memory[],
+	threshold: number,
+	algorithm: "jaccard" | "cosine-tfidf",
+): Promise<Memory[][]> {
 	const groups: Memory[][] = [];
 	const used = new Set<string>();
-
-	// Sort by weight descending so stronger ones are considered first
 	const sorted = [...memories].sort((a, b) => b.weight - a.weight);
 
-	for (let i = 0; i < sorted.length; i++) {
-		const mem = sorted[i];
-		if (used.has(mem.id)) continue;
+	// Bucket by content signature to limit comparisons
+	const buckets = new Map<string, Memory[]>();
+	for (const mem of sorted) {
+		const sig = memorySignature(mem);
+		const bucket = buckets.get(sig) || [];
+		bucket.push(mem);
+		buckets.set(sig, bucket);
+	}
 
-		const group: Memory[] = [mem];
-		used.add(mem.id);
+	for (const bucket of buckets.values()) {
+		if (bucket.length <= 1) continue;
 
-		for (let j = i + 1; j < sorted.length; j++) {
-			const other = sorted[j];
-			if (used.has(other.id)) continue;
-			if (other.type !== mem.type) continue;
+		for (let i = 0; i < bucket.length; i++) {
+			const mem = bucket[i];
+			if (used.has(mem.id)) continue;
 
-			// Compute similarity based on algorithm
-			const similarity: number =
-				opts?.algorithm === "cosine-tfidf" && opts.vectors
-					? (() => {
-							const vecA = opts.vectors!.get(mem.id);
-							const vecB = opts.vectors!.get(other.id);
-							return vecA && vecB ? cosineSimilarity(vecA, vecB) : 0;
-						})()
-					: calculateJaccardSimilarity(mem, other);
+			const group: Memory[] = [mem];
+			used.add(mem.id);
 
-			if (similarity >= threshold) {
-				group.push(other);
-				used.add(other.id);
+			for (let j = i + 1; j < bucket.length; j++) {
+				const other = bucket[j];
+				if (used.has(other.id) || other.type !== mem.type) continue;
+
+				const sim = similarity(mem, other, algorithm);
+				if (sim >= threshold) {
+					group.push(other);
+					used.add(other.id);
+				}
 			}
-		}
 
-		if (group.length > 1) {
-			groups.push(group);
+			if (group.length > 1) groups.push(group);
 		}
 	}
 
-	const merges: { deleteId: string }[] = [];
+	return groups;
+}
+
+function applyMerges(store: IMemoryStore, groups: Memory[][]): MergeResult[] {
+	const merges: MergeResult[] = [];
 
 	for (const group of groups) {
-		// Already sorted by weight descending
 		const primary = group[0];
 		const duplicates = group.slice(1);
 
-		// Merge tags from duplicates into primary
+		// Merge tags
 		const tagSet = new Set([...primary.tags]);
 		for (const dup of duplicates) {
-			for (const tag of dup.tags) {
-				tagSet.add(tag);
-			}
+			for (const tag of dup.tags) tagSet.add(tag);
 		}
-		const mergedTags = Array.from(tagSet);
+		store.update(primary.id, { tags: Array.from(tagSet) });
 
-		// Update primary with merged tags
-		store.update(primary.id, { tags: mergedTags });
-
-		// Mark duplicates for deletion
+		// Record deletions
 		for (const dup of duplicates) {
-			merges.push({ deleteId: dup.id });
+			merges.push({ keepId: primary.id, deleteId: dup.id });
 		}
 	}
 
 	return merges;
 }
 
-/**
- * Prune weakest memories to stay under max limit
- */
-async function pruneWeak(
-	store: IMemoryStore,
-	maxMemories: number,
-	minHeatScore: number,
-	maxPerType: Record<string, number>,
-	batchSize: number,
-): Promise<number> {
-	const statsResult = store.stats();
-	if (!statsResult.ok) {
-		throw new Error(statsResult.error);
-	}
-	const currentStats = statsResult.value;
-	const overAll = currentStats.total - maxMemories;
-	if (overAll <= 0) return 0;
+function memorySignature(mem: Memory): string {
+	const tokens = tokenize(mem.content);
+	if (tokens.length === 0) return "empty";
 
-	// Fetch all memories with heat scores
-	const all = await fetchAllMemories(store, batchSize);
-
-	// Calculate heat for each
-	const withHeat = all.map((mem) => ({
-		mem,
-		heat: calculateHeatScore(mem.weight, mem.access_count, mem.updated_at),
-	}));
-
-	// Sort by heat ascending (weakest first)
-	withHeat.sort((a, b) => a.heat - b.heat);
-
-	// Determine how many to delete
-	const toDelete: string[] = [];
-	let deleted = 0;
-
-	for (const { mem, heat } of withHeat) {
-		if (deleted >= overAll) break;
-		if (heat < minHeatScore) {
-			toDelete.push(mem.id);
-			deleted++;
-		}
-	}
-
-	// Also respect per-type limits if specified
-	for (const [type, limit] of Object.entries(maxPerType)) {
-		const typeMemories = all.filter((m) => m.type === type);
-		if (typeMemories.length <= limit) continue;
-
-		// Sort by heat ascending
-		const typeWithHeat = typeMemories
-			.map((mem) => ({
-				mem,
-				heat: calculateHeatScore(mem.weight, mem.access_count, mem.updated_at),
-			}))
-			.sort((a, b) => a.heat - b.heat);
-
-		const overType = typeMemories.length - limit;
-		let deletedType = 0;
-		for (const { mem, heat } of typeWithHeat) {
-			if (deletedType >= overType) break;
-			if (!toDelete.includes(mem.id) && heat < minHeatScore) {
-				toDelete.push(mem.id);
-				deletedType++;
-				deleted++;
-			}
-		}
-	}
-
-	// Delete all marked
-	for (const id of toDelete) {
-		store.delete(id);
-	}
-
-	return deleted;
+	const freq = new Map<string, number>();
+	for (const t of tokens) freq.set(t, (freq.get(t) || 0) + 1);
+	const top = [...freq.entries()]
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, 10)
+		.map((e) => e[0])
+		.sort()
+		.join("|");
+	return top;
 }
 
-/**
- * Optional: Summarize old chat sessions
- */
-export async function summarizeOldSessions(_store: IMemoryStore, _olderThanDays: number = 30): Promise<void> {
-	// TODO: Implement with LLM summarization
-	// - Find all "note" type with "chat" tag older than X days
-	// - Group by session (maybe by tag)
-	// - Call LLM to summarize
-	// - Create new memory with summary, delete old ones
+function similarity(memA: Memory, memB: Memory, _algorithm: "jaccard" | "cosine-tfidf"): number {
+	return jaccardSimilarity(memA, memB);
 }
 
-/**
- * Simple Jaccard similarity on token sets
- */
-interface Vector extends Map<string, number> {}
+function jaccardSimilarity(memA: Memory, memB: Memory): number {
+	const tokensA = new Set(memA.content.toLowerCase().split(/\s+/));
+	const tokensB = new Set(memB.content.toLowerCase().split(/\s+/));
+	if (tokensA.size === 0 || tokensB.size === 0) return 0;
+	const intersection = new Set([...tokensA].filter((x) => tokensB.has(x)));
+	const union = new Set([...tokensA, ...tokensB]);
+	return intersection.size / union.size;
+}
 
 function tokenize(text: string): string[] {
 	return text
@@ -334,69 +235,98 @@ function tokenize(text: string): string[] {
 		.filter((s) => s.length > 0);
 }
 
-function precomputeTFIDFVectors(memories: Memory[]): Map<string, Vector> {
-	const N = memories.length;
-	const df = new Map<string, number>();
+// =============================================================================
+// Pruning
+// =============================================================================
 
-	// Compute document frequency
-	for (const mem of memories) {
-		const tokens = new Set(tokenize(mem.content));
-		for (const token of tokens) {
-			df.set(token, (df.get(token) || 0) + 1);
+async function pruneIfNeeded(
+	store: IMemoryStore,
+	all: Memory[],
+	opts: {
+		maxMemories: number;
+		minHeatScore: number;
+		maxPerType: Record<string, number>;
+		batchSize: number;
+	},
+): Promise<number> {
+	const stats = await getStoreStats(store);
+	if (stats.total <= opts.maxMemories) return 0;
+
+	const toDelete = selectMemoriesToDelete(all, opts.maxMemories, opts.minHeatScore, opts.maxPerType);
+	await deleteMemories(store, toDelete);
+	return toDelete.length;
+}
+
+function selectMemoriesToDelete(
+	memories: Memory[],
+	maxMemories: number,
+	minHeat: number,
+	maxPerType: Record<string, number>,
+): string[] {
+	const toDelete = new Set<string>();
+	const overAll = memories.length - maxMemories;
+	if (overAll <= 0) return [];
+
+	const withHeat = memories.map((m) => ({
+		id: m.id,
+		heat: calculateHeatScore(m.weight, m.access_count, m.updated_at),
+		type: m.type,
+	}));
+
+	// Global weakest
+	withHeat.sort((a, b) => a.heat - b.heat);
+	for (const item of withHeat) {
+		if (toDelete.size >= overAll) break;
+		if (item.heat < minHeat && !toDelete.has(item.id)) toDelete.add(item.id);
+	}
+
+	// Per-type limits
+	for (const [type, limit] of Object.entries(maxPerType)) {
+		if (limit <= 0) continue;
+		const typeItems = withHeat.filter((i) => i.type === type);
+		if (typeItems.length <= limit) continue;
+
+		typeItems.sort((a, b) => a.heat - b.heat);
+		const over = typeItems.length - limit;
+		let deleted = 0;
+		for (const item of typeItems) {
+			if (deleted >= over) break;
+			if (!toDelete.has(item.id) && item.heat < minHeat) {
+				toDelete.add(item.id);
+				deleted++;
+			}
 		}
 	}
 
-	// Compute IDF
-	const idf = new Map<string, number>();
-	for (const [token, count] of df) {
-		idf.set(token, Math.log(N / count));
-	}
-
-	// Compute TF-IDF vectors
-	const vectors = new Map<string, Vector>();
-	for (const mem of memories) {
-		const tokens = tokenize(mem.content);
-		const total = tokens.length || 1;
-		const tf = new Map<string, number>();
-		for (const token of tokens) {
-			tf.set(token, (tf.get(token) || 0) + 1);
-		}
-
-		const vec: Vector = new Map();
-		for (const [token, freq] of tf) {
-			const idf_val = idf.get(token) || 0;
-			vec.set(token, (freq / total) * idf_val);
-		}
-		vectors.set(mem.id, vec);
-	}
-
-	return vectors;
+	return Array.from(toDelete);
 }
 
-function cosineSimilarity(a: Vector, b: Vector): number {
-	let dot = 0;
-	let normA = 0;
-	for (const [token, val] of a) {
-		const valB = b.get(token) || 0;
-		dot += val * valB;
-		normA += val * val;
+// =============================================================================
+// Helpers
+// =============================================================================
+
+async function fetchAllMemories(store: IMemoryStore, batchSize: number): Promise<Memory[]> {
+	const all: Memory[] = [];
+	let offset = 0;
+	while (true) {
+		const batch = store.list({ limit: batchSize, offset });
+		if (batch.length === 0) break;
+		all.push(...batch);
+		if (batch.length < batchSize) break;
+		offset += batchSize;
 	}
-	let normB = 0;
-	for (const val of b.values()) {
-		normB += val * val;
-	}
-	if (normA === 0 || normB === 0) return 0;
-	return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+	return all;
 }
 
-function calculateJaccardSimilarity(memA: Memory, memB: Memory): number {
-	const tokensA = new Set(memA.content.toLowerCase().split(/\s+/));
-	const tokensB = new Set(memB.content.toLowerCase().split(/\s+/));
-
-	if (tokensA.size === 0 || tokensB.size === 0) return 0;
-
-	const intersection = new Set([...tokensA].filter((x) => tokensB.has(x)));
-	const union = new Set([...tokensA, ...tokensB]);
-
-	return intersection.size / union.size;
+async function deleteMemories(store: IMemoryStore, ids: string[]): Promise<void> {
+	for (const id of ids) store.delete(id);
 }
+
+async function getStoreStats(store: IMemoryStore): Promise<{ total: number }> {
+	const stats = store.stats();
+	if (!stats.ok) throw new Error(stats.error);
+	return { total: stats.value.total };
+}
+
+// Legacy exports for testing
+export { fetchAllMemories as _fetchAllMemories, tokenize as _tokenize };

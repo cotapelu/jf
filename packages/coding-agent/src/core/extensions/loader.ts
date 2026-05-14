@@ -71,7 +71,13 @@ function getAliases(): Record<string, string> {
 		if (fs.existsSync(workspacePath)) {
 			return workspacePath;
 		}
-		return fileURLToPath(import.meta.resolve(specifier));
+		try {
+			// Try to resolve the ES module entry using import condition (cast to any for TS compatibility)
+			return (require.resolve as any)(specifier, { conditions: new Set(["import"]) });
+		} catch {
+			// Fallback to default resolution (may return CJS)
+			return require.resolve(specifier);
+		}
 	};
 
 	_aliases = {
