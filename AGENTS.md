@@ -88,4 +88,4 @@ Mock external deps; test pure logic only; tests <100ms; deterministic. Include: 
 
 CHÚ Ý: CODE MỚI NHẤT CÁC GÓI pi-tui, pi-agent-core và pi-ai mà app đang sử dụng nằm ở thư mục llm-context/pi-mono/packages/
 nếu bạn mắc phải vấn đề build thì vào đó mà đọc code để hieur. rồi fix code app hiện tại theo các gói đó.
-
+code trong llm-context là để tham khảo, cấm sừa nó. app hiện tại dùng 3 gói đó. bạn cấm sửa code trong llm-context, mục đích của nó là để tham khảo.
