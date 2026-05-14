@@ -83,7 +83,7 @@
 		"shx": "^0.4.0",
 		"strip-literal": "^3.1.0",
 		"typescript": "^5.7.3",
-		"vitest": "^3.2.4"
+		"vitest": "^4.1.6"
 	},
 	"keywords": [
 		"coding-agent",
