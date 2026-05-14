@@ -180,6 +180,14 @@ export class InteractiveMode {
 	private lastStatusSpacer: Spacer | undefined = undefined;
 	private lastStatusText: Text | undefined = undefined;
 
+	// Render debouncing to prevent flickering during streaming updates
+	// Issue: message_update events fire ~20-50 times/sec during LLM streaming,
+	// causing this.ui.requestRender() to clear/redraw terminal each time → flicker.
+	// Fix: Batch renders within RENDER_DEBOUNCE_MS (50ms = max 20 FPS, smooth).
+	private pendingRenderRequest = false;
+	private readonly RENDER_DEBOUNCE_MS = 50; // ms
+	private originalRequestRender?: () => void;
+
 	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
 	private streamingMessage: AssistantMessage | undefined = undefined;
@@ -268,6 +276,9 @@ export class InteractiveMode {
 		this.version = VERSION;
 		this.ui = new TUI(new ProcessTerminal(), this.settingsManager.getShowHardwareCursor());
 		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
+		// Override requestRender with debounced version to prevent flickering during streaming
+		this.originalRequestRender = this.ui.requestRender.bind(this.ui);
+		this.ui.requestRender = () => this.scheduleRender();
 		this.headerContainer = new Container();
 		this.chatContainer = new Container();
 		this.pendingMessagesContainer = new Container();
@@ -301,6 +312,21 @@ export class InteractiveMode {
 		// Register themes from resource loader and initialize
 		setRegisteredThemes(this.session.resourceLoader.getThemes().themes);
 		initTheme(this.settingsManager.getTheme(), true);
+	}
+
+	/**
+	 * Debounced wrapper around original TUI.requestRender().
+	 * - Ignores calls while a render is pending (debounce).
+	 * - Triggers actual render after RENDER_DEBOUNCE_MS.
+	 * - Prevents terminal flicker during streaming LLM output.
+	 */
+	private scheduleRender(): void {
+		if (this.pendingRenderRequest) return;
+		this.pendingRenderRequest = true;
+		setTimeout(() => {
+			this.originalRequestRender?.();
+			this.pendingRenderRequest = false;
+		}, this.RENDER_DEBOUNCE_MS);
 	}
 
 	private getAutocompleteSourceTag(sourceInfo?: SourceInfo): string | undefined {
