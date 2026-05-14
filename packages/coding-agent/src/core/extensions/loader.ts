@@ -58,33 +58,21 @@ const require = createRequire(import.meta.url);
 let _aliases: Record<string, string> | null = null;
 function getAliases(): Record<string, string> {
 	if (_aliases) return _aliases;
-
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	const packageIndex = path.resolve(__dirname, "../..", "index.js");
-
-	const typeboxEntry = require.resolve("@sinclair/typebox");
-	const typeboxRoot = typeboxEntry.replace(/[\\/]build[\\/]cjs[\\/]index\.js$/, "");
-
-	const packagesRoot = path.resolve(__dirname, "../../../../");
-	const resolveWorkspaceOrImport = (workspaceRelativePath: string, specifier: string): string => {
-		const workspacePath = path.join(packagesRoot, workspaceRelativePath);
-		if (fs.existsSync(workspacePath)) {
-			return workspacePath;
-		}
-		return fileURLToPath(import.meta.resolve(specifier));
-	};
-
+	// Project root: go up 5 levels from this file (src/core/extensions)
+	const projectRoot = path.resolve(__dirname, "../../../../../");
+	const packageRoot = path.resolve(__dirname, "../../.."); // packages/coding-agent
 	_aliases = {
-		"@quangtynu/pi-coding-agent": packageIndex,
-		"@mariozechner/pi-agent-core": resolveWorkspaceOrImport("agent/dist/index.js", "@mariozechner/pi-agent-core"),
-		"@mariozechner/pi-tui": resolveWorkspaceOrImport("tui/dist/index.js", "@mariozechner/pi-tui"),
-		"@mariozechner/pi-ai": resolveWorkspaceOrImport("ai/dist/index.js", "@mariozechner/pi-ai"),
-		"@mariozechner/pi-ai/oauth": resolveWorkspaceOrImport("ai/dist/oauth.js", "@mariozechner/pi-ai/oauth"),
-		"@sinclair/typebox": typeboxRoot,
+		"@quangtynu/pi-coding-agent": path.join(packageRoot, "dist", "index.js"),
+		"@mariozechner/pi-agent-core": path.join(projectRoot, "node_modules", "@mariozechner", "pi-agent-core", "dist", "index.js"),
+		"@mariozechner/pi-tui": path.join(projectRoot, "node_modules", "@mariozechner", "pi-tui", "dist", "index.js"),
+		"@mariozechner/pi-ai": path.join(projectRoot, "node_modules", "@mariozechner", "pi-ai", "dist", "index.js"),
+		"@mariozechner/pi-ai/oauth": path.join(projectRoot, "node_modules", "@mariozechner", "pi-ai", "dist", "oauth.js"),
+		"typebox": path.join(projectRoot, "node_modules", "typebox", "build", "index.mjs"),
 	};
-
 	return _aliases;
 }
+
 
 const UNICODE_SPACES = /[\u00A0\u2000-\u200A\u202F\u205F\u3000]/g;
 
@@ -401,41 +389,6 @@ export async function loadExtensions(paths: string[], cwd: string, eventBus?: Ev
 		}
 	}
 
-	// Detect duplicate tools, commands, and message renderers
-	const seenTools = new Set<string>();
-	const seenCommands = new Set<string>();
-	const seenRenderers = new Set<string>();
-
-	for (const ext of extensions) {
-		// Tools
-		for (const name of ext.tools.keys()) {
-			if (seenTools.has(name)) {
-				ext.tools.delete(name);
-				errors.push({ path: ext.path, error: `duplicate-tool: ${name} conflicts with a previously loaded extension` });
-			} else {
-				seenTools.add(name);
-			}
-		}
-		// Commands
-		for (const name of ext.commands.keys()) {
-			if (seenCommands.has(name)) {
-				ext.commands.delete(name);
-				errors.push({ path: ext.path, error: `duplicate-command: ${name} conflicts with a previously loaded extension` });
-			} else {
-				seenCommands.add(name);
-			}
-		}
-		// Message renderers
-		for (const type of ext.messageRenderers.keys()) {
-			if (seenRenderers.has(type)) {
-				ext.messageRenderers.delete(type);
-				errors.push({ path: ext.path, error: `duplicate-message-renderer: ${type} conflicts with a previously loaded extension` });
-			} else {
-				seenRenderers.add(type);
-			}
-		}
-	}
-
 	return {
 		extensions,
 		errors,
@@ -600,54 +553,5 @@ export async function discoverAndLoadExtensions(
 		addPaths([resolved]);
 	}
 
-	const result = await loadExtensions(allPaths, cwd, eventBus);
-
-	// Detect duplicate tools, commands, and message renderers across extensions
-	const seenTools = new Set<string>();
-	const seenCommands = new Set<string>();
-	const seenRenderers = new Set<string>();
-
-	for (const ext of result.extensions) {
-		// Tools
-		const toolNames = Array.from(ext.tools.keys());
-		for (const name of toolNames) {
-			if (seenTools.has(name)) {
-				ext.tools.delete(name);
-				result.errors.push({ path: ext.path, error: `duplicate-tool: ${name} conflicts with a previously loaded extension` });
-			} else {
-				seenTools.add(name);
-			}
-		}
-		// Commands
-		const cmdNames = Array.from(ext.commands.keys());
-		for (const name of cmdNames) {
-			if (seenCommands.has(name)) {
-				ext.commands.delete(name);
-				result.errors.push({ path: ext.path, error: `duplicate-command: ${name} conflicts with a previously loaded extension` });
-			} else {
-				seenCommands.add(name);
-			}
-		}
-		// Message renderers
-		const rendererTypes = Array.from(ext.messageRenderers.keys());
-		for (const type of rendererTypes) {
-			if (seenRenderers.has(type)) {
-				ext.messageRenderers.delete(type);
-				result.errors.push({ path: ext.path, error: `duplicate-message-renderer: ${type} conflicts with a previously loaded extension` });
-			} else {
-				seenRenderers.add(type);
-			}
-		}
-	}
-
-	// Prefer explicit extensions: sort extensions so that those that were explicitly configured come first
-	const explicitSet = new Set(configuredPaths.map(p => path.resolve(p)));
-	result.extensions.sort((a, b) => {
-		const aExplicit = explicitSet.has(a.path) || explicitSet.has(a.sourceInfo.path);
-		const bExplicit = explicitSet.has(b.path) || explicitSet.has(b.sourceInfo.path);
-		if (aExplicit === bExplicit) return 0;
-		return aExplicit ? -1 : 1;
-	});
-
-	return result;
+	return loadExtensions(allPaths, cwd, eventBus);
 }

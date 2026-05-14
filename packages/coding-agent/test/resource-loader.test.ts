@@ -163,7 +163,7 @@ Project skill`,
 			mkdirSync(projectExtDir, { recursive: true });
 
 			writeFileSync(
-				join(projectExtDir, "project.js"),
+				join(projectExtDir, "project.ts"),
 				`export default function(pi) {
 	pi.registerCommand("deploy", {
 		description: "project deploy",
@@ -177,7 +177,7 @@ Project skill`,
 			);
 
 			writeFileSync(
-				join(userExtDir, "user.js"),
+				join(userExtDir, "user.ts"),
 				`export default function(pi) {
 	pi.registerCommand("deploy", {
 		description: "user deploy",
@@ -224,14 +224,14 @@ Project skill`,
 
 		it("should honor overrides for auto-discovered resources", async () => {
 			const settingsManager = SettingsManager.inMemory();
-			settingsManager.setExtensionPaths(["-extensions/disabled.js"]);
+			settingsManager.setExtensionPaths(["-extensions/disabled.ts"]);
 			settingsManager.setSkillPaths(["-skills/skip-skill"]);
 			settingsManager.setPromptTemplatePaths(["-prompts/skip.md"]);
 			settingsManager.setThemePaths(["-themes/skip.json"]);
 
 			const extensionsDir = join(agentDir, "extensions");
 			mkdirSync(extensionsDir, { recursive: true });
-			writeFileSync(join(extensionsDir, "disabled.js"), "export default function() {}");
+			writeFileSync(join(extensionsDir, "disabled.ts"), "export default function() {}");
 
 			const skillDir = join(agentDir, "skills", "skip-skill");
 			mkdirSync(skillDir, { recursive: true });
@@ -260,7 +260,7 @@ Content`,
 			const { prompts } = loader.getPrompts();
 			const { themes } = loader.getThemes();
 
-			expect(extensions.some((e) => e.path.endsWith("disabled.js"))).toBe(false);
+			expect(extensions.some((e) => e.path.endsWith("disabled.ts"))).toBe(false);
 			expect(skills.some((s) => s.name === "skip-skill")).toBe(false);
 			expect(prompts.some((p) => p.name === "skip")).toBe(false);
 			expect(themes.some((t) => t.sourcePath?.endsWith("skip.json"))).toBe(false);
@@ -457,10 +457,10 @@ Content`,
 			mkdirSync(ext2Dir, { recursive: true });
 
 			writeFileSync(
-				join(ext1Dir, "index.js"),
+				join(ext1Dir, "index.ts"),
 				`
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 export default function(pi: ExtensionAPI) {
   pi.registerTool({
     name: "duplicate-tool",
@@ -472,10 +472,10 @@ export default function(pi: ExtensionAPI) {
 			);
 
 			writeFileSync(
-				join(ext2Dir, "index.js"),
+				join(ext2Dir, "index.ts"),
 				`
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 export default function(pi: ExtensionAPI) {
   pi.registerTool({
     name: "duplicate-tool",
@@ -496,13 +496,13 @@ export default function(pi: ExtensionAPI) {
 		it("should prefer explicit CLI extensions over discovered extensions when commands and tools conflict", async () => {
 			const globalExtDir = join(agentDir, "extensions");
 			mkdirSync(globalExtDir, { recursive: true });
-			const explicitExtPath = join(tempDir, "explicit-extension.js");
+			const explicitExtPath = join(tempDir, "explicit-extension.ts");
 
 			writeFileSync(
-				join(globalExtDir, "global.js"),
+				join(globalExtDir, "global.ts"),
 				`
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 export default function(pi: ExtensionAPI) {
   pi.registerTool({
     name: "duplicate-tool",
@@ -521,7 +521,7 @@ export default function(pi: ExtensionAPI) {
 				explicitExtPath,
 				`
 import type { ExtensionAPI } from "@quangtynu/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 export default function(pi: ExtensionAPI) {
   pi.registerTool({
     name: "duplicate-tool",

@@ -277,10 +277,6 @@ export class InteractiveMode {
 		const editorPaddingX = this.settingsManager.getEditorPaddingX();
 		const autocompleteMaxVisible = this.settingsManager.getAutocompleteMaxVisible();
 
-		// Initialize command history
-
-		// Load history from file (not passed to editor in current version)
-		// const savedHistory = this.commandHistory.getAllAsText(100);
 		this.defaultEditor = new CustomEditor(this.ui, getEditorTheme(), this.keybindings, {
 			paddingX: editorPaddingX,
 			autocompleteMaxVisible,
