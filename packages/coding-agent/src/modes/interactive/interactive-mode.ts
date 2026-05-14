@@ -325,7 +325,6 @@ export class InteractiveMode {
 		if (this.pendingRenderRequest) return;
 		this.pendingRenderRequest = true;
 		const timeoutId = setTimeout(() => {
-			// Remove from tracking set before executing
 			this.renderDebounceTimers.delete(timeoutId);
 			this.originalRequestRender?.();
 			this.pendingRenderRequest = false;
