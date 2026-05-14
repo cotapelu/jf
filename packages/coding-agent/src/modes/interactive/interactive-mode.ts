@@ -48,6 +48,7 @@ import {
 } from "../../config.js";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.js";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.js";
+import { type CommandHistory, createCommandHistory } from "../../core/command-history.js";
 import type {
 	ExtensionContext,
 	ExtensionRunner,
@@ -161,6 +162,7 @@ export class InteractiveMode {
 	private footerDataProvider: FooterDataProvider;
 	// Stored so the same manager can be injected into custom editors, selectors, and extension UI.
 	private keybindings: KeybindingsManager;
+	private commandHistory!: CommandHistory;
 	private version: string;
 	private isInitialized = false;
 	private onInputCallback?: (text: string) => void;
@@ -277,6 +279,11 @@ export class InteractiveMode {
 		const editorPaddingX = this.settingsManager.getEditorPaddingX();
 		const autocompleteMaxVisible = this.settingsManager.getAutocompleteMaxVisible();
 
+		// Initialize command history
+		this.commandHistory = createCommandHistory(this.sessionManager.getCwd());
+
+		// Load history from file (not passed to editor in current version)
+		// const savedHistory = this.commandHistory.getAllAsText(100);
 		this.defaultEditor = new CustomEditor(this.ui, getEditorTheme(), this.keybindings, {
 			paddingX: editorPaddingX,
 			autocompleteMaxVisible,
@@ -2803,6 +2810,8 @@ export class InteractiveMode {
 		return new Promise((resolve) => {
 			this.onInputCallback = (text: string) => {
 				this.onInputCallback = undefined;
+				// Save user input to command history
+				this.commandHistory.save(text);
 				resolve(text);
 			};
 		});

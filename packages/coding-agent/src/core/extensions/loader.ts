@@ -5,6 +5,7 @@
  */
 
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,6 +49,8 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@quangtynu/pi-coding-agent": _bundledPiCodingAgent,
 };
 
+const require = createRequire(import.meta.url);
+
 /**
  * Get aliases for jiti (used in Node.js/development mode).
  * In Bun binary mode, virtualModules is used instead.
@@ -55,25 +58,31 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 let _aliases: Record<string, string> | null = null;
 function getAliases(): Record<string, string> {
 	if (_aliases) return _aliases;
+
 	const __dirname = path.dirname(fileURLToPath(import.meta.url));
-	// Project root: go up 5 levels from this file (src/core/extensions)
-	const projectRoot = path.resolve(__dirname, "../../../../../");
-	const packageRoot = path.resolve(__dirname, "../../.."); // packages/coding-agent
-	_aliases = {
-		"@quangtynu/pi-coding-agent": path.join(packageRoot, "dist", "index.js"),
-		"@mariozechner/pi-agent-core": path.join(
-			projectRoot,
-			"node_modules",
-			"@mariozechner",
-			"pi-agent-core",
-			"dist",
-			"index.js",
-		),
-		"@mariozechner/pi-tui": path.join(projectRoot, "node_modules", "@mariozechner", "pi-tui", "dist", "index.js"),
-		"@mariozechner/pi-ai": path.join(projectRoot, "node_modules", "@mariozechner", "pi-ai", "dist", "index.js"),
-		"@mariozechner/pi-ai/oauth": path.join(projectRoot, "node_modules", "@mariozechner", "pi-ai", "dist", "oauth.js"),
-		typebox: path.join(projectRoot, "node_modules", "typebox", "build", "index.mjs"),
+	const packageIndex = path.resolve(__dirname, "../..", "index.js");
+
+	const typeboxEntry = require.resolve("@sinclair/typebox");
+	const typeboxRoot = typeboxEntry.replace(/[\\/]build[\\/]cjs[\\/]index\.js$/, "");
+
+	const packagesRoot = path.resolve(__dirname, "../../../../");
+	const resolveWorkspaceOrImport = (workspaceRelativePath: string, specifier: string): string => {
+		const workspacePath = path.join(packagesRoot, workspaceRelativePath);
+		if (fs.existsSync(workspacePath)) {
+			return workspacePath;
+		}
+		return fileURLToPath(import.meta.resolve(specifier));
 	};
+
+	_aliases = {
+		"@quangtynu/pi-coding-agent": packageIndex,
+		"@mariozechner/pi-agent-core": resolveWorkspaceOrImport("agent/dist/index.js", "@mariozechner/pi-agent-core"),
+		"@mariozechner/pi-tui": resolveWorkspaceOrImport("tui/dist/index.js", "@mariozechner/pi-tui"),
+		"@mariozechner/pi-ai": resolveWorkspaceOrImport("ai/dist/index.js", "@mariozechner/pi-ai"),
+		"@mariozechner/pi-ai/oauth": resolveWorkspaceOrImport("ai/dist/oauth.js", "@mariozechner/pi-ai/oauth"),
+		"@sinclair/typebox": typeboxRoot,
+	};
+
 	return _aliases;
 }
 
