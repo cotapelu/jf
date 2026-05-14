@@ -187,6 +187,7 @@ export class InteractiveMode {
 	private pendingRenderRequest = false;
 	private readonly RENDER_DEBOUNCE_MS = 50; // ms
 	private originalRequestRender?: () => void;
+	private renderDebounceTimers: Set<NodeJS.Timeout> = new Set();
 
 	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
@@ -323,10 +324,13 @@ export class InteractiveMode {
 	private scheduleRender(): void {
 		if (this.pendingRenderRequest) return;
 		this.pendingRenderRequest = true;
-		setTimeout(() => {
+		const timeoutId = setTimeout(() => {
+			// Remove from tracking set before executing
+			this.renderDebounceTimers.delete(timeoutId);
 			this.originalRequestRender?.();
 			this.pendingRenderRequest = false;
 		}, this.RENDER_DEBOUNCE_MS);
+		this.renderDebounceTimers.add(timeoutId);
 	}
 
 	private getAutocompleteSourceTag(sourceInfo?: SourceInfo): string | undefined {
@@ -2886,6 +2890,12 @@ export class InteractiveMode {
 		// Drain any in-flight Kitty key release events before stopping.
 		// This prevents escape sequences from leaking to the parent shell over slow SSH.
 		await this.ui.terminal.drainInput(1000);
+
+		// Cancel any pending debounced renders to prevent calls after shutdown
+		for (const timer of this.renderDebounceTimers) {
+			clearTimeout(timer);
+		}
+		this.renderDebounceTimers.clear();
 
 		this.stop();
 		process.exit(0);
