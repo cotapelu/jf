@@ -183,9 +183,9 @@ export class InteractiveMode {
 	// Render debouncing to prevent flickering during streaming updates
 	// Issue: message_update events fire ~20-50 times/sec during LLM streaming,
 	// causing this.ui.requestRender() to clear/redraw terminal each time → flicker.
-	// Fix: Batch renders within RENDER_DEBOUNCE_MS (100ms = max 10 FPS, smoother).
+	// Fix: Batch renders within RENDER_DEBOUNCE_MS (500ms = max 2 FPS, smoother).
 	private pendingRenderRequest = false;
-	private readonly RENDER_DEBOUNCE_MS = 100; // ms
+	private readonly RENDER_DEBOUNCE_MS = 500; // ms
 	private originalRequestRender?: () => void;
 	private renderDebounceTimers: Set<NodeJS.Timeout> = new Set();
 

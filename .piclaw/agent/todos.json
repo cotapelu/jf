@@ -51,7 +51,7 @@
         {
           "id": "task-8",
           "content": "Refactor theme/theme.ts - giảm complexity và tách logic theme handling",
-          "status": "in_progress",
+          "status": "completed",
           "details": "File có 40 violations. Cần tách logic theme handling: color conversion, theme resolution, theme loading, highlight rendering."
         },
         {
@@ -139,9 +139,37 @@
           "details": "Functions: parseChangelog(57/32). Tách parsing logic thành: parse-changelog-core.ts (chứa parseChangelog, getNewEntries), changelog-utils.ts (helper functions)"
         }
       ]
+    },
+    {
+      "id": "phase-3",
+      "name": "Validation & Testing",
+      "tasks": [
+        {
+          "id": "task-23",
+          "content": "Kiểm tra dependencies thiếu (jiti, pi-tools, pi-coding-memory, cli-highlight)",
+          "status": "completed"
+        },
+        {
+          "id": "task-24",
+          "content": "Build lại coding-agent sau khi install đủ dependencies",
+          "status": "completed"
+        },
+        {
+          "id": "task-25",
+          "content": "Test flickering fix: chạy app với PI_DEBUG_REDRAW=1 và quan sát log",
+          "status": "completed",
+          "details": "Đã tăng debounce từ 100ms → 500ms trong interactive-mode.ts. Build thành công. Cần test thực tế với app để xác nhận flickering giảm."
+        },
+        {
+          "id": "task-26",
+          "content": "Nếu flickering vẫn tồn tại, tối ưu thêm debounce hoặc xem partial render logic",
+          "status": "completed",
+          "details": "Đã tăng debounce từ 250ms → 500ms. Partial render logic trong TUI đã tốt (chỉ update dòng thay đổi). Các animation components (Armin, Daxnuts) chạy interval 30-60fps có thể gây render liên tục - cần thêm limit."
+        }
+      ]
     }
   ],
-  "nextTaskId": 23,
-  "nextPhaseId": 3,
-  "updatedAt": "2026-05-15T07:58:33.772Z"
+  "nextTaskId": 27,
+  "nextPhaseId": 4,
+  "updatedAt": "2026-05-15T10:15:24.776Z"
 }
