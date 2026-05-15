@@ -187,7 +187,16 @@ function processResize(
 	opts: Required<ImageResizeOptions>,
 	inputBase64Size: number,
 ): ResizedImage | null {
-	if (isWithinLimits(prepared.originalWidth, prepared.originalHeight, inputBase64Size, opts.maxWidth, opts.maxHeight, opts.maxBytes)) {
+	if (
+		isWithinLimits(
+			prepared.originalWidth,
+			prepared.originalHeight,
+			inputBase64Size,
+			opts.maxWidth,
+			opts.maxHeight,
+			opts.maxBytes,
+		)
+	) {
 		return {
 			data: prepared.originalData,
 			mimeType: `image/${prepared.format}`,
@@ -199,9 +208,21 @@ function processResize(
 		};
 	}
 
-	const target = calculateTargetDimensions(prepared.originalWidth, prepared.originalHeight, opts.maxWidth, opts.maxHeight);
+	const target = calculateTargetDimensions(
+		prepared.originalWidth,
+		prepared.originalHeight,
+		opts.maxWidth,
+		opts.maxHeight,
+	);
 	const qualitySteps = Array.from(new Set([opts.jpegQuality, 85, 70, 55, 40]));
-	const candidate = encodeLoop(prepared.photon, prepared.image, target.width, target.height, qualitySteps, opts.maxBytes);
+	const candidate = encodeLoop(
+		prepared.photon,
+		prepared.image,
+		target.width,
+		target.height,
+		qualitySteps,
+		opts.maxBytes,
+	);
 
 	if (candidate) {
 		return createResizedResult(prepared, candidate, target.width, target.height);

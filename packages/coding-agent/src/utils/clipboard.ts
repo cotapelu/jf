@@ -1,7 +1,13 @@
 import { platform } from "os";
 import { isWaylandSession } from "./clipboard-image.js";
 import { clipboard } from "./clipboard-native.js";
-import { copyToX11Clipboard, copyToWaylandClipboard, copyToTermuxClipboard, copyToDarwinClipboard, copyToWindowsClipboard } from "./clipboard-platform.js";
+import {
+	copyToDarwinClipboard,
+	copyToTermuxClipboard,
+	copyToWaylandClipboard,
+	copyToWindowsClipboard,
+	copyToX11Clipboard,
+} from "./clipboard-platform.js";
 
 type NativeClipboardExecOptions = {
 	input: string;

@@ -143,7 +143,7 @@ export function isWaylandSession(env: NodeJS.ProcessEnv = process.env): boolean 
 	return Boolean(env.WAYLAND_DISPLAY) || env.XDG_SESSION_TYPE === "wayland";
 }
 
-function preparePowerShellScript(tempPath: string): string {
+function preparePowerShellScript(): string {
 	return [
 		"Add-Type -AssemblyName System.Windows.Forms",
 		"Add-Type -AssemblyName System.Drawing",
@@ -183,7 +183,7 @@ function readClipboardImageViaPowerShell(): ClipboardImage | null {
 		const winPath = winPathResult.stdout.toString("utf-8").trim();
 		if (!winPath) return null;
 
-		const script = preparePowerShellScript(winPath);
+		const script = preparePowerShellScript();
 		const result = executePowerShell(script, { ...process.env, PI_WSL_CLIPBOARD_IMAGE_PATH: winPath });
 		return processPowerShellResult(result, tmpFile);
 	} finally {

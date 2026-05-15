@@ -11,6 +11,26 @@ export function serializeJsonLine(value: unknown): string {
 	return `${JSON.stringify(value)}\n`;
 }
 
+function processChunk(
+	chunk: string | Buffer,
+	buffer: string,
+	decoder: StringDecoder,
+	onLine: (line: string) => void,
+): string {
+	buffer += typeof chunk === "string" ? chunk : decoder.write(chunk);
+	while (true) {
+		const newlineIndex = buffer.indexOf("\n");
+		if (newlineIndex === -1) return buffer;
+		const line = buffer.slice(0, newlineIndex);
+		onLine(line.endsWith("\r") ? line.slice(0, -1) : line);
+		buffer = buffer.slice(newlineIndex + 1);
+	}
+}
+
+function emitRemaining(buffer: string, onLine: (line: string) => void): void {
+	if (buffer.length > 0) onLine(buffer);
+}
+
 /**
  * Attach an LF-only JSONL reader to a stream.
  *
@@ -22,30 +42,13 @@ export function attachJsonlLineReader(stream: Readable, onLine: (line: string) =
 	const decoder = new StringDecoder("utf8");
 	let buffer = "";
 
-	const emitLine = (line: string) => {
-		onLine(line.endsWith("\r") ? line.slice(0, -1) : line);
-	};
-
 	const onData = (chunk: string | Buffer) => {
-		buffer += typeof chunk === "string" ? chunk : decoder.write(chunk);
-
-		while (true) {
-			const newlineIndex = buffer.indexOf("\n");
-			if (newlineIndex === -1) {
-				return;
-			}
-
-			emitLine(buffer.slice(0, newlineIndex));
-			buffer = buffer.slice(newlineIndex + 1);
-		}
+		buffer = processChunk(chunk, buffer, decoder, onLine);
 	};
 
 	const onEnd = () => {
 		buffer += decoder.end();
-		if (buffer.length > 0) {
-			emitLine(buffer);
-			buffer = "";
-		}
+		emitRemaining(buffer, onLine);
 	};
 
 	stream.on("data", onData);

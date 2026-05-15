@@ -1,7 +1,7 @@
 import hostedGitInfo from "hosted-git-info";
-import { splitRef } from "./git-url-splitter.js";
-import { parseGenericGitUrl } from "./git-url-parser.js";
 import type { GitSource } from "./git-types.js";
+import { parseGenericGitUrl } from "./git-url-parser.js";
+import { splitRef } from "./git-url-splitter.js";
 
 export type { GitSource } from "./git-types.js";
 

@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import { APP_NAME, getAgentDir } from "./config.js";
 import { selectConfig } from "./cli/config-selector.js";
-import { SettingsManager } from "./core/settings-manager.js";
+import { APP_NAME, getAgentDir } from "./config.js";
 import { DefaultPackageManager } from "./core/package-manager.js";
+import { SettingsManager } from "./core/settings-manager.js";
 
 function reportSettingsErrors(settingsManager: SettingsManager, context: string): void {
 	const errors = settingsManager.drainErrors();
@@ -151,14 +151,22 @@ function parseArgs(rest: string[]): { local: boolean; help: boolean; invalidOpti
 	return options;
 }
 
-function parsePackageCommand(args: string[]): { command: string; source?: string; local: boolean; help: boolean; invalidOption?: string } | undefined {
+function parsePackageCommand(
+	args: string[],
+): { command: string; source?: string; local: boolean; help: boolean; invalidOption?: string } | undefined {
 	const parsed = parseCommand(args);
 	if (!parsed) return undefined;
 
 	const { command, rest } = parsed;
 	const baseOptions = parseArgs(rest);
 
-	return { command, source: baseOptions.source, local: baseOptions.local, help: baseOptions.help, invalidOption: baseOptions.invalidOption };
+	return {
+		command,
+		source: baseOptions.source,
+		local: baseOptions.local,
+		help: baseOptions.help,
+		invalidOption: baseOptions.invalidOption,
+	};
 }
 
 function createPackageManager(cwd: string, agentDir: string): DefaultPackageManager {
@@ -181,22 +189,20 @@ function removePackage(packageManager: DefaultPackageManager, source: string, lo
 	return packageManager.removeAndPersist(source, { local });
 }
 
-function executeInstall(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<void> {
-	return installPackage(packageManager, source, local)
-		.then(() => console.log(chalk.green(`Installed ${source}`)));
+function _executeInstall(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<void> {
+	return installPackage(packageManager, source, local).then(() => console.log(chalk.green(`Installed ${source}`)));
 }
 
-function executeRemove(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<boolean> {
-	return removePackage(packageManager, source, local)
-		.then((removed) => {
-			if (!removed) {
-				console.error(chalk.red(`No matching package found for ${source}`));
-				process.exitCode = 1;
-				return false;
-			}
-			console.log(chalk.green(`Removed ${source}`));
-			return true;
-		});
+function _executeRemove(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<boolean> {
+	return removePackage(packageManager, source, local).then((removed) => {
+		if (!removed) {
+			console.error(chalk.red(`No matching package found for ${source}`));
+			process.exitCode = 1;
+			return false;
+		}
+		console.log(chalk.green(`Removed ${source}`));
+		return true;
+	});
 }
 
 function listPackages(packageManager: DefaultPackageManager): void {
@@ -234,14 +240,13 @@ function listPackages(packageManager: DefaultPackageManager): void {
 }
 
 function updatePackage(packageManager: DefaultPackageManager, source?: string): Promise<void> {
-	return packageManager.update(source)
-		.then(() => {
-			if (source) {
-				console.log(chalk.green(`Updated ${source}`));
-			} else {
-				console.log(chalk.green("Updated packages"));
-			}
-		});
+	return packageManager.update(source).then(() => {
+		if (source) {
+			console.log(chalk.green(`Updated ${source}`));
+		} else {
+			console.log(chalk.green("Updated packages"));
+		}
+	});
 }
 
 export async function handleConfigCommand(args: string[]): Promise<boolean> {

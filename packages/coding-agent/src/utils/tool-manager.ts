@@ -1,9 +1,8 @@
-import type { ChildProcess } from "node:child_process";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { platform } from "node:os";
-import { TOOLS, type ToolConfig, TOOLS_DIR } from "./tool-downloader.js";
+import { join } from "node:path";
+import { TOOLS, TOOLS_DIR } from "./tool-downloader.js";
 
 const TERMUX_PACKAGES: Record<string, string> = {
 	fd: "fd",
@@ -95,7 +94,9 @@ export async function ensureTool(tool: "fd" | "rg", silent: boolean = false): Pr
 	} catch (e) {
 		if (!silent) {
 			// eslint-disable-next-line no-console
-			console.log(require("chalk").yellow(`Failed to download ${config.name}: ${e instanceof Error ? e.message : e}`));
+			console.log(
+				require("chalk").yellow(`Failed to download ${config.name}: ${e instanceof Error ? e.message : e}`),
+			);
 		}
 		return undefined;
 	}

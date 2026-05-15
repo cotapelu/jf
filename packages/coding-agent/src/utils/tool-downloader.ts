@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { spawnSync } from "child_process";
 import extractZip from "extract-zip";
 import { chmodSync, createWriteStream, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "fs";
@@ -116,7 +115,12 @@ export function findBinaryRecursively(rootDir: string, binaryFileName: string): 
 	return null;
 }
 
-function getDownloadPaths(tool: "fd" | "rg", version: string, plat: string, architecture: string): { assetName: string; binaryPath: string } {
+function getDownloadPaths(
+	tool: "fd" | "rg",
+	version: string,
+	plat: string,
+	architecture: string,
+): { assetName: string; binaryPath: string } {
 	const config = TOOLS[tool];
 	if (!config) throw new Error(`Unknown tool: ${tool}`);
 
@@ -145,7 +149,12 @@ function extractZipArchive(archivePath: string, extractDir: string, assetName: s
 	});
 }
 
-function findExtractedBinary(config: ToolConfig, extractDir: string, assetName: string, binaryExt: string): string | null {
+function findExtractedBinary(
+	config: ToolConfig,
+	extractDir: string,
+	assetName: string,
+	binaryExt: string,
+): string | null {
 	const binaryFileName = config.binaryName + binaryExt;
 	const extractedDir = join(extractDir, assetName.replace(/\.(tar\.gz|zip)$/, ""));
 	const extractedBinaryCandidates = [join(extractedDir, binaryFileName), join(extractDir, binaryFileName)];
@@ -178,7 +187,18 @@ function cleanupFiles(archivePath: string, extractDir: string): void {
 	rmSync(extractDir, { recursive: true, force: true });
 }
 
-async function prepareToolDownload(tool: "fd" | "rg"): Promise<{ config: ToolConfig; plat: string; architecture: string; version: string; assetName: string; binaryPath: string; downloadUrl: string; archivePath: string; extractDir: string; binaryExt: string }> {
+async function prepareToolDownload(tool: "fd" | "rg"): Promise<{
+	config: ToolConfig;
+	plat: string;
+	architecture: string;
+	version: string;
+	assetName: string;
+	binaryPath: string;
+	downloadUrl: string;
+	archivePath: string;
+	extractDir: string;
+	binaryExt: string;
+}> {
 	const config = TOOLS[tool];
 	if (!config) throw new Error(`Unknown tool: ${tool}`);
 
@@ -195,7 +215,18 @@ async function prepareToolDownload(tool: "fd" | "rg"): Promise<{ config: ToolCon
 	const extractDir = createExtractDir();
 	const binaryExt = plat === "win32" ? ".exe" : "";
 
-	return { config, plat, architecture, version, assetName, binaryPath, downloadUrl, archivePath, extractDir, binaryExt };
+	return {
+		config,
+		plat,
+		architecture,
+		version,
+		assetName,
+		binaryPath,
+		downloadUrl,
+		archivePath,
+		extractDir,
+		binaryExt,
+	};
 }
 
 async function downloadToolArchive(downloadUrl: string, archivePath: string): Promise<void> {
@@ -221,7 +252,13 @@ async function extractToolArchiveAsync(archivePath: string, extractDir: string, 
 	}
 }
 
-function installToolBinary(config: ToolConfig, extractDir: string, assetName: string, binaryPath: string, binaryExt: string): void {
+function installToolBinary(
+	config: ToolConfig,
+	extractDir: string,
+	assetName: string,
+	binaryPath: string,
+	binaryExt: string,
+): void {
 	const extractedBinary = findExtractedBinary(config, extractDir, assetName, binaryExt);
 
 	if (extractedBinary) {
@@ -239,7 +276,8 @@ function cleanupToolFiles(archivePath: string, extractDir: string): void {
 
 // Download and install a tool
 export async function downloadTool(tool: "fd" | "rg"): Promise<string> {
-	const { config, plat, architecture, assetName, binaryPath, downloadUrl, archivePath, extractDir, binaryExt } = await prepareToolDownload(tool);
+	const { config, assetName, binaryPath, downloadUrl, archivePath, extractDir, binaryExt } =
+		await prepareToolDownload(tool);
 
 	// Download
 	await downloadToolArchive(downloadUrl, archivePath);
