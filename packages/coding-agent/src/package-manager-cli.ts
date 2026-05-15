@@ -169,7 +169,7 @@ function parsePackageCommand(
 	};
 }
 
-function createPackageManager(cwd: string, agentDir: string): DefaultPackageManager {
+function _createPackageManager(cwd: string, agentDir: string): DefaultPackageManager {
 	const settingsManager = SettingsManager.create(cwd, agentDir);
 	reportSettingsErrors(settingsManager, "package command");
 	const packageManager = new DefaultPackageManager({ cwd, agentDir, settingsManager });
@@ -205,7 +205,7 @@ function _executeRemove(packageManager: DefaultPackageManager, source: string, l
 	});
 }
 
-function listPackages(packageManager: DefaultPackageManager): void {
+function _listPackages(packageManager: DefaultPackageManager): void {
 	const configuredPackages = packageManager.listConfiguredPackages();
 	const userPackages = configuredPackages.filter((pkg) => pkg.scope === "user");
 	const projectPackages = configuredPackages.filter((pkg) => pkg.scope === "project");
@@ -239,7 +239,7 @@ function listPackages(packageManager: DefaultPackageManager): void {
 	}
 }
 
-function updatePackage(packageManager: DefaultPackageManager, source?: string): Promise<void> {
+function _updatePackage(packageManager: DefaultPackageManager, source?: string): Promise<void> {
 	return packageManager.update(source).then(() => {
 		if (source) {
 			console.log(chalk.green(`Updated ${source}`));

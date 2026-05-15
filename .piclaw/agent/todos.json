@@ -111,7 +111,7 @@
         {
           "id": "task-18",
           "content": "Refactor packages/tools/src/context-compactor-tool.ts",
-          "status": "pending",
+          "status": "completed",
           "details": "Các files này cần phải tách nhỏ functions (contextCompactDirectory(101/35), contextCompactMessages(203/101), scoreMessage(200/100), summarizeWithLLM(168/90), isPair(122/55), estimate(116/48), walk(80/23), compactFileContent(29/13))"
         },
         {
@@ -143,5 +143,5 @@
   ],
   "nextTaskId": 23,
   "nextPhaseId": 3,
-  "updatedAt": "2026-05-15T05:13:35.589Z"
+  "updatedAt": "2026-05-15T07:58:33.772Z"
 }
