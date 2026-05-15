@@ -19,10 +19,6 @@ const DEFAULT_READ_TIMEOUT_MS = 3000;
 const DEFAULT_POWERSHELL_TIMEOUT_MS = 5000;
 const DEFAULT_MAX_BUFFER_BYTES = 50 * 1024 * 1024;
 
-export function isWaylandSession(env: NodeJS.ProcessEnv = process.env): boolean {
-	return Boolean(env.WAYLAND_DISPLAY) || env.XDG_SESSION_TYPE === "wayland";
-}
-
 function baseMimeType(mimeType: string): string {
 	return mimeType.split(";")[0]?.trim().toLowerCase() ?? mimeType.toLowerCase();
 }
@@ -64,15 +60,9 @@ function isSupportedImageMimeType(mimeType: string): boolean {
 	return SUPPORTED_IMAGE_MIME_TYPES.some((t) => t === base);
 }
 
-/**
- * Convert unsupported image formats to PNG using Photon.
- * Returns null if conversion is unavailable or fails.
- */
 async function convertToPng(bytes: Uint8Array): Promise<Uint8Array | null> {
 	const photon = await loadPhoton();
-	if (!photon) {
-		return null;
-	}
+	if (!photon) return null;
 
 	try {
 		const image = photon.PhotonImage.new_from_byteslice(bytes);
@@ -86,11 +76,24 @@ async function convertToPng(bytes: Uint8Array): Promise<Uint8Array | null> {
 	}
 }
 
-function runCommand(
-	command: string,
-	args: string[],
-	options?: { timeoutMs?: number; maxBufferBytes?: number; env?: NodeJS.ProcessEnv },
-): { stdout: Buffer; ok: boolean } {
+interface CommandOptions {
+	timeoutMs?: number;
+	maxBufferBytes?: number;
+	env?: NodeJS.ProcessEnv;
+}
+
+interface CommandResult {
+	stdout: Buffer;
+	ok: boolean;
+}
+
+function normalizeStdout(raw: any): Buffer {
+	if (Buffer.isBuffer(raw)) return raw;
+	if (typeof raw === "string") return Buffer.from(raw, "utf-8");
+	return Buffer.alloc(0);
+}
+
+function executeCommand(command: string, args: string[], options?: CommandOptions): CommandResult {
 	const timeoutMs = options?.timeoutMs ?? DEFAULT_READ_TIMEOUT_MS;
 	const maxBufferBytes = options?.maxBufferBytes ?? DEFAULT_MAX_BUFFER_BYTES;
 
@@ -100,26 +103,16 @@ function runCommand(
 		env: options?.env,
 	});
 
-	if (result.error) {
-		return { ok: false, stdout: Buffer.alloc(0) };
-	}
+	if (result.error) return { ok: false, stdout: Buffer.alloc(0) };
+	if (result.status !== 0) return { ok: false, stdout: Buffer.alloc(0) };
 
-	if (result.status !== 0) {
-		return { ok: false, stdout: Buffer.alloc(0) };
-	}
-
-	const stdout = Buffer.isBuffer(result.stdout)
-		? result.stdout
-		: Buffer.from(result.stdout ?? "", typeof result.stdout === "string" ? "utf-8" : undefined);
-
+	const stdout = normalizeStdout(result.stdout);
 	return { ok: true, stdout };
 }
 
 function readClipboardImageViaWlPaste(): ClipboardImage | null {
-	const list = runCommand("wl-paste", ["--list-types"], { timeoutMs: DEFAULT_LIST_TIMEOUT_MS });
-	if (!list.ok) {
-		return null;
-	}
+	const list = executeCommand("wl-paste", ["--list-types"], { timeoutMs: DEFAULT_LIST_TIMEOUT_MS });
+	if (!list.ok) return null;
 
 	const types = list.stdout
 		.toString("utf-8")
@@ -128,23 +121,16 @@ function readClipboardImageViaWlPaste(): ClipboardImage | null {
 		.filter(Boolean);
 
 	const selectedType = selectPreferredImageMimeType(types);
-	if (!selectedType) {
-		return null;
-	}
+	if (!selectedType) return null;
 
-	const data = runCommand("wl-paste", ["--type", selectedType, "--no-newline"]);
-	if (!data.ok || data.stdout.length === 0) {
-		return null;
-	}
+	const data = executeCommand("wl-paste", ["--type", selectedType, "--no-newline"]);
+	if (!data.ok || data.stdout.length === 0) return null;
 
 	return { bytes: data.stdout, mimeType: baseMimeType(selectedType) };
 }
 
 function isWSL(env: NodeJS.ProcessEnv = process.env): boolean {
-	if (env.WSL_DISTRO_NAME || env.WSLENV) {
-		return true;
-	}
-
+	if (env.WSL_DISTRO_NAME || env.WSLENV) return true;
 	try {
 		const release = readFileSync("/proc/version", "utf-8");
 		return /microsoft|wsl/i.test(release);
@@ -153,65 +139,64 @@ function isWSL(env: NodeJS.ProcessEnv = process.env): boolean {
 	}
 }
 
-/**
- * On WSL, the Linux clipboard (Wayland/X11) does not receive image data from
- * Windows screenshots (Win+Shift+S). PowerShell can access the Windows clipboard
- * directly, so we use it as a fallback.
- */
+export function isWaylandSession(env: NodeJS.ProcessEnv = process.env): boolean {
+	return Boolean(env.WAYLAND_DISPLAY) || env.XDG_SESSION_TYPE === "wayland";
+}
+
+function preparePowerShellScript(tempPath: string): string {
+	return [
+		"Add-Type -AssemblyName System.Windows.Forms",
+		"Add-Type -AssemblyName System.Drawing",
+		"$path = $env:PI_WSL_CLIPBOARD_IMAGE_PATH",
+		"$img = [System.Windows.Forms.Clipboard]::GetImage()",
+		"if ($img) { $img.Save($path, [System.Drawing.Imaging.ImageFormat]::Png); Write-Output 'ok' } else { Write-Output 'empty' }",
+	].join("; ");
+}
+
+function executePowerShell(script: string, envVars: NodeJS.ProcessEnv): CommandResult {
+	return executeCommand("powershell.exe", ["-NoProfile", "-Command", script], {
+		timeoutMs: DEFAULT_POWERSHELL_TIMEOUT_MS,
+		env: envVars,
+	});
+}
+
+function processPowerShellResult(result: CommandResult, tempFile: string): ClipboardImage | null {
+	if (!result.ok) return null;
+	const output = result.stdout.toString("utf-8").trim();
+	if (output !== "ok") return null;
+
+	try {
+		const bytes = readFileSync(tempFile);
+		if (bytes.length === 0) return null;
+		return { bytes: new Uint8Array(bytes), mimeType: "image/png" };
+	} catch {
+		return null;
+	}
+}
+
 function readClipboardImageViaPowerShell(): ClipboardImage | null {
 	const tmpFile = join(tmpdir(), `pi-wsl-clip-${randomUUID()}.png`);
 
 	try {
-		const winPathResult = runCommand("wslpath", ["-w", tmpFile], { timeoutMs: DEFAULT_LIST_TIMEOUT_MS });
-		if (!winPathResult.ok) {
-			return null;
-		}
-
+		const winPathResult = executeCommand("wslpath", ["-w", tmpFile], { timeoutMs: DEFAULT_LIST_TIMEOUT_MS });
+		if (!winPathResult.ok) return null;
 		const winPath = winPathResult.stdout.toString("utf-8").trim();
-		if (!winPath) {
-			return null;
-		}
+		if (!winPath) return null;
 
-		const psScript = [
-			"Add-Type -AssemblyName System.Windows.Forms",
-			"Add-Type -AssemblyName System.Drawing",
-			"$path = $env:PI_WSL_CLIPBOARD_IMAGE_PATH",
-			"$img = [System.Windows.Forms.Clipboard]::GetImage()",
-			"if ($img) { $img.Save($path, [System.Drawing.Imaging.ImageFormat]::Png); Write-Output 'ok' } else { Write-Output 'empty' }",
-		].join("; ");
-
-		const result = runCommand("powershell.exe", ["-NoProfile", "-Command", psScript], {
-			timeoutMs: DEFAULT_POWERSHELL_TIMEOUT_MS,
-			env: { ...process.env, PI_WSL_CLIPBOARD_IMAGE_PATH: winPath },
-		});
-		if (!result.ok) {
-			return null;
-		}
-
-		const output = result.stdout.toString("utf-8").trim();
-		if (output !== "ok") {
-			return null;
-		}
-
-		const bytes = readFileSync(tmpFile);
-		if (bytes.length === 0) {
-			return null;
-		}
-
-		return { bytes: new Uint8Array(bytes), mimeType: "image/png" };
-	} catch {
-		return null;
+		const script = preparePowerShellScript(winPath);
+		const result = executePowerShell(script, { ...process.env, PI_WSL_CLIPBOARD_IMAGE_PATH: winPath });
+		return processPowerShellResult(result, tmpFile);
 	} finally {
 		try {
 			unlinkSync(tmpFile);
 		} catch {
-			// Ignore cleanup errors.
+			// ignore cleanup errors
 		}
 	}
 }
 
 function readClipboardImageViaXclip(): ClipboardImage | null {
-	const targets = runCommand("xclip", ["-selection", "clipboard", "-t", "TARGETS", "-o"], {
+	const targets = executeCommand("xclip", ["-selection", "clipboard", "-t", "TARGETS", "-o"], {
 		timeoutMs: DEFAULT_LIST_TIMEOUT_MS,
 	});
 
@@ -228,7 +213,7 @@ function readClipboardImageViaXclip(): ClipboardImage | null {
 	const tryTypes = preferred ? [preferred, ...SUPPORTED_IMAGE_MIME_TYPES] : [...SUPPORTED_IMAGE_MIME_TYPES];
 
 	for (const mimeType of tryTypes) {
-		const data = runCommand("xclip", ["-selection", "clipboard", "-t", mimeType, "-o"]);
+		const data = executeCommand("xclip", ["-selection", "clipboard", "-t", mimeType, "-o"]);
 		if (data.ok && data.stdout.length > 0) {
 			return { bytes: data.stdout, mimeType: baseMimeType(mimeType) };
 		}
@@ -238,15 +223,9 @@ function readClipboardImageViaXclip(): ClipboardImage | null {
 }
 
 async function readClipboardImageViaNativeClipboard(): Promise<ClipboardImage | null> {
-	if (!clipboard?.hasImage()) {
-		return null;
-	}
-
+	if (!clipboard?.hasImage()) return null;
 	const imageData = await clipboard.getImageBinary();
-	if (!imageData || imageData.length === 0) {
-		return null;
-	}
-
+	if (!imageData || imageData.length === 0) return null;
 	const bytes = imageData instanceof Uint8Array ? imageData : Uint8Array.from(imageData);
 	return { bytes, mimeType: "image/png" };
 }
@@ -258,43 +237,29 @@ export async function readClipboardImage(options?: {
 	const env = options?.env ?? process.env;
 	const platform = options?.platform ?? process.platform;
 
-	if (env.TERMUX_VERSION) {
-		return null;
-	}
+	if (env.TERMUX_VERSION) return null;
 
 	let image: ClipboardImage | null = null;
 
 	if (platform === "linux") {
 		const wsl = isWSL(env);
 		const wayland = isWaylandSession(env);
-
-		// Use wl-paste/xclip only if Wayland OR (WSL with X display, i.e., WSLg)
 		const hasXDisplay = Boolean(env.DISPLAY);
+
 		if (wayland || (wsl && hasXDisplay)) {
 			image = readClipboardImageViaWlPaste() ?? readClipboardImageViaXclip();
 		}
-
-		if (!image && wsl) {
-			image = readClipboardImageViaPowerShell();
-		}
-
-		if (!image && !wayland) {
-			image = await readClipboardImageViaNativeClipboard();
-		}
+		if (!image && wsl) image = readClipboardImageViaPowerShell();
+		if (!image && !wayland) image = await readClipboardImageViaNativeClipboard();
 	} else {
 		image = await readClipboardImageViaNativeClipboard();
 	}
 
-	if (!image) {
-		return null;
-	}
+	if (!image) return null;
 
-	// Convert unsupported formats (e.g., BMP from WSLg) to PNG
 	if (!isSupportedImageMimeType(image.mimeType)) {
 		const pngBytes = await convertToPng(image.bytes);
-		if (!pngBytes) {
-			return null;
-		}
+		if (!pngBytes) return null;
 		return { bytes: pngBytes, mimeType: "image/png" };
 	}
 

@@ -3,14 +3,14 @@ import { applyExifOrientation } from "./exif-orientation.js";
 import { loadPhoton } from "./photon.js";
 
 export interface ImageResizeOptions {
-	maxWidth?: number; // Default: 2000
-	maxHeight?: number; // Default: 2000
-	maxBytes?: number; // Default: 4.5MB of base64 payload (below Anthropic's 5MB limit)
-	jpegQuality?: number; // Default: 80
+	maxWidth?: number;
+	maxHeight?: number;
+	maxBytes?: number;
+	jpegQuality?: number;
 }
 
 export interface ResizedImage {
-	data: string; // base64
+	data: string;
 	mimeType: string;
 	originalWidth: number;
 	originalHeight: number;
@@ -19,7 +19,6 @@ export interface ResizedImage {
 	wasResized: boolean;
 }
 
-// 4.5MB of base64 payload. Provides headroom below Anthropic's 5MB limit.
 const DEFAULT_MAX_BYTES = 4.5 * 1024 * 1024;
 
 const DEFAULT_OPTIONS: Required<ImageResizeOptions> = {
@@ -44,133 +43,195 @@ function encodeCandidate(buffer: Uint8Array, mimeType: string): EncodedCandidate
 	};
 }
 
+function calculateTargetDimensions(
+	originalWidth: number,
+	originalHeight: number,
+	maxWidth: number,
+	maxHeight: number,
+): { width: number; height: number } {
+	let w = originalWidth;
+	let h = originalHeight;
+	if (w > maxWidth) {
+		h = Math.round((h * maxWidth) / w);
+		w = maxWidth;
+	}
+	if (h > maxHeight) {
+		w = Math.round((w * maxHeight) / h);
+		h = maxHeight;
+	}
+	return { width: w, height: h };
+}
+
+function tryEncoderAtSize(
+	photon: any,
+	image: any,
+	width: number,
+	height: number,
+	jpegQualities: number[],
+): EncodedCandidate[] {
+	const resized = photon.resize(image, width, height, photon.SamplingFilter.Lanczos3);
+	try {
+		const candidates: EncodedCandidate[] = [encodeCandidate(resized.get_bytes(), "image/png")];
+		for (const quality of jpegQualities) {
+			candidates.push(encodeCandidate(resized.get_bytes_jpeg(quality), "image/jpeg"));
+		}
+		return candidates;
+	} finally {
+		resized.free();
+	}
+}
+
+function tryFirstCandidate(
+	photon: any,
+	image: any,
+	width: number,
+	height: number,
+	qualitySteps: number[],
+	maxBytes: number,
+): EncodedCandidate | null {
+	const candidates = tryEncoderAtSize(photon, image, width, height, qualitySteps);
+	for (const candidate of candidates) {
+		if (candidate.encodedSize < maxBytes) return candidate;
+	}
+	return null;
+}
+
+function findNextSize(currentWidth: number, currentHeight: number): { width: number; height: number } | null {
+	if (currentWidth === 1 && currentHeight === 1) return null;
+	const nextWidth = currentWidth === 1 ? 1 : Math.max(1, Math.floor(currentWidth * 0.75));
+	const nextHeight = currentHeight === 1 ? 1 : Math.max(1, Math.floor(currentHeight * 0.75));
+	if (nextWidth === currentWidth && nextHeight === currentHeight) return null;
+	return { width: nextWidth, height: nextHeight };
+}
+
+function encodeLoop(
+	photon: any,
+	image: any,
+	startWidth: number,
+	startHeight: number,
+	qualitySteps: number[],
+	maxBytes: number,
+): EncodedCandidate | null {
+	let current: { width: number; height: number } | null = { width: startWidth, height: startHeight };
+
+	while (current) {
+		const { width, height } = current;
+		const candidate = tryFirstCandidate(photon, image, width, height, qualitySteps, maxBytes);
+		if (candidate) return candidate;
+		const next = findNextSize(width, height);
+		current = next;
+	}
+
+	return null;
+}
+
+interface PreparedImage {
+	photon: any;
+	image: any;
+	originalWidth: number;
+	originalHeight: number;
+	format: string;
+	originalData: string;
+}
+
+async function prepareImage(img: ImageContent): Promise<PreparedImage | null> {
+	const photon = await loadPhoton();
+	if (!photon) return null;
+
+	const inputBuffer = Buffer.from(img.data, "base64");
+	const inputBytes = new Uint8Array(inputBuffer);
+	const rawImage = photon.PhotonImage.new_from_byteslice(inputBytes);
+	const image = applyExifOrientation(photon, rawImage, inputBytes);
+	if (image !== rawImage) rawImage.free();
+
+	return {
+		photon,
+		image,
+		originalWidth: image.get_width(),
+		originalHeight: image.get_height(),
+		format: img.mimeType?.split("/")[1] ?? "png",
+		originalData: img.data,
+	};
+}
+
+function isWithinLimits(
+	originalWidth: number,
+	originalHeight: number,
+	inputBase64Size: number,
+	maxWidth: number,
+	maxHeight: number,
+	maxBytes: number,
+): boolean {
+	return originalWidth <= maxWidth && originalHeight <= maxHeight && inputBase64Size < maxBytes;
+}
+
+function createResizedResult(
+	prepared: PreparedImage,
+	candidate: EncodedCandidate,
+	targetWidth: number,
+	targetHeight: number,
+): ResizedImage {
+	return {
+		data: candidate.data,
+		mimeType: candidate.mimeType,
+		originalWidth: prepared.originalWidth,
+		originalHeight: prepared.originalHeight,
+		width: targetWidth,
+		height: targetHeight,
+		wasResized: true,
+	};
+}
+
+function processResize(
+	prepared: PreparedImage,
+	opts: Required<ImageResizeOptions>,
+	inputBase64Size: number,
+): ResizedImage | null {
+	if (isWithinLimits(prepared.originalWidth, prepared.originalHeight, inputBase64Size, opts.maxWidth, opts.maxHeight, opts.maxBytes)) {
+		return {
+			data: prepared.originalData,
+			mimeType: `image/${prepared.format}`,
+			originalWidth: prepared.originalWidth,
+			originalHeight: prepared.originalHeight,
+			width: prepared.originalWidth,
+			height: prepared.originalHeight,
+			wasResized: false,
+		};
+	}
+
+	const target = calculateTargetDimensions(prepared.originalWidth, prepared.originalHeight, opts.maxWidth, opts.maxHeight);
+	const qualitySteps = Array.from(new Set([opts.jpegQuality, 85, 70, 55, 40]));
+	const candidate = encodeLoop(prepared.photon, prepared.image, target.width, target.height, qualitySteps, opts.maxBytes);
+
+	if (candidate) {
+		return createResizedResult(prepared, candidate, target.width, target.height);
+	}
+
+	return null;
+}
+
 /**
  * Resize an image to fit within the specified max dimensions and encoded file size.
  * Returns null if the image cannot be resized below maxBytes.
- *
- * Uses Photon (Rust/WASM) for image processing. If Photon is not available,
- * returns null.
- *
- * Strategy for staying under maxBytes:
- * 1. First resize to maxWidth/maxHeight
- * 2. Try both PNG and JPEG formats, pick the smaller one
- * 3. If still too large, try JPEG with decreasing quality
- * 4. If still too large, progressively reduce dimensions until 1x1
  */
 export async function resizeImage(img: ImageContent, options?: ImageResizeOptions): Promise<ResizedImage | null> {
 	const opts = { ...DEFAULT_OPTIONS, ...options };
-	const inputBuffer = Buffer.from(img.data, "base64");
 	const inputBase64Size = Buffer.byteLength(img.data, "utf-8");
+	const prepared = await prepareImage(img);
+	if (!prepared) return null;
 
-	const photon = await loadPhoton();
-	if (!photon) {
-		return null;
-	}
-
-	let image: ReturnType<typeof photon.PhotonImage.new_from_byteslice> | undefined;
 	try {
-		const inputBytes = new Uint8Array(inputBuffer);
-		const rawImage = photon.PhotonImage.new_from_byteslice(inputBytes);
-		image = applyExifOrientation(photon, rawImage, inputBytes);
-		if (image !== rawImage) rawImage.free();
-
-		const originalWidth = image.get_width();
-		const originalHeight = image.get_height();
-		const format = img.mimeType?.split("/")[1] ?? "png";
-
-		// Check if already within all limits (dimensions AND encoded size)
-		if (originalWidth <= opts.maxWidth && originalHeight <= opts.maxHeight && inputBase64Size < opts.maxBytes) {
-			return {
-				data: img.data,
-				mimeType: img.mimeType ?? `image/${format}`,
-				originalWidth,
-				originalHeight,
-				width: originalWidth,
-				height: originalHeight,
-				wasResized: false,
-			};
-		}
-
-		// Calculate initial dimensions respecting max limits
-		let targetWidth = originalWidth;
-		let targetHeight = originalHeight;
-
-		if (targetWidth > opts.maxWidth) {
-			targetHeight = Math.round((targetHeight * opts.maxWidth) / targetWidth);
-			targetWidth = opts.maxWidth;
-		}
-		if (targetHeight > opts.maxHeight) {
-			targetWidth = Math.round((targetWidth * opts.maxHeight) / targetHeight);
-			targetHeight = opts.maxHeight;
-		}
-
-		function tryEncodings(width: number, height: number, jpegQualities: number[]): EncodedCandidate[] {
-			const resized = photon!.resize(image!, width, height, photon!.SamplingFilter.Lanczos3);
-
-			try {
-				const candidates: EncodedCandidate[] = [encodeCandidate(resized.get_bytes(), "image/png")];
-				for (const quality of jpegQualities) {
-					candidates.push(encodeCandidate(resized.get_bytes_jpeg(quality), "image/jpeg"));
-				}
-				return candidates;
-			} finally {
-				resized.free();
-			}
-		}
-
-		const qualitySteps = Array.from(new Set([opts.jpegQuality, 85, 70, 55, 40]));
-		let currentWidth = targetWidth;
-		let currentHeight = targetHeight;
-
-		while (true) {
-			const candidates = tryEncodings(currentWidth, currentHeight, qualitySteps);
-			for (const candidate of candidates) {
-				if (candidate.encodedSize < opts.maxBytes) {
-					return {
-						data: candidate.data,
-						mimeType: candidate.mimeType,
-						originalWidth,
-						originalHeight,
-						width: currentWidth,
-						height: currentHeight,
-						wasResized: true,
-					};
-				}
-			}
-
-			if (currentWidth === 1 && currentHeight === 1) {
-				break;
-			}
-
-			const nextWidth = currentWidth === 1 ? 1 : Math.max(1, Math.floor(currentWidth * 0.75));
-			const nextHeight = currentHeight === 1 ? 1 : Math.max(1, Math.floor(currentHeight * 0.75));
-			if (nextWidth === currentWidth && nextHeight === currentHeight) {
-				break;
-			}
-
-			currentWidth = nextWidth;
-			currentHeight = nextHeight;
-		}
-
-		return null;
-	} catch {
-		return null;
+		return processResize(prepared, opts, inputBase64Size);
 	} finally {
-		if (image) {
-			image.free();
-		}
+		prepared.image.free();
 	}
 }
 
 /**
  * Format a dimension note for resized images.
- * This helps the model understand the coordinate mapping.
  */
 export function formatDimensionNote(result: ResizedImage): string | undefined {
-	if (!result.wasResized) {
-		return undefined;
-	}
-
+	if (!result.wasResized) return undefined;
 	const scale = result.originalWidth / result.width;
 	return `[Image: original ${result.originalWidth}x${result.originalHeight}, displayed at ${result.width}x${result.height}. Multiply coordinates by ${scale.toFixed(2)} to map to original image.]`;
 }

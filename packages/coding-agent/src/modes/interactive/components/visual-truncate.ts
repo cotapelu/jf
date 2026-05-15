@@ -12,17 +12,23 @@ export interface VisualTruncateResult {
 	skippedCount: number;
 }
 
+function getAllVisualLines(text: string, width: number, paddingX: number): string[] {
+	const tempText = new Text(text, paddingX, 0);
+	return tempText.render(width);
+}
+
+function truncateLines(allLines: string[], maxVisualLines: number): { visualLines: string[]; skippedCount: number } {
+	if (allLines.length <= maxVisualLines) {
+		return { visualLines: allLines, skippedCount: 0 };
+	}
+	const truncated = allLines.slice(-maxVisualLines);
+	const skipped = allLines.length - maxVisualLines;
+	return { visualLines: truncated, skippedCount: skipped };
+}
+
 /**
  * Truncate text to a maximum number of visual lines (from the end).
  * This accounts for line wrapping based on terminal width.
- *
- * @param text - The text content (may contain newlines)
- * @param maxVisualLines - Maximum number of visual lines to show
- * @param width - Terminal/render width
- * @param paddingX - Horizontal padding for Text component (default 0).
- *                   Use 0 when result will be placed in a Box (Box adds its own padding).
- *                   Use 1 when result will be placed in a plain Container.
- * @returns The truncated visual lines and count of skipped lines
  */
 export function truncateToVisualLines(
 	text: string,
@@ -34,17 +40,6 @@ export function truncateToVisualLines(
 		return { visualLines: [], skippedCount: 0 };
 	}
 
-	// Create a temporary Text component to render and get visual lines
-	const tempText = new Text(text, paddingX, 0);
-	const allVisualLines = tempText.render(width);
-
-	if (allVisualLines.length <= maxVisualLines) {
-		return { visualLines: allVisualLines, skippedCount: 0 };
-	}
-
-	// Take the last N visual lines
-	const truncatedLines = allVisualLines.slice(-maxVisualLines);
-	const skippedCount = allVisualLines.length - maxVisualLines;
-
-	return { visualLines: truncatedLines, skippedCount };
+	const allVisualLines = getAllVisualLines(text, width, paddingX);
+	return truncateLines(allVisualLines, maxVisualLines);
 }

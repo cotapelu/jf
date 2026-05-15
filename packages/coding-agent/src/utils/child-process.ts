@@ -2,6 +2,98 @@ import type { ChildProcess } from "node:child_process";
 
 const EXIT_STDIO_GRACE_MS = 100;
 
+class ChildProcessWaiter {
+	private settled = false;
+	private exited = false;
+	private exitCode: number | null = null;
+	private postExitTimer?: NodeJS.Timeout;
+	private stdoutEnded: boolean;
+	private stderrEnded: boolean;
+	private child: ChildProcess;
+	private resolve!: (value: number | null) => void;
+	private reject!: (reason?: any) => void;
+
+	constructor(child: ChildProcess) {
+		this.child = child;
+		this.stdoutEnded = child.stdout === null;
+		this.stderrEnded = child.stderr === null;
+	}
+
+	wait(): Promise<number | null> {
+		return new Promise<number | null>((resolve, reject) => {
+			this.resolve = resolve;
+			this.reject = reject;
+			this.setupListeners();
+		});
+	}
+
+	private setupListeners(): void {
+		this.child.stdout?.once("end", this.onStdoutEnd);
+		this.child.stderr?.once("end", this.onStderrEnd);
+		this.child.once("error", this.onError);
+		this.child.once("exit", this.onExit);
+		this.child.once("close", this.onClose);
+	}
+
+	private cleanup = (): void => {
+		if (this.postExitTimer) {
+			clearTimeout(this.postExitTimer);
+			this.postExitTimer = undefined;
+		}
+		this.child.removeListener("error", this.onError);
+		this.child.removeListener("exit", this.onExit);
+		this.child.removeListener("close", this.onClose);
+		this.child.stdout?.removeListener("end", this.onStdoutEnd);
+		this.child.stderr?.removeListener("end", this.onStderrEnd);
+	};
+
+	private finalize = (code: number | null): void => {
+		if (this.settled) return;
+		this.settled = true;
+		this.cleanup();
+		this.child.stdout?.destroy();
+		this.child.stderr?.destroy();
+		this.resolve(code);
+	};
+
+	private maybeFinalizeAfterExit = (): void => {
+		if (!this.exited || this.settled) return;
+		if (this.stdoutEnded && this.stderrEnded) {
+			this.finalize(this.exitCode);
+		}
+	};
+
+	private onStdoutEnd = (): void => {
+		this.stdoutEnded = true;
+		this.maybeFinalizeAfterExit();
+	};
+
+	private onStderrEnd = (): void => {
+		this.stderrEnded = true;
+		this.maybeFinalizeAfterExit();
+	};
+
+	private onError = (err: Error): void => {
+		if (this.settled) return;
+		this.settled = true;
+		this.cleanup();
+		this.reject(err);
+	};
+
+	private onExit = (code: number | null): void => {
+		this.exited = true;
+		this.exitCode = code;
+		this.maybeFinalizeAfterExit();
+		if (!this.settled) {
+			this.postExitTimer = setTimeout(() => this.finalize(code), EXIT_STDIO_GRACE_MS);
+		}
+	};
+
+	private onClose = (code: number | null): void => {
+		this.finalize(code);
+	};
+}
+
 /**
  * Wait for a child process to terminate without hanging on inherited stdio handles.
  *
@@ -11,76 +103,5 @@ const EXIT_STDIO_GRACE_MS = 100;
  * then forcibly stop tracking the inherited handles.
  */
 export function waitForChildProcess(child: ChildProcess): Promise<number | null> {
-	return new Promise((resolve, reject) => {
-		let settled = false;
-		let exited = false;
-		let exitCode: number | null = null;
-		let postExitTimer: NodeJS.Timeout | undefined;
-		let stdoutEnded = child.stdout === null;
-		let stderrEnded = child.stderr === null;
-
-		const cleanup = () => {
-			if (postExitTimer) {
-				clearTimeout(postExitTimer);
-				postExitTimer = undefined;
-			}
-			child.removeListener("error", onError);
-			child.removeListener("exit", onExit);
-			child.removeListener("close", onClose);
-			child.stdout?.removeListener("end", onStdoutEnd);
-			child.stderr?.removeListener("end", onStderrEnd);
-		};
-
-		const finalize = (code: number | null) => {
-			if (settled) return;
-			settled = true;
-			cleanup();
-			child.stdout?.destroy();
-			child.stderr?.destroy();
-			resolve(code);
-		};
-
-		const maybeFinalizeAfterExit = () => {
-			if (!exited || settled) return;
-			if (stdoutEnded && stderrEnded) {
-				finalize(exitCode);
-			}
-		};
-
-		const onStdoutEnd = () => {
-			stdoutEnded = true;
-			maybeFinalizeAfterExit();
-		};
-
-		const onStderrEnd = () => {
-			stderrEnded = true;
-			maybeFinalizeAfterExit();
-		};
-
-		const onError = (err: Error) => {
-			if (settled) return;
-			settled = true;
-			cleanup();
-			reject(err);
-		};
-
-		const onExit = (code: number | null) => {
-			exited = true;
-			exitCode = code;
-			maybeFinalizeAfterExit();
-			if (!settled) {
-				postExitTimer = setTimeout(() => finalize(code), EXIT_STDIO_GRACE_MS);
-			}
-		};
-
-		const onClose = (code: number | null) => {
-			finalize(code);
-		};
-
-		child.stdout?.once("end", onStdoutEnd);
-		child.stderr?.once("end", onStderrEnd);
-		child.once("error", onError);
-		child.once("exit", onExit);
-		child.once("close", onClose);
-	});
+	return new ChildProcessWaiter(child).wait();
 }

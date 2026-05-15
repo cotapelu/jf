@@ -1,18 +1,8 @@
 import chalk from "chalk";
-import { selectConfig } from "./cli/config-selector.js";
 import { APP_NAME, getAgentDir } from "./config.js";
-import { DefaultPackageManager } from "./core/package-manager.js";
+import { selectConfig } from "./cli/config-selector.js";
 import { SettingsManager } from "./core/settings-manager.js";
-
-export type PackageCommand = "install" | "remove" | "update" | "list";
-
-interface PackageCommandOptions {
-	command: PackageCommand;
-	source?: string;
-	local: boolean;
-	help: boolean;
-	invalidOption?: string;
-}
+import { DefaultPackageManager } from "./core/package-manager.js";
 
 function reportSettingsErrors(settingsManager: SettingsManager, context: string): void {
 	const errors = settingsManager.drainErrors();
@@ -24,7 +14,7 @@ function reportSettingsErrors(settingsManager: SettingsManager, context: string)
 	}
 }
 
-function getPackageCommandUsage(command: PackageCommand): string {
+function getPackageCommandUsage(command: string): string {
 	switch (command) {
 		case "install":
 			return `${APP_NAME} install <source> [-l]`;
@@ -35,12 +25,11 @@ function getPackageCommandUsage(command: PackageCommand): string {
 		case "list":
 			return `${APP_NAME} list`;
 	}
+	return `${APP_NAME} <command>`;
 }
 
-function printPackageCommandHelp(command: PackageCommand): void {
-	switch (command) {
-		case "install":
-			console.log(`${chalk.bold("Usage:")}
+function printInstallHelp(): void {
+	console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("install")}
 
 Install a package and add it to settings.
@@ -56,10 +45,10 @@ Examples:
   ${APP_NAME} install ssh://git@github.com/user/repo
   ${APP_NAME} install ./local/path
 `);
-			return;
+}
 
-		case "remove":
-			console.log(`${chalk.bold("Usage:")}
+function printRemoveHelp(): void {
+	console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("remove")}
 
 Remove a package and its source from settings.
@@ -72,70 +61,187 @@ Examples:
   ${APP_NAME} remove npm:@foo/bar
   ${APP_NAME} uninstall npm:@foo/bar
 `);
-			return;
+}
 
-		case "update":
-			console.log(`${chalk.bold("Usage:")}
+function printUpdateHelp(): void {
+	console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("update")}
 
 Update installed packages.
 If <source> is provided, only that package is updated.
 `);
-			return;
+}
 
-		case "list":
-			console.log(`${chalk.bold("Usage:")}
+function printListHelp(): void {
+	console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("list")}
 
 List installed packages from user and project settings.
 `);
-			return;
+}
+
+function printPackageCommandHelp(command: string): void {
+	switch (command) {
+		case "install":
+			printInstallHelp();
+			break;
+		case "remove":
+			printRemoveHelp();
+			break;
+		case "update":
+			printUpdateHelp();
+			break;
+		case "list":
+			printListHelp();
+			break;
 	}
 }
 
-function parsePackageCommand(args: string[]): PackageCommandOptions | undefined {
+function parseCommand(args: string[]): { command: string; rest: string[] } | null {
 	const [rawCommand, ...rest] = args;
-	let command: PackageCommand | undefined;
+	let command: string | undefined;
 	if (rawCommand === "uninstall") {
 		command = "remove";
-	} else if (rawCommand === "install" || rawCommand === "remove" || rawCommand === "update" || rawCommand === "list") {
+	} else if (["install", "remove", "update", "list"].includes(rawCommand)) {
 		command = rawCommand;
 	}
-	if (!command) {
-		return undefined;
+	if (!command) return null;
+	return { command, rest };
+}
+
+function parseOption(
+	arg: string,
+	command: string,
+	options: { local: boolean; help: boolean; invalidOption?: string; source?: string },
+): void {
+	if (arg === "-h" || arg === "--help") {
+		options.help = true;
+		return;
 	}
 
-	let local = false;
-	let help = false;
-	let invalidOption: string | undefined;
-	let source: string | undefined;
+	if (arg === "-l" || arg === "--local") {
+		if (command === "install" || command === "remove") {
+			options.local = true;
+		} else {
+			options.invalidOption = options.invalidOption ?? arg;
+		}
+		return;
+	}
+
+	if (arg.startsWith("-")) {
+		options.invalidOption = options.invalidOption ?? arg;
+		return;
+	}
+
+	if (!options.source) {
+		options.source = arg;
+	}
+}
+
+function parseArgs(rest: string[]): { local: boolean; help: boolean; invalidOption?: string; source?: string } {
+	const options: { local: boolean; help: boolean; invalidOption?: string; source?: string } = {
+		local: false,
+		help: false,
+	};
 
 	for (const arg of rest) {
-		if (arg === "-h" || arg === "--help") {
-			help = true;
-			continue;
-		}
+		parseOption(arg, "", options); // command will be set later
+	}
 
-		if (arg === "-l" || arg === "--local") {
-			if (command === "install" || command === "remove") {
-				local = true;
-			} else {
-				invalidOption = invalidOption ?? arg;
+	return options;
+}
+
+function parsePackageCommand(args: string[]): { command: string; source?: string; local: boolean; help: boolean; invalidOption?: string } | undefined {
+	const parsed = parseCommand(args);
+	if (!parsed) return undefined;
+
+	const { command, rest } = parsed;
+	const baseOptions = parseArgs(rest);
+
+	return { command, source: baseOptions.source, local: baseOptions.local, help: baseOptions.help, invalidOption: baseOptions.invalidOption };
+}
+
+function createPackageManager(cwd: string, agentDir: string): DefaultPackageManager {
+	const settingsManager = SettingsManager.create(cwd, agentDir);
+	reportSettingsErrors(settingsManager, "package command");
+	const packageManager = new DefaultPackageManager({ cwd, agentDir, settingsManager });
+	packageManager.setProgressCallback((event) => {
+		if (event.type === "start") {
+			process.stdout.write(chalk.dim(`${event.message}\n`));
+		}
+	});
+	return packageManager;
+}
+
+function installPackage(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<void> {
+	return packageManager.installAndPersist(source, { local });
+}
+
+function removePackage(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<boolean> {
+	return packageManager.removeAndPersist(source, { local });
+}
+
+function executeInstall(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<void> {
+	return installPackage(packageManager, source, local)
+		.then(() => console.log(chalk.green(`Installed ${source}`)));
+}
+
+function executeRemove(packageManager: DefaultPackageManager, source: string, local: boolean): Promise<boolean> {
+	return removePackage(packageManager, source, local)
+		.then((removed) => {
+			if (!removed) {
+				console.error(chalk.red(`No matching package found for ${source}`));
+				process.exitCode = 1;
+				return false;
 			}
-			continue;
-		}
+			console.log(chalk.green(`Removed ${source}`));
+			return true;
+		});
+}
 
-		if (arg.startsWith("-")) {
-			invalidOption = invalidOption ?? arg;
-			continue;
-		}
+function listPackages(packageManager: DefaultPackageManager): void {
+	const configuredPackages = packageManager.listConfiguredPackages();
+	const userPackages = configuredPackages.filter((pkg) => pkg.scope === "user");
+	const projectPackages = configuredPackages.filter((pkg) => pkg.scope === "project");
 
-		if (!source) {
-			source = arg;
+	if (configuredPackages.length === 0) {
+		console.log(chalk.dim("No packages installed."));
+		return;
+	}
+
+	const formatPackage = (pkg: (typeof configuredPackages)[number]) => {
+		const display = pkg.filtered ? `${pkg.source} (filtered)` : pkg.source;
+		console.log(`  ${display}`);
+		if (pkg.installedPath) {
+			console.log(chalk.dim(`    ${pkg.installedPath}`));
+		}
+	};
+
+	if (userPackages.length > 0) {
+		console.log(chalk.bold("User packages:"));
+		for (const pkg of userPackages) {
+			formatPackage(pkg);
 		}
 	}
 
-	return { command, source, local, help, invalidOption };
+	if (projectPackages.length > 0) {
+		if (userPackages.length > 0) console.log();
+		console.log(chalk.bold("Project packages:"));
+		for (const pkg of projectPackages) {
+			formatPackage(pkg);
+		}
+	}
+}
+
+function updatePackage(packageManager: DefaultPackageManager, source?: string): Promise<void> {
+	return packageManager.update(source)
+		.then(() => {
+			if (source) {
+				console.log(chalk.green(`Updated ${source}`));
+			} else {
+				console.log(chalk.green("Updated packages"));
+			}
+		});
 }
 
 export async function handleConfigCommand(args: string[]): Promise<boolean> {
@@ -267,4 +373,5 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 		process.exitCode = 1;
 		return true;
 	}
+	return true;
 }

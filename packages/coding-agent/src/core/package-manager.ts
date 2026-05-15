@@ -6,7 +6,7 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import ignore from "ignore";
 import { minimatch } from "minimatch";
 import { CONFIG_DIR_NAME } from "../config.js";
-import { type GitSource, parseGitUrl } from "../utils/git.js";
+import { type GitSource, parseGitUrl } from "../utils/git-url-resolver.js";
 import { isLocalPath } from "../utils/paths.js";
 import { isStdoutTakenOver } from "./output-guard.js";
 import type { PackageSource, SettingsManager } from "./settings-manager.js";

@@ -6,7 +6,7 @@ import { spawn } from "child_process";
 import { readFileSync, statSync } from "fs";
 import path from "path";
 import { keyHint } from "../../modes/interactive/components/keybinding-hints.js";
-import { ensureTool } from "../../utils/tools-manager.js";
+import { ensureTool } from "../../utils/tool-manager.js";
 import type { ToolDefinition, ToolRenderResultOptions } from "../extensions/types.js";
 import { resolveToCwd } from "./path-utils.js";
 import { getTextOutput, invalidArgText, shortenPath, str } from "./render-utils.js";

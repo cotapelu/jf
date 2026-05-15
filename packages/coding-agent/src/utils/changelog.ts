@@ -8,6 +8,29 @@ export interface ChangelogEntry {
 }
 
 /**
+ * Parse version number from a changelog header line (starting with ##)
+ * Returns null if line is not a valid version header
+ */
+export function parseVersionFromHeader(line: string): { major: number; minor: number; patch: number } | null {
+	const match = line.match(/##\s+\[?(\d+)\.(\d+)\.(\d+)\]?/);
+	if (!match) {
+		return null;
+	}
+	return {
+		major: Number.parseInt(match[1], 10),
+		minor: Number.parseInt(match[2], 10),
+		patch: Number.parseInt(match[3], 10),
+	};
+}
+
+/**
+ * Check if a line is a changelog version header
+ */
+export function isChangelogHeader(line: string): boolean {
+	return line.startsWith("## ");
+}
+
+/**
  * Parse changelog entries from CHANGELOG.md
  * Scans for ## lines and collects content until next ## or EOF
  */
@@ -26,7 +49,7 @@ export function parseChangelog(changelogPath: string): ChangelogEntry[] {
 
 		for (const line of lines) {
 			// Check if this is a version header (## [x.y.z] ...)
-			if (line.startsWith("## ")) {
+			if (isChangelogHeader(line)) {
 				// Save previous entry if exists
 				if (currentVersion && currentLines.length > 0) {
 					entries.push({
@@ -36,13 +59,9 @@ export function parseChangelog(changelogPath: string): ChangelogEntry[] {
 				}
 
 				// Try to parse version from this line
-				const versionMatch = line.match(/##\s+\[?(\d+)\.(\d+)\.(\d+)\]?/);
-				if (versionMatch) {
-					currentVersion = {
-						major: Number.parseInt(versionMatch[1], 10),
-						minor: Number.parseInt(versionMatch[2], 10),
-						patch: Number.parseInt(versionMatch[3], 10),
-					};
+				const version = parseVersionFromHeader(line);
+				if (version) {
+					currentVersion = version;
 					currentLines = [line];
 				} else {
 					// Reset if we can't parse version
