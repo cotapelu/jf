@@ -172,35 +172,55 @@ export function trimWhitespace(text: string): string {
 /**
  * LLM summarization (stub: in real implementation, call OpenAI/Anthropic API)
  */
-async function summarizeWithLLM(content: string, opts: CompactOptions): Promise<string> {
-	if (!opts.apiKey) {
-		throw new Error("LLM summarization requested but no apiKey provided");
-	}
+async function buildSummarizePrompt(content: string, targetTokens: number): string {
+  return `Summarize concisely preserving key information, questions, and technical details. Target: ~${targetTokens} tokens.\n\n${content}`;
+}
 
-	const maxTokens = opts.maxFileTokensForHeuristic || 5000;
-	const currentTokens = estimateTokens(content);
-	if (currentTokens <= maxTokens) {
-		// Already small enough; minify instead
-		if (opts.removeComments !== false) content = stripCodeComments(content);
-		if (opts.trimWhitespace !== true) content = trimWhitespace(content);
-		return content;
-	}
+async function callLLM(prompt: string, targetTokens: number, options: CompactOptions): Promise<string | null> {
+  if (!options.apiKey) return null;
+  try {
+    if (options.llmProvider === "anthropic") {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": options.apiKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: (options as any).llmModel || "claude-3-5-sonnet-20241022",
+          max_tokens: Math.min(targetTokens, 4000),
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await res.json() as any;
+      return data.content?.[0]?.text || null;
+    } else {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${options.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: (options as any).llmModel || "gpt-4-turbo-preview",
+          max_tokens: Math.min(targetTokens, 4000),
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await res.json() as any;
+      return data.choices?.[0]?.message?.content || null;
+    }
+  } catch (error) {
+    console.error("LLM summarization failed:", error);
+    return null;
+  }
+}
 
-	// Construct prompt
-	const _prompt = `Summarize the following code to preserve its core functionality while reducing its length as much as possible. Keep function and class signatures, but you can shorten implementations if they are straightforward. Return ONLY the compacted code, no explanations.\n\n\`\`\`\n${content}\n\`\`\``;
-
-	// Call LLM (simplified — you would integrate openai/anthropic SDKs)
-	if (opts.llmProvider === "anthropic") {
-		// ... anthropic call
-	} else {
-		// ... openai call
-	}
-
-	// Placeholder: for now, return original with minification
-	let compacted = content;
-	if (opts.removeComments !== false) compacted = stripCodeComments(compacted);
-	if (opts.trimWhitespace !== true) compacted = trimWhitespace(compacted);
-	return compacted;
+async function summarizeWithLLM(content: string, targetTokens: number, options: CompactOptions): Promise<string | null> {
+  const prompt = buildSummarizePrompt(content, targetTokens);
+  const summary = await callLLM(prompt, targetTokens, options);
+  return summary;
 }
 
 // ============ Core Compaction Functions ============
