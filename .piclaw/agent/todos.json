@@ -167,9 +167,86 @@
           "details": "Đã tăng debounce từ 250ms → 500ms. Partial render logic trong TUI đã tốt (chỉ update dòng thay đổi). Các animation components (Armin, Daxnuts) chạy interval 30-60fps có thể gây render liên tục - cần thêm limit."
         }
       ]
+    },
+    {
+      "id": "phase-4",
+      "name": "Self-Optimization Loop",
+      "tasks": [
+        {
+          "id": "task-27",
+          "content": "Analyze codebase and identify top violations",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "phase-5",
+      "name": "Refactor session-selector-search.ts",
+      "tasks": [
+        {
+          "id": "task-28",
+          "content": "Extract tokenizeQuery helper (≤20 lines)",
+          "status": "completed"
+        },
+        {
+          "id": "task-29",
+          "content": "Extract parseRegexMode helper",
+          "status": "completed"
+        },
+        {
+          "id": "task-30",
+          "content": "Refactor parseSearchQuery (≤20 lines)",
+          "status": "completed"
+        },
+        {
+          "id": "task-31",
+          "content": "Extract matchRegexMode helper",
+          "status": "completed"
+        },
+        {
+          "id": "task-32",
+          "content": "Extract matchTokenMode helper",
+          "status": "completed"
+        },
+        {
+          "id": "task-33",
+          "content": "Refactor matchSession (≤20 lines)",
+          "status": "completed"
+        },
+        {
+          "id": "task-34",
+          "content": "Extract filterRecent helper",
+          "status": "completed"
+        },
+        {
+          "id": "task-35",
+          "content": "Extract sortRelevance helper",
+          "status": "completed"
+        },
+        {
+          "id": "task-36",
+          "content": "Refactor filterAndSortSessions (≤20 lines)",
+          "status": "completed"
+        },
+        {
+          "id": "task-37",
+          "content": "Run quality check on file",
+          "status": "completed"
+        },
+        {
+          "id": "task-38",
+          "content": "Run session-selector-search tests",
+          "status": "completed"
+        },
+        {
+          "id": "task-39",
+          "content": "Commit changes",
+          "status": "completed"
+        }
+      ]
     }
   ],
-  "nextTaskId": 27,
-  "nextPhaseId": 4,
-  "updatedAt": "2026-05-15T10:15:24.776Z"
+  "nextTaskId": 40,
+  "nextPhaseId": 6,
+  "updatedAt": "2026-05-15T11:52:15.498Z"
 }

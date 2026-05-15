@@ -24,8 +24,7 @@ function cyclomaticComplexity(code: string): number {
 }
 
 function findFunctions(content: string): Array<{ name: string; start: number; end: number; lines: number }> {
-	const functions = [];
-	// Match function declarations (various forms)
+	const functions: Array<{ name: string; start: number; end: number; lines: number }> = [];
 	const patterns = [
 		/export\s+(?:async\s+)?function\s+([a-zA-Z_]\w*)\s*\(/g,
 		/function\s+([a-zA-Z_]\w*)\s*\(/g,
@@ -38,13 +37,33 @@ function findFunctions(content: string): Array<{ name: string; start: number; en
 		while ((match = pattern.exec(content)) !== null) {
 			const name = match[1];
 			const start = content.lastIndexOf('\n', match.index) + 1;
-			// Find the end of the function (matching braces)
-			const afterBody = content.indexOf('\n}', match.index);
-			const afterBrace = content.indexOf('}', match.index);
-			const end = Math.max(afterBody, afterBrace);
-			const functionBody = content.substring(start, end > 0 ? end : start + 1000);
+			// Find the function body end by matching braces.
+			const openBrace = content.indexOf('{', match.index);
+			let end = -1;
+			if (openBrace !== -1) {
+				let depth = 1;
+				for (let i = openBrace + 1; i < content.length; i++) {
+					const ch = content[i];
+					if (ch === '{') depth++;
+					else if (ch === '}') {
+						depth--;
+						if (depth === 0) {
+							end = i + 1; // position after the closing brace
+							break;
+						}
+					}
+				}
+			}
+			// Fallback if no braces found
+			if (end === -1) {
+				const afterBody = content.indexOf('\n}', match.index);
+				const afterBrace = content.indexOf('}', match.index);
+				end = Math.max(afterBody, afterBrace);
+				if (end === -1) end = start + 1000;
+			}
+			const functionBody = content.substring(start, end);
 			const lines = functionBody.split('\n').length;
-			functions.push({ name, start, end: end > 0 ? end : start + functionBody.length, lines });
+			functions.push({ name, start, end, lines });
 		}
 	}
 	return functions;
