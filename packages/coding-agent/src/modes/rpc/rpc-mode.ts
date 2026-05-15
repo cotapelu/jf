@@ -12,6 +12,7 @@
  */
 
 import * as crypto from "node:crypto";
+import type { AgentSession } from "../../core/agent-session.js";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.js";
 import type {
 	ExtensionUIContext,
@@ -39,656 +40,610 @@ export type {
 	RpcSessionState,
 } from "./rpc-types.js";
 
-/**
- * Run in RPC mode.
- * Listens for JSON commands on stdin, outputs events and responses on stdout.
- */
-export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<never> {
-	takeOverStdout();
-	let session = runtimeHost.session;
-	let unsubscribe: (() => void) | undefined;
+// ============================================================================
+// Types and Interfaces
+// ============================================================================
 
-	const output = (obj: RpcResponse | RpcExtensionUIRequest | object) => {
-		writeRawStdout(serializeJsonLine(obj));
-	};
+interface RpcContext {
+	runtimeHost: AgentSessionRuntime;
+	session: AgentSession;
+	unsubscribe?: () => void;
+	detachInput?: () => void;
+	pendingExtensionRequests: Map<string, { resolve: (value: any) => void; reject: (error: Error) => void }>;
+	shutdownRequested: boolean;
+	output: (obj: RpcResponse | RpcExtensionUIRequest | object) => void;
+	success: <T extends RpcCommand["type"]>(id: string | undefined, command: T, data?: object | null) => RpcResponse;
+	error: (id: string | undefined, command: string, message: string) => RpcResponse;
+}
 
-	const success = <T extends RpcCommand["type"]>(
-		id: string | undefined,
-		command: T,
-		data?: object | null,
-	): RpcResponse => {
-		if (data === undefined) {
-			return { id, type: "response", command, success: true } as RpcResponse;
-		}
-		return { id, type: "response", command, success: true, data } as RpcResponse;
-	};
+type CommandHandler = (ctx: RpcContext, command: any) => Promise<RpcResponse>;
 
-	const error = (id: string | undefined, command: string, message: string): RpcResponse => {
-		return { id, type: "response", command, success: false, error: message };
-	};
+// ============================================================================
+// Core Output Helpers (≤20 lines each)
+// ============================================================================
 
-	// Pending extension UI requests waiting for response
-	const pendingExtensionRequests = new Map<
-		string,
-		{ resolve: (value: any) => void; reject: (error: Error) => void }
-	>();
+function rpcOutput(obj: RpcResponse | RpcExtensionUIRequest | object): void {
+	writeRawStdout(serializeJsonLine(obj));
+}
 
-	// Shutdown request flag
-	let shutdownRequested = false;
+function rpcSuccess<T extends RpcCommand["type"]>(
+	id: string | undefined,
+	command: T,
+	data?: object | null,
+): RpcResponse {
+	if (data === undefined) {
+		return { id, type: "response", command, success: true } as RpcResponse;
+	}
+	return { id, type: "response", command, success: true, data } as RpcResponse;
+}
 
-	/** Helper for dialog methods with signal/timeout support */
-	function createDialogPromise<T>(
-		opts: ExtensionUIDialogOptions | undefined,
-		defaultValue: T,
-		request: Record<string, unknown>,
-		parseResponse: (response: RpcExtensionUIResponse) => T,
-	): Promise<T> {
-		if (opts?.signal?.aborted) return Promise.resolve(defaultValue);
+function rpcError(id: string | undefined, command: string, message: string): RpcResponse {
+	return { id, type: "response", command, success: false, error: message };
+}
 
-		const id = crypto.randomUUID();
-		return new Promise((resolve, reject) => {
-			let timeoutId: ReturnType<typeof setTimeout> | undefined;
+// ============================================================================
+// Dialog Promise Helper (≤20 lines)
+// ============================================================================
 
-			const cleanup = () => {
-				if (timeoutId) clearTimeout(timeoutId);
-				opts?.signal?.removeEventListener("abort", onAbort);
-				pendingExtensionRequests.delete(id);
-			};
-
-			const onAbort = () => {
+function createDialogPromise<T>(
+	ctx: RpcContext,
+	opts: ExtensionUIDialogOptions | undefined,
+	defaultValue: T,
+	request: Record<string, unknown>,
+	parseResponse: (response: RpcExtensionUIResponse) => T,
+): Promise<T> {
+	if (opts?.signal?.aborted) return Promise.resolve(defaultValue);
+	const id = crypto.randomUUID();
+	return new Promise((resolve, reject) => {
+		let timeoutId: ReturnType<typeof setTimeout>;
+		const cleanup = () => {
+			if (timeoutId) clearTimeout(timeoutId);
+			opts?.signal?.removeEventListener("abort", onAbort);
+			ctx.pendingExtensionRequests.delete(id);
+		};
+		const onAbort = () => {
+			cleanup();
+			resolve(defaultValue);
+		};
+		opts?.signal?.addEventListener("abort", onAbort, { once: true });
+		if (opts?.timeout) {
+			timeoutId = setTimeout(() => {
 				cleanup();
 				resolve(defaultValue);
-			};
-			opts?.signal?.addEventListener("abort", onAbort, { once: true });
+			}, opts.timeout);
+		}
+		ctx.pendingExtensionRequests.set(id, {
+			resolve: (response: RpcExtensionUIResponse) => {
+				cleanup();
+				resolve(parseResponse(response));
+			},
+			reject,
+		});
+		ctx.output({ type: "extension_ui_request", id, ...request } as RpcExtensionUIRequest);
+	});
+}
 
-			if (opts?.timeout) {
-				timeoutId = setTimeout(() => {
-					cleanup();
-					resolve(defaultValue);
-				}, opts.timeout);
-			}
+// ============================================================================
+// Extension UI Context (class with small methods)
+// ============================================================================
 
-			pendingExtensionRequests.set(id, {
+class RpcExtensionUIContextImpl implements ExtensionUIContext {
+	constructor(private ctx: RpcContext) {}
+
+	select = (title: string, options: any, opts?: ExtensionUIDialogOptions) =>
+		createDialogPromise(this.ctx, opts, undefined, { method: "select", title, options }, (r) =>
+			"cancelled" in r && r.cancelled ? undefined : "value" in r ? r.value : undefined,
+		);
+
+	confirm = (title: string, message: string, opts?: ExtensionUIDialogOptions) =>
+		createDialogPromise(this.ctx, opts, false, { method: "confirm", title, message }, (r) =>
+			"cancelled" in r && r.cancelled ? false : "confirmed" in r ? r.confirmed : false,
+		);
+
+	input = (title: string, placeholder: string, opts?: ExtensionUIDialogOptions) =>
+		createDialogPromise(this.ctx, opts, undefined, { method: "input", title, placeholder }, (r) =>
+			"cancelled" in r && r.cancelled ? undefined : "value" in r ? r.value : undefined,
+		);
+
+	notify = (message: string, type?: "info" | "warning" | "error") => {
+		this.ctx.output({
+			type: "extension_ui_request",
+			id: crypto.randomUUID(),
+			method: "notify",
+			message,
+			notifyType: type,
+		} as RpcExtensionUIRequest);
+	};
+
+	onTerminalInput = () => () => {};
+
+	setStatus = (key: string, text: string | undefined) => {
+		this.ctx.output({
+			type: "extension_ui_request",
+			id: crypto.randomUUID(),
+			method: "setStatus",
+			statusKey: key,
+			statusText: text,
+		} as RpcExtensionUIRequest);
+	};
+
+	setWorkingMessage = (_message?: string) => {};
+
+	setHiddenThinkingLabel = (_label?: string) => {};
+
+	setWidget = (key: string, content: unknown, options?: ExtensionWidgetOptions) => {
+		if (content === undefined || Array.isArray(content)) {
+			this.ctx.output({
+				type: "extension_ui_request",
+				id: crypto.randomUUID(),
+				method: "setWidget",
+				widgetKey: key,
+				widgetLines: content as string[] | undefined,
+				widgetPlacement: options?.placement,
+			} as RpcExtensionUIRequest);
+		}
+	};
+
+	setFooter = (_factory: unknown) => {};
+
+	setHeader = (_factory: unknown) => {};
+
+	setTitle = (title: string) => {
+		this.ctx.output({
+			type: "extension_ui_request",
+			id: crypto.randomUUID(),
+			method: "setTitle",
+			title,
+		} as RpcExtensionUIRequest);
+	};
+
+	custom = async () => {
+		return undefined as never;
+	};
+
+	pasteToEditor = (text: string) => {
+		this.setEditorText(text);
+	};
+
+	setEditorText = (text: string) => {
+		this.ctx.output({
+			type: "extension_ui_request",
+			id: crypto.randomUUID(),
+			method: "set_editor_text",
+			text,
+		} as RpcExtensionUIRequest);
+	};
+
+	getEditorText = (): string => "";
+
+	editor = async (title: string, prefill?: string): Promise<string | undefined> => {
+		const id = crypto.randomUUID();
+		return new Promise((resolve, reject) => {
+			this.ctx.pendingExtensionRequests.set(id, {
 				resolve: (response: RpcExtensionUIResponse) => {
-					cleanup();
-					resolve(parseResponse(response));
+					if ("cancelled" in response && response.cancelled) resolve(undefined);
+					else if ("value" in response) resolve(response.value);
+					else resolve(undefined);
 				},
 				reject,
 			});
-			output({ type: "extension_ui_request", id, ...request } as RpcExtensionUIRequest);
+			this.ctx.output({
+				type: "extension_ui_request",
+				id,
+				method: "editor",
+				title,
+				prefill,
+			} as RpcExtensionUIRequest);
 		});
+	};
+
+	setEditorComponent = () => {};
+
+	get theme() {
+		return theme;
 	}
 
-	/**
-	 * Create an extension UI context that uses the RPC protocol.
-	 */
-	const createExtensionUIContext = (): ExtensionUIContext => ({
-		select: (title, options, opts) =>
-			createDialogPromise(opts, undefined, { method: "select", title, options, timeout: opts?.timeout }, (r) =>
-				"cancelled" in r && r.cancelled ? undefined : "value" in r ? r.value : undefined,
-			),
+	getAllThemes = () => [];
 
-		confirm: (title, message, opts) =>
-			createDialogPromise(opts, false, { method: "confirm", title, message, timeout: opts?.timeout }, (r) =>
-				"cancelled" in r && r.cancelled ? false : "confirmed" in r ? r.confirmed : false,
-			),
+	getTheme = (_name: string) => undefined;
 
-		input: (title, placeholder, opts) =>
-			createDialogPromise(opts, undefined, { method: "input", title, placeholder, timeout: opts?.timeout }, (r) =>
-				"cancelled" in r && r.cancelled ? undefined : "value" in r ? r.value : undefined,
-			),
+	setTheme = (_theme: string | Theme) => {
+		return { success: false, error: "Theme switching not supported in RPC mode" };
+	};
 
-		notify(message: string, type?: "info" | "warning" | "error"): void {
-			// Fire and forget - no response needed
-			output({
-				type: "extension_ui_request",
-				id: crypto.randomUUID(),
-				method: "notify",
-				message,
-				notifyType: type,
-			} as RpcExtensionUIRequest);
+	getToolsExpanded = () => false;
+
+	setToolsExpanded = (_expanded: boolean) => {};
+}
+
+function createExtensionUIContext(ctx: RpcContext): ExtensionUIContext {
+	return new RpcExtensionUIContextImpl(ctx);
+}
+
+// ============================================================================
+// Command Context Actions (≤20 lines)
+// ============================================================================
+
+function createCommandContextActions(ctx: RpcContext) {
+	return {
+		waitForIdle: () => ctx.session.agent.waitForIdle(),
+		newSession: async (options: any) => {
+			const result = await ctx.runtimeHost.newSession(options);
+			if (!result.cancelled) await rebindSession(ctx);
+			return result;
 		},
-
-		onTerminalInput(): () => void {
-			// Raw terminal input not supported in RPC mode
-			return () => {};
+		fork: async (entryId: string) => {
+			const result = await ctx.runtimeHost.fork(entryId);
+			if (!result.cancelled) await rebindSession(ctx);
+			return { cancelled: result.cancelled };
 		},
-
-		setStatus(key: string, text: string | undefined): void {
-			// Fire and forget - no response needed
-			output({
-				type: "extension_ui_request",
-				id: crypto.randomUUID(),
-				method: "setStatus",
-				statusKey: key,
-				statusText: text,
-			} as RpcExtensionUIRequest);
+		navigateTree: async (targetId: string, options: any) => {
+			const result = await ctx.session.navigateTree(targetId, {
+				summarize: options?.summarize,
+				customInstructions: options?.customInstructions,
+				replaceInstructions: options?.replaceInstructions,
+				label: options?.label,
+			});
+			return { cancelled: result.cancelled };
 		},
-
-		setWorkingMessage(_message?: string): void {
-			// Working message not supported in RPC mode - requires TUI loader access
+		switchSession: async (sessionPath: string) => {
+			const result = await ctx.runtimeHost.switchSession(sessionPath);
+			if (!result.cancelled) await rebindSession(ctx);
+			return result;
 		},
-
-		setHiddenThinkingLabel(_label?: string): void {
-			// Hidden thinking label not supported in RPC mode - requires TUI message rendering access
+		reload: async () => {
+			await ctx.session.reload();
 		},
+	};
+}
 
-		setWidget(key: string, content: unknown, options?: ExtensionWidgetOptions): void {
-			// Only support string arrays in RPC mode - factory functions are ignored
-			if (content === undefined || Array.isArray(content)) {
-				output({
-					type: "extension_ui_request",
-					id: crypto.randomUUID(),
-					method: "setWidget",
-					widgetKey: key,
-					widgetLines: content as string[] | undefined,
-					widgetPlacement: options?.placement,
-				} as RpcExtensionUIRequest);
-			}
-			// Component factories are not supported in RPC mode - would need TUI access
+// ============================================================================
+// Session Rebinding (≤20 lines)
+// ============================================================================
+
+async function rebindSession(ctx: RpcContext): Promise<void> {
+	ctx.session = ctx.runtimeHost.session;
+	await ctx.session.bindExtensions({
+		uiContext: createExtensionUIContext(ctx),
+		commandContextActions: createCommandContextActions(ctx),
+		shutdownHandler: () => {
+			ctx.shutdownRequested = true;
 		},
-
-		setFooter(_factory: unknown): void {
-			// Custom footer not supported in RPC mode - requires TUI access
-		},
-
-		setHeader(_factory: unknown): void {
-			// Custom header not supported in RPC mode - requires TUI access
-		},
-
-		setTitle(title: string): void {
-			// Fire and forget - host can implement terminal title control
-			output({
-				type: "extension_ui_request",
-				id: crypto.randomUUID(),
-				method: "setTitle",
-				title,
-			} as RpcExtensionUIRequest);
-		},
-
-		async custom() {
-			// Custom UI not supported in RPC mode
-			return undefined as never;
-		},
-
-		pasteToEditor(text: string): void {
-			// Paste handling not supported in RPC mode - falls back to setEditorText
-			this.setEditorText(text);
-		},
-
-		setEditorText(text: string): void {
-			// Fire and forget - host can implement editor control
-			output({
-				type: "extension_ui_request",
-				id: crypto.randomUUID(),
-				method: "set_editor_text",
-				text,
-			} as RpcExtensionUIRequest);
-		},
-
-		getEditorText(): string {
-			// Synchronous method can't wait for RPC response
-			// Host should track editor state locally if needed
-			return "";
-		},
-
-		async editor(title: string, prefill?: string): Promise<string | undefined> {
-			const id = crypto.randomUUID();
-			return new Promise((resolve, reject) => {
-				pendingExtensionRequests.set(id, {
-					resolve: (response: RpcExtensionUIResponse) => {
-						if ("cancelled" in response && response.cancelled) {
-							resolve(undefined);
-						} else if ("value" in response) {
-							resolve(response.value);
-						} else {
-							resolve(undefined);
-						}
-					},
-					reject,
-				});
-				output({ type: "extension_ui_request", id, method: "editor", title, prefill } as RpcExtensionUIRequest);
+		onError: (err: any) => {
+			ctx.output({
+				type: "extension_error",
+				extensionPath: err.extensionPath,
+				event: err.event,
+				error: err.error,
 			});
 		},
-
-		setEditorComponent(): void {
-			// Custom editor components not supported in RPC mode
-		},
-
-		get theme() {
-			return theme;
-		},
-
-		getAllThemes() {
-			return [];
-		},
-
-		getTheme(_name: string) {
-			return undefined;
-		},
-
-		setTheme(_theme: string | Theme) {
-			// Theme switching not supported in RPC mode
-			return { success: false, error: "Theme switching not supported in RPC mode" };
-		},
-
-		getToolsExpanded() {
-			// Tool expansion not supported in RPC mode - no TUI
-			return false;
-		},
-
-		setToolsExpanded(_expanded: boolean) {
-			// Tool expansion not supported in RPC mode - no TUI
-		},
 	});
+	ctx.unsubscribe?.();
+	ctx.unsubscribe = ctx.session.subscribe((event) => ctx.output(event));
+}
 
-	const rebindSession = async (): Promise<void> => {
-		session = runtimeHost.session;
-		await session.bindExtensions({
-			uiContext: createExtensionUIContext(),
-			commandContextActions: {
-				waitForIdle: () => session.agent.waitForIdle(),
-				newSession: async (options) => {
-					const result = await runtimeHost.newSession(options);
-					if (!result.cancelled) {
-						await rebindSession();
-					}
-					return result;
-				},
-				fork: async (entryId) => {
-					const result = await runtimeHost.fork(entryId);
-					if (!result.cancelled) {
-						await rebindSession();
-					}
-					return { cancelled: result.cancelled };
-				},
-				navigateTree: async (targetId, options) => {
-					const result = await session.navigateTree(targetId, {
-						summarize: options?.summarize,
-						customInstructions: options?.customInstructions,
-						replaceInstructions: options?.replaceInstructions,
-						label: options?.label,
-					});
-					return { cancelled: result.cancelled };
-				},
-				switchSession: async (sessionPath) => {
-					const result = await runtimeHost.switchSession(sessionPath);
-					if (!result.cancelled) {
-						await rebindSession();
-					}
-					return result;
-				},
-				reload: async () => {
-					await session.reload();
-				},
-			},
-			shutdownHandler: () => {
-				shutdownRequested = true;
-			},
-			onError: (err) => {
-				output({ type: "extension_error", extensionPath: err.extensionPath, event: err.event, error: err.error });
-			},
-		});
+// ============================================================================
+// Command Handlers Map (each handler ≤20 lines)
+// ============================================================================
 
-		unsubscribe?.();
-		unsubscribe = session.subscribe((event) => {
-			output(event);
-		});
-	};
+const commandHandlers: Record<string, CommandHandler> = {
+	prompt: async (ctx, command) => {
+		ctx.session
+			.prompt(command.message, {
+				images: command.images,
+				streamingBehavior: command.streamingBehavior,
+				source: "rpc",
+			})
+			.catch((e) => ctx.output(rpcError(command.id, "prompt", e.message)));
+		return rpcSuccess(command.id, "prompt");
+	},
 
-	await rebindSession();
+	steer: async (ctx, command) => {
+		await ctx.session.steer(command.message, command.images);
+		return rpcSuccess(command.id, "steer");
+	},
 
-	// Handle a single command
-	const handleCommand = async (command: RpcCommand): Promise<RpcResponse> => {
-		const id = command.id;
+	follow_up: async (ctx, command) => {
+		await ctx.session.followUp(command.message, command.images);
+		return rpcSuccess(command.id, "follow_up");
+	},
 
-		switch (command.type) {
-			// =================================================================
-			// Prompting
-			// =================================================================
+	abort: async (ctx, command) => {
+		await ctx.session.abort();
+		return rpcSuccess(command.id, "abort");
+	},
 
-			case "prompt": {
-				// Don't await - events will stream
-				// Extension commands are executed immediately, file prompt templates are expanded
-				// If streaming and streamingBehavior specified, queues via steer/followUp
-				session
-					.prompt(command.message, {
-						images: command.images,
-						streamingBehavior: command.streamingBehavior,
-						source: "rpc",
-					})
-					.catch((e) => output(error(id, "prompt", e.message)));
-				return success(id, "prompt");
-			}
+	new_session: async (ctx, command) => {
+		const options = command.parentSession ? { parentSession: command.parentSession } : undefined;
+		const result = await ctx.runtimeHost.newSession(options);
+		if (!result.cancelled) await rebindSession(ctx);
+		return rpcSuccess(command.id, "new_session", result);
+	},
 
-			case "steer": {
-				await session.steer(command.message, command.images);
-				return success(id, "steer");
-			}
-
-			case "follow_up": {
-				await session.followUp(command.message, command.images);
-				return success(id, "follow_up");
-			}
-
-			case "abort": {
-				await session.abort();
-				return success(id, "abort");
-			}
-
-			case "new_session": {
-				const options = command.parentSession ? { parentSession: command.parentSession } : undefined;
-				const result = await runtimeHost.newSession(options);
-				if (!result.cancelled) {
-					await rebindSession();
-				}
-				return success(id, "new_session", result);
-			}
-
-			// =================================================================
-			// State
-			// =================================================================
-
-			case "get_state": {
-				const state: RpcSessionState = {
-					model: session.model,
-					thinkingLevel: session.thinkingLevel,
-					isStreaming: session.isStreaming,
-					isCompacting: session.isCompacting,
-					steeringMode: session.steeringMode,
-					followUpMode: session.followUpMode,
-					sessionFile: session.sessionFile,
-					sessionId: session.sessionId,
-					sessionName: session.sessionName,
-					autoCompactionEnabled: session.autoCompactionEnabled,
-					messageCount: session.messages.length,
-					pendingMessageCount: session.pendingMessageCount,
-				};
-				return success(id, "get_state", state);
-			}
-
-			// =================================================================
-			// Model
-			// =================================================================
-
-			case "set_model": {
-				const models = await session.modelRegistry.getAvailable();
-				const model = models.find((m) => m.provider === command.provider && m.id === command.modelId);
-				if (!model) {
-					return error(id, "set_model", `Model not found: ${command.provider}/${command.modelId}`);
-				}
-				await session.setModel(model);
-				return success(id, "set_model", model);
-			}
-
-			case "cycle_model": {
-				const result = await session.cycleModel();
-				if (!result) {
-					return success(id, "cycle_model", null);
-				}
-				return success(id, "cycle_model", result);
-			}
-
-			case "get_available_models": {
-				const models = await session.modelRegistry.getAvailable();
-				return success(id, "get_available_models", { models });
-			}
-
-			// =================================================================
-			// Thinking
-			// =================================================================
-
-			case "set_thinking_level": {
-				session.setThinkingLevel(command.level);
-				return success(id, "set_thinking_level");
-			}
-
-			case "cycle_thinking_level": {
-				const level = session.cycleThinkingLevel();
-				if (!level) {
-					return success(id, "cycle_thinking_level", null);
-				}
-				return success(id, "cycle_thinking_level", { level });
-			}
-
-			// =================================================================
-			// Queue Modes
-			// =================================================================
-
-			case "set_steering_mode": {
-				session.setSteeringMode(command.mode);
-				return success(id, "set_steering_mode");
-			}
-
-			case "set_follow_up_mode": {
-				session.setFollowUpMode(command.mode);
-				return success(id, "set_follow_up_mode");
-			}
-
-			// =================================================================
-			// Compaction
-			// =================================================================
-
-			case "compact": {
-				const result = await session.compact(command.customInstructions);
-				return success(id, "compact", result);
-			}
-
-			case "set_auto_compaction": {
-				session.setAutoCompactionEnabled(command.enabled);
-				return success(id, "set_auto_compaction");
-			}
-
-			// =================================================================
-			// Retry
-			// =================================================================
-
-			case "set_auto_retry": {
-				session.setAutoRetryEnabled(command.enabled);
-				return success(id, "set_auto_retry");
-			}
-
-			case "abort_retry": {
-				session.abortRetry();
-				return success(id, "abort_retry");
-			}
-
-			// =================================================================
-			// Bash
-			// =================================================================
-
-			case "bash": {
-				const result = await session.executeBash(command.command);
-				return success(id, "bash", result);
-			}
-
-			case "abort_bash": {
-				session.abortBash();
-				return success(id, "abort_bash");
-			}
-
-			// =================================================================
-			// Session
-			// =================================================================
-
-			case "get_session_stats": {
-				const stats = session.getSessionStats();
-				return success(id, "get_session_stats", stats);
-			}
-
-			case "export_html": {
-				const path = await session.exportToHtml(command.outputPath);
-				return success(id, "export_html", { path });
-			}
-
-			case "switch_session": {
-				const result = await runtimeHost.switchSession(command.sessionPath);
-				if (!result.cancelled) {
-					await rebindSession();
-				}
-				return success(id, "switch_session", result);
-			}
-
-			case "fork": {
-				const result = await runtimeHost.fork(command.entryId);
-				if (!result.cancelled) {
-					await rebindSession();
-				}
-				return success(id, "fork", { text: result.selectedText, cancelled: result.cancelled });
-			}
-
-			case "get_fork_messages": {
-				const messages = session.getUserMessagesForForking();
-				return success(id, "get_fork_messages", { messages });
-			}
-
-			case "get_last_assistant_text": {
-				const text = session.getLastAssistantText();
-				return success(id, "get_last_assistant_text", { text });
-			}
-
-			case "set_session_name": {
-				const name = command.name.trim();
-				if (!name) {
-					return error(id, "set_session_name", "Session name cannot be empty");
-				}
-				session.setSessionName(name);
-				return success(id, "set_session_name");
-			}
-
-			// =================================================================
-			// Messages
-			// =================================================================
-
-			case "get_messages": {
-				return success(id, "get_messages", { messages: session.messages });
-			}
-
-			// =================================================================
-			// Commands (available for invocation via prompt)
-			// =================================================================
-
-			case "get_commands": {
-				const commands: RpcSlashCommand[] = [];
-
-				for (const command of session.extensionRunner?.getRegisteredCommands() ?? []) {
-					commands.push({
-						name: command.invocationName,
-						description: command.description,
-						source: "extension",
-						sourceInfo: command.sourceInfo,
-					});
-				}
-
-				for (const template of session.promptTemplates) {
-					commands.push({
-						name: template.name,
-						description: template.description,
-						source: "prompt",
-						sourceInfo: template.sourceInfo,
-					});
-				}
-
-				for (const skill of session.resourceLoader.getSkills().skills) {
-					commands.push({
-						name: `skill:${skill.name}`,
-						description: skill.description,
-						source: "skill",
-						sourceInfo: skill.sourceInfo,
-					});
-				}
-
-				return success(id, "get_commands", { commands });
-			}
-
-			default: {
-				const unknownCommand = command as { type: string };
-				return error(undefined, unknownCommand.type, `Unknown command: ${unknownCommand.type}`);
-			}
-		}
-	};
-
-	/**
-	 * Check if shutdown was requested and perform shutdown if so.
-	 * Called after handling each command when waiting for the next command.
-	 */
-	let detachInput = () => {};
-
-	async function shutdown(): Promise<never> {
-		unsubscribe?.();
-		await runtimeHost.dispose();
-		detachInput();
-		process.stdin.pause();
-		process.exit(0);
-	}
-
-	async function checkShutdownRequested(): Promise<void> {
-		if (!shutdownRequested) return;
-		await shutdown();
-	}
-
-	const handleInputLine = async (line: string) => {
-		let parsed: unknown;
-		try {
-			parsed = JSON.parse(line);
-		} catch (parseError: unknown) {
-			output(
-				error(
-					undefined,
-					"parse",
-					`Failed to parse command: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
-				),
-			);
-			return;
-		}
-
-		// Handle extension UI responses
-		if (
-			typeof parsed === "object" &&
-			parsed !== null &&
-			"type" in parsed &&
-			parsed.type === "extension_ui_response"
-		) {
-			const response = parsed as RpcExtensionUIResponse;
-			const pending = pendingExtensionRequests.get(response.id);
-			if (pending) {
-				pendingExtensionRequests.delete(response.id);
-				pending.resolve(response);
-			}
-			return;
-		}
-
-		const command = parsed as RpcCommand;
-		try {
-			const response = await handleCommand(command);
-			output(response);
-			await checkShutdownRequested();
-		} catch (commandError: unknown) {
-			output(
-				error(
-					command.id,
-					command.type,
-					commandError instanceof Error ? commandError.message : String(commandError),
-				),
-			);
-		}
-	};
-
-	const onInputEnd = () => {
-		void shutdown();
-	};
-	process.stdin.on("end", onInputEnd);
-
-	detachInput = (() => {
-		const detachJsonl = attachJsonlLineReader(process.stdin, (line) => {
-			void handleInputLine(line);
-		});
-		return () => {
-			detachJsonl();
-			process.stdin.off("end", onInputEnd);
+	get_state: async (ctx, command) => {
+		const state: RpcSessionState = {
+			model: ctx.session.model,
+			thinkingLevel: ctx.session.thinkingLevel,
+			isStreaming: ctx.session.isStreaming,
+			isCompacting: ctx.session.isCompacting,
+			steeringMode: ctx.session.steeringMode,
+			followUpMode: ctx.session.followUpMode,
+			sessionFile: ctx.session.sessionFile,
+			sessionId: ctx.session.sessionId,
+			sessionName: ctx.session.sessionName,
+			autoCompactionEnabled: ctx.session.autoCompactionEnabled,
+			messageCount: ctx.session.messages.length,
+			pendingMessageCount: ctx.session.pendingMessageCount,
 		};
-	})();
+		return rpcSuccess(command.id, "get_state", state);
+	},
 
-	// Keep process alive forever
+	set_model: async (ctx, command) => {
+		const models = await ctx.session.modelRegistry.getAvailable();
+		const model = models.find((m) => m.provider === command.provider && m.id === command.modelId);
+		if (!model) return rpcError(command.id, "set_model", `Model not found: ${command.provider}/${command.modelId}`);
+		await ctx.session.setModel(model);
+		return rpcSuccess(command.id, "set_model", model);
+	},
+
+	cycle_model: async (ctx, command) => {
+		const result = await ctx.session.cycleModel();
+		return result ? rpcSuccess(command.id, "cycle_model", result) : rpcSuccess(command.id, "cycle_model", null);
+	},
+
+	get_available_models: async (ctx, command) => {
+		const models = await ctx.session.modelRegistry.getAvailable();
+		return rpcSuccess(command.id, "get_available_models", { models });
+	},
+
+	set_thinking_level: async (ctx, command) => {
+		ctx.session.setThinkingLevel(command.level);
+		return rpcSuccess(command.id, "set_thinking_level");
+	},
+
+	cycle_thinking_level: async (ctx, command) => {
+		const level = ctx.session.cycleThinkingLevel();
+		return level
+			? rpcSuccess(command.id, "cycle_thinking_level", { level })
+			: rpcSuccess(command.id, "cycle_thinking_level", null);
+	},
+
+	set_steering_mode: async (ctx, command) => {
+		ctx.session.setSteeringMode(command.mode);
+		return rpcSuccess(command.id, "set_steering_mode");
+	},
+
+	set_follow_up_mode: async (ctx, command) => {
+		ctx.session.setFollowUpMode(command.mode);
+		return rpcSuccess(command.id, "set_follow_up_mode");
+	},
+
+	compact: async (ctx, command) => {
+		const result = await ctx.session.compact(command.customInstructions);
+		return rpcSuccess(command.id, "compact", result);
+	},
+
+	set_auto_compaction: async (ctx, command) => {
+		ctx.session.setAutoCompactionEnabled(command.enabled);
+		return rpcSuccess(command.id, "set_auto_compaction");
+	},
+
+	set_auto_retry: async (ctx, command) => {
+		ctx.session.setAutoRetryEnabled(command.enabled);
+		return rpcSuccess(command.id, "set_auto_retry");
+	},
+
+	abort_retry: async (ctx, command) => {
+		ctx.session.abortRetry();
+		return rpcSuccess(command.id, "abort_retry");
+	},
+
+	bash: async (ctx, command) => {
+		const result = await ctx.session.executeBash(command.command);
+		return rpcSuccess(command.id, "bash", result);
+	},
+
+	abort_bash: async (ctx, command) => {
+		ctx.session.abortBash();
+		return rpcSuccess(command.id, "abort_bash");
+	},
+
+	get_session_stats: async (ctx, command) => {
+		const stats = ctx.session.getSessionStats();
+		return rpcSuccess(command.id, "get_session_stats", stats);
+	},
+
+	export_html: async (ctx, command) => {
+		const path = await ctx.session.exportToHtml(command.outputPath);
+		return rpcSuccess(command.id, "export_html", { path });
+	},
+
+	switch_session: async (ctx, command) => {
+		const result = await ctx.runtimeHost.switchSession(command.sessionPath);
+		if (!result.cancelled) await rebindSession(ctx);
+		return rpcSuccess(command.id, "switch_session", result);
+	},
+
+	fork: async (ctx, command) => {
+		const result = await ctx.runtimeHost.fork(command.entryId);
+		if (!result.cancelled) await rebindSession(ctx);
+		return rpcSuccess(command.id, "fork", { text: result.selectedText, cancelled: result.cancelled });
+	},
+
+	get_fork_messages: async (ctx, command) => {
+		const messages = ctx.session.getUserMessagesForForking();
+		return rpcSuccess(command.id, "get_fork_messages", { messages });
+	},
+
+	get_last_assistant_text: async (ctx, command) => {
+		const text = ctx.session.getLastAssistantText();
+		return rpcSuccess(command.id, "get_last_assistant_text", { text });
+	},
+
+	set_session_name: async (ctx, command) => {
+		const name = command.name.trim();
+		if (!name) return rpcError(command.id, "set_session_name", "Session name cannot be empty");
+		ctx.session.setSessionName(name);
+		return rpcSuccess(command.id, "set_session_name");
+	},
+
+	get_messages: async (ctx, command) => {
+		return rpcSuccess(command.id, "get_messages", { messages: ctx.session.messages });
+	},
+
+	get_commands: async (ctx, command) => {
+		const commands: RpcSlashCommand[] = [];
+
+		for (const cmd of ctx.session.extensionRunner?.getRegisteredCommands() ?? []) {
+			commands.push({
+				name: cmd.invocationName,
+				description: cmd.description,
+				source: "extension",
+				sourceInfo: cmd.sourceInfo,
+			});
+		}
+
+		for (const template of ctx.session.promptTemplates) {
+			commands.push({
+				name: template.name,
+				description: template.description,
+				source: "prompt",
+				sourceInfo: template.sourceInfo,
+			});
+		}
+
+		for (const skill of ctx.session.resourceLoader.getSkills().skills) {
+			commands.push({
+				name: `skill:${skill.name}`,
+				description: skill.description,
+				source: "skill",
+				sourceInfo: skill.sourceInfo,
+			});
+		}
+
+		return rpcSuccess(command.id, "get_commands", { commands });
+	},
+};
+
+function handleCommand(ctx: RpcContext, command: RpcCommand): Promise<RpcResponse> {
+	const handler = commandHandlers[command.type];
+	if (handler) {
+		return handler(ctx, command);
+	}
+	return Promise.resolve(
+		rpcError(undefined, (command as { type: string }).type, `Unknown command: ${(command as { type: string }).type}`),
+	);
+}
+
+// ============================================================================
+// Input Handling (≤20 lines each)
+// ============================================================================
+
+function handleInputLine(ctx: RpcContext, line: string): void {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(line);
+	} catch (parseError: unknown) {
+		ctx.output(
+			rpcError(
+				undefined,
+				"parse",
+				`Failed to parse command: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+			),
+		);
+		return;
+	}
+
+	if (typeof parsed === "object" && parsed !== null && "type" in parsed && parsed.type === "extension_ui_response") {
+		const response = parsed as RpcExtensionUIResponse;
+		const pending = ctx.pendingExtensionRequests.get(response.id);
+		if (pending) {
+			ctx.pendingExtensionRequests.delete(response.id);
+			pending.resolve(response);
+		}
+		return;
+	}
+
+	const command = parsed as RpcCommand;
+	handleInputLineAsync(ctx, command).catch((err) => {
+		console.error("Unexpected error in handleInputLine:", err);
+	});
+}
+
+async function handleInputLineAsync(ctx: RpcContext, command: any): Promise<void> {
+	try {
+		const response = await handleCommand(ctx, command);
+		ctx.output(response);
+		await checkShutdownRequested(ctx);
+	} catch (commandError: unknown) {
+		ctx.output(
+			rpcError(
+				(command as any).id,
+				(command as any).type,
+				commandError instanceof Error ? commandError.message : String(commandError),
+			),
+		);
+	}
+}
+
+// ============================================================================
+// Shutdown Handling (≤20 lines)
+// ============================================================================
+
+async function shutdown(ctx: RpcContext): Promise<never> {
+	ctx.unsubscribe?.();
+	await ctx.runtimeHost.dispose();
+	ctx.detachInput?.();
+	process.stdin.pause();
+	process.exit(0);
+}
+
+async function checkShutdownRequested(ctx: RpcContext): Promise<void> {
+	if (!ctx.shutdownRequested) return;
+	await shutdown(ctx);
+}
+
+function onInputEnd(ctx: RpcContext): void {
+	void shutdown(ctx);
+}
+
+// ============================================================================
+// Initialization and Setup (≤20 lines)
+// ============================================================================
+
+function initializeRpcContext(runtimeHost: AgentSessionRuntime): RpcContext {
+	return {
+		runtimeHost,
+		session: runtimeHost.session,
+		pendingExtensionRequests: new Map(),
+		shutdownRequested: false,
+		output: (obj) => rpcOutput(obj),
+		success: rpcSuccess as any,
+		error: rpcError as any,
+		unsubscribe: undefined,
+		detachInput: undefined,
+	};
+}
+
+function setupInputHandling(ctx: RpcContext): void {
+	ctx.detachInput = attachJsonlLineReader(process.stdin, (line) => {
+		void handleInputLine(ctx, line);
+	});
+	process.stdin.on("end", () => onInputEnd(ctx));
+}
+
+function waitForShutdown(): Promise<never> {
 	return new Promise(() => {});
+}
+
+// ============================================================================
+// Main Entry (Orchestrator ≤20 lines)
+// ============================================================================
+
+export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<never> {
+	takeOverStdout();
+	const ctx = initializeRpcContext(runtimeHost);
+	await rebindSession(ctx);
+	setupInputHandling(ctx);
+	return waitForShutdown();
 }
