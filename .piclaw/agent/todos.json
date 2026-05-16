@@ -244,9 +244,112 @@
           "status": "completed"
         }
       ]
+    },
+    {
+      "id": "phase-6",
+      "name": "Refactor tree-selector.ts",
+      "tasks": [
+        {
+          "id": "task-40",
+          "content": "Analyze flattenTree and applyFilter methods",
+          "status": "in_progress"
+        },
+        {
+          "id": "task-41",
+          "content": "Extract sub-functions for flattenTree (e.g., processNode, computeChildIndent, buildGutters)",
+          "status": "pending"
+        },
+        {
+          "id": "task-42",
+          "content": "Ensure each function ≤20 lines and complexity ≤10",
+          "status": "pending"
+        },
+        {
+          "id": "task-43",
+          "content": "Run quality check on file",
+          "status": "pending"
+        },
+        {
+          "id": "task-44",
+          "content": "Run tests for tree-selector",
+          "status": "pending"
+        },
+        {
+          "id": "task-45",
+          "content": "Commit changes",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-7",
+      "name": "Refactor tree-selector.ts flattenTree",
+      "tasks": [
+        {
+          "id": "task-46",
+          "content": "Replace flattenTree body with delegated implementation",
+          "status": "pending"
+        },
+        {
+          "id": "task-47",
+          "content": "Extract flattenTreeImpl helper with sub-functions (computeContainsActive, orderRoots, buildInitialStack, extractToolCalls, createFlatNode, computeChildIndent, computeChildGutters, orderChildren, pushChildren)",
+          "status": "pending"
+        },
+        {
+          "id": "task-48",
+          "content": "Run quality check on tree-selector.ts",
+          "status": "pending"
+        },
+        {
+          "id": "task-49",
+          "content": "Run tests for tree-selector",
+          "status": "pending"
+        },
+        {
+          "id": "task-50",
+          "content": "Commit changes",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-8",
+      "name": "Refactor test-theme-colors.ts",
+      "tasks": [
+        {
+          "id": "task-51",
+          "content": "Analyze cmdTheme (55 lines) and split into smaller helpers",
+          "status": "completed"
+        },
+        {
+          "id": "task-52",
+          "content": "Split cmdTest (23 lines) if needed",
+          "status": "pending"
+        },
+        {
+          "id": "task-53",
+          "content": "Ensure all functions ≤20 lines and complexity ≤10",
+          "status": "pending"
+        },
+        {
+          "id": "task-54",
+          "content": "Run quality check on file",
+          "status": "pending"
+        },
+        {
+          "id": "task-55",
+          "content": "Run tests for test-theme-colors",
+          "status": "pending"
+        },
+        {
+          "id": "task-56",
+          "content": "Commit changes",
+          "status": "pending"
+        }
+      ]
     }
   ],
-  "nextTaskId": 40,
-  "nextPhaseId": 6,
-  "updatedAt": "2026-05-15T11:52:15.498Z"
+  "nextTaskId": 57,
+  "nextPhaseId": 9,
+  "updatedAt": "2026-05-16T00:36:42.981Z"
 }

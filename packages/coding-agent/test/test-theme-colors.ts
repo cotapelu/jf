@@ -148,78 +148,77 @@ function cmdContrast(targetContrast: number): void {
 	}
 }
 
+function testEntry(name: string, hex: string): void {
+	const rgb = hexToRgb(hex);
+	const vsWhite = getContrast(rgb, 1.0);
+	const vsBlack = getContrast(rgb, 0.0);
+	const passW = vsWhite >= 4.5 ? "AA" : vsWhite >= 3.0 ? "AA-lg" : "FAIL";
+	const passB = vsBlack >= 4.5 ? "AA" : vsBlack >= 3.0 ? "AA-lg" : "FAIL";
+	console.log(
+		`${name.padEnd(14)} ${fgAnsi(hex)}Sample text${reset}  ${hex}  white: ${vsWhite.toFixed(2)}:1 ${passW.padEnd(5)}  black: ${vsBlack.toFixed(2)}:1 ${passB}`,
+	);
+}
+
 function cmdTest(filePath: string): void {
 	if (!fs.existsSync(filePath)) {
 		console.error(`File not found: ${filePath}`);
 		process.exit(1);
 	}
-
 	const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 	const vars = data.vars || data;
-
 	console.log(`\n=== Testing ${filePath} ===\n`);
-
 	for (const [name, hex] of Object.entries(vars as Record<string, string>)) {
 		if (!hex.startsWith("#")) continue;
-		const rgb = hexToRgb(hex);
-		const vsWhite = getContrast(rgb, 1.0);
-		const vsBlack = getContrast(rgb, 0.0);
-		const passW = vsWhite >= 4.5 ? "AA" : vsWhite >= 3.0 ? "AA-lg" : "FAIL";
-		const passB = vsBlack >= 4.5 ? "AA" : vsBlack >= 3.0 ? "AA-lg" : "FAIL";
-		console.log(
-			`${name.padEnd(14)} ${fgAnsi(hex)}Sample text${reset}  ${hex}  white: ${vsWhite.toFixed(2)}:1 ${passW.padEnd(5)}  black: ${vsBlack.toFixed(2)}:1 ${passB}`,
-		);
+		testEntry(name, hex);
 	}
+}
+
+function parseAnsiRgb(ansi: string): [number, number, number] | null {
+	const match = ansi.match(/38;2;(\d+);(\d+);(\d+)/);
+	return match ? [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)] : null;
+}
+
+function getContrastVsWhite(colorName: string): string {
+	const ansi = theme.getFgAnsi(colorName as Parameters<typeof theme.getFgAnsi>[0]);
+	const rgb = parseAnsiRgb(ansi);
+	if (!rgb) return "(default)";
+	const ratio = getContrast(rgb, 1.0);
+	const pass = ratio >= 4.5 ? "AA" : ratio >= 3.0 ? "AA-lg" : "FAIL";
+	return `${ratio.toFixed(2)}:1 ${pass}`;
+}
+
+function getContrastVsBlack(colorName: string): string {
+	const ansi = theme.getFgAnsi(colorName as Parameters<typeof theme.getFgAnsi>[0]);
+	const rgb = parseAnsiRgb(ansi);
+	if (!rgb) return "(default)";
+	const ratio = getContrast(rgb, 0.0);
+	const pass = ratio >= 4.5 ? "AA" : ratio >= 3.0 ? "AA-lg" : "FAIL";
+	return `${ratio.toFixed(2)}:1 ${pass}`;
+}
+
+function logThemeColor(colorName: string): void {
+	const sample = theme.fg(colorName as Parameters<typeof theme.fg>[0], "Sample text");
+	const cw = getContrastVsWhite(colorName);
+	const cb = getContrastVsBlack(colorName);
+	console.log(`${colorName.padEnd(20)} ${sample}  white: ${cw.padEnd(12)} black: ${cb}`);
 }
 
 function cmdTheme(themeName: string): void {
 	process.env.COLORTERM = "truecolor";
 	initTheme(themeName);
-
-	const parseAnsiRgb = (ansi: string): [number, number, number] | null => {
-		const match = ansi.match(/38;2;(\d+);(\d+);(\d+)/);
-		return match ? [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)] : null;
-	};
-
-	const getContrastVsWhite = (colorName: string): string => {
-		const ansi = theme.getFgAnsi(colorName as Parameters<typeof theme.getFgAnsi>[0]);
-		const rgb = parseAnsiRgb(ansi);
-		if (!rgb) return "(default)";
-		const ratio = getContrast(rgb, 1.0);
-		const pass = ratio >= 4.5 ? "AA" : ratio >= 3.0 ? "AA-lg" : "FAIL";
-		return `${ratio.toFixed(2)}:1 ${pass}`;
-	};
-
-	const getContrastVsBlack = (colorName: string): string => {
-		const ansi = theme.getFgAnsi(colorName as Parameters<typeof theme.getFgAnsi>[0]);
-		const rgb = parseAnsiRgb(ansi);
-		if (!rgb) return "(default)";
-		const ratio = getContrast(rgb, 0.0);
-		const pass = ratio >= 4.5 ? "AA" : ratio >= 3.0 ? "AA-lg" : "FAIL";
-		return `${ratio.toFixed(2)}:1 ${pass}`;
-	};
-
-	const logColor = (name: string): void => {
-		const sample = theme.fg(name as Parameters<typeof theme.fg>[0], "Sample text");
-		const cw = getContrastVsWhite(name);
-		const cb = getContrastVsBlack(name);
-		console.log(`${name.padEnd(20)} ${sample}  white: ${cw.padEnd(12)} black: ${cb}`);
-	};
-
 	console.log(`\n=== ${themeName} theme (WCAG AA = 4.5:1) ===`);
-
 	console.log("\n--- Core UI ---");
-	["accent", "border", "borderAccent", "borderMuted", "success", "error", "warning", "muted", "dim"].forEach(logColor);
-
+	["accent", "border", "borderAccent", "borderMuted", "success", "error", "warning", "muted", "dim"].forEach(
+		logThemeColor,
+	);
 	console.log("\n--- Markdown ---");
-	["mdHeading", "mdLink", "mdCode", "mdCodeBlock", "mdCodeBlockBorder", "mdQuote", "mdListBullet"].forEach(logColor);
-
+	["mdHeading", "mdLink", "mdCode", "mdCodeBlock", "mdCodeBlockBorder", "mdQuote", "mdListBullet"].forEach(
+		logThemeColor,
+	);
 	console.log("\n--- Diff ---");
-	["toolDiffAdded", "toolDiffRemoved", "toolDiffContext"].forEach(logColor);
-
+	["toolDiffAdded", "toolDiffRemoved", "toolDiffContext"].forEach(logThemeColor);
 	console.log("\n--- Thinking ---");
-	["thinkingOff", "thinkingMinimal", "thinkingLow", "thinkingMedium", "thinkingHigh"].forEach(logColor);
-
+	["thinkingOff", "thinkingMinimal", "thinkingLow", "thinkingMedium", "thinkingHigh"].forEach(logThemeColor);
 	console.log("\n--- Backgrounds ---");
 	console.log("userMessageBg:", theme.bg("userMessageBg", " Sample "));
 	console.log("toolPendingBg:", theme.bg("toolPendingBg", " Sample "));
