@@ -53,7 +53,7 @@
 	},
 	"version": "0.0.3",
 	"dependencies": {
-		"@earendil-works/pi-agent-core": "^0.74.0",
+		"@earendil-works/pi-agent-core": "^0.75.1",
 		"@earendil-works/pi-ai": "^0.74.0",
 		"@earendil-works/pi-tui": "^0.74.0",
 		"@mariozechner/jiti": "^2.6.5",
