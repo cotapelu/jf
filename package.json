@@ -37,7 +37,7 @@
 		"@typescript/native-preview": "^7.0.0-dev.20260412.1",
 		"@vitest/coverage-v8": "^4.1.6",
 		"@vitest/runner": "^3.2.4",
-		"@vitest/spy": "^3.2.4",
+		"@vitest/spy": "^4.1.6",
 		"concurrently": "^9.2.1",
 		"esbuild": "^0.28.0",
 		"husky": "^9.1.7",
