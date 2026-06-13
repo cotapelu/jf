@@ -34,7 +34,8 @@ import {
 
 import { registerAllTools } from "./tools/index.js";
 import { setCurrentRuntime } from "./runtime-context.js";
-import { ParentChildSessionManager } from "./parent-child-session-manager.js";
+// New session tool replaces ParentChildSessionManager
+// import { ParentChildSessionManager } from "./parent-child-session-manager.js";
 
 // 1️⃣ PromptTemplate usage
 const myCustomPrompt: PromptTemplate = {
@@ -140,48 +141,112 @@ export async function main() {
     console.log(` Parent session: ${runtime.session.sessionFile}`);
     console.log();
 
-    // ====== DEMO 3: Parent-Child Session Tool (LLM có thể gọi) ======
+    // ====== DEMO 3: Advanced Session Tool (LLM có thể gọi) ======
     console.log(
-        "📦 Demo 3: Using session_manager tool directly (as LLM would)",
+        "📦 Demo 3: Using session tool with all operations (as LLM would)",
     );
 
-    // Demo: gọi tool trực tiếp (mô phỏng LLM gọi)
-    const { registerSessionManagerTool } = await import("./tools/index.js");
-    const sessionTool: any = registerSessionManagerTool()[0];
+    // Demo: gọi tool trực tiếp với API mới
+    const { registerSessionTool } = await import("./tools/index.js");
+    const sessionTool: any = registerSessionTool()[0];
 
-    // Trạng thái ban đầu
+    // 1. Status ban đầu
     console.log("\n1. Getting initial status...");
-    const status1 = await sessionTool.execute("status_1", { action: "get_status" });
+    const status1 = await sessionTool.execute("status_1", { operation: "status" });
     console.log("   ", status1.content[0].text);
 
-    // Tạo child
-    console.log("\n2. Creating child session...");
-    const createResult = await sessionTool.execute("create_1", { action: "create_child" });
-    console.log("   ", createResult.content[0].text);
-    const status2 = await sessionTool.execute("status_2", { action: "get_status" });
+    // 2. Tạo child với name và tags
+    console.log("\n2. Creating named child session...");
+    const create1 = await sessionTool.execute("create_1", {
+        operation: "create",
+        name: "debug-session",
+        tags: ["debug", "issue-123"],
+    });
+    console.log("   ", create1.content[0].text);
+    const status2 = await sessionTool.execute("status_2", { operation: "status" });
     console.log("   ", status2.content[0].text);
 
-    // Tạo child mới (replace)
-    console.log("\n3. Creating another child (replaces previous)...");
-    await sessionTool.execute("create_2", { action: "create_child" });
-    const status3 = await sessionTool.execute("status_3", { action: "get_status" });
-    console.log("   ", status3.content[0].text);
+    // 3. Tạo child thứ 2
+    console.log("\n3. Creating another child (feature work)...");
+    const create2 = await sessionTool.execute("create_2", {
+        operation: "create",
+        name: "feature-auth",
+        tags: ["feature", "auth"],
+    });
+    console.log("   ", create2.content[0].text);
 
-    // Switch parent
-    console.log("\n4. Switching to parent...");
-    await sessionTool.execute("switch_parent", { action: "switch_to_parent" });
-    const status4 = await sessionTool.execute("status_4", { action: "get_status" });
-    console.log("   ", status4.content[0].text);
+    // 4. List all sessions
+    console.log("\n4. Listing all sessions (sorted by created)...");
+    const list = await sessionTool.execute("list_1", { operation: "list" });
+    console.log("   ", list.content[0].text);
 
-    // Switch child
-    console.log("\n5. Switching to child...");
-    await sessionTool.execute("switch_child", { action: "switch_to_child" });
-    const status5 = await sessionTool.execute("status_5", { action: "get_status" });
-    console.log("   ", status5.content[0].text);
+    // 5. Get info on specific session
+    console.log("\n5. Getting info on first child...");
+    const firstChildId = create1.details.sessionId;
+    const info = await sessionTool.execute("info_1", {
+        operation: "info",
+        sessionId: firstChildId,
+    });
+    console.log("   ", info.content[0].text);
 
-    // Dispose
-    console.log("\n6. Disposing...");
-    await sessionTool.execute("dispose", { action: "dispose" });
+    // 6. Switch to a specific session
+    console.log("\n6. Switching to first child by ID...");
+    const switch1 = await sessionTool.execute("switch_1", {
+        operation: "switch",
+        sessionId: firstChildId,
+    });
+    console.log("   ", switch1.content[0].text);
+
+    // 7. Switch to parent
+    console.log("\n7. Switching back to parent...");
+    const switchParent = await sessionTool.execute("switch_parent", {
+        operation: "switch",
+        sessionId: "parent",
+    });
+    console.log("   ", switchParent.content[0].text);
+
+    // 8. Show session tree
+    console.log("\n8. Showing session tree...");
+    const tree = await sessionTool.execute("tree_1", { operation: "tree" });
+    console.log("   ", tree.content[0].text);
+
+    // 9. Add tags to a session
+    console.log("\n9. Adding priority:high tag to feature-auth...");
+    const tag = await sessionTool.execute("tag_1", {
+        operation: "tag",
+        sessionId: create2.details.sessionId,
+        tagAction: "add",
+        tags: ["priority:high"],
+    });
+    console.log("   ", tag.content[0].text);
+
+    // 10. View history
+    console.log("\n10. Viewing operation history...");
+    const history = await sessionTool.execute("history_1", { operation: "history", limit: 10 });
+    console.log("   ", history.content[0].text);
+
+    // 11. Diagnostics
+    console.log("\n11. Running diagnostics...");
+    const diag = await sessionTool.execute("diag_1", { operation: "diagnostics" });
+    console.log("   ", diag.content[0].text);
+
+    // 12. Get detailed diagnostics object
+    console.log("\n12. Diagnostics details:", JSON.stringify(diag.details, null, 2));
+
+    // 13. Rename a session
+    console.log("\n13. Renaming feature-auth to feature-auth-v2...");
+    await sessionTool.execute("rename_1", {
+        operation: "rename",
+        sessionId: create2.details.sessionId,
+        name: "feature-auth-v2",
+    });
+
+    // 14. List again to see changes
+    console.log("\n14. Listing sessions after rename...");
+    const list2 = await sessionTool.execute("list_2", { operation: "list" });
+    console.log("   ", list2.content[0].text);
+
+    console.log("\n✅ Demo 3 complete!");
 
     console.log();
 

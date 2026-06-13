@@ -7,13 +7,18 @@
   },
   "scripts": {
     "start": "tsx src/main.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.79.2"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.8",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.8"
   }
 }

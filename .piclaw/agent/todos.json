@@ -1,7 +1,34 @@
 {
   "version": 1,
-  "phases": [],
-  "nextTaskId": 1,
-  "nextPhaseId": 1,
-  "updatedAt": "2026-06-13T02:58:26.376Z"
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "Finalization",
+      "tasks": [
+        {
+          "id": "task-1",
+          "content": "Verify build and all tests pass",
+          "status": "completed"
+        },
+        {
+          "id": "task-2",
+          "content": "Update documentation",
+          "status": "completed"
+        },
+        {
+          "id": "task-3",
+          "content": "Final demo run and verification",
+          "status": "in_progress"
+        },
+        {
+          "id": "task-4",
+          "content": "Commit all changes",
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "nextTaskId": 5,
+  "nextPhaseId": 2,
+  "updatedAt": "2026-06-13T06:18:44.726Z"
 }
