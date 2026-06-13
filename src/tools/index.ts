@@ -17,6 +17,7 @@ import {
 	createReadTool,
 	createWriteTool,
 } from "@earendil-works/pi-coding-agent";
+import { createSessionManagerTool } from "./session-manager-tool.js";
 
 // Custom tool: get_time
 export const registerGetTimeTool = (): ToolDefinition => ({
@@ -100,4 +101,11 @@ export function registerAllCustomTools(): ToolDefinition[] {
  */
 export function registerAllTools(cwd: string): ToolDefinition[] {
 	return [...registerAllBuiltinTools(cwd), ...registerAllCustomTools()];
+}
+
+/**
+ * Register session manager tool (requires runtime context to be set)
+ */
+export function registerSessionManagerTool(): ToolDefinition[] {
+	return [createSessionManagerTool()];
 }

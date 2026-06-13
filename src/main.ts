@@ -33,6 +33,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 import { registerAllTools } from "./tools/index.js";
+import { setCurrentRuntime } from "./runtime-context.js";
 import { ParentChildSessionManager } from "./parent-child-session-manager.js";
 
 // 1️⃣ PromptTemplate usage
@@ -134,42 +135,53 @@ export async function main() {
             sessionManager,
         },
     );
+    // Set global runtime context for session_manager tool
+    setCurrentRuntime(runtime);
     console.log(` Parent session: ${runtime.session.sessionFile}`);
     console.log();
 
-    // ====== DEMO 3: Parent-Child Session Manager ======
+    // ====== DEMO 3: Parent-Child Session Tool (LLM có thể gọi) ======
     console.log(
-        "📦 Demo 3: ParentChildSessionManager (1 parent + 1 child)",
+        "📦 Demo 3: Using session_manager tool directly (as LLM would)",
     );
 
-    // Tạo manager wrapper
-    const pcManager = new ParentChildSessionManager(runtime);
+    // Demo: gọi tool trực tiếp (mô phỏng LLM gọi)
+    const { registerSessionManagerTool } = await import("./tools/index.js");
+    const sessionTool: any = registerSessionManagerTool()[0];
 
-    console.log(" Parent session (mẹ):", pcManager.parentSession.sessionFile);
+    // Trạng thái ban đầu
+    console.log("\n1. Getting initial status...");
+    const status1 = await sessionTool.execute("status_1", { action: "get_status" });
+    console.log("   ", status1.content[0].text);
 
-    // Tạo child session 1
-    console.log("\n👉 Creating child session 1...");
-    await pcManager.createChildSession();
-    console.log(` Child 1 (con): ${pcManager.childSession?.sessionFile}`);
-    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+    // Tạo child
+    console.log("\n2. Creating child session...");
+    const createResult = await sessionTool.execute("create_1", { action: "create_child" });
+    console.log("   ", createResult.content[0].text);
+    const status2 = await sessionTool.execute("status_2", { action: "get_status" });
+    console.log("   ", status2.content[0].text);
 
-    // Tạo child session 2 (thay thế child cũ)
-    console.log("\n👉 Creating child session 2 (replaces previous child)...");
-    await pcManager.createChildSession();
-    console.log(` Child 2 (con mới): ${pcManager.childSession?.sessionFile}`);
-    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+    // Tạo child mới (replace)
+    console.log("\n3. Creating another child (replaces previous)...");
+    await sessionTool.execute("create_2", { action: "create_child" });
+    const status3 = await sessionTool.execute("status_3", { action: "get_status" });
+    console.log("   ", status3.content[0].text);
 
-    // Chuyển về parent
-    console.log("\n👉 Switching back to parent...");
-    await pcManager.switchToParent();
-    console.log(` Now active: ${pcManager.session.sessionFile}`);
-    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+    // Switch parent
+    console.log("\n4. Switching to parent...");
+    await sessionTool.execute("switch_parent", { action: "switch_to_parent" });
+    const status4 = await sessionTool.execute("status_4", { action: "get_status" });
+    console.log("   ", status4.content[0].text);
 
-    // Chuyển lại child
-    console.log("\n👉 Switching to child again...");
-    await pcManager.switchToChild();
-    console.log(` Now active: ${pcManager.session.sessionFile}`);
-    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+    // Switch child
+    console.log("\n5. Switching to child...");
+    await sessionTool.execute("switch_child", { action: "switch_to_child" });
+    const status5 = await sessionTool.execute("status_5", { action: "get_status" });
+    console.log("   ", status5.content[0].text);
+
+    // Dispose
+    console.log("\n6. Disposing...");
+    await sessionTool.execute("dispose", { action: "dispose" });
 
     console.log();
 
