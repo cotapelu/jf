@@ -29,15 +29,25 @@ function getManager(): ParentChildSessionManager {
 export function createSessionManagerTool(): ToolDefinition {
     return {
         name: "session_manager",
-        label: "Session Manager (Parent-Child)",
+        label: "Session Manager",
         description:
-            "Quản lý parent-child sessions: tạo child session mới, chuyển đổi giữa parent và child, xem trạng thái. Chỉ hỗ trợ 1 parent + 1 child. Parent là session ban đầu, child là session làm việc con.\n\n" +
-            "Actions:\n" +
-            "- create_child: Tạo child session mới (nếu có child cũ sẽ bị thay thế)\n" +
-            "- switch_to_parent: Chuyển runtime về parent session\n" +
-            "- switch_to_child: Chuyển runtime về child session\n" +
-            "- get_status: Xem thông tin cả parent và child\n" +
-            "- dispose: Dispose toàn bộ runtime (kết thúc session)",
+            "Internal tool for managing parent-child sessions. Use this to create a new child session for independent work, switch between sessions, and monitor status. Exactly 1 parent + 1 child supported.\n\n" +
+            "Operations:\n" +
+            "- create_child: Create a new child session (replaces any existing child). Use when starting a fresh independent task.\n" +
+            "- switch_to_parent: Switch runtime to the parent session.\n" +
+            "- switch_to_child: Switch runtime to the current child session.\n" +
+            "- get_status: Get info about both sessions and which is active.\n" +
+            "- dispose: Dispose entire runtime (both sessions), ending the session.",
+        promptSnippet: "session_manager: manage parent-child sessions (create child, switch)",
+        promptGuidelines: [
+            "You have the ability to manage sessions via the `session_manager` tool.",
+            "- Create a child session when starting a new independent task to avoid mixing contexts.",
+            "- Switch back to parent to continue the original conversation.",
+            "- Switch to child to resume the most recent independent work.",
+            "- Check status with get_status if unsure.",
+            "- Only one child session exists at a time; creating a new child replaces the old one.",
+            "- Dispose when completely finished to free resources.",
+        ],
         parameters: {
             type: "object",
             properties: {
