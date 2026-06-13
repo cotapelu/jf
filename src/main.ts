@@ -32,7 +32,7 @@ import {
     type ModelInfo,
 } from "@earendil-works/pi-coding-agent";
 
-import { registerAllTools } from "./tools/index.js";
+import { registerGetTimeTool, registerSessionTool } from "./tools/index.js";
 import { setCurrentRuntime } from "./runtime-context.js";
 
 // 1️⃣ PromptTemplate usage
@@ -78,8 +78,8 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
         services,
         sessionManager,
         sessionStartEvent,
-        tools: [],
-        customTools: registerAllTools(cwd),
+        tools: ["read", "bash", "edit", "write", "grep", "find", "ls"],
+        customTools: [...registerSessionTool(), registerGetTimeTool()],
     };
 
     // Create session với explicit typing

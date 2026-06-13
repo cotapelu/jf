@@ -104,10 +104,10 @@ export function registerAllTools(cwd: string): ToolDefinition[] {
 }
 
 /**
- * Register session tool (call after runtime creation to initialize)
+ * Register session tool (manager initializes lazily on first use)
  */
 export function registerSessionTool(): ToolDefinition[] {
-	initializeSessionTool();
+	// Defer initialization until tool execution (lazy)
 	return [createSessionTool()];
 }
 

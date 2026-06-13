@@ -8,7 +8,7 @@
   "scripts": {
     "start": "tsx src/main.ts",
     "build": "tsc && chmod +x dist/cli.js",
-    "test": "vitest",
+    "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage"
   },
