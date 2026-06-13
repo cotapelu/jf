@@ -22,15 +22,15 @@ export function createMockSession(name: string): AgentSession {
  * Also maintains an internal array of sessions for verification.
  */
 export function createMockRuntime(initialSession: AgentSession = createMockSession('parent')): any {
-    let currentSession = initialSession;
+    let currentSession: AgentSession | null = initialSession;
     const sessions: AgentSession[] = [initialSession];
     let counter = 0;
 
     return {
-        get session(): AgentSession {
+        get session(): AgentSession | null {
             return currentSession;
         },
-        set session(s: AgentSession) {
+        set session(s: AgentSession | null) {
             currentSession = s;
         },
         async newSession(options?: { parentSession?: string }): Promise<{ cancelled: boolean }> {

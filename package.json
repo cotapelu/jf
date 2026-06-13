@@ -1,9 +1,9 @@
 {
-  "name": "pi-sdk-ts",
+  "name": "jf-pi-sdk",
   "version": "0.0.1",
   "type": "module",
   "bin": {
-    "pst": "dist/cli.js"
+    "jf": "dist/cli.js"
   },
   "scripts": {
     "start": "tsx src/main.ts",

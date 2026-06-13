@@ -312,14 +312,14 @@ src/
 ## 🆚 Comparison with Old ParentChildSessionManager
 
 | Feature | Old (ParentChildSessionManager) | New (SessionTool) |
-|---------|-------------------------------|-------------------|
+|---------|--------------------------------|-------------------|
 | Max children | 1 | Unlimited |
 | Metadata | None | Name, tags, timestamps, parent |
 | Tree support | No | Yes (full hierarchy) |
 | History tracking | No | Yes (audit trail) |
 | Operations | 3 (create, switch, dispose) | 12 (full lifecycle) |
 | Error handling | Basic | Comprehensive |
-| Tests | None | 92 tests |
+| Unit tests | 0 | 92 |
 | Singleton | Yes (static) | No (instance per runtime) |
 
 ## 📄 License

@@ -12,15 +12,15 @@ function createMockSession(name: string): AgentSession {
 
 // Mock Runtime
 function createMockRuntime(initialSession: AgentSession = createMockSession('parent')): any {
-    let currentSession = initialSession;
+    let currentSession: AgentSession | null = initialSession;
     const sessions: AgentSession[] = [initialSession];
     let counter = 0;
 
     return {
-        get session(): AgentSession {
+        get session(): AgentSession | null {
             return currentSession;
         },
-        set session(s: AgentSession) {
+        set session(s: AgentSession | null) {
             currentSession = s;
         },
         async newSession(options?: { parentSession?: string }): Promise<{ cancelled: boolean }> {
@@ -324,7 +324,7 @@ describe('MultiSessionManager', () => {
     describe('exportMetadata()', () => {
         it('should export all session data as plain object', async () => {
             await manager.createChild({ name: 'child-1' });
-            const exportData = manager.exportMetadata();
+            const exportData = manager.exportMetadata() as any;
 
             expect(exportData).toHaveProperty('sessions');
             expect(exportData).toHaveProperty('rootSessionId');
