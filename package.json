@@ -1,0 +1,19 @@
+{
+  "name": "pi-sdk-ts",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "pst": "dist/cli.js"
+  },
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.79.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
