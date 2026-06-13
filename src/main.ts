@@ -33,6 +33,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 import { registerAllTools } from "./tools/index.js";
+import { ParentChildSessionManager } from "./parent-child-session-manager.js";
 
 // 1️⃣ PromptTemplate usage
 const myCustomPrompt: PromptTemplate = {
@@ -136,18 +137,40 @@ export async function main() {
     console.log(` Parent session: ${runtime.session.sessionFile}`);
     console.log();
 
-    // ====== DEMO 3: Tạo child sessions ======
+    // ====== DEMO 3: Parent-Child Session Manager ======
     console.log(
-        "📦 Demo 3: Creating child sessions via runtime.newSession()",
+        "📦 Demo 3: ParentChildSessionManager (1 parent + 1 child)",
     );
-    console.log(" Creating child session 1...");
-    await runtime.newSession();
-    console.log(` Child 1: ${runtime.session.sessionFile}`);
-    console.log(" Creating child session 2...");
-    await runtime.newSession();
-    console.log(` Child 2: ${runtime.session.sessionFile}`);
-    // Switch back to first (using last sessions)
-    // Note: In real app, you'd track session files and switch as needed
+
+    // Tạo manager wrapper
+    const pcManager = new ParentChildSessionManager(runtime);
+
+    console.log(" Parent session (mẹ):", pcManager.parentSession.sessionFile);
+
+    // Tạo child session 1
+    console.log("\n👉 Creating child session 1...");
+    await pcManager.createChildSession();
+    console.log(` Child 1 (con): ${pcManager.childSession?.sessionFile}`);
+    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+
+    // Tạo child session 2 (thay thế child cũ)
+    console.log("\n👉 Creating child session 2 (replaces previous child)...");
+    await pcManager.createChildSession();
+    console.log(` Child 2 (con mới): ${pcManager.childSession?.sessionFile}`);
+    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+
+    // Chuyển về parent
+    console.log("\n👉 Switching back to parent...");
+    await pcManager.switchToParent();
+    console.log(` Now active: ${pcManager.session.sessionFile}`);
+    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+
+    // Chuyển lại child
+    console.log("\n👉 Switching to child again...");
+    await pcManager.switchToChild();
+    console.log(` Now active: ${pcManager.session.sessionFile}`);
+    console.log(` Currently active: ${pcManager.isParentActive ? "parent" : "child"}`);
+
     console.log();
 
     // ====== DEMO 4: InteractiveMode ======
