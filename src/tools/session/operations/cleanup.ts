@@ -1,6 +1,7 @@
 import type { MultiSessionManager } from '../manager.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { logger } from '../../../logger.js';
 
 /**
  * Cleanup old session files on disk
@@ -89,7 +90,12 @@ export async function operationCleanup(
   }
 
   // Actually delete
-  await Promise.all(uniqueDelete.map((file) => fs.unlink(file).catch((err) => console.error(`Failed to delete ${file}:`, err))));
+  await Promise.all(
+    uniqueDelete.map(
+      (file) =>
+        fs.unlink(file).catch((err) => logger.error(`Failed to delete ${file}: ${err}`))
+    )
+  );
 
   return {
     content: [

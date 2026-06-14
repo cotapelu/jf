@@ -140,8 +140,7 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Consider structured logging with Pino/Winston (optional)
-2. Integrate with runtime diagnostics (optional)
+1. Integrate with runtime diagnostics (optional)
 
 ---
 

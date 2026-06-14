@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { AgentSession, AgentSessionRuntime } from '@earendil-works/pi-coding-agent';
 import { SessionRegistry, SessionMetadata } from './registry.js';
+import { logger } from '../../logger.js';
 
 /**
  * Simple async mutex for serializing operations
@@ -112,7 +113,7 @@ export class MultiSessionManager {
       parentId: null,
     });
     this.rootSessionId = meta.id;
-    console.log(`✅ Parent session registered: ${meta.id} (${meta.filePath})`);
+    logger.debug(`Parent session registered: ${meta.id} (${meta.filePath})`);
   }
 
   /**
@@ -180,7 +181,7 @@ export class MultiSessionManager {
         parentId: parentId,
       });
 
-      console.log(`✅ Created child session: ${metadata.id} (parent: ${parentId})`);
+      logger.debug(`Created child session: ${metadata.id} (parent: ${parentId})`);
       return metadata;
     });
   }
@@ -212,7 +213,7 @@ export class MultiSessionManager {
       // Switch runtime's session
       await this.runtime.switchSession(targetMeta.filePath);
 
-      console.log(`🔄 Switched to session: ${sessionId} (${targetMeta.filePath})`);
+      logger.debug(`Switched to session: ${sessionId} (${targetMeta.filePath})`);
     });
   }
 

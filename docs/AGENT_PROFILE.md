@@ -147,8 +147,9 @@
    - **Pattern:** Always `await` async operations in switch cases
 
 2. **Type assertion abuse** - Tests use `as any` extensively
-   - **Status:** ⚠️ ACKNOWLEDGED
-   - **Pattern:** Create proper mock types instead of `any`
+   - **Status:** ✅ MOSTLY FIXED
+   - **Resolution:** Introduced `AgentSessionRuntime` type, typed `MultiSessionManager` constructor, improved error handling. Some `as any` remain for test mocks due to SDK complexity, but coverage improved significantly.
+   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors
 
 3. **Details shape inconsistency** - `operationList` returned raw `sessions` in details, other ops returned transformed
    - **Status:** ✅ FIXED (normalized shape)
@@ -189,9 +190,11 @@
 - Reduced `any` usage in test mocks (typed `AgentSessionRuntime`)
 - Reorganized tool registration: moved `get-time-tool` to `tools/time/`
 - Added `session.cleanup` operation for disk rotation
+- Implemented structured logging (env-controlled logger)
 - Added 4 new tests for cleanup (total tests now 105)
 
 🔄 **REMAINING:**
+- Integrate with runtime diagnostics (optional)
 - WeakRef garbage collection verification (likely covered by existing dispose test)
 
 ---
