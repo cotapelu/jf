@@ -138,10 +138,11 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Add concurrent session operation tests (race conditions)
-2. Add WeakRef garbage collection simulation test
-3. Reduce `any` usage in test mocks (type safety)
-4. Reorganize tool registration under src/tools/ (optional)
+1. Fix concurrent session creation race (implement lock in MultiSessionManager.createChild)
+2. Enable concurrency test (remove skip after fix)
+3. Add WeakRef garbage collection simulation test
+4. Reduce `any` usage in test mocks (type safety)
+5. Reorganize tool registration under src/tools/ (optional)
 
 ---
 

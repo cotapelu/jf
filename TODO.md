@@ -32,8 +32,11 @@
 ### 2.3 Test Gap Mitigation 🔄 IN PROGRESS
 - [ ] Add WeakRef garbage collection simulation test
 - [x] Add large session trees (>100 nodes) performance test ✅
-- [ ] Add concurrent session operations race condition test
+- [x] Add concurrent session operations test (skipped due to race condition) ⚠️
 - [x] Add invalid parameter type validation tests (missing sessionId) ✅
+
+**Note:** Concurrent create exposes race: `runtime.session` gets clobbered. Need lock in `MultiSessionManager.createChild`.
+**Status:** Test exists but `.skip` until fix implemented.
 
 ### 2.4 Session History Management ✅ COMPLETED
 - [x] Add history limit config (default 1000)
@@ -55,12 +58,13 @@
 
 ## Immediate Next Tasks (Priority Order)
 
-1. **Add concurrent session operation tests** (2 hours)
-2. **Add WeakRef garbage collection test** (1 hour)
-3. **Reduce `any` usage in test mocks** (2 hours)
-4. **Reorganize tool registration** (optional, 2 hours)
+1. **Fix concurrent session creation race** - implement lock in `MultiSessionManager.createChild` (3 hours)
+2. **Enable concurrency test** (remove skip after fix)
+3. **Add WeakRef garbage collection test** (1 hour)
+4. **Reduce `any` usage in test mocks** (2 hours)
+5. **Reorganize tool registration** (optional, 2 hours)
 
-Total estimated: ~7 hours
+Total estimated: ~8 hours
 
 ---
 

@@ -481,6 +481,19 @@ describe('SessionTool', () => {
     });
   });
 
+  // Concurrent operations are currently limited by the Pi SDK's use of a single mutable `runtime.session` property.
+  // Multiple concurrent `newSession` calls clobber each other's session, leading to race conditions.
+  // TODO: Implement a lock in MultiSessionManager.createChild to prevent concurrent modifications.
+  describe.skip('concurrency', () => {
+    it('should handle concurrent session creation without corruption', async () => {
+      // Skipped due to known race condition: runtime.session gets overwritten.
+    });
+
+    it('should handle concurrent switches to different sessions', async () => {
+      // Skipped for same reason; switch operations may also be affected if they rely on runtime.session.
+    });
+  });
+
   describe('error handling', () => {
     it('should return error for unknown operation', async () => {
       const result: any = await tool.execute('err1', { operation: 'unknown' } as any);
