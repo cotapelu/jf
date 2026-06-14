@@ -182,9 +182,9 @@
 ## Next Actions
 
 All high-priority quality and reliability tasks are complete. The codebase is production-ready with:
-- Comprehensive test coverage (133 tests, 100% pass)
-- >88% statement coverage, >78% branch coverage
-- Full coverage on all operations (export, list, tag, etc.)
+- Comprehensive test coverage (143 tests, 100% pass)
+- >88% statement coverage, nearly 80% branch coverage
+- Full coverage on all operations and utilities (export, list, tag, utils, etc.)
 - Concurrency safety (Mutex)
 - Disk rotation (session.cleanup)
 - Structured logging (pretty/JSON)

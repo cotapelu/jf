@@ -7,8 +7,8 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-14  
-**Iteration:** 6 (Branch coverage expansion)  
-**Focus:** Increase branch coverage via operationList & operationTag tests
+Iteration:** 7 (Utils coverage finalization)  
+**Focus:** Achieve near‑100% branch coverage by testing pure utilities
 
 ---
 
@@ -21,8 +21,8 @@
 | Duplicate code (<5) | N/A | No dup>5 | 0 duplicates | ✅ |
 | Error handling | Partial | 100% public | 100% | ✅ |
 | Input validation | Partial | 100% external | 100% | ✅ |
-| Test coverage | 133 tests | ≥80% | 88.21% stmts, 90.83% funcs | ✅ |
-| Tests passing | 133/133 | 100% | 133/133 (100%) | ✅ |
+| Test coverage | 143 tests | ≥80% | 88.21% stmts, 90.83% funcs | ✅ |
+| Tests passing | 143/143 | 100% | 143/143 (100%) | ✅ |
 | Build status | Working | No errors | ✅ Success | ✅ |
 | Lint status | 3 errors | 0 errors | ✅ Clean | ✅ |
 
@@ -77,10 +77,12 @@ Duration  ~400ms
   - Session export operation tests: +7
 - Phase 6 additions:
   - operationList & operationTag unit tests: +16
-- **Total: 133 tests passing**
+- Phase 7 additions:
+  - Session utilities tests (formatSession, countNodes, renderTree, formatListOutput): +10
+- **Total: 143 tests passing**
 
 **Failure rate:** 0%  
-**Coverage:** Statements 88.21%, Branches 78.45%, Functions 90.83%, Lines 89.22% ✅
+**Coverage:** Statements 88.21%, Branches 79.55%, Functions 90.83%, Lines 89.22% ✅
 
 **Lint status:** ✅ Clean (3 errors fixed via ESLint config)
 

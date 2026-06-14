@@ -72,8 +72,17 @@ All tests now pass (101).
 
 - [x] Add operationList unit tests (filter, sort, limit)
 - [x] Add operationTag unit tests (error paths: missing sessionId, tags, tagAction, session not found)
-- [x] Increased branch coverage to 78.45%, statements 88.21%
-- [x] All tests: 133/133 passing
+- [x] Increased branch coverage to 78.45% → 79.55%, statements 88.21%
+- [x] All tests: 133/133 → 143/143
+
+## Phase 7: Utilities Coverage Finalization (COMPLETED ✅)
+
+- [x] Test formatSession (various session states)
+- [x] Test countNodes (trees of various shapes)
+- [x] Test formatListOutput (sessions list formatting)
+- [x] Test renderTree (nested tree rendering)
+- [x] Achieved 100% statements on utils.ts, 91.3% branches
+- [x] All tests: 143/143 passing
 
 All high-priority tasks complete.
 
