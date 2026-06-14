@@ -56,15 +56,13 @@ All tests now pass (101).
 
 ---
 
-## Immediate Next Tasks (Priority Order)
+## Phase 4: Observability & Test Expansion (COMPLETED ✅)
 
-1. [x] Reduce `any` usage in test mocks (completed)
-2. [x] Reorganize tool registration (done)
-3. [x] Add session file rotation/cleanup (implemented cleanup operation)
-4. [x] Consider structured logging (implemented)
-5. [ ] Integrate runtime diagnostics (optional)
+- [x] Add JSON log format option (PI_LOG_FORMAT=json)
+- [x] Comprehensive logger tests (5 tests, coverage ~66%)
+- [x] Updated evolution docs with latest iteration
 
-Total estimated: ~7 hours (if all done)
+All high-priority tasks complete.
 
 ---
 
@@ -77,6 +75,7 @@ Total estimated: ~7 hours (if all done)
 | 2026-06-14 | Updated evolution docs (metrics, profile, roadmap) | 2 |
 | 2026-06-14 | Created PROJECT_STATE.md & TODO.md | 2 |
 | 2026-06-14 | Added CI/CD pipeline (GitHub Actions) | 3 |
+| 2026-06-14 | Added JSON logging format + tests | 4 |
 
 ---
 
