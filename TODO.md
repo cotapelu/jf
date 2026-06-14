@@ -27,7 +27,7 @@
 - [x] Fix unused variable false positives (underscore-prefixed params)
 - [x] Run lint - no errors
 - [x] Apply Prettier formatting to codebase
-- [ ] Add `format` script to package.json (optional)
+- [x] Add `format` script to package.json
 
 ### 2.3 Test Gap Mitigation 🔄 IN PROGRESS
 - [ ] Add WeakRef garbage collection simulation test

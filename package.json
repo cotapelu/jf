@@ -11,17 +11,20 @@
     "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.79.2"
   },
   "devDependencies": {
+    "@types/prettier": "^2.7.3",
     "@typescript-eslint/eslint-plugin": "^8.61.0",
     "@typescript-eslint/parser": "^8.61.0",
     "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.5.0",
     "globals": "^17.6.0",
+    "prettier": "^3.8.4",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.61.0",
