@@ -3,9 +3,13 @@ import { operationList, formatListOutput } from '../tools/session/operations/lis
 import type { MultiSessionManager } from '../tools/session/manager.js';
 import type { SessionMetadata } from '../tools/session/registry.js';
 
+// Use any for mocks to avoid strict type issues in tests
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mgr: any = {};
+
 describe('operationList', () => {
-  let mgr: MultiSessionManager;
-  let mockList: vi.Mock;
+  let mgr!: any;
+  let mockList: any;
 
   function createMeta(id: string, name?: string, isActive = false, createdAt = new Date()) {
     return {
@@ -15,7 +19,11 @@ describe('operationList', () => {
       createdAt,
       filePath: `/path/${id}.jsonl`,
       tags: [],
-    } as SessionMetadata;
+      // additional fields not needed for tests
+      parentId: undefined,
+      state: undefined,
+      sessionRef: undefined,
+    } as any;
   }
 
   beforeEach(() => {

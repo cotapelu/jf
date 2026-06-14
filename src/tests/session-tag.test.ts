@@ -3,10 +3,14 @@ import { operationTag } from '../tools/session/operations/tag.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
 import type { SessionMetadata } from '../tools/session/registry.js';
 
-describe('operationTag', () => {
-  let mgr: MultiSessionManager;
+// Use any for mocks to avoid strict type issues in tests
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mgr: any = {};
 
-  function createMeta(id: string, tags: string[] = []): SessionMetadata {
+describe('operationTag', () => {
+  let mgr!: any;
+
+  function createMeta(id: string, tags: string[] = []) {
     return {
       id,
       name: id,
@@ -14,7 +18,10 @@ describe('operationTag', () => {
       createdAt: new Date(),
       filePath: `/path/${id}.jsonl`,
       tags,
-    } as SessionMetadata;
+      parentId: undefined,
+      state: undefined,
+      sessionRef: undefined,
+    } as any;
   }
 
   beforeEach(() => {

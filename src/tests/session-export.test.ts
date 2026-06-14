@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { operationExport } from '../tools/session/operations/export.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
 
+// Treat mgr as any to avoid complex typing in tests
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mgr: any = {};
+
 describe('operationExport', () => {
-  let mgr: MultiSessionManager;
+  let mgr!: any;
   let mockRegistry: any;
   let mockSession: any;
 
