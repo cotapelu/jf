@@ -21,19 +21,19 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (153/153)
+- Test pass rate: ✅ 100% (167/167)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
 ### Test Coverage
-- Statements: 89.02% (target ≥80%)
-- Branches: 80.93% (target ≥60%)
+- Statements: 91.05% (target ≥80%)
+- Branches: 82.32% (target ≥60%)
 - Functions: 90.83% (target ≥80%)
-- Lines: 90.08% (target ≥80%)
+- Lines: 92.24% (target ≥80%)
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 153 tests passing (~650ms)
+- Vitest: ✅ 167 tests passing (~700ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -143,6 +143,14 @@ src/
 1. **Info & Rename Operation Tests** - Added unit tests for `operationInfo` and `operationRename` covering success and all error paths
 2. **Coverage Increase** - Statements 89.02%, Branches 80.93%, Lines 90.08%; `info.ts` 100%
 3. **All Tests Passing** - 153/153
+
+---
+
+## Recent Changes (Iteration 9)
+
+1. **Logger Tests Expansion** - Added tests for all log levels (trace, debug, info, warn, error, fatal) in both pretty and JSON formats
+2. **Coverage Increase** - Statements 91.05%, Branches 82.32%, Lines 92.24%; `logger.ts` 96.87% stmts, 100% lines
+3. **All Tests Passing** - 167/167
 
 ---
 
