@@ -26,7 +26,7 @@
 - [x] Configure ESLint (typescript-eslint)
 - [x] Fix unused variable false positives (underscore-prefixed params)
 - [x] Run lint - no errors
-- [ ] Apply Prettier formatting to codebase
+- [x] Apply Prettier formatting to codebase
 - [ ] Add `format` script to package.json (optional)
 
 ### 2.3 Test Gap Mitigation 🔄 IN PROGRESS
