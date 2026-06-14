@@ -15,7 +15,7 @@
 
 ---
 
-## Phase 2: Quality Infrastructure (IN PROGRESS 🔄)
+## Phase 2: Quality Infrastructure (COMPLETED ✅)
 
 ### 2.1 Coverage Thresholds ✅ COMPLETED
 - [x] Add coverage config to vitest.config.ts
@@ -46,10 +46,10 @@ All tests now pass (101).
 
 ---
 
-## Phase 3: Future Enhancements (PENDING ⏳)
+## Phase 3: Future Enhancements (IN PROGRESS 🔄)
 
-- [ ] Review and reduce `any` usage in test mocks
-- [ ] Reorganize tool registration under src/tools/ subdirectories
+- [x] Review and reduce `any` usage in test mocks (completed)
+- [x] Reorganize tool registration under src/tools/ subdirectories (done)
 - [ ] Add session file rotation/cleanup strategy
 - [ ] Consider Pino/Winston logger for structured logging
 - [ ] Integrate with runtime diagnostics
