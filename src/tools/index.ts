@@ -18,7 +18,7 @@ import {
   createReadTool,
   createWriteTool,
 } from '@earendil-works/pi-coding-agent';
-import { getTimeTool } from './get-time-tool.js';
+import { getTimeTool } from './time/index.js';
 import {
   createSessionTool,
   initializeSessionTool,
@@ -26,7 +26,7 @@ import {
 } from './session/index.js';
 
 // Re-export get_time tool for convenience
-export { getTimeTool } from './get-time-tool.js';
+export { getTimeTool } from './time/index.js';
 
 /**
  * Register ALL built-in tools by calling EVERY tool factory function

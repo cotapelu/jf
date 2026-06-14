@@ -59,7 +59,7 @@ All tests now pass (101).
 ## Immediate Next Tasks (Priority Order)
 
 1. [x] Reduce `any` usage in test mocks (completed)
-2. [ ] Reorganize tool registration (optional, 2 hours)
+2. [x] Reorganize tool registration (done: moved get-time-tool to time/ subdirectory)
 3. [ ] Add session file rotation (optional, 3 hours)
 4. [ ] Consider structured logging (optional, 2 hours)
 
