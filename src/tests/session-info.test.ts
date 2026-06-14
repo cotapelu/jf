@@ -32,7 +32,7 @@ describe('operationInfo', () => {
   });
 
   it('returns info for explicit sessionId', () => {
-    const meta = createMeta({ name: 'My Session', tags: ['a', 'b'], childCount: 0 });
+    const meta = createMeta({ name: 'My Session', tags: ['a', 'b'] });
     (mgr.get as any).mockReturnValue(meta);
     (mgr.getRegistry as any).mockReturnValue({ getChildren: () => [] });
 
@@ -41,6 +41,7 @@ describe('operationInfo', () => {
     expect(result.details.operation).toBe('info');
     expect(result.details.session.id).toBe('sess1');
     expect(result.details.session.name).toBe('My Session');
+    expect(result.details.session.childCount).toBe(0);
     expect(() => JSON.stringify(result)).not.toThrow();
   });
 
