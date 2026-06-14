@@ -7,8 +7,8 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-14  
-**Iteration:** 1 (Initial refactoring)  
-**Focus:** Code quality - Function size violation
+**Iteration:** 2 (Quality infrastructure)  
+**Focus:** Lint & TypeScript compliance - unused parameter handling
 
 ---
 
@@ -21,45 +21,48 @@
 | Duplicate code (<5) | N/A | No dup>5 | 0 duplicates | ✅ |
 | Error handling | Partial | 100% public | 100% | ✅ |
 | Input validation | Partial | 100% external | 100% | ✅ |
-| Test coverage | 92 tests | ≥80% | Estimated ≥85% | ✅ |
-| Tests passing | 92/92 | 100% | 92/92 (100%) | ✅ |
+| Test coverage | 92 tests | ≥80% | 83.08% stmts, 88.54% funcs | ✅ |
+| Tests passing | 92/92 | 100% | 97/97 (100%) | ✅ |
 | Build status | Working | No errors | ✅ Success | ✅ |
+| Lint status | 3 errors | 0 errors | ✅ Clean | ✅ |
 
 ---
 
 ## Refactoring Impact
 
-### Before
-- `session-tool.ts`: 1 execute() function = **638 lines**
-- Complexity: Massive switch with 12 cases (~30 complexity)
-- Violation: Critical (Function size >20 lines by 31x)
+### Refactoring (Iteration 1)
+**Before:** `session-tool.ts`: 1 execute() = **638 lines**, complexity ~30
+**After:** Modular structure: 13 functions <20 lines each, complexity 1-3
 
-### After
-- `src/tools/session/`: Modular structure with 13 functions
-  - `index.ts` execute dispatcher: 40 lines (switch)
-  - `operations/*.ts`: 12 functions, **all <20 lines** (avg 12 lines)
-  - `utils.ts`: 3 helper functions (<20 lines each)
-- Complexity: Each operation complexity 1-3
-- Maintainability: ⬆️⬆️⬆️
+### Lint Compliance (Iteration 2)
+**Issue:** ESLint flagged 3 unused parameters in `get-time-tool.ts`
+- Parameters `_toolCallId`, `_signal`, `_onUpdate`, `_ctx` required by Pi SDK interface but unused in simple tool
+- ESLint `no-unused-vars` was blocking CI
+**Fix:** Configure ESLint to ignore underscore-prefixed parameters via `argsIgnorePattern: "^_"`
+**Result:** All lint errors resolved, CI passes
+
 
 ---
 
-## Test Results
+## Test Results (Iteration 2)
 
 ```
 RUN  v4.1.8
 Test Files  3 passed (3)
-Tests  92 passed (92)
-Duration  419ms
+Tests  97 passed (97)
+Duration  705ms
 ```
 
-**Test breakdown:**
+**Test breakdown (cumulative):**
 - `session-tool.test.ts`: 33 tests ✅
 - `multi-session-manager.test.ts`: ~30 tests ✅
 - `session-registry.test.ts`: ~29 tests ✅
+- Additional tests: 5 new tests added (bringing total from 92→97)
 
 **Failure rate:** 0%  
-**Test coverage:** Maintained ≥80%
+**Coverage:** Statements 83.08%, Branches 70.23%, Functions 88.54%, Lines 83.42% ✅
+
+**Lint status:** ✅ Clean (3 errors fixed via ESLint config)
 
 ---
 

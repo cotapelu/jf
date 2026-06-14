@@ -44,6 +44,23 @@
 
 **Status:** ✅ FIXED in iteration 1
 
+### 3. ESLint Unused Variable False Positives (FIXED ✅)
+**Severity:** MEDIUM (blocking CI)  
+**Instance:** `get-time-tool.ts` - parameters `_toolCallId`, `_signal`, `_onUpdate`, `_ctx`  
+**Impact:** Lint fails, CI pipeline blocked  
+**Root cause:** Pi SDK tool interface requires these parameters even when unused. Simple tools don't need them.  
+**Testing:** Verified all tool execute() functions follow interface: `(toolCallId, params, signal?, onUpdate?, ctx?)`  
+**Resolution:** Configure ESLint `no-unused-vars` rule with `argsIgnorePattern: "^_"`  
+**Pattern established:** All tool execute() functions must prefix unused interface parameters with `_` to indicate intentional non-use, and ESLint must be configured to ignore them.  
+**Status:** ✅ FIXED in iteration 2
+
+### 4. Tool Registration Organization (PARTIAL)
+**Severity:** MEDIUM  
+**Instance:** `src/tools/index.ts` imports from fragmented paths  
+**Impact:** Harder to navigate, potential import errors  
+**Status:** PARTIAL - Session tool now has clean module, other tools (get-time) still standalone  
+**Recommendation:** Consider organizing all custom tools under `src/tools/` subdirectories
+
 ---
 
 ### 3. Tool Registration Organization (PARTIAL)
@@ -148,33 +165,32 @@
 
 ---
 
-## Recommendations for Next Iteration
+## Quality Infrastructure Status (Phase 2 Progress)
 
-1. **Add coverage threshold** - Update vitest.config.ts:
-   ```ts
-   test: {
-     coverage: { thresholds: { global: { branches: 80, functions: 80, lines: 80, statements: 80 } } }
-   }
-   ```
+✅ **COMPLETED:**
+- Coverage thresholds defined in `vitest.config.ts` (statements/functions/lines ≥80%, branches ≥60%)
+- Prettier configuration present (`.prettierrc`)
+- ESLint configuration present (`eslint.config.js`) with TypeScript rules
+- ESLint unused-var false positive resolved via `argsIgnorePattern: "^_"`
 
-2. **Add Prettier** - `.prettierrc` + format all files
+🔄 **NEXT PRIORITIES:**
+1. **Ensure Prettier formatting applied** - Run `npx prettier --write src/` and optionally add `format` script
+2. **Address test gaps** - Add edge case tests for:
+   - WeakRef garbage collection simulation
+   - Large session trees (>100 nodes)
+   - Concurrent session operations
+   - Invalid parameter type validation
+3. **Add session history limit** - Prevent unbounded memory growth
 
-3. **Add ESLint** - Basic linting (no unreachable code, no unused vars)
-
-4. **Address test gaps** - Add edge case tests for:
-   - WeekRef garbage collection simulation
-   - Large tree traversal
-   - Concurrent operations
-
-5. **Add session history limit** - Prevent unbounded growth
+---
 
 ---
 
 ## Evolution Trajectory
 
-**Phase 1 (Current):** Critical refactoring  
-**Phase 2 (Next):** Quality infrastructure (coverage, formatting, linting)  
-**Phase 3 (Future):** Performance & edge case hardening  
+**Phase 1 (Complete):** Critical refactoring - eliminated function size violations ✅  
+**Phase 2 (In Progress):** Quality infrastructure - coverage thresholds ✅, linting ✅, formatting ⏳  
+**Phase 3 (Planned):** Edge case hardening & performance (test gaps, history limit)  
 **Phase 4:** Documentation & examples
 
 ---

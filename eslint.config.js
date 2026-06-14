@@ -14,7 +14,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
       '@typescript-eslint/no-explicit-any': 'off',
       "@typescript-eslint/consistent-type-imports": 'off',
       "@typescript-eslint/no-unsafe-argument": 'off',
