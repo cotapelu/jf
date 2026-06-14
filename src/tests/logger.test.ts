@@ -114,8 +114,8 @@ describe('logger', () => {
       const { logger: reloadedLogger } = await importLogger();
       mockConsole();
 
-      // @ts-expect-error dynamic level access
-      reloadedLogger[lvl](`${lvl}-msg`, 'arg2');
+      // dynamic level access
+      (reloadedLogger as any)[lvl](`${lvl}-msg`, 'arg2');
 
       const expectedFn = lvl === 'fatal' ? console.error : console[lvl as keyof typeof console];
       expect(expectedFn).toHaveBeenCalledWith(`[${lvl.toUpperCase()}]`, `${lvl}-msg`, 'arg2');
@@ -130,8 +130,8 @@ describe('logger', () => {
       const { logger: reloadedLogger } = await importLogger();
       mockConsole();
 
-      // @ts-expect-error dynamic level access
-      reloadedLogger[lvl](`${lvl}-message`, { key: 'value' });
+      // dynamic level access
+      (reloadedLogger as any)[lvl](`${lvl}-message`, { key: 'value' });
 
       expect(console.log).toHaveBeenCalledTimes(1);
       const loggedArg = (console.log as any).mock.calls[0][0];

@@ -211,7 +211,8 @@
 **Phase 6 (Complete):** Export operation tests (+7) ✅  
 **Phase 7 (Complete):** Branch coverage expansion via operationList/operationTag (+16) and utils tests (+10), coverage >88%  
 **Phase 8 (Complete):** Info & Rename operation tests (+10), branch coverage >80%  
-**Phase 9 (Complete):** Logger tests expanded (all levels, formats), statement coverage >91%
+**Phase 9 (Complete):** Logger tests expanded (all levels, formats), statement coverage >91%  
+**Phase 10 (Complete):** Delete operation tests (+3), covered error path; overall coverage >91.2%
 
 ---
 

@@ -99,6 +99,14 @@ All tests now pass (101).
 - [x] Achieved >91% statements, >82% branches
 - [x] All tests: 167/167 passing
 
+## Phase 10: Delete Operation Coverage (COMPLETED ✅)
+
+- [x] Test success case (explicit sessionId)
+- [x] Test using active session when sessionId omitted
+- [x] Test error path: missing sessionId & no active session
+- [x] Increased overall coverage to 91.26% statements, 82.59% branches
+- [x] All tests: 170/170 passing
+
 All high-priority tasks complete.
 
 ---
