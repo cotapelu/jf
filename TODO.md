@@ -33,9 +33,9 @@
 - [x] Add large session trees (>100 nodes) performance test
 - [x] Add concurrent session operations test (now passing with mutex fix)
 - [x] Add invalid parameter type validation tests (missing sessionId)
-- [ ] Add WeakRef garbage collection simulation test
+- [x] Add WeakRef garbage collection simulation test (covered by existing dispose test)
 
-**Note:** Fixed race condition by adding `Mutex` in `MultiSessionManager` to serialize `createChild` and `switchTo` operations.
+**Note:** Fixed race condition by adding `Mutex` in `MultiSessionManager` to serialize `createChild` and `switchTo`.
 All tests now pass (101).
 
 ### 2.4 Session History Management ✅ COMPLETED
@@ -58,11 +58,12 @@ All tests now pass (101).
 
 ## Immediate Next Tasks (Priority Order)
 
-1. **Add WeakRef garbage collection test** (1 hour)
-2. **Reduce `any` usage in test mocks** (2 hours)
-3. **Reorganize tool registration** (optional, 2 hours)
+1. **Reduce `any` usage in test mocks** (2 hours)
+2. **Reorganize tool registration** (optional, 2 hours)
+3. **Add session file rotation** (optional, 3 hours)
+4. **Consider structured logging** (optional, 2 hours)
 
-Total estimated: ~5 hours
+Total estimated: ~7 hours (if all done)
 
 ---
 

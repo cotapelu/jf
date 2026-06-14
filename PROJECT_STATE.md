@@ -140,9 +140,10 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Add WeakRef garbage collection simulation test
-2. Reduce `any` usage in test mocks (type safety)
-3. Reorganize tool registration under src/tools/ (optional)
+1. Reduce `any` usage in test mocks (type safety)
+2. Reorganize tool registration under src/tools/ (optional)
+3. Add session file rotation/cleanup strategy (optional)
+4. Consider structured logging with Pino/Winston (optional)
 
 ---
 
