@@ -1,9 +1,10 @@
-import type { AgentSession } from '@earendil-works/pi-coding-agent';
+import type { AgentSession, AgentSessionRuntime, AgentSessionServices, AgentSessionRuntimeDiagnostic } from '@earendil-works/pi-coding-agent';
 
 /**
  * Create a minimal mock AgentSession
  */
 export function createMockSession(name: string): AgentSession {
+  // Minimal shape; cast to any then to AgentSession to satisfy type (tests only)
   return {
     sessionFile: `/path/to/${name}.jsonl`,
     dispose: async () => {},
@@ -21,39 +22,37 @@ export function createMockSession(name: string): AgentSession {
  *
  * Also maintains an internal array of sessions for verification.
  */
-export function createMockRuntime(initialSession: AgentSession = createMockSession('parent')): any {
+export function createMockRuntime(initialSession: AgentSession = createMockSession('parent')): AgentSessionRuntime {
   let currentSession: AgentSession | null = initialSession;
   const sessions: AgentSession[] = [initialSession];
   let counter = 0;
 
-  return {
-    get session(): AgentSession | null {
+  // Use `any` internally to avoid needing to implement all methods of AgentSessionRuntime
+  const runtime: any = {
+    get session() {
       return currentSession;
     },
-    set session(s: AgentSession | null) {
+    set session(s) {
       currentSession = s;
     },
-    async newSession(options?: { parentSession?: string }): Promise<{ cancelled: boolean }> {
+    async newSession(options?: { parentSession?: string }) {
       const newSession = createMockSession(`child-${++counter}`);
       sessions.push(newSession);
       currentSession = newSession;
       return { cancelled: false };
     },
-    async switchSession(filePath: string): Promise<void> {
+    async switchSession(filePath: string) {
       const target = sessions.find((s) => s.sessionFile === filePath);
-      if (!target) {
-        throw new Error(`Session not found: ${filePath}`);
-      }
+      if (!target) throw new Error(`Session not found: ${filePath}`);
       currentSession = target;
     },
-    async dispose(): Promise<void> {
-      for (const s of sessions) {
-        await s.dispose();
-      }
+    async dispose() {
+      for (const s of sessions) await s.dispose();
       sessions.length = 0;
       currentSession = null;
     },
-    // Expose for test verification
     _sessions: sessions,
   };
+
+  return runtime as AgentSessionRuntime;
 }
