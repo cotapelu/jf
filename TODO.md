@@ -84,6 +84,13 @@ All tests now pass (101).
 - [x] Achieved 100% statements on utils.ts, 91.3% branches
 - [x] All tests: 143/143 passing
 
+## Phase 8: Remaining Operation Coverage (COMPLETED ✅)
+
+- [x] Info operation tests (success, missing session, session not found)
+- [x] Rename operation tests (success, missing name, session not found)
+- [x] Improved branch coverage to 80.93%, statements 89.02%
+- [x] All tests: 153/153 passing
+
 All high-priority tasks complete.
 
 ---

@@ -21,19 +21,19 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (143/143)
+- Test pass rate: ✅ 100% (153/153)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
 ### Test Coverage
-- Statements: 88.21% (target ≥80%)
-- Branches: 79.55% (target ≥60%)
+- Statements: 89.02% (target ≥80%)
+- Branches: 80.93% (target ≥60%)
 - Functions: 90.83% (target ≥80%)
-- Lines: 89.22% (target ≥80%)
+- Lines: 90.08% (target ≥80%)
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 143 tests passing (~600ms)
+- Vitest: ✅ 153 tests passing (~650ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -135,6 +135,14 @@ src/
 1. **Session Utils Tests** - Added full coverage for `formatSession`, `countNodes`, `formatListOutput` (utils), `renderTree`
 2. **Branch Coverage Increase** - Branches up to 79.55%, statements 88.21% sustained
 3. **All Tests Passing** - 143/143
+
+---
+
+## Recent Changes (Iteration 8)
+
+1. **Info & Rename Operation Tests** - Added unit tests for `operationInfo` and `operationRename` covering success and all error paths
+2. **Coverage Increase** - Statements 89.02%, Branches 80.93%, Lines 90.08%; `info.ts` 100%
+3. **All Tests Passing** - 153/153
 
 ---
 
