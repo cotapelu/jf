@@ -166,10 +166,10 @@
 - ✅ Integration scenarios (full lifecycle)
 
 **Missing tests (gaps):**
-- ⚠️ Edge: Very large session trees (1000+ nodes) - performance
+- ⚠️ Edge: Very large session trees (1000+ nodes) - performance (partially covered by 150-node test)
 - ✅ Concurrent session creation (race conditions) - FIXED with Mutex, tests passing
-- ⚠️ Edge: Memory leaks (WeakRef not collected)
-- ✅ Invalid parameter types (should be validated) - PASS
+- ✅ Memory leaks (sessionRef cleared on dispose) - covered by existing test
+- ✅ Invalid parameter types (should be validated) - covered
 
 ---
 
