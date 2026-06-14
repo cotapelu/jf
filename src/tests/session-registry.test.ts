@@ -358,7 +358,7 @@ describe('SessionRegistry', () => {
 
       // Register 6 sessions => 6 history entries (each register records 'create')
       const sessions = Array.from({ length: 6 }, (_, i) => createMockSession(`s${i}`));
-      sessions.forEach(s => registry.register(s));
+      sessions.forEach((s) => registry.register(s));
 
       const history = registry.getHistory(10);
       expect(history.length).toBe(5); // Should keep only last 5
@@ -441,4 +441,3 @@ describe('SessionState', () => {
     expect(SessionState.DISPOSED).toBe('disposed');
   });
 });
-

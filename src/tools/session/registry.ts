@@ -371,10 +371,7 @@ export class SessionRegistry {
     });
 
     // Enforce history size limit
-    if (
-      this.maxHistoryEntries > 0 &&
-      this.history.length > this.maxHistoryEntries
-    ) {
+    if (this.maxHistoryEntries > 0 && this.history.length > this.maxHistoryEntries) {
       // Remove oldest entry
       this.history.shift();
     }

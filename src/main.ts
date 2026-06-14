@@ -77,8 +77,14 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   // Include custom tool names in allowlist to enable them
   const allCustomTools = registerAllCustomTools();
   const allToolNames = [
-    'read', 'bash', 'edit', 'write', 'grep', 'find', 'ls',
-    ...allCustomTools.map(t => t.name),
+    'read',
+    'bash',
+    'edit',
+    'write',
+    'grep',
+    'find',
+    'ls',
+    ...allCustomTools.map((t) => t.name),
   ];
   const sessionOptions: CreateAgentSessionFromServicesOptions = {
     services,
