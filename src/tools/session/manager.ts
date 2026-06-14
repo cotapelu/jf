@@ -2,6 +2,38 @@
 import type { AgentSession } from '@earendil-works/pi-coding-agent';
 import { SessionRegistry, SessionMetadata } from './registry.js';
 
+/**
+ * Simple async mutex for serializing operations
+ */
+class Mutex {
+  private locked = false;
+  private waiting: Array<{
+    fn: () => Promise<any>;
+    resolve: (value: any) => void;
+    reject: (reason?: any) => void;
+  }> = [];
+
+  async run<T>(fn: () => Promise<T>): Promise<T> {
+    if (!this.locked) {
+      this.locked = true;
+      try {
+        return await fn();
+      } finally {
+        this.locked = false;
+        if (this.waiting.length > 0) {
+          const next = this.waiting.shift()!;
+          // Execute next with lock re-acquired
+          this.run(next.fn).then(next.resolve, next.reject).catch(() => {});
+        }
+      }
+    } else {
+      return new Promise<T>((resolve, reject) => {
+        this.waiting.push({ fn, resolve, reject });
+      });
+    }
+  }
+}
+
 export interface MultiSessionManagerOptions {
   /** Whether to allow creating multiple child sessions */
   allowMultipleChildren?: boolean;
@@ -50,6 +82,9 @@ export class MultiSessionManager {
 
   // Cache the root/parent session ID
   private rootSessionId: string | null = null;
+
+  // Mutex to serialize operations that access runtime.session
+  private readonly sessionMutex = new Mutex();
 
   constructor(runtime: any, options: MultiSessionManagerOptions = {}) {
     const maxHistory = options.maxHistoryEntries ?? 1000;
@@ -103,42 +138,44 @@ export class MultiSessionManager {
       parentSession?: string; // defaults to current active
     } = {}
   ): Promise<SessionMetadata> {
-    const parentId = options.parentSession ?? this.registry.getActive()?.id ?? this.rootSessionId;
+    return this.sessionMutex.run(async () => {
+      const parentId = options.parentSession ?? this.registry.getActive()?.id ?? this.rootSessionId;
 
-    if (!parentId) {
-      throw new Error('No parent session available');
-    }
+      if (!parentId) {
+        throw new Error('No parent session available');
+      }
 
-    // Check max sessions limit
-    if (this.options.maxSessions > 0 && this.registry.count >= this.options.maxSessions) {
-      throw new Error(
-        `Max sessions limit (${this.options.maxSessions}) reached. ` +
-          `Dispose old sessions before creating new ones.`
-      );
-    }
+      // Check max sessions limit
+      if (this.options.maxSessions > 0 && this.registry.count >= this.options.maxSessions) {
+        throw new Error(
+          `Max sessions limit (${this.options.maxSessions}) reached. ` +
+            `Dispose old sessions before creating new ones.`
+        );
+      }
 
-    // Call runtime to create new session
-    const parentMeta = this.registry.get(parentId);
-    const result = await this.runtime.newSession({
-      parentSession: parentMeta?.filePath,
+      // Call runtime to create new session
+      const parentMeta = this.registry.get(parentId);
+      const result = await this.runtime.newSession({
+        parentSession: parentMeta?.filePath,
+      });
+
+      if (result.cancelled) {
+        throw new Error('Session creation was cancelled');
+      }
+
+      // The runtime.session is now the new child
+      const childSession = this.runtime.session;
+
+      // Register with metadata
+      const metadata = this.registry.register(childSession, {
+        name: options.name ?? `child-${this.registry.count}`,
+        tags: [...(options.tags ?? []), 'child'],
+        parentId: parentId,
+      });
+
+      console.log(`✅ Created child session: ${metadata.id} (parent: ${parentId})`);
+      return metadata;
     });
-
-    if (result.cancelled) {
-      throw new Error('Session creation was cancelled');
-    }
-
-    // The runtime.session is now the new child
-    const childSession = this.runtime.session;
-
-    // Register with metadata
-    const metadata = this.registry.register(childSession, {
-      name: options.name ?? `child-${this.registry.count}`,
-      tags: [...(options.tags ?? []), 'child'],
-      parentId: parentId,
-    });
-
-    console.log(`✅ Created child session: ${metadata.id} (parent: ${parentId})`);
-    return metadata;
   }
 
   /**
@@ -148,26 +185,28 @@ export class MultiSessionManager {
    * @throws Error if session not found or already active
    */
   async switchTo(sessionId: string): Promise<void> {
-    if (!this.registry.has(sessionId)) {
-      throw new Error(`Session not found: ${sessionId}`);
-    }
+    return this.sessionMutex.run(async () => {
+      if (!this.registry.has(sessionId)) {
+        throw new Error(`Session not found: ${sessionId}`);
+      }
 
-    const currentActive = this.registry.getActive();
-    if (currentActive?.id === sessionId) {
-      throw new Error(`Already active on session: ${sessionId}`);
-    }
+      const currentActive = this.registry.getActive();
+      if (currentActive?.id === sessionId) {
+        throw new Error(`Already active on session: ${sessionId}`);
+      }
 
-    const targetMeta = this.registry.get(sessionId)!;
-    const success = this.registry.setActive(sessionId);
+      const targetMeta = this.registry.get(sessionId)!;
+      const success = this.registry.setActive(sessionId);
 
-    if (!success) {
-      throw new Error(`Failed to activate session: ${sessionId}`);
-    }
+      if (!success) {
+        throw new Error(`Failed to activate session: ${sessionId}`);
+      }
 
-    // Switch runtime's session
-    await this.runtime.switchSession(targetMeta.filePath);
+      // Switch runtime's session
+      await this.runtime.switchSession(targetMeta.filePath);
 
-    console.log(`🔄 Switched to session: ${sessionId} (${targetMeta.filePath})`);
+      console.log(`🔄 Switched to session: ${sessionId} (${targetMeta.filePath})`);
+    });
   }
 
   /**

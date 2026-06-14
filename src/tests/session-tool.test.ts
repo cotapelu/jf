@@ -481,16 +481,57 @@ describe('SessionTool', () => {
     });
   });
 
-  // Concurrent operations are currently limited by the Pi SDK's use of a single mutable `runtime.session` property.
-  // Multiple concurrent `newSession` calls clobber each other's session, leading to race conditions.
-  // TODO: Implement a lock in MultiSessionManager.createChild to prevent concurrent modifications.
-  describe.skip('concurrency', () => {
+  describe('concurrency', () => {
     it('should handle concurrent session creation without corruption', async () => {
-      // Skipped due to known race condition: runtime.session gets overwritten.
+      // Create 3 sessions concurrently
+      const results = await Promise.all([
+        tool.execute('conc1', { operation: 'create', name: 'conc-1' }),
+        tool.execute('conc2', { operation: 'create', name: 'conc-2' }),
+        tool.execute('conc3', { operation: 'create', name: 'conc-3' }),
+      ]);
+
+      // All should succeed without isError
+      results.forEach((r: any) => {
+        expect(r.isError).toBeUndefined();
+        expect(r.details).toBeDefined();
+        expect(r.details.sessionId).toBeDefined();
+      });
+
+      // All session IDs should be unique
+      const ids = results.map((r: any) => r.details.sessionId);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(3);
+
+      // Check registry state: parent + 3 children = 4
+      const status: any = await tool.execute('status_after_conc', { operation: 'status' });
+      expect(status.details.diagnostics.totalSessions).toBe(4);
+
+      // Exactly one session should be active
+      expect(status.details.activeSession).not.toBeNull();
+      const activeId = status.details.activeSession.id;
+      const list: any = await tool.execute('list_conc', { operation: 'list' });
+      expect(list.details.sessions).toHaveLength(4);
+      const activeCount = list.details.sessions.filter((s: any) => s.isActive).length;
+      expect(activeCount).toBe(1);
+      // Verify active ID is among the three created IDs
+      expect([ids[0], ids[1], ids[2]]).toContain(activeId);
     });
 
     it('should handle concurrent switches to different sessions', async () => {
-      // Skipped for same reason; switch operations may also be affected if they rely on runtime.session.
+      const s1: any = await tool.execute('c1_conc', { operation: 'create', name: 'c1' });
+      const s2: any = await tool.execute('c2_conc', { operation: 'create', name: 'c2' });
+      const id1 = s1.details.sessionId;
+      const id2 = s2.details.sessionId;
+
+      await Promise.all([
+        tool.execute('sw1', { operation: 'switch', sessionId: id1 }),
+        tool.execute('sw2', { operation: 'switch', sessionId: id2 }),
+      ]);
+
+      const status: any = await tool.execute('status_conc_switch', { operation: 'status' });
+      expect(status.details.activeSession).not.toBeNull();
+      const activeId = status.details.activeSession.id;
+      expect([id1, id2]).toContain(activeId);
     });
   });
 

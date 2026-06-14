@@ -35,7 +35,6 @@ export function createMockRuntime(initialSession: AgentSession = createMockSessi
     },
     async newSession(options?: { parentSession?: string }): Promise<{ cancelled: boolean }> {
       const newSession = createMockSession(`child-${++counter}`);
-      console.log(`[MockRuntime] newSession created: ${newSession.sessionFile} (counter=${counter})`);
       sessions.push(newSession);
       currentSession = newSession;
       return { cancelled: false };

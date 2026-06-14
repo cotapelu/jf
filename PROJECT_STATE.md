@@ -21,7 +21,7 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (99/99)
+- Test pass rate: ✅ 100% (101/101)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
@@ -87,9 +87,11 @@ src/
 
 1. **ESLint Configuration Update** - Added `argsIgnorePattern: "^_"` to `no-unused-vars` rule
 2. **Lint Clean** - All ESLint errors resolved (3 previously in get-time-tool.ts)
-3. **Test Suite Growth** - 5 new tests added (92 → 97)
-4. **Coverage Maintained** - Statement coverage 83%, function coverage 88%
-5. **Documentation Updates** - Evolution docs refreshed with Phase 2 progress
+3. **Test Suite Growth** - Initial 5 new tests (92 → 97)
+4. **Additional Tests** - Large tree scalability (1), parameter validation (1), concurrency (2) → total 101 tests
+5. **Mutex Implementation** - Added async lock to MultiSessionManager to serialize `createChild` and `switchTo`, fixing race condition
+6. **Coverage Maintained** - Statement coverage ~83%, function coverage ~88%
+7. **Documentation Updates** - Evolution docs refreshed with Phase 2 progress
 
 ---
 
@@ -98,7 +100,8 @@ src/
 ### Active Issues
 - ✅ Prettier formatting applied to codebase
 - ✅ Session history limit implemented (maxHistoryEntries default 1000)
-- 🔄 Test gaps: large trees ✅, param validation ✅, concurrency ⏳, WeakRef GC ⏳
+- ✅ Concurrency issue fixed (Mutex) and tests passing
+- ⏳ WeakRef garbage collection test (remaining)
 - ⚠️ Some test mocks use `any` (weak typing)
 
 ### Low Priority
@@ -119,9 +122,8 @@ src/
 - Full TypeScript type safety
 
 ⏳ **What's incomplete:**
-- Advanced test coverage: concurrency, WeakRef GC
-- Documentation for memory expectations (now present above)
-- Optional: reduce `any` usage in test mocks
+- WeakRef garbage collection test (remaining)
+- Reduce `any` usage in test mocks (optional improvement)
 
 ---
 
@@ -138,11 +140,9 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Fix concurrent session creation race (implement lock in MultiSessionManager.createChild)
-2. Enable concurrency test (remove skip after fix)
-3. Add WeakRef garbage collection simulation test
-4. Reduce `any` usage in test mocks (type safety)
-5. Reorganize tool registration under src/tools/ (optional)
+1. Add WeakRef garbage collection simulation test
+2. Reduce `any` usage in test mocks (type safety)
+3. Reorganize tool registration under src/tools/ (optional)
 
 ---
 

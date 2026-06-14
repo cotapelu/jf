@@ -87,6 +87,14 @@
 **Impact:** Code readability, PR reviews, team consistency  
 **Status:** ⚠️ ACKNOWLEDGED - should add `.prettierrc` and format
 
+### 6. Concurrent Session Creation Race Condition (FIXED ✅)
+**Severity:** HIGH (data corruption risk)  
+**Instance:** Concurrent `createChild` or `switchTo` operations caused duplicate registration and lost sessions due to race on mutable `runtime.session`.  
+**Impact:** Session metadata corruption, incorrect active session, potential data loss.  
+**Root cause:** `runtime.session` is shared mutable state; `newSession()` sets it, and subsequent read in `createChild` could observe a different session if concurrent call overwrites.  
+**Resolution:** Implemented async `Mutex` in `MultiSessionManager` to serialize operations that access/modify `runtime.session`. Both `createChild` and `switchTo` are protected.  
+**Status:** ✅ FIXED - concurrency tests added and passing.
+
 ---
 
 ## Fragile Modules
@@ -158,29 +166,27 @@
 - ✅ Integration scenarios (full lifecycle)
 
 **Missing tests (gaps):**
-- ⚠️ Edge: Very large session trees (1000+ sessions) - performance
-- ⚠️ Edge: Concurrent session creation (race conditions)
+- ⚠️ Edge: Very large session trees (1000+ nodes) - performance
+- ✅ Concurrent session creation (race conditions) - FIXED with Mutex, tests passing
 - ⚠️ Edge: Memory leaks (WeakRef not collected)
-- ⚠️ Negative: Invalid parameter types (should be validated)
+- ✅ Invalid parameter types (should be validated) - PASS
 
 ---
 
 ## Quality Infrastructure Status (Phase 2 Progress)
 
 ✅ **COMPLETED:**
-- Coverage thresholds defined in `vitest.config.ts` (statements/functions/lines ≥80%, branches ≥60%)
-- Prettier configuration present (`.prettierrc`)
-- ESLint configuration present (`eslint.config.js`) with TypeScript rules
+- Coverage thresholds defined in `vitest.config.ts` (statements ≥80%, branches ≥60%, functions ≥80%, lines ≥80%)
+- Prettier installed, configuration present (`.prettierrc`), code formatted, `format` script added
+- ESLint configured (`eslint.config.js`) with TypeScript rules
 - ESLint unused-var false positive resolved via `argsIgnorePattern: "^_"`
+- Session history limit implemented (maxHistoryEntries default 1000) and tested
+- Concurrency race fixed: Added `Mutex` to `MultiSessionManager`, all tests passing (101)
 
-🔄 **NEXT PRIORITIES:**
-1. **Ensure Prettier formatting applied** - Run `npx prettier --write src/` and optionally add `format` script
-2. **Address test gaps** - Add edge case tests for:
-   - WeakRef garbage collection simulation
-   - Large session trees (>100 nodes)
-   - Concurrent session operations
-   - Invalid parameter type validation
-3. **Add session history limit** - Prevent unbounded memory growth
+🔄 **REMAINING PRIORITIES:**
+1. **WeakRef garbage collection test** - Verify memory cleanup
+2. **Reduce `any` usage** in test mocks - Improve type safety
+3. **Reorganize tool registration** (optional) - Move get-time-tool under subdirectory
 
 ---
 
@@ -189,9 +195,9 @@
 ## Evolution Trajectory
 
 **Phase 1 (Complete):** Critical refactoring - eliminated function size violations ✅  
-**Phase 2 (In Progress):** Quality infrastructure - coverage thresholds ✅, linting ✅, formatting ⏳  
-**Phase 3 (Planned):** Edge case hardening & performance (test gaps, history limit)  
-**Phase 4:** Documentation & examples
+**Phase 2 (99% Complete):** Quality infrastructure - coverage thresholds ✅, linting ✅, formatting ✅, history limit ✅, concurrency fix ✅  
+**Phase 3 (Next):** Edge case hardening - WeakRef GC test, reduce `any` usage  
+**Phase 4:** Optional reorganization & documentation
 
 ---
 
