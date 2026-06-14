@@ -83,6 +83,11 @@ type InternalSessionOperation = SessionOperation | 'update';
  * await registry.unregister(sessionId, "disposed");
  * ```
  */
+export interface SessionRegistryOptions {
+  /** Maximum number of history entries to retain (default: 1000, 0 = unlimited) */
+  maxHistoryEntries?: number;
+}
+
 export class SessionRegistry {
   /** Map of session ID -> metadata */
   private readonly sessions: Map<string, SessionMetadata> = new Map();
@@ -98,6 +103,13 @@ export class SessionRegistry {
 
   /** Counter for generating unique IDs */
   private idCounter = 0;
+
+  /** Maximum history entries (0 = unlimited) */
+  private readonly maxHistoryEntries: number;
+
+  constructor(options: SessionRegistryOptions = {}) {
+    this.maxHistoryEntries = options.maxHistoryEntries ?? 1000;
+  }
 
   /**
    * Register a new session with optional metadata
@@ -352,11 +364,20 @@ export class SessionRegistry {
   ): void {
     this.history.push({
       timestamp: new Date(),
-      operation: operation as SessionOperation, // Cast để lưu internal ops
+      operation: operation as SessionOperation,
       sessionId,
       details,
       actor: 'system',
     });
+
+    // Enforce history size limit
+    if (
+      this.maxHistoryEntries > 0 &&
+      this.history.length > this.maxHistoryEntries
+    ) {
+      // Remove oldest entry
+      this.history.shift();
+    }
   }
 
   /** Get count of all non-disposed sessions */

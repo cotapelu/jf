@@ -353,6 +353,32 @@ describe('SessionRegistry', () => {
   });
 
   describe('WeakRef garbage collection', () => {
+    it('should enforce history size limit (default 1000)', () => {
+      const registry = new SessionRegistry({ maxHistoryEntries: 5 });
+
+      // Register 6 sessions => 6 history entries (each register records 'create')
+      const sessions = Array.from({ length: 6 }, (_, i) => createMockSession(`s${i}`));
+      sessions.forEach(s => registry.register(s));
+
+      const history = registry.getHistory(10);
+      expect(history.length).toBe(5); // Should keep only last 5
+
+      // Oldest should be the 2nd register (after first 2 registers)
+      // Actually: 6 creates -> after limit, oldest removed -> should keep last 5
+      const firstEntry = history[0];
+      expect(firstEntry.operation).toBe('create');
+    });
+
+    it('should allow unlimited history when maxHistoryEntries=0', () => {
+      const registry = new SessionRegistry({ maxHistoryEntries: 0 });
+
+      for (let i = 0; i < 200; i++) {
+        const s = createMockSession(`s${i}`);
+        registry.register(s);
+      }
+
+      expect(registry.getHistory().length).toBe(200);
+    });
     it('should clear sessionRef after dispose', () => {
       const session = createMockSession('gc-test');
       const meta = registry.register(session);

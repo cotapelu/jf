@@ -7,6 +7,8 @@ export interface MultiSessionManagerOptions {
   allowMultipleChildren?: boolean;
   /** Max number of sessions to keep in registry (0 = unlimited) */
   maxSessions?: number;
+  /** Maximum history entries to retain (0 = unlimited, default 1000) */
+  maxHistoryEntries?: number;
 }
 
 /**
@@ -50,11 +52,13 @@ export class MultiSessionManager {
   private rootSessionId: string | null = null;
 
   constructor(runtime: any, options: MultiSessionManagerOptions = {}) {
+    const maxHistory = options.maxHistoryEntries ?? 1000;
     this.runtime = runtime;
-    this.registry = new SessionRegistry();
+    this.registry = new SessionRegistry({ maxHistoryEntries: maxHistory });
     this.options = {
       allowMultipleChildren: true,
       maxSessions: 0,
+      maxHistoryEntries: maxHistory,
       ...options,
     };
 

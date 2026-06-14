@@ -3,43 +3,34 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Phase 3: Quality Infrastructure",
+      "name": "Phase 3b: Memory & Performance Hardening",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Add ESLint for static analysis (no unused vars, unreachable code)",
-          "status": "completed",
-          "details": "Added eslint.config.js with flat config, ignore tests, enforce unused-vars. Lint passes clean. Added lint script to package.json."
+          "content": "Add session history limit (configurable, default 1000)",
+          "status": "in_progress",
+          "details": "Prevent unbounded memory growth in SessionRegistry. Add maxHistoryEntries option (default 1000), LRU eviction."
         },
         {
           "id": "task-2",
-          "content": "Add tests for WeakRef GC behavior",
-          "status": "in_progress"
+          "content": "Add performance test: large session tree (100+ nodes)",
+          "status": "pending",
+          "details": "Ensure tree operations (getTree, list) remain fast with many sessions. Test 100, 1000 nodes."
         },
         {
           "id": "task-3",
-          "content": "Add performance test: large session tree (100+ nodes)",
-          "status": "pending"
-        },
-        {
-          "id": "task-4",
-          "content": "Add session history limit (configurable, default 1000)",
-          "status": "pending"
-        },
-        {
-          "id": "task-5",
           "content": "Update README with new session tool module structure",
           "status": "pending"
         },
         {
-          "id": "task-6",
-          "content": "Git commit: chore: add ESLint, clean lint, quality infra",
+          "id": "task-4",
+          "content": "Git commit: feat: add session history limit, performance tests",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 7,
+  "nextTaskId": 5,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-14T01:19:42.526Z"
+  "updatedAt": "2026-06-14T01:23:29.511Z"
 }
