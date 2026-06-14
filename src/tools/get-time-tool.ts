@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 
 /**

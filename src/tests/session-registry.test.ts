@@ -351,6 +351,43 @@ describe('SessionRegistry', () => {
       expect(registry.activeCount).toBe(1); // Only one active at a time
     });
   });
+
+  describe('WeakRef garbage collection', () => {
+    it('should clear sessionRef after dispose', () => {
+      const session = createMockSession('gc-test');
+      const meta = registry.register(session);
+
+      expect(meta.sessionRef).not.toBeNull();
+
+      registry.unregister(meta.id);
+
+      expect(meta.sessionRef).toBeNull();
+      expect(meta.state).toBe(SessionState.DISPOSED);
+    });
+
+    it('should remove disposed sessions from list', () => {
+      const session1 = createMockSession('keep');
+      const session2 = createMockSession('dispose');
+
+      const meta1 = registry.register(session1);
+      const meta2 = registry.register(session2);
+
+      expect(registry.list()).toHaveLength(2);
+
+      registry.unregister(meta2.id);
+
+      expect(registry.list()).toHaveLength(1);
+      expect(registry.get(meta1.id)).toBe(meta1);
+      expect(registry.get(meta2.id)).toBeNull();
+    });
+
+    it('should allow GC of disposed session refs', () => {
+      const session = createMockSession('gctest');
+      const meta = registry.register(session);
+      registry.unregister(meta.id);
+      expect(meta.sessionRef).toBeNull();
+    });
+  });
 });
 
 describe('SessionMetadata', () => {
@@ -378,3 +415,4 @@ describe('SessionState', () => {
     expect(SessionState.DISPOSED).toBe('disposed');
   });
 });
+

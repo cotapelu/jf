@@ -5,6 +5,7 @@
  * Note: Most factories take `cwd` and optional `options`.
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import {
   createBashTool,

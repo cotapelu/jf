@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { AgentSession } from '@earendil-works/pi-coding-agent';
-import { SessionRegistry, SessionMetadata, SessionState } from './registry.js';
+import { SessionRegistry, SessionMetadata } from './registry.js';
 
 export interface MultiSessionManagerOptions {
   /** Whether to allow creating multiple child sessions */
