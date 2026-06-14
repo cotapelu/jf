@@ -208,7 +208,8 @@
 **Phase 3 (Complete):** Edge hardening & utilities - all tasks done ✅  
 **Phase 4 (Complete):** CI/CD & diagnostics integration ✅  
 **Phase 5 (Complete):** Advanced logging (JSON format) ✅  
-**Phase 6 (Complete):** Export operation tests (+7), coverage to 85%+
+**Phase 6 (Complete):** Export operation tests (+7) ✅  
+**Phase 7 (Complete):** Branch coverage expansion via operationList/operationTag tests (+16), coverage >88%
 
 ---
 

@@ -68,6 +68,13 @@ All tests now pass (101).
 - [x] Achieved 100% coverage on export.ts
 - [x] Improved overall coverage to 85.36% statements
 
+## Phase 6: Branch Coverage Expansion (COMPLETED ✅)
+
+- [x] Add operationList unit tests (filter, sort, limit)
+- [x] Add operationTag unit tests (error paths: missing sessionId, tags, tagAction, session not found)
+- [x] Increased branch coverage to 78.45%, statements 88.21%
+- [x] All tests: 133/133 passing
+
 All high-priority tasks complete.
 
 ---

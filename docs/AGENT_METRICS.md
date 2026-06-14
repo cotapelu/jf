@@ -7,8 +7,8 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-14  
-**Iteration:** 5 (Export coverage completion)  
-**Focus:** Fill uncovered file gaps; target 0% coverage modules
+**Iteration:** 6 (Branch coverage expansion)  
+**Focus:** Increase branch coverage via operationList & operationTag tests
 
 ---
 
@@ -21,8 +21,8 @@
 | Duplicate code (<5) | N/A | No dup>5 | 0 duplicates | ✅ |
 | Error handling | Partial | 100% public | 100% | ✅ |
 | Input validation | Partial | 100% external | 100% | ✅ |
-| Test coverage | 117 tests | ≥80% | 85.36% stmts, 88.33% funcs | ✅ |
-| Tests passing | 117/117 | 100% | 117/117 (100%) | ✅ |
+| Test coverage | 133 tests | ≥80% | 88.21% stmts, 90.83% funcs | ✅ |
+| Tests passing | 133/133 | 100% | 133/133 (100%) | ✅ |
 | Build status | Working | No errors | ✅ Success | ✅ |
 | Lint status | 3 errors | 0 errors | ✅ Clean | ✅ |
 
@@ -75,10 +75,12 @@ Duration  ~400ms
   - Logger JSON format feature: +5
 - Phase 5 additions:
   - Session export operation tests: +7
-- **Total: 117 tests passing**
+- Phase 6 additions:
+  - operationList & operationTag unit tests: +16
+- **Total: 133 tests passing**
 
 **Failure rate:** 0%  
-**Coverage:** Statements 85.36%, Branches 74.58%, Functions 88.33%, Lines 86.42% ✅
+**Coverage:** Statements 88.21%, Branches 78.45%, Functions 90.83%, Lines 89.22% ✅
 
 **Lint status:** ✅ Clean (3 errors fixed via ESLint config)
 

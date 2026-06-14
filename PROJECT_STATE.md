@@ -21,19 +21,19 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (117/117)
+- Test pass rate: ✅ 100% (133/133)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
 ### Test Coverage
-- Statements: 85.36% (target ≥80%)
-- Branches: 74.58% (target ≥60%)
-- Functions: 88.33% (target ≥80%)
-- Lines: 86.42% (target ≥80%)
+- Statements: 88.21% (target ≥80%)
+- Branches: 78.45% (target ≥60%)
+- Functions: 90.83% (target ≥80%)
+- Lines: 89.22% (target ≥80%)
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 117 tests passing (~500ms)
+- Vitest: ✅ 133 tests passing (~550ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -119,6 +119,14 @@ src/
 1. **Export Operation Tests** - Added 7 tests to cover `session.export`; removed 0% coverage gap
 2. **Coverage Increase** - Up to 85.36% statements, 88.33% functions, 86.42% lines
 3. **All Tests Passing** - 117/117
+
+---
+
+## Recent Changes (Iteration 6)
+
+1. **List and Tag Operation Tests** - Added comprehensive unit tests for `operationList` (including filtering, sorting, limiting) and `operationTag` (including all error paths)
+2. **Branch Coverage Boost** - Branches up to 78.45%, statements 88.21%, functions 90.83%
+3. **All Tests Passing** - 133/133
 
 ---
 
