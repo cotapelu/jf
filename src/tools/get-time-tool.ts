@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 
 /**
@@ -6,10 +5,16 @@ import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
  *
  * Returns current time in specified timezone.
  */
-export const registerGetTimeTool = (): ToolDefinition => ({
+export const getTimeTool: ToolDefinition = {
   name: 'get_time',
   label: 'Get Time',
   description: "Get current time in ISO format. timezone param: 'UTC', 'Asia/Ho_Chi_Minh', etc.",
+  promptSnippet: 'get_time: get current time in a timezone',
+  promptGuidelines: [
+    'Use this tool when the user asks for the current time, timezone conversion, or time-related queries.',
+    "Specify a timezone like 'UTC', 'Asia/Ho_Chi_Minh', or 'America/New_York'.",
+    'If no timezone is specified, it defaults to UTC.',
+  ],
   parameters: {
     type: 'object',
     properties: {
@@ -53,4 +58,4 @@ export const registerGetTimeTool = (): ToolDefinition => ({
       };
     }
   },
-});
+};

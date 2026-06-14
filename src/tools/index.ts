@@ -18,45 +18,15 @@ import {
   createReadTool,
   createWriteTool,
 } from '@earendil-works/pi-coding-agent';
+import { getTimeTool } from './get-time-tool.js';
 import {
   createSessionTool,
   initializeSessionTool,
   resetSessionTool as resetSessionToolInternal,
 } from './session/index.js';
 
-// Custom tool: get_time
-export const registerGetTimeTool = (): ToolDefinition => ({
-  name: 'get_time',
-  label: 'Get Time',
-  description: 'Get current time in ISO format',
-  parameters: {
-    type: 'object',
-    properties: {
-      timezone: {
-        type: 'string',
-        description: "Timezone (e.g., 'UTC', 'Asia/Ho_Chi_Minh')",
-      },
-    },
-  },
-  async execute(_toolCallId: string, params: { timezone?: string }): Promise<any> {
-    const now = new Date();
-    const timezone = params.timezone || 'UTC';
-    const options: Intl.DateTimeFormatOptions = {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    };
-    const formatted = now.toLocaleString('en-CA', options).replace(',', '');
-    return {
-      content: [{ type: 'text', text: `Current time in ${timezone}: ${formatted}` }],
-      details: { timestamp: now.toISOString() },
-    };
-  },
-});
+// Re-export get_time tool for convenience
+export { getTimeTool } from './get-time-tool.js';
 
 /**
  * Register ALL built-in tools by calling EVERY tool factory function
@@ -95,10 +65,18 @@ export function registerAllBuiltinTools(cwd: string): ToolDefinition[] {
 }
 
 /**
+ * Register session tool (manager initializes lazily on first use)
+ */
+export function registerSessionTool(): ToolDefinition[] {
+  // Defer initialization until tool execution (lazy)
+  return [createSessionTool()];
+}
+
+/**
  * Register all custom (non-builtin) tools
  */
 export function registerAllCustomTools(): ToolDefinition[] {
-  return [registerGetTimeTool()];
+  return [getTimeTool, ...registerSessionTool()];
 }
 
 /**
@@ -106,14 +84,6 @@ export function registerAllCustomTools(): ToolDefinition[] {
  */
 export function registerAllTools(cwd: string): ToolDefinition[] {
   return [...registerAllBuiltinTools(cwd), ...registerAllCustomTools()];
-}
-
-/**
- * Register session tool (manager initializes lazily on first use)
- */
-export function registerSessionTool(): ToolDefinition[] {
-  // Defer initialization until tool execution (lazy)
-  return [createSessionTool()];
 }
 
 /**
