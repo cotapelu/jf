@@ -187,11 +187,11 @@ All high-priority quality and reliability tasks are complete. The codebase is pr
 - Disk rotation (session.cleanup)
 - Structured logging (env-controlled)
 - Diagnostics integration (cleanup stats)
+- CI/CD pipeline (GitHub Actions)
 
 Optional future work:
-- Add CI/CD pipeline
-- Add more advanced logging (JSON output)
-- Extend diagnostics with additional metrics
+- Advanced logging (JSON output)
+- Extended diagnostics metrics
 
 ---
 
