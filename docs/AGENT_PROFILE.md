@@ -191,10 +191,10 @@
 - Reorganized tool registration: moved `get-time-tool` to `tools/time/`
 - Added `session.cleanup` operation for disk rotation
 - Implemented structured logging (env-controlled logger)
+- Integrated cleanup metrics into session diagnostics
 - Added 4 new tests for cleanup (total tests now 105)
 
 🔄 **REMAINING:**
-- Integrate with runtime diagnostics (optional)
 - WeakRef garbage collection verification (likely covered by existing dispose test)
 
 ---

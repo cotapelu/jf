@@ -52,7 +52,7 @@ All tests now pass (101).
 - [x] Reorganize tool registration under src/tools/ subdirectories (done)
 - [x] Add session file rotation/cleanup strategy (implemented cleanup operation + tests)
 - [x] Consider structured logging (implemented logger with env control)
-- [ ] Integrate with runtime diagnostics
+- [x] Integrate with runtime diagnostics (cleanup stats)
 
 ---
 

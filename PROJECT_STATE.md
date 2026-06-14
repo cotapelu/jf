@@ -140,7 +140,7 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Integrate with runtime diagnostics (optional)
+No remaining high-priority tasks.
 
 ---
 

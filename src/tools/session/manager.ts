@@ -87,6 +87,13 @@ export class MultiSessionManager {
   // Mutex to serialize operations that access runtime.session
   private readonly sessionMutex = new Mutex();
 
+  // Cleanup statistics for diagnostics
+  private cleanupStats = {
+    operations: 0,
+    totalCleaned: 0,
+    lastCleanup: undefined as Date | undefined,
+  };
+
   constructor(runtime: AgentSessionRuntime, options: MultiSessionManagerOptions = {}) {
     const maxHistory = options.maxHistoryEntries ?? 1000;
     this.runtime = runtime;
@@ -121,6 +128,13 @@ export class MultiSessionManager {
    */
   getRegistry(): SessionRegistry {
     return this.registry;
+  }
+
+  /** Record a cleanup operation (internal) */
+  recordCleanup(deletedCount: number): void {
+    this.cleanupStats.operations++;
+    this.cleanupStats.totalCleaned += deletedCount;
+    this.cleanupStats.lastCleanup = new Date();
   }
 
   /**
@@ -411,6 +425,11 @@ export class MultiSessionManager {
     childCount: number;
     disposedCount: number;
     historySize: number;
+    cleanup?: {
+      operations: number;
+      totalCleaned: number;
+      lastCleanup?: string;
+    };
   } {
     const all = this.registry.list({ includeDisposed: true });
     const nonDisposed = this.registry.list();
@@ -421,6 +440,13 @@ export class MultiSessionManager {
       childCount: this.registry.getChildren(this.rootSessionId!).length,
       disposedCount: all.length - nonDisposed.length,
       historySize: this.registry.getHistory().length,
+      ...(this.cleanupStats.operations > 0 ? {
+        cleanup: {
+          operations: this.cleanupStats.operations,
+          totalCleaned: this.cleanupStats.totalCleaned,
+          lastCleanup: this.cleanupStats.lastCleanup?.toISOString(),
+        }
+      } : {}),
     };
   }
 

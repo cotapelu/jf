@@ -97,6 +97,11 @@ export async function operationCleanup(
     )
   );
 
+  // Record cleanup stats (only if not dry-run)
+  if (!params.dryRun) {
+    (mgr as any).recordCleanup?.(uniqueDelete.length);
+  }
+
   return {
     content: [
       {
