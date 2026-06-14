@@ -14,6 +14,7 @@ import {
   operationHistory,
   operationStatus,
   operationDiagnostics,
+  operationCleanup,
 } from './operations/index.js';
 import { formatListOutput } from './utils.js';
 
@@ -97,6 +98,19 @@ export function createSessionTool(): ToolDefinition {
         },
         sortBy: { type: 'string', enum: ['created', 'name', 'id'], description: 'Sort field' },
         limit: { type: 'number', description: 'Maximum number to return' },
+        // Cleanup operation parameters
+        olderThanDays: {
+          type: 'number',
+          description: 'Delete files older than N days (default: 30)'
+        },
+        keepCount: {
+          type: 'number',
+          description: 'Keep at least N most recent session files (default: 100)'
+        },
+        dryRun: {
+          type: 'boolean',
+          description: 'If true, only report what would be deleted without actually deleting (default: false)'
+        }
       },
       required: ['operation'],
     },
@@ -113,6 +127,10 @@ export function createSessionTool(): ToolDefinition {
         filterState?: 'active' | 'inactive' | 'all';
         sortBy?: 'created' | 'name' | 'id';
         limit?: number;
+        // cleanup
+        olderThanDays?: number;
+        keepCount?: number;
+        dryRun?: boolean;
       }
     ): Promise<any> {
       const mgr = getManager();
@@ -158,6 +176,8 @@ export function createSessionTool(): ToolDefinition {
             return operationStatus(mgr);
           case 'diagnostics':
             return operationDiagnostics(mgr);
+          case 'cleanup':
+            return await operationCleanup(mgr, params);
           default:
             throw new Error(`Unknown operation: ${params.operation}`);
         }

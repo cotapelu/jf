@@ -123,6 +123,13 @@ export class MultiSessionManager {
   }
 
   /**
+   * Get the underlying AgentSessionRuntime (advanced operations)
+   */
+  getRuntime(): AgentSessionRuntime {
+    return this.runtime;
+  }
+
+  /**
    * Create a new child session
    *
    * This calls runtime.newSession() and registers the result.

@@ -50,7 +50,7 @@ All tests now pass (101).
 
 - [x] Review and reduce `any` usage in test mocks (completed)
 - [x] Reorganize tool registration under src/tools/ subdirectories (done)
-- [ ] Add session file rotation/cleanup strategy
+- [x] Add session file rotation/cleanup strategy (implemented cleanup operation + tests)
 - [ ] Consider Pino/Winston logger for structured logging
 - [ ] Integrate with runtime diagnostics
 
@@ -59,9 +59,10 @@ All tests now pass (101).
 ## Immediate Next Tasks (Priority Order)
 
 1. [x] Reduce `any` usage in test mocks (completed)
-2. [x] Reorganize tool registration (done: moved get-time-tool to time/ subdirectory)
-3. [ ] Add session file rotation (optional, 3 hours)
-4. [ ] Consider structured logging (optional, 2 hours)
+2. [x] Reorganize tool registration (done)
+3. [x] Add session file rotation/cleanup (implemented cleanup operation)
+4. [ ] Consider structured logging (optional)
+5. [ ] Integrate runtime diagnostics (optional)
 
 Total estimated: ~7 hours (if all done)
 

@@ -10,3 +10,4 @@ export { operationTree } from './tree.js';
 export { operationHistory } from './history.js';
 export { operationStatus } from './status.js';
 export { operationDiagnostics } from './diagnostics.js';
+export { operationCleanup } from './cleanup.js';

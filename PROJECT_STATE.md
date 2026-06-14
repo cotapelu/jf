@@ -140,9 +140,8 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Reorganize tool registration under src/tools/ (optional)
-2. Add session file rotation/cleanup strategy (optional)
-3. Consider structured logging with Pino/Winston (optional)
+1. Consider structured logging with Pino/Winston (optional)
+2. Integrate with runtime diagnostics (optional)
 
 ---
 

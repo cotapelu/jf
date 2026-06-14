@@ -183,10 +183,16 @@
 - Session history limit implemented (maxHistoryEntries default 1000) and tested
 - Concurrency race fixed: Added `Mutex` to `MultiSessionManager`, all tests passing (101)
 
-🔄 **REMAINING PRIORITIES:**
-1. **WeakRef garbage collection test** - Verify memory cleanup
-2. **Reduce `any` usage** in test mocks - Improve type safety
-3. **Reorganize tool registration** (optional) - Move get-time-tool under subdirectory
+## Phase 3 Progress (Edge Hardening & Utilities)
+
+✅ **COMPLETED:**
+- Reduced `any` usage in test mocks (typed `AgentSessionRuntime`)
+- Reorganized tool registration: moved `get-time-tool` to `tools/time/`
+- Added `session.cleanup` operation for disk rotation
+- Added 4 new tests for cleanup (total tests now 105)
+
+🔄 **REMAINING:**
+- WeakRef garbage collection verification (likely covered by existing dispose test)
 
 ---
 
@@ -195,9 +201,9 @@
 ## Evolution Trajectory
 
 **Phase 1 (Complete):** Critical refactoring - eliminated function size violations ✅  
-**Phase 2 (99% Complete):** Quality infrastructure - coverage thresholds ✅, linting ✅, formatting ✅, history limit ✅, concurrency fix ✅  
-**Phase 3 (Next):** Edge case hardening - WeakRef GC test, reduce `any` usage  
-**Phase 4:** Optional reorganization & documentation
+**Phase 2 (Complete):** Quality infrastructure - all tasks done ✅  
+**Phase 3 (Partially Complete):** Edge hardening & utilities - reduce any ✅, reorganize ✅, cleanup tool ✅  
+**Phase 4 (Next):** Documentation polish, optional logging/diagnostics integration
 
 ---
 
