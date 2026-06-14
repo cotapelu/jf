@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { AgentSession } from '@earendil-works/pi-coding-agent';
+import type { AgentSession, AgentSessionRuntime } from '@earendil-works/pi-coding-agent';
 import { SessionRegistry, SessionMetadata } from './registry.js';
 
 /**
@@ -76,7 +76,7 @@ export interface MultiSessionManagerOptions {
  * ```
  */
 export class MultiSessionManager {
-  private readonly runtime: any; // AgentSessionRuntime
+  private readonly runtime: AgentSessionRuntime;
   private readonly registry: SessionRegistry;
   private readonly options: Required<MultiSessionManagerOptions>;
 
@@ -86,7 +86,7 @@ export class MultiSessionManager {
   // Mutex to serialize operations that access runtime.session
   private readonly sessionMutex = new Mutex();
 
-  constructor(runtime: any, options: MultiSessionManagerOptions = {}) {
+  constructor(runtime: AgentSessionRuntime, options: MultiSessionManagerOptions = {}) {
     const maxHistory = options.maxHistoryEntries ?? 1000;
     this.runtime = runtime;
     this.registry = new SessionRegistry({ maxHistoryEntries: maxHistory });

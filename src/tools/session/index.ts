@@ -161,10 +161,12 @@ export function createSessionTool(): ToolDefinition {
           default:
             throw new Error(`Unknown operation: ${params.operation}`);
         }
-      } catch (error: any) {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const stack = error instanceof Error ? error.stack : undefined;
         return {
-          content: [{ type: 'text', text: `❌ Error: ${error.message}` }],
-          details: { operation: params.operation, error: error.message, stack: error.stack },
+          content: [{ type: 'text', text: `❌ Error: ${message}` }],
+          details: { operation: params.operation, error: message, stack },
           isError: true,
         };
       }
