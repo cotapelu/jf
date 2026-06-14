@@ -31,15 +31,15 @@
 
 ### 2.3 Test Gap Mitigation 🔄 IN PROGRESS
 - [ ] Add WeakRef garbage collection simulation test
-- [x] Add large session trees (>100 nodes) performance test
+- [x] Add large session trees (>100 nodes) performance test ✅
 - [ ] Add concurrent session operations race condition test
-- [x] Add invalid parameter type validation tests (missing sessionId)
+- [x] Add invalid parameter type validation tests (missing sessionId) ✅
 
-### 2.4 Session History Management ⏳ PENDING
-- [ ] Add history limit config (default 1000)
-- [ ] Implement LRU eviction in SessionRegistry
-- [ ] Add test for history overflow behavior
-- [ ] Document memory expectations
+### 2.4 Session History Management ✅ COMPLETED
+- [x] Add history limit config (default 1000)
+- [x] Implement LRU eviction in SessionRegistry
+- [x] Add test for history overflow behavior
+- [x] Document memory expectations
 
 ---
 
@@ -55,13 +55,12 @@
 
 ## Immediate Next Tasks (Priority Order)
 
-1. **Apply Prettier** - `npx prettier --write src/` (30 min)
-2. **Test gaps: WeakRef** - Add GC test (1 hour)
-3. **Test gaps: Large trees** - Performance test (1 hour)
-4. **Test gaps: Concurrency** - Race condition test (2 hours)
-5. **History limit** - Implement LRU (3 hours)
+1. **Add concurrent session operation tests** (2 hours)
+2. **Add WeakRef garbage collection test** (1 hour)
+3. **Reduce `any` usage in test mocks** (2 hours)
+4. **Reorganize tool registration** (optional, 2 hours)
 
-Total estimated: ~8 hours
+Total estimated: ~7 hours
 
 ---
 

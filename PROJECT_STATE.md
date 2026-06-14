@@ -33,9 +33,9 @@
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 97 tests passing in 705ms
+- Vitest: ✅ 99 tests passing (~400ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
-- Prettier: ✅ Config present, formatting applied
+- Prettier: ✅ Config present, formatting applied; format script available
 
 ---
 
@@ -75,6 +75,12 @@ src/
 - Tool interface: `execute(toolCallId, params, signal?, onUpdate?, ctx?)`
 - Unused interface parameters prefixed with `_` to indicate intentional
 
+#### Memory Management
+- SessionRegistry stores metadata (not full sessions) in memory.
+- WeakRef holds session references; disposed sessions cleared immediately (sessionRef set null).
+- History limit enforced: default 1000 entries, LRU eviction (shift oldest). Configurable via `maxHistoryEntries`.
+- Empirical safe limit: ~1000 sessions before memory considerations; history eviction prevents unbounded growth.
+
 ---
 
 ## Recent Changes (Iteration 2)
@@ -90,9 +96,9 @@ src/
 ## Known Issues & Debt
 
 ### Active Issues
-- ⚠️ Prettier formatting not applied to codebase yet
-- ⚠️ Session history limit not implemented (unbounded memory risk)
-- ⚠️ Test gaps: WeakRef GC, large trees, concurrency, type validation
+- ✅ Prettier formatting applied to codebase
+- ✅ Session history limit implemented (maxHistoryEntries default 1000)
+- 🔄 Test gaps: large trees ✅, param validation ✅, concurrency ⏳, WeakRef GC ⏳
 - ⚠️ Some test mocks use `any` (weak typing)
 
 ### Low Priority
@@ -113,9 +119,9 @@ src/
 - Full TypeScript type safety
 
 ⏳ **What's incomplete:**
-- Prettier formatting (config present)
-- Session history eviction policy (LRU)
-- Advanced test coverage for edge cases
+- Advanced test coverage: concurrency, WeakRef GC
+- Documentation for memory expectations (now present above)
+- Optional: reduce `any` usage in test mocks
 
 ---
 
@@ -132,12 +138,10 @@ src/
 
 ## Next High-Impact Tasks
 
-1. Apply Prettier formatting (`npx prettier --write src/`)
-2. Add WeakRef garbage collection test
-3. Add large session tree performance test
-4. Add concurrent session operation tests
-5. Implement session history limit (configurable, default 1000)
-6. Consider adding `npm run format` script
+1. Add concurrent session operation tests (race conditions)
+2. Add WeakRef garbage collection simulation test
+3. Reduce `any` usage in test mocks (type safety)
+4. Reorganize tool registration under src/tools/ (optional)
 
 ---
 
