@@ -5,7 +5,7 @@
  * Tools can then call getCurrentRuntime() to access it.
  */
 
-import type { AgentSessionRuntime } from "@earendil-works/pi-coding-agent";
+import type { AgentSessionRuntime } from '@earendil-works/pi-coding-agent';
 
 let currentRuntime: AgentSessionRuntime | null = null;
 
@@ -14,25 +14,25 @@ let currentRuntime: AgentSessionRuntime | null = null;
  * Call this after creating the runtime (e.g., in main.ts).
  */
 export function setCurrentRuntime(runtime: AgentSessionRuntime | null): void {
-    currentRuntime = runtime;
+  currentRuntime = runtime;
 }
 
 /**
  * Get the current runtime. Throws if not set.
  */
 export function getCurrentRuntime(): AgentSessionRuntime {
-    if (!currentRuntime) {
-        throw new Error(
-            "Runtime not set. This tool requires an active runtime context. " +
-            "Make sure to call setCurrentRuntime() after creating the runtime.",
-        );
-    }
-    return currentRuntime;
+  if (!currentRuntime) {
+    throw new Error(
+      'Runtime not set. This tool requires an active runtime context. ' +
+        'Make sure to call setCurrentRuntime() after creating the runtime.'
+    );
+  }
+  return currentRuntime;
 }
 
 /**
  * Clear the current runtime (e.g., on dispose).
  */
 export function clearCurrentRuntime(): void {
-    currentRuntime = null;
+  currentRuntime = null;
 }
