@@ -59,8 +59,14 @@ All tests now pass (101).
 ## Phase 4: Observability & Test Expansion (COMPLETED ✅)
 
 - [x] Add JSON log format option (PI_LOG_FORMAT=json)
-- [x] Comprehensive logger tests (5 tests, coverage ~66%)
+- [x] Comprehensive logger tests (5 tests)
 - [x] Updated evolution docs with latest iteration
+
+## Phase 5: Zero-Coverage Gap Closure (COMPLETED ✅)
+
+- [x] Add tests for session.export operation (+7 tests)
+- [x] Achieved 100% coverage on export.ts
+- [x] Improved overall coverage to 85.36% statements
 
 All high-priority tasks complete.
 

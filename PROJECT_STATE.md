@@ -8,7 +8,7 @@
 
 **Project:** jf-pi-sdk - Pi Coding Agent SDK TypeScript wrapper  
 **Status:** HEALTHY ⬆️  
-**Phase:** All phases complete - production-ready  
+**Phase:** All phases (1-6) complete - production-ready  
 **Branch:** main (clean working tree)
 
 ---
@@ -21,19 +21,19 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (110/110)
+- Test pass rate: ✅ 100% (117/117)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
 ### Test Coverage
-- Statements: 82.92% (target ≥80%)
-- Branches: 71.54% (target ≥60%)
-- Functions: 87.5% (target ≥80%)
-- Lines: 83.83% (target ≥80%)
+- Statements: 85.36% (target ≥80%)
+- Branches: 74.58% (target ≥60%)
+- Functions: 88.33% (target ≥80%)
+- Lines: 86.42% (target ≥80%)
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 110 tests passing (~450ms)
+- Vitest: ✅ 117 tests passing (~500ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -111,6 +111,14 @@ src/
 2. **Logger Tests** - Added comprehensive test suite for logger (5 tests)
 3. **Coverage** - Improved overall coverage to 82.92% statements, 87.5% functions
 4. **Final Status** - All quality gates met; codebase production-ready
+
+---
+
+## Recent Changes (Iteration 5)
+
+1. **Export Operation Tests** - Added 7 tests to cover `session.export`; removed 0% coverage gap
+2. **Coverage Increase** - Up to 85.36% statements, 88.33% functions, 86.42% lines
+3. **All Tests Passing** - 117/117
 
 ---
 

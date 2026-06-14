@@ -182,16 +182,17 @@
 ## Next Actions
 
 All high-priority quality and reliability tasks are complete. The codebase is production-ready with:
-- Comprehensive test coverage (105 tests, 100% pass)
+- Comprehensive test coverage (117 tests, 100% pass)
+- Full coverage on all operations (including export)
 - Concurrency safety (Mutex)
 - Disk rotation (session.cleanup)
-- Structured logging (env-controlled)
+- Structured logging (pretty/JSON)
 - Diagnostics integration (cleanup stats)
 - CI/CD pipeline (GitHub Actions)
 
 Optional future work:
-- Advanced logging (JSON output)
 - Extended diagnostics metrics
+- Refine test mocks to reduce `any`
 
 ---
 
