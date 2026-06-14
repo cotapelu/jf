@@ -31,9 +31,9 @@
 
 ### 2.3 Test Gap Mitigation 🔄 IN PROGRESS
 - [ ] Add WeakRef garbage collection simulation test
-- [ ] Add large session trees (>100 nodes) performance test
+- [x] Add large session trees (>100 nodes) performance test
 - [ ] Add concurrent session operations race condition test
-- [ ] Add invalid parameter type validation tests
+- [x] Add invalid parameter type validation tests (missing sessionId)
 
 ### 2.4 Session History Management ⏳ PENDING
 - [ ] Add history limit config (default 1000)
