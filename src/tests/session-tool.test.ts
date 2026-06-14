@@ -166,6 +166,14 @@ describe('SessionTool', () => {
       // @ts-ignore
       expect(result.content[0].text).toContain('Already active');
     });
+
+    it('should throw when sessionId is not provided', async () => {
+      const result: any = await tool.execute('switch_missing', { operation: 'switch' });
+      // @ts-ignore
+      expect(result.isError).toBe(true);
+      // @ts-ignore
+      expect(result.content[0].text).toContain('Target session not specified or not found');
+    });
   });
 
   describe('list operation', () => {

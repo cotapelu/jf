@@ -263,6 +263,42 @@ describe('SessionRegistry', () => {
       expect(child2Node).toBeDefined();
       expect(child2Node!.children).toHaveLength(0);
     });
+
+    it('should handle large trees efficiently (>100 nodes)', () => {
+      // Create a deep tree with 150+ nodes
+      const root = createMockSession('large_root');
+      const rootMeta = registry.register(root);
+
+      // Create 150 children in a chain (depth 150)
+      const nodes: SessionMetadata[] = [rootMeta];
+      for (let i = 0; i < 150; i++) {
+        const child = createMockSession(`large_child_${i}`);
+        const parent = nodes[i];
+        const childMeta = registry.register(child, { parentId: parent.id });
+        nodes.push(childMeta);
+      }
+
+      // Should have 151 total sessions
+      expect(registry.count).toBe(151);
+
+      // Tree should have single root with deep chain
+      const tree = registry.getTree();
+      expect(tree.roots).toHaveLength(1);
+      expect(tree.roots[0].session.id).toBe(rootMeta.id);
+      expect(tree.roots[0].children).toHaveLength(1);
+
+      // Verify depth
+      let node = tree.roots[0];
+      for (let i = 0; i < 150; i++) {
+        expect(node.children).toHaveLength(1);
+        node = node.children[0];
+      }
+      expect(node.session.id).toBe(nodes[150].id);
+
+      // List should return all sessions sorted by creation date desc
+      const list = registry.list();
+      expect(list).toHaveLength(151);
+    });
   });
 
   describe('findByFilePath()', () => {
