@@ -11,3 +11,4 @@ export { operationHistory } from './history.js';
 export { operationStatus } from './status.js';
 export { operationDiagnostics } from './diagnostics.js';
 export { operationCleanup } from './cleanup.js';
+export { operationPrepareChild, operationChildRead, operationChildWrite, operationParentRead, operationCompleteChild } from './handoff.js';

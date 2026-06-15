@@ -1,0 +1,6 @@
+{
+  "status": "pending",
+  "createdAt": "2026-06-15T09:23:04.374Z",
+  "mission": "Tính tổng a+b từ context và trả về JSON",
+  "outputPath": "/tmp/test_child_output.json"
+}
