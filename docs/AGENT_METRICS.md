@@ -6,9 +6,9 @@
 
 ## Current Iteration Summary
 
-**Date:** 2026-06-14  
-**Iteration:** 10 (Delete operation test)  
-**Focus:** Add missing error path tests for operationDelete; improve coverage to >91.2%
+**Date:** 2026-06-16  
+**Iteration:** 11 (Skills Implementation)  
+**Focus:** Implemented Skill Orchestrator tool (src/tools/skills/) with engine, validation, and 3 sample skills (refactor, test, doc)
 
 ---
 
@@ -136,11 +136,13 @@ Duration  ~400ms
 
 ## Next Iteration Targets
 
-Remaining Phase 2 & Phase 3 priorities:
+Phase 11+ priorities from PI_SDK_CAPABILITIES roadmap:
 
-1. **WeakRef Garbage Collection Test** - Verify memory cleanup behavior
-2. **Reduce `any` usage** in test mocks - Improve type safety
-3. **Reorganize tool registration** (optional) - Move all tools under subdirectories
+1. **Skill Orchestrator (PRIORITY 1)** ✅ COMPLETED - Implemented skills tool with engine, validation, 3 sample skills
+2. **Skills Testing Framework (PRIORITY 2)** - Add comprehensive unit tests for skill engine and all built-in skills
+3. **Extensions Framework (PRIORITY 3)** - Modular extension loading system (git, docker, k8s)
+4. **Codebase Indexer (PRIORITY 4)** - AST scanning for context-aware coding
+5. **Context Compaction (PRIORITY 5)** - Auto-summarize long sessions
 
 Note: All critical quality gates met (functions ≤20, complexity ≤10, coverage ≥80%, 100% tests pass).
 

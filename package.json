@@ -7,7 +7,8 @@
   },
   "scripts": {
     "start": "tsx src/main.ts",
-    "build": "tsc && chmod +x dist/cli.js",
+    "prebuild": "rimraf dist && mkdir -p dist/tools/skills",
+    "build": "npm run prebuild && cpx \"src/tools/skills/skills-md/**/*.md\" dist/tools/skills/skills-md && tsc && chmod +x dist/cli.js",
     "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",
@@ -15,19 +16,24 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.79.2"
+    "@earendil-works/pi-coding-agent": "^0.79.2",
+    "@earendil-works/pi-ai": "^0.79.2",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.3",
     "@types/pino": "^7.0.4",
     "@types/prettier": "^2.7.3",
+    "@types/yaml": "^1.9.6",
     "@typescript-eslint/eslint-plugin": "^8.61.0",
     "@typescript-eslint/parser": "^8.61.0",
     "@vitest/coverage-v8": "^4.1.8",
+    "cpx": "^1.5.0",
     "eslint": "^10.5.0",
     "globals": "^17.6.0",
     "pino": "^10.3.1",
     "prettier": "^3.8.4",
+    "rimraf": "^5.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.61.0",

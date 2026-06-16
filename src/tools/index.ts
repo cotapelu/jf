@@ -10,6 +10,7 @@ import { createBashTool, createCodingTools, createEditTool, createFindTool, crea
 import { getTimeTool } from './time/index.js';
 import { createSessionTool, initializeSessionTool, resetSessionTool as resetSessionToolInternal, } from './session/index.js';
 import { createMultiAgentTool } from './multi-agent/index.js';
+import { skillTool } from './skills/index.js';
 
 // Re-export get_time tool for convenience
 export { getTimeTool } from './time/index.js';
@@ -89,7 +90,7 @@ export function registerMultiAgentTool(): ToolDefinition[] {
  * Register all custom (non-builtin) tools
  */
 export function registerAllCustomTools(): ToolDefinition[] {
-	return [getTimeTool, ...registerMultiAgentTool(), ...registerSessionTool()];
+	return [getTimeTool, skillTool, ...registerMultiAgentTool(), ...registerSessionTool()];
 }
 
 /**

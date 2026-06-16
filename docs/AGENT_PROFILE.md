@@ -13,6 +13,7 @@
 - Modular architecture design
 - Session management systems
 - Tool creation patterns
+- Skill orchestration engine (execution, validation, chaining)
 
 ---
 

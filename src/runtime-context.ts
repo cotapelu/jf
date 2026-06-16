@@ -55,6 +55,16 @@
  * Need only model registry?           → getCurrentModelRegistry()
  * Need only resource loader?          → getCurrentResourceLoader()
  * Need only cwd?                      → getCurrentCwd()
+ * Need only agent dir?                → getCurrentAgentDir()
+ * Need only current model?            → getCurrentModel()
+ * Need extension runner?              → getCurrentExtensionRunner()
+ * Need session manager?              → getCurrentSessionManager()
+ * Need session file?                  → getCurrentSessionFile()
+ * Need session ID?                    → getCurrentSessionId()
+ * Need active tool names?             → getCurrentActiveToolNames()
+ * Need all tools?                     → getCurrentAllTools()
+ * Need tool definition by name?       → getCurrentToolDefinition(name)
+ * Need all messages?                  → getCurrentMessages()
  *
  * RULE OF THUMB: Use the most specific getter available. Only use
  * getCurrentRuntime() if you need 2+ properties from it.
@@ -76,7 +86,8 @@
  * Tools can then call getCurrentRuntime() to access it.
  */
 
-import type { AgentSessionRuntime, AgentSession, AgentSessionServices, AgentSessionRuntimeDiagnostic } from '@earendil-works/pi-coding-agent';
+import type { AgentSessionRuntime, AgentSession, AgentSessionServices, AgentSessionRuntimeDiagnostic, ToolDefinition, ExtensionRunner, SessionManager, ToolInfo } from '@earendil-works/pi-coding-agent';
+import type { Model } from '@earendil-works/pi-ai';
 
 let currentRuntime: AgentSessionRuntime | null = null;
 
@@ -130,12 +141,100 @@ export function getCurrentDiagnostics(): readonly AgentSessionRuntimeDiagnostic[
 }
 
 /**
+ * Get the agent directory from services.
+ */
+export function getCurrentAgentDir(): string {
+  return getCurrentServices().agentDir;
+}
+
+/**
+ * Get current model from session (may be undefined if not selected yet).
+ */
+export function getCurrentModel(): Model<any> | undefined {
+  return getCurrentSession().model;
+}
+
+/**
+ * Get the current model's API type (for provider selection).
+ */
+export function getCurrentModelApi(): any {
+  return getCurrentModel()?.api;
+}
+
+/**
+ * Get extension runner from session.
+ */
+export function getCurrentExtensionRunner(): ExtensionRunner {
+  return getCurrentSession().extensionRunner;
+}
+
+/**
+ * Get session manager from current session (not services).
+ */
+export function getCurrentSessionManager(): SessionManager {
+  return getCurrentSession().sessionManager;
+}
+
+/**
+ * Get current session file path (undefined if sessions disabled).
+ */
+export function getCurrentSessionFile(): string | undefined {
+  return getCurrentSession().sessionFile;
+}
+
+/**
+ * Get current session ID.
+ */
+export function getCurrentSessionId(): string {
+  return getCurrentSession().sessionId;
+}
+
+/**
+ * Get current session display name.
+ */
+export function getCurrentSessionName(): string | undefined {
+  return getCurrentSession().sessionName;
+}
+
+/**
+ * Get active tool names from current session.
+ */
+export function getCurrentActiveToolNames(): string[] {
+  return getCurrentSession().getActiveToolNames();
+}
+
+/**
+ * Get all configured tools from current session (returns ToolInfo, not ToolDefinition).
+ * Use getCurrentToolDefinition(name) for ToolDefinition.
+ */
+export function getCurrentToolInfoList(): ToolInfo[] {
+  return getCurrentSession().getAllTools();
+}
+
+/**
+ * Get tool definition by name from current session.
+ */
+export function getCurrentToolDefinition(name: string): ToolDefinition | undefined {
+  return getCurrentSession().getToolDefinition(name);
+}
+
+/**
+ * Get all messages from current session.
+ */
+export function getCurrentMessages(): any[] {
+  return getCurrentSession().messages;
+}
+
+/**
  * Get model fallback message (if any) from the runtime.
  */
 export function getCurrentModelFallbackMessage(): string | undefined {
   return getCurrentRuntime().modelFallbackMessage;
 }
 
+/**
+ * Get auth storage from services.
+ */
 export function getCurrentAuthStorage(): any {
   return getCurrentServices().authStorage;
 }
