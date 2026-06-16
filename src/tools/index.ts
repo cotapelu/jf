@@ -5,7 +5,7 @@
  * Note: Most factories take `cwd` and optional `options`.
  */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
+import type { BashToolOptions, ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { createBashTool, createCodingTools, createEditTool, createFindTool, createGrepTool, createLsTool, createReadOnlyTools, createReadTool, createWriteTool, } from '@earendil-works/pi-coding-agent';
 import { getTimeTool } from './time/index.js';
 import { createSessionTool, initializeSessionTool, resetSessionTool as resetSessionToolInternal, } from './session/index.js';
@@ -15,39 +15,59 @@ import { createMultiAgentTool } from './multi-agent/index.js';
 export { getTimeTool } from './time/index.js';
 
 /**
- * Register ALL built-in tools by calling EVERY tool factory function
+ * Create enhanced bash tool with clear guidelines and safety rules
+ */
+function createEnhancedBashTool(cwd: string, options?: BashToolOptions): ToolDefinition {
+  const baseTool = createBashTool(cwd, options);
+  return {
+    ...baseTool,
+    promptSnippet: 'Execute shell commands (ls, grep, mkdir, rm, etc.) with timeout. Always check exit code. Prefer specialized tools (read, edit, write, find, grep, ls) when available.',
+    promptGuidelines: [
+      'Use absolute paths or paths relative to current working directory (cwd)',
+      'PREFER built-in specialized tools over bash:',
+      '  - read: for reading file contents',
+      '  - edit: for modifying files',
+      '  - write: for creating files',
+      '  - find/grep/ls: for file discovery and searching',
+      'Only use bash for operations NOT covered by specialized tools (e.g., package managers, build systems, custom scripts)',
+      'ALWAYS provide timeout for long-running commands: network (curl, npm, pip), compilation (make, gcc), tests, large file operations',
+      '  Example: { command: "npm test", timeout: 60 }',
+      'Non-zero exit code = failure. ALWAYS examine stderr output in result for error details',
+      'Avoid interactive commands requiring stdin. Use flags: -y, --no-prompt, --quiet, or input redirection (<, <<)',
+      'Clean up temporary files immediately after use (rm -f, tmpdir)',
+      'Split complex multi-step operations into separate bash calls for better observability and error isolation',
+      'Use proper quoting and escaping: "$VAR" (expand), \'$VAR\' (literal), \\ for escaping',
+      'Check existence before operations: test -f file.txt, test -d dir, [ -e path ]',
+      'For critical operations, prepend set -e to exit on first error',
+      'Understand output truncation: last 2000 lines or 50KB (whichever first); full output saved to temp file if truncated',
+      'NEVER use rm -rf /, dd, fork bombs, or destructive commands without explicit confirmation',
+      'Respect project structure: operate only within cwd, do not modify system files (/etc, /usr, C:\\Windows)',
+    ],
+  };
+}
+
+/**
+
+/**
+ * Register ALL built-in tools with enhanced metadata
  *
- * This demonstrates full SDK usage:
- * - createBashTool(cwd)
- * - createCodingTools(cwd)
- * - createEditTool(cwd)
- * - createFindTool(cwd)
- * - createGrepTool(cwd)
- * - createLsTool(cwd)
- * - createReadOnlyTools(cwd)
- * - createReadTool(cwd)
- * - createWriteTool(cwd)
+ * Each tool added individually to control metadata and avoid duplicates.
  */
 export function registerAllBuiltinTools(cwd: string): ToolDefinition[] {
-	const tools: ToolDefinition[] = [];
+  const tools: ToolDefinition[] = [];
 
-	// 1. Convenience factories (return arrays)
-	tools.push(...createCodingTools(cwd)); // [read, bash, edit, write]
-	tools.push(...createReadOnlyTools(cwd)); // [read, grep, find, ls]
+  // Core file operations
+  tools.push(createReadTool(cwd));
+  tools.push(createEnhancedBashTool(cwd));
+  tools.push(createEditTool(cwd));
+  tools.push(createWriteTool(cwd));
 
-	// 2. Individual factories (each adds one tool)
-	// Note: These will duplicate some tools (e.g., another 'read', 'bash') - SDK will dedupe
-	tools.push(createBashTool(cwd));
-	tools.push(createEditTool(cwd));
-	tools.push(createFindTool(cwd));
-	tools.push(createGrepTool(cwd));
-	tools.push(createLsTool(cwd));
-	tools.push(createReadTool(cwd));
-	tools.push(createWriteTool(cwd));
+  // File discovery tools
+  tools.push(createFindTool(cwd));
+  tools.push(createGrepTool(cwd));
+  tools.push(createLsTool(cwd));
 
-	// All 7 built-in tools are included (some duplicates)
-	// The SDK handles deduplication by tool name
-	return tools;
+  return tools;
 }
 
 /**
