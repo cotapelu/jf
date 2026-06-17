@@ -3,77 +3,123 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Phase 12: Extensions Framework Planning",
+      "name": "Phase 12: Extensions Framework",
       "tasks": [
         {
           "id": "task-1",
           "content": "Design Extension interface and registry system architecture",
-          "status": "in_progress"
+          "status": "completed"
         },
         {
           "id": "task-2",
           "content": "Create src/tools/extensions/ directory structure",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-3",
           "content": "Implement ExtensionRegistry class with tool discovery and registration",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-4",
           "content": "Create base Extension abstract class with lifecycle hooks",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-5",
           "content": "Implement GitExtension with core git operations (status, diff, commit, push, pull)",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-6",
           "content": "Write unit tests for ExtensionRegistry (registration, discovery, error handling)",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-7",
           "content": "Write unit tests for GitExtension tool definitions",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-8",
           "content": "Integrate extensions into main.ts runtime factory",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-9",
           "content": "Update AGENT_METRICS.md with Phase 12 progress",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-10",
           "content": "Update AGENT_PROFILE.md with extensions module analysis",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-11",
           "content": "Update EVOLUTION.md with Phase 12 completion",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-12",
           "content": "Update TODO.md with Phase 12 completed tasks log",
-          "status": "pending"
+          "status": "completed"
         },
         {
           "id": "task-13",
           "content": "Git commit: 'feat: extensions framework - registry + git extension'",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "Phase 13: Codebase Indexer",
+      "tasks": [
+        {
+          "id": "task-14",
+          "content": "Design Codebase Indexer API and scope (queries, output format)",
+          "status": "in_progress"
+        },
+        {
+          "id": "task-15",
+          "content": "Create src/tools/indexer/ directory structure",
+          "status": "pending"
+        },
+        {
+          "id": "task-16",
+          "content": "Implement AST scanner using TypeScript compiler API",
+          "status": "pending"
+        },
+        {
+          "id": "task-17",
+          "content": "Create indexer ToolDefinition with parameters (pattern, symbol type)",
+          "status": "pending"
+        },
+        {
+          "id": "task-18",
+          "content": "Write unit tests for indexer (sample project fixture)",
+          "status": "pending"
+        },
+        {
+          "id": "task-19",
+          "content": "Integrate indexer tool into main runtime",
+          "status": "pending"
+        },
+        {
+          "id": "task-20",
+          "content": "Update documentation (PROJECT_STATE, AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO)",
+          "status": "pending"
+        },
+        {
+          "id": "task-21",
+          "content": "Git commit: 'feat: codebase indexer - AST scanning'",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 14,
-  "nextPhaseId": 2,
-  "updatedAt": "2026-06-17T00:04:09.367Z"
+  "nextTaskId": 22,
+  "nextPhaseId": 3,
+  "updatedAt": "2026-06-17T07:30:00Z"
 }

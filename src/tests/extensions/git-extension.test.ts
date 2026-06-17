@@ -48,4 +48,14 @@ describe('GitExtension', () => {
     const ext = new GitExtension({ defaultAuthor: 'Test <test@example.com>' });
     expect(ext['options'].defaultAuthor).toBe('Test <test@example.com>');
   });
+
+  it('should initialize without error', () => {
+    const ext = new GitExtension();
+    expect(() => ext.initialize({} as any)).not.toThrow();
+  });
+
+  it('should dispose without error', () => {
+    const ext = new GitExtension();
+    expect(() => ext.dispose()).not.toThrow();
+  });
 });

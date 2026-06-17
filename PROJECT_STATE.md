@@ -211,6 +211,7 @@ src/
 - Time retrieval tool
 - Full TypeScript type safety
 - Skills orchestration (load skill docs, execute skill workflows)
+- Extensions framework (registry + GitExtension: git status, diff, commit, push, pull)
 
 ⏳ **What's incomplete:**
 - WeakRef garbage collection test (remaining)

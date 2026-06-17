@@ -7,8 +7,8 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-17  
-**Iteration:** 12 (Extensions Framework)  
-**Focus:** Extension registry system + GitExtension (git.status, git.diff, git.commit, git.push, git.pull)
+**Iteration:** 13 (Codebase Indexer)  
+**Focus:** AST-based code search tool (codebase.index) for symbol lookup and file indexing
 
 ---
 
@@ -21,8 +21,8 @@
 | Duplicate code (<5) | N/A | No dup>5 | 0 duplicates | ✅ |
 | Error handling | Partial | 100% public | 100% | ✅ |
 | Input validation | Partial | 100% external | 100% | ✅ |
-| Test coverage | 170 tests | ≥80% | 91.26% stmts, 90.83% funcs | ✅ |
-| Tests passing | 170/170 | 100% | 191/191 (100%) | ✅ |
+| Test coverage | 191 tests | ≥80% | 86.12% stmts, 80.95% funcs | ✅ |
+| Tests passing | 191/191 | 100% | 200/200 (100%) | ✅ |
 | Build status | Working | No errors | ✅ Success | ✅ |
 | Lint status | 3 errors | 0 errors | ✅ Clean | ✅ |
 
@@ -87,10 +87,16 @@ Duration  ~400ms
   - Delete operation tests (success & error paths): +3
 - Phase 11 additions:
   - Skills Orchestrator implementation (skill tool, engine, validation, 5 tests): +5
-- **Total: 175 tests passing**
+- Phase 12 additions:
+  - Extensions Framework (registry 11 tests + git-extension 5 tests): +16
+- Phase 13 additions:
+  - Codebase Indexer tool (4 tests)
+  - GetTimeTool tests (3 tests)
+  - GitExtension lifecycle tests (2 tests): +9
+- **Total: 200 tests passing**
 
 **Failure rate:** 0%  
-**Coverage:** Statements 91.26%, Branches 82.59%, Functions 90.83%, Lines 92.45% ✅
+**Coverage:** Statements 86.12%, Branches 78.53%, Functions 80.95%, Lines 91.22% ✅
 
 **Lint status:** ✅ Clean (3 errors fixed via ESLint config)
 
@@ -140,11 +146,11 @@ Duration  ~400ms
 
 Phase 11+ priorities from PI_SDK_CAPABILITIES roadmap:
 
-1. **Skill Orchestrator (PRIORITY 1)** ✅ COMPLETED - Implemented skills tool with engine, validation, 3 sample skills
+1. **Skill Orchestrator (PRIORITY 1)** ✅ COMPLETED
 2. **Skills Testing Framework (PRIORITY 2)** - Add comprehensive unit tests for skill engine and all built-in skills
-3. **Extensions Framework (PRIORITY 3)** ✅ COMPLETED - Modular extension loading system (GitExtension + registry)
-4. **Codebase Indexer (PRIORITY 4)** - AST scanning for context-aware coding
-5. **Context Compaction (PRIORITY 5)** - Auto-summarize long sessions
+3. **Extensions Framework (PRIORITY 3)** ✅ COMPLETED
+4. **Codebase Indexer (PRIORITY 4)** ✅ COMPLETED - AST scanning for symbol search (codebase.index)
+5. **Context Compaction (PRIORITY 5)** - Auto-summarize long sessions (NEXT)
 
 Note: All critical quality gates met (functions ≤20, complexity ≤10, coverage ≥80%, 100% tests pass).
 

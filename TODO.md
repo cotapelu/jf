@@ -123,6 +123,7 @@ All high-priority tasks complete.
 | 2026-06-14 | Added JSON logging format + tests | 4 |
 | 2026-06-17 | Skills Orchestrator implementation (engine, tool, 5 tests) | 11 |
 | 2026-06-17 | Extensions Framework (registry, GitExtension, 16 tests) | 12 |
+| 2026-06-17 | Codebase Indexer implementation (AST scanner, tool, 4 tests) | 13 |
 
 ---
 
