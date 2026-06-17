@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { operationRename } from '../tools/session/operations/rename.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
 import type { SessionMetadata } from '../tools/session/registry.js';
+import { SessionState } from '../tools/session/registry.js';
 
 describe('operationRename', () => {
   let mgr: MultiSessionManager;
@@ -15,10 +16,10 @@ describe('operationRename', () => {
       filePath: '/data/s1.jsonl',
       tags: [],
       parentId: null,
-      state: 'created',
-      sessionRef: undefined,
+      state: SessionState.INACTIVE,
+      sessionRef: null,
       ...overrides,
-    } as SessionMetadata;
+    };
   }
 
   beforeEach(() => {
@@ -31,7 +32,7 @@ describe('operationRename', () => {
   it('renames session successfully', () => {
     const meta = createMeta({ name: 'New Name' });
     (mgr.rename as ReturnType<typeof vi.fn>).mockReturnValue(meta);
-    const result = operationRename(mgr, { sessionId: 'sess1', name: 'New Name' });
+    const result: any = operationRename(mgr, { sessionId: 'sess1', name: 'New Name' });
     expect(result.details).toMatchObject({
       operation: 'rename',
       sessionId: 'sess1',
@@ -44,7 +45,7 @@ describe('operationRename', () => {
     const activeId = 'active1';
     (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: activeId } as any);
     (mgr.rename as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: activeId, name: 'Renamed' }));
-    const result = operationRename(mgr, { name: 'Renamed' });
+    const result: any = operationRename(mgr, { name: 'Renamed' });
     expect(result.details.sessionId).toBe(activeId);
   });
 
@@ -54,7 +55,7 @@ describe('operationRename', () => {
   });
 
   it('throws when name is missing', () => {
-    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 's1' } as any);
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: 's1' } as any));
     expect(() => operationRename(mgr, { sessionId: 's1' })).toThrow('Name is required');
   });
 

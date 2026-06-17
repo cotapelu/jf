@@ -3,9 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rmdir, writeFile } from 'fs/promises';
+import { mkdtemp, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { codebaseIndexTool } from '../../tools/indexer/index.js';
+import { codebaseIndexTool as rawTool } from '../../tools/indexer/index.js';
+
+const tool: any = rawTool;
 
 describe('Codebase Indexer Tool', () => {
   let tempDir: string;
@@ -15,18 +17,18 @@ describe('Codebase Indexer Tool', () => {
   });
 
   afterEach(async () => {
-    await rmdir(tempDir, { recursive: true });
+    await rm(tempDir, { recursive: true, force: true });
   });
 
   it('should have correct metadata', () => {
-    expect(codebaseIndexTool).toBeDefined();
-    expect(codebaseIndexTool.name).toBe('codebase.index');
-    expect(codebaseIndexTool.description).toContain('code');
+    expect(rawTool).toBeDefined();
+    expect(rawTool.name).toBe('codebase.index');
+    expect(rawTool.description).toContain('code');
   });
 
   it('should return empty when no symbols found', async () => {
     await writeFile(join(tempDir, 'empty.ts'), '');
-    const result = await codebaseIndexTool.execute('call', { query: 'test' }, undefined, undefined, { cwd: tempDir });
+    const result: any = await tool.execute('call', { query: 'test' }, undefined, undefined, { cwd: tempDir });
     expect(result.details?.status).toBe('success');
     expect(result.content[0].text).toBe('No symbols found');
   });
@@ -37,7 +39,7 @@ describe('Codebase Indexer Tool', () => {
       function bar() {}
     `;
     await writeFile(join(tempDir, 'sample.ts'), code);
-    const result = await codebaseIndexTool.execute('call', { query: 'foo', kind: 'function' }, undefined, undefined, { cwd: tempDir });
+    const result: any = await tool.execute('call', { query: 'foo', kind: 'function' }, undefined, undefined, { cwd: tempDir });
     expect(result.details?.status).toBe('success');
     expect(result.content[0].text).toContain('foo');
     expect(result.content[0].text).toContain('function');
@@ -48,7 +50,7 @@ describe('Codebase Indexer Tool', () => {
       class MyClass {}
     `;
     await writeFile(join(tempDir, 'sample.ts'), code);
-    const result = await codebaseIndexTool.execute('call', { query: 'MyClass', kind: 'class' }, undefined, undefined, { cwd: tempDir });
+    const result: any = await tool.execute('call', { query: 'MyClass', kind: 'class' }, undefined, undefined, { cwd: tempDir });
     expect(result.details?.status).toBe('success');
     expect(result.content[0].text).toContain('MyClass');
     expect(result.content[0].text).toContain('class');

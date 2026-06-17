@@ -33,7 +33,7 @@ describe('Context Compaction Tool', () => {
       summary: 'Summary of older messages...',
       removedMessages: 10,
     });
-    const result = await compactContextTool.execute('call', { messages: [{ role: 'user', content: 'hello' }] }, undefined, undefined, mockCtx);
+    const result: any = await compactContextTool.execute('call', { messages: [{ role: 'user', content: 'hello' }] }, undefined, undefined, mockCtx);
     expect(result.details?.status).toBe('success');
     expect(result.content[0].text).toContain('Summary');
   });
@@ -51,13 +51,13 @@ describe('Context Compaction Tool', () => {
 
   it('should handle algorithm errors', async () => {
     (compactSession as any).mockRejectedValue(new Error('Session too large to compact'));
-    const result = await compactContextTool.execute('call', { messages: [{ role: 'user', content: 'x' }] }, undefined, undefined, mockCtx);
+    const result: any = await compactContextTool.execute('call', { messages: [{ role: 'user', content: 'x' }] }, undefined, undefined, mockCtx);
     expect(result.details?.status).toBe('error');
     expect(result.isError).toBe(true);
   });
 
   it('should require messages parameter', async () => {
-    const result = await compactContextTool.execute('call', {}, undefined, undefined, mockCtx);
+    const result: any = await compactContextTool.execute('call', {}, undefined, undefined, mockCtx);
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('messages array is required');
   });

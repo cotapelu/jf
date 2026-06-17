@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { operationInfo } from '../tools/session/operations/info.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
 import type { SessionMetadata } from '../tools/session/registry.js';
+import { SessionState } from '../tools/session/registry.js';
 
 describe('operationInfo', () => {
   let mgr: MultiSessionManager;
@@ -15,10 +16,10 @@ describe('operationInfo', () => {
       filePath: '/data/s1.jsonl',
       tags: [],
       parentId: null,
-      state: 'created',
-      sessionRef: undefined,
+      state: SessionState.INACTIVE,
+      sessionRef: null,
       ...overrides,
-    } as SessionMetadata;
+    };
   }
 
   beforeEach(() => {
@@ -33,12 +34,12 @@ describe('operationInfo', () => {
 
   it('returns info for explicit sessionId', () => {
     const meta = createMeta({ name: 'My Session', tags: ['a', 'b'] });
-    mgr.get.mockReturnValue(meta);
-    mgr.getRegistry.mockReturnValue({ getChildren: () => [] });
+    (mgr.get as ReturnType<typeof vi.fn>).mockReturnValue(meta);
+    (mgr.getRegistry as ReturnType<typeof vi.fn>).mockReturnValue({ getChildren: () => [] });
 
-    const result = operationInfo(mgr, { sessionId: 'sess1' });
+    const result: any = operationInfo(mgr, { sessionId: 'sess1' });
 
-    expect(result.details.operation).toBe('info');
+    expect(result.details?.operation).toBe('info');
     expect(result.details.session.id).toBe('sess1');
     expect(result.details.session.name).toBe('My Session');
     expect(result.details.session.childCount).toBe(0);
@@ -47,33 +48,33 @@ describe('operationInfo', () => {
 
   it('uses active session when sessionId omitted', () => {
     const meta = createMeta({ name: 'Active' });
-    mgr.getActive.mockReturnValue({ id: 'sess1' });
-    mgr.get.mockReturnValue(meta);
-    mgr.getRegistry.mockReturnValue({ getChildren: () => [] });
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 'sess1' } as any);
+    (mgr.get as ReturnType<typeof vi.fn>).mockReturnValue(meta);
+    (mgr.getRegistry as ReturnType<typeof vi.fn>).mockReturnValue({ getChildren: () => [] });
 
-    const result = operationInfo(mgr, {});
+    const result: any = operationInfo(mgr, {});
 
     expect(result.details.session.id).toBe('sess1');
   });
 
   it('throws when no active session and no sessionId', () => {
-    mgr.getActive.mockReturnValue(null);
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(null);
     expect(() => operationInfo(mgr, {})).toThrow('No active session');
   });
 
   it('throws when session not found', () => {
-    mgr.getActive.mockReturnValue(null);
-    mgr.get.mockReturnValue(undefined);
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(null);
+    (mgr.get as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
     expect(() => operationInfo(mgr, { sessionId: 'missing' })).toThrow('Session not found');
   });
 
   it('includes child count in details', () => {
     const meta = createMeta();
-    mgr.get.mockReturnValue(meta);
-    mgr.getRegistry.mockReturnValue({
+    (mgr.get as ReturnType<typeof vi.fn>).mockReturnValue(meta);
+    (mgr.getRegistry as ReturnType<typeof vi.fn>).mockReturnValue({
       getChildren: () => [{ id: 'c1' }, { id: 'c2' }],
     });
-    const result = operationInfo(mgr, { sessionId: 'sess1' });
+    const result: any = operationInfo(mgr, { sessionId: 'sess1' });
     expect(result.details.session.childCount).toBe(2);
   });
 });
