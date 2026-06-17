@@ -47,8 +47,22 @@
         { "id": "task-28", "content": "Git commit: 'chore: evolution round - Phase 14 Context Compaction complete'", "status": "completed" }
       ]
     }
+    },
+    {
+      "id": "phase-4",
+      "name": "Phase 15: Skills Testing Framework",
+      "tasks": [
+        { "id": "task-29", "content": "Design skill testing framework (mock LLM, validate outputs)", "status": "in_progress" },
+        { "id": "task-30", "content": "Write unit tests for SkillEngine (load skill, validate parameters, execution)", "status": "pending" },
+        { "id": "task-31", "content": "Write tests for built-in refactor.extract-function skill", "status": "pending" },
+        { "id": "task-32", "content": "Write tests for built-in test.generate-unit-test skill", "status": "pending" },
+        { "id": "task-33", "content": "Write tests for built-in doc.generate-jsdoc skill", "status": "pending" },
+        { "id": "task-34", "content": "Update documentation (PROJECT_STATE, AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO)", "status": "pending" },
+        { "id": "task-35", "content": "Git commit: 'feat: skills testing framework - comprehensive skill tests'", "status": "pending" }
+      ]
+    }
   ],
-  "nextTaskId": 29,
-  "nextPhaseId": 4,
-  "updatedAt": "2026-06-17T08:10:00Z"
+  "nextTaskId": 36,
+  "nextPhaseId": 5,
+  "updatedAt": "2026-06-17T08:30:00Z"
 }
