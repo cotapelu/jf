@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { skillTool, listAvailableSkills } from '../../../tools/skills/skill-tool.js';
-import { getCurrentCwd } from '../../../runtime-context.js';
+import { getCurrentCwd, getCurrentResourceLoader } from '../../../runtime-context.js';
 
 // Mock fs/promises
 vi.mock('fs/promises', () => ({
@@ -90,6 +90,51 @@ describe('Skill Loader Tool', () => {
       expect(skills[0].description).toBe('Analyze Code');
       expect(skills[1].name).toBe('refactor-extract');
       expect(skills[1].description).toBe('Refactor Extract');
+    });
+  });
+
+  describe('execute fallback and error handling', () => {
+    it('should fallback to resourceLoader when file not found in any path', async () => {
+      vi.mocked(readFile).mockRejectedValue(new Error('ENOENT'));
+      const mockResourceLoader = { loadSkill: vi.fn().mockResolvedValue({ content: 'Skill from loader' }) };
+      vi.mocked(getCurrentResourceLoader).mockReturnValue(mockResourceLoader as any);
+
+      const result = await (skillTool.execute as any)('call', { skill: 'fallback-skill' }, undefined, undefined, undefined);
+
+      expect(result.details?.status).toBe('success');
+      expect(result.content[0].text).toBe('Skill from loader');
+      expect(mockResourceLoader.loadSkill).toHaveBeenCalledWith('fallback-skill');
+    });
+
+    it('should return error when both file and resourceLoader fail', async () => {
+      vi.mocked(readFile).mockRejectedValue(new Error('ENOENT'));
+      const mockResourceLoader = { loadSkill: vi.fn().mockRejectedValue(new Error('Loader error')) };
+      vi.mocked(getCurrentResourceLoader).mockReturnValue(mockResourceLoader as any);
+
+      const result = await (skillTool.execute as any)('call', { skill: 'missing' }, undefined, undefined, undefined);
+
+      expect(result.details?.status).toBe('error');
+      // Both file paths and resourceLoader failed -> 'not found' message
+      expect(result.content[0].text).toContain('Skill "missing" not found');
+    });
+
+    it('should try next path if earlier readFile fails', async () => {
+      // First attempt fails, second succeeds (no third call)
+      vi.mocked(readFile)
+        .mockImplementationOnce(async () => { throw new Error('fail1'); })
+        .mockImplementationOnce(async () => 'Second path content');
+
+      const result = await (skillTool.execute as any)('call', { skill: 'test' }, undefined, undefined, undefined);
+      expect(result.details?.status).toBe('success');
+      expect(result.content[0].text).toBe('Second path content');
+    });
+  });
+
+  describe('listAvailableSkills edge cases', () => {
+    it('should handle readdir error and return empty array', async () => {
+      vi.mocked(readdir).mockRejectedValue(new Error('readdir fail'));
+      const skills = await listAvailableSkills('/test/cwd');
+      expect(skills).toEqual([]);
     });
   });
 });
