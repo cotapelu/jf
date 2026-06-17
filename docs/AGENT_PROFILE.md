@@ -16,6 +16,7 @@
 - Skill orchestration engine (execution, validation, chaining)
 - Extensions framework (registry + GitExtension)
 - Codebase indexing (AST scanning, symbol search)
+- Context compaction (token-aware session summarization)
 
 ---
 
@@ -220,6 +221,7 @@
 **Phase 11 (Complete):** Skills orchestration implementation (engine, tool, validation, 5 tests) ✅
 **Phase 12 (Complete):** Extensions framework (ExtensionRegistry, GitExtension, 16 tests) ✅
 **Phase 13 (Complete):** Codebase Indexer (AST scanner, tool, 4 tests) ✅
+**Phase 14 (Complete):** Context Compaction (algorithm, tool, 5 tests) ✅
 
 ---
 

@@ -9,6 +9,7 @@ import type { BashToolOptions, ToolDefinition } from '@earendil-works/pi-coding-
 import { createBashTool, createCodingTools, createEditTool, createFindTool, createGrepTool, createLsTool, createReadOnlyTools, createReadTool, createWriteTool, } from '@earendil-works/pi-coding-agent';
 import { getTimeTool } from './time/index.js';
 import { codebaseIndexTool } from './indexer/index.js';
+import { compactContextTool } from './compaction/index.js';
 import { createSessionTool, initializeSessionTool, resetSessionTool as resetSessionToolInternal, } from './session/index.js';
 import { createMultiAgentTool } from './multi-agent/index.js';
 import { skillTool } from './skills/index.js';
@@ -91,7 +92,7 @@ export function registerMultiAgentTool(): ToolDefinition[] {
  * Register all custom (non-builtin) tools
  */
 export function registerAllCustomTools(): ToolDefinition[] {
-	return [getTimeTool, skillTool, codebaseIndexTool, ...registerMultiAgentTool(), ...registerSessionTool()];
+	return [getTimeTool, codebaseIndexTool, compactContextTool, skillTool, ...registerMultiAgentTool(), ...registerSessionTool()];
 }
 
 /**
