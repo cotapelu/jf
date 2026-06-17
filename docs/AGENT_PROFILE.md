@@ -73,20 +73,21 @@
 
 ---
 
-### 4. Missing Coverage Enforcement
+### 4. Missing Coverage Enforcement (FIXED ✅)
 **Severity:** MEDIUM  
 **Instance:** No coverage threshold in vitest.config.ts  
 **Impact:** Cannot enforce ≥80% coverage requirement programmatically  
-**Current:** Tests pass but coverage not measured/verified  
-**Status:** ⚠️ ACKNOWLEDGED - needs `vitest --coverage` integration
+**Resolution:** Added coverage thresholds (statements ≥80%, branches ≥60%, functions ≥80%, lines ≥80%) and integrated into CI pipeline.  
+**Status:** ✅ FIXED
 
 ---
 
-### 5. Code Formatting
+### 5. Code Formatting (FIXED ✅)
 **Severity:** LOW (dev practice)  
 **Instance:** No Prettier config, inconsistent formatting (mixed quotes, spacing)  
 **Impact:** Code readability, PR reviews, team consistency  
-**Status:** ⚠️ ACKNOWLEDGED - should add `.prettierrc` and format
+**Resolution:** Installed Prettier, created `.prettierrc`, formatted entire codebase, added `format` script.  
+**Status:** ✅ FIXED
 
 ### 6. Concurrent Session Creation Race Condition (FIXED ✅)
 **Severity:** HIGH (data corruption risk)  
@@ -214,7 +215,8 @@
 **Phase 8 (Complete):** Info & Rename operation tests (+10), branch coverage >80%  
 **Phase 9 (Complete):** Logger tests expanded (all levels, formats), statement coverage >91%  
 **Phase 10 (Complete):** Delete operation tests (+3), covered error path; overall coverage >91.2%
+**Phase 11 (Complete):** Skills orchestration implementation (engine, tool, validation, 5 tests) ✅
 
 ---
 
-*Profile last updated: 2026-06-14*
+*Profile last updated: 2026-06-17*

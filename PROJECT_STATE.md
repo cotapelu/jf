@@ -1,6 +1,6 @@
 # Project State - Auto-Update
 
-*Last updated: 2026-06-14T10:00:00Z*
+*Last updated: 2026-06-17T06:50:00Z*
 
 ---
 
@@ -8,7 +8,7 @@
 
 **Project:** jf-pi-sdk - Pi Coding Agent SDK TypeScript wrapper  
 **Status:** HEALTHY ⬆️  
-**Phase:** All phases (1-6) complete - production-ready  
+**Phase:** Phases 1-11 complete - production-ready with Skills Orchestrator  
 **Branch:** main (clean working tree)
 
 ---
@@ -21,7 +21,7 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (170/170)
+- Test pass rate: ✅ 100% (175/175)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
@@ -33,7 +33,7 @@
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 170 tests passing (~700ms)
+- Vitest: ✅ 175 tests passing (~878ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -160,6 +160,16 @@ src/
 2. **Coverage Increase** - Statements 91.26%, Branches 82.59%, Lines 92.45%; `delete.ts` 100%
 3. **All Tests Passing** - 170/170
 
+## Recent Changes (Iteration 11)
+
+1. **Skills Implementation** - Created Skill Orchestrator system (`src/tools/skills/`) with:
+   - `SkillEngine` with YAML loading, parameter validation, LLM execution
+   - `skillTool` ToolDefinition for LLM invocation
+   - Built-in skill definitions: `refactor.extract-function`, `test.generate-unit-test`, `doc.generate-jsdoc`
+   - 5 unit tests for skill tool (loading, listing skills)
+2. **Test Suite Growth** - Total tests increased from 170 → 175
+3. **All Tests Passing** - 175/175
+
 ---
 
 ## Known Issues & Debt
@@ -170,6 +180,7 @@ src/
 - ✅ Concurrency issue fixed (Mutex) and tests passing
 - ✅ WeakRef garbage collection covered by existing dispose test
 - ⚠️ Some test mocks use `any` (acceptable for complex SDK types)
+- ✅ Skills Orchestrator implemented and tested (Phase 11)
 
 ### Low Priority
 - Tool registration reorganized (Phase 3)
@@ -187,6 +198,7 @@ src/
 - Multi-session management
 - Time retrieval tool
 - Full TypeScript type safety
+- Skills orchestration (load skill docs, execute skill workflows)
 
 ⏳ **What's incomplete:**
 - WeakRef garbage collection test (remaining)
@@ -207,7 +219,12 @@ src/
 
 ## Next High-Impact Tasks
 
-No remaining high-priority tasks.
+**Next Phases (PI_SDK_CAPABILITIES Roadmap):**
+- Phase 12: Extensions Framework (git, docker, k8s)
+- Phase 13: Codebase Indexer (AST scanning)
+- Phase 14: Context Compaction (auto-summarize)
+
+*Optional remaining task: Reduce `any` usage in test mocks for stronger typing.*
 
 ---
 

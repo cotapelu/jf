@@ -121,7 +121,8 @@ All high-priority tasks complete.
 | 2026-06-14 | Created PROJECT_STATE.md & TODO.md | 2 |
 | 2026-06-14 | Added CI/CD pipeline (GitHub Actions) | 3 |
 | 2026-06-14 | Added JSON logging format + tests | 4 |
+| 2026-06-17 | Skills Orchestrator implementation (engine, tool, 5 tests) | 11 |
 
 ---
 
-*TODO last updated: 2026-06-14*
+*TODO last updated: 2026-06-17*
