@@ -3,37 +3,77 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Documentation Sync for Phase 11",
+      "name": "Phase 12: Extensions Framework Planning",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Update PROJECT_STATE.md with Phase 11 completion and 175 tests",
-          "status": "completed"
+          "content": "Design Extension interface and registry system architecture",
+          "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Update TODO.md to add Phase 11 completed task",
-          "status": "completed"
+          "content": "Create src/tools/extensions/ directory structure",
+          "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Update AGENT_METRICS.md with correct test count and metrics",
-          "status": "completed"
+          "content": "Implement ExtensionRegistry class with tool discovery and registration",
+          "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Update AGENT_PROFILE.md with Phase 11 and current stats",
-          "status": "completed"
+          "content": "Create base Extension abstract class with lifecycle hooks",
+          "status": "pending"
         },
         {
           "id": "task-5",
-          "content": "Update EVOLUTION.md to reflect Phase 11 complete",
-          "status": "completed"
+          "content": "Implement GitExtension with core git operations (status, diff, commit, push, pull)",
+          "status": "pending"
+        },
+        {
+          "id": "task-6",
+          "content": "Write unit tests for ExtensionRegistry (registration, discovery, error handling)",
+          "status": "pending"
+        },
+        {
+          "id": "task-7",
+          "content": "Write unit tests for GitExtension tool definitions",
+          "status": "pending"
+        },
+        {
+          "id": "task-8",
+          "content": "Integrate extensions into main.ts runtime factory",
+          "status": "pending"
+        },
+        {
+          "id": "task-9",
+          "content": "Update AGENT_METRICS.md with Phase 12 progress",
+          "status": "pending"
+        },
+        {
+          "id": "task-10",
+          "content": "Update AGENT_PROFILE.md with extensions module analysis",
+          "status": "pending"
+        },
+        {
+          "id": "task-11",
+          "content": "Update EVOLUTION.md with Phase 12 completion",
+          "status": "pending"
+        },
+        {
+          "id": "task-12",
+          "content": "Update TODO.md with Phase 12 completed tasks log",
+          "status": "pending"
+        },
+        {
+          "id": "task-13",
+          "content": "Git commit: 'feat: extensions framework - registry + git extension'",
+          "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 6,
+  "nextTaskId": 14,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-16T23:52:16.826Z"
+  "updatedAt": "2026-06-17T00:04:09.367Z"
 }

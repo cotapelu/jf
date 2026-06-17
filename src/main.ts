@@ -34,6 +34,7 @@ import {
 } from '@earendil-works/pi-coding-agent';
 
 import { registerAllCustomTools } from './tools/index.js';
+import { getExtensionRegistry, GitExtension } from './tools/extensions/index.js';
 import { setCurrentRuntime } from './runtime-context.js';
 
 // 1️⃣ PromptTemplate usage
@@ -73,9 +74,20 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   const services: AgentSessionServices = await createAgentSessionServices(servicesOptions);
   const diagnostics: AgentSessionRuntimeDiagnostic[] = services.diagnostics;
 
-  // Session options
-  // Include custom tool names in allowlist to enable them
-  const allCustomTools = registerAllCustomTools();
+  // Register and initialize extensions
+  const extensionRegistry = getExtensionRegistry();
+  // Register built-in extensions (idempotent)
+  if (!extensionRegistry.has('git')) {
+    extensionRegistry.register(new GitExtension());
+  }
+  await extensionRegistry.initializeAll(cwd);
+  const extensionTools = extensionRegistry.getAllTools(cwd);
+
+  // Assemble custom tools: built-in custom tools + extension tools
+  const baseCustomTools = registerAllCustomTools();
+  const allCustomTools = [...baseCustomTools, ...extensionTools];
+
+  // Session options: include all tool names
   const allToolNames = [
     'read',
     'bash',

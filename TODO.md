@@ -1,6 +1,6 @@
 # Project TODO - Tracked Tasks
 
-*Last updated: 2026-06-14T10:00:00Z*
+*Last updated: 2026-06-17T07:30:00Z*
 
 ---
 
@@ -122,6 +122,7 @@ All high-priority tasks complete.
 | 2026-06-14 | Added CI/CD pipeline (GitHub Actions) | 3 |
 | 2026-06-14 | Added JSON logging format + tests | 4 |
 | 2026-06-17 | Skills Orchestrator implementation (engine, tool, 5 tests) | 11 |
+| 2026-06-17 | Extensions Framework (registry, GitExtension, 16 tests) | 12 |
 
 ---
 

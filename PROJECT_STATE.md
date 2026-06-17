@@ -8,7 +8,7 @@
 
 **Project:** jf-pi-sdk - Pi Coding Agent SDK TypeScript wrapper  
 **Status:** HEALTHY ⬆️  
-**Phase:** Phases 1-11 complete - production-ready with Skills Orchestrator  
+**Phase:** Phases 1-12 complete - production-ready  
 **Branch:** main (clean working tree)
 
 ---
@@ -21,7 +21,7 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (175/175)
+- Test pass rate: ✅ 100% (191/191)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
@@ -33,7 +33,7 @@
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 175 tests passing (~878ms)
+- Vitest: ✅ 191 tests passing (~880ms)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -185,6 +185,18 @@ src/
 ### Low Priority
 - Tool registration reorganized (Phase 3)
 - Session file rotation implemented (`session.cleanup`)
+
+---
+
+## Recent Changes (Iteration 12)
+
+1. **Extensions Framework** - Implemented modular extension system:
+   - `ExtensionRegistry` with registration, initialization, disposal lifecycle
+   - `GitExtension` providing 5 git tools (status, diff, commit, push, pull)
+   - Comprehensive error handling and input validation
+2. **Test Suite Growth** - Added 16 unit tests (registry: 11, git extension: 5)
+3. **Test Count** - Total tests increased from 175 → 191
+4. **All Tests Passing** - 191/191
 
 ---
 

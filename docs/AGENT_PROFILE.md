@@ -14,6 +14,7 @@
 - Session management systems
 - Tool creation patterns
 - Skill orchestration engine (execution, validation, chaining)
+- Extensions framework (registry + GitExtension)
 
 ---
 
@@ -216,6 +217,7 @@
 **Phase 9 (Complete):** Logger tests expanded (all levels, formats), statement coverage >91%  
 **Phase 10 (Complete):** Delete operation tests (+3), covered error path; overall coverage >91.2%
 **Phase 11 (Complete):** Skills orchestration implementation (engine, tool, validation, 5 tests) ✅
+**Phase 12 (Complete):** Extensions framework (ExtensionRegistry, GitExtension, 16 tests) ✅
 
 ---
 
