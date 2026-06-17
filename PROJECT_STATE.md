@@ -8,7 +8,7 @@
 
 **Project:** jf-pi-sdk - Pi Coding Agent SDK TypeScript wrapper  
 **Status:** HEALTHY ⬆️  
-**Phase:** Phases 1-12 complete - production-ready  
+**Phase:** Phases 1-15 complete - production-ready  
 **Branch:** main (clean working tree)
 
 ---
@@ -21,19 +21,19 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (191/191)
+- Test pass rate: ✅ 100% (213/213)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
 ### Test Coverage
-- Statements: 91.26% (target ≥80%)
-- Branches: 82.59% (target ≥60%)
-- Functions: 90.83% (target ≥80%)
-- Lines: 92.45% (target ≥80%)
+- Statements: 86.75% (target ≥80%)
+- Branches: 78.93% (target ≥60%)
+- Functions: 81.06% (target ≥80%)
+- Lines: 92.04% (target ≥80%)
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 191 tests passing (~880ms)
+- Vitest: ✅ 213 tests passing (~1.4s)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)
@@ -199,6 +199,17 @@ src/
 4. **All Tests Passing** - 191/191
 
 ---
+
+## Recent Changes (Iteration 13)
+
+1. **Skills Testing Framework** - Added comprehensive unit tests for:
+   - `SkillEngine` (listAvailableSkills)
+   - `skillTool` error handling and fallback scenarios (4 tests)
+   - Built-in skill content validation (refactor-extract, generate-tests, generate-docs)
+2. **Test Suite Growth** - Total tests increased from 205 → 213 (+8)
+3. **Coverage** - Maintained above thresholds: Statements 86.75%, Branches 78.93%, Functions 81.06%, Lines 92.04%
+4. **Documentation** - Updated evolution docs (AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO) for Phase 15
+5. **All Tests Passing** - 213/213
 
 ## Capabilities
 

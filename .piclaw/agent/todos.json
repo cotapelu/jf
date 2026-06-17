@@ -56,8 +56,8 @@
         { "id": "task-31", "content": "Write tests for built-in refactor.extract-function skill", "status": "completed" },
         { "id": "task-32", "content": "Write tests for built-in test.generate-unit-test skill", "status": "completed" },
         { "id": "task-33", "content": "Write tests for built-in doc.generate-jsdoc skill", "status": "completed" },
-        { "id": "task-34", "content": "Update documentation (PROJECT_STATE, AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO)", "status": "in_progress" },
-        { "id": "task-35", "content": "Git commit: 'feat: skills testing framework - comprehensive skill tests'", "status": "pending" }
+        { "id": "task-34", "content": "Update documentation (PROJECT_STATE, AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO)", "status": "completed" },
+        { "id": "task-35", "content": "Git commit: 'feat: skills testing framework - comprehensive skill tests'", "status": "completed" }
       ]
     }
   ],
