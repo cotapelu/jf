@@ -38,13 +38,13 @@
       "id": "phase-3",
       "name": "Phase 14: Context Compaction",
       "tasks": [
-        { "id": "task-22", "content": "Design Context Compaction API (summarize, truncate, token estimation)", "status": "in_progress" },
-        { "id": "task-23", "content": "Create src/tools/compaction/ directory structure", "status": "pending" },
-        { "id": "task-24", "content": "Implement compaction algorithm (sliding window or hierarchical summarization)", "status": "pending" },
-        { "id": "task-25", "content": "Write unit tests for compaction (short, medium, long sessions)", "status": "pending" },
-        { "id": "task-26", "content": "Integrate compaction tool into main runtime", "status": "pending" },
-        { "id": "task-27", "content": "Update documentation (PROJECT_STATE, AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO)", "status": "pending" },
-        { "id": "task-28", "content": "Git commit: 'feat: context compaction - session summarization'", "status": "pending" }
+        { "id": "task-22", "content": "Design Context Compaction API (summarize, truncate, token estimation)", "status": "completed" },
+        { "id": "task-23", "content": "Create src/tools/compaction/ directory structure", "status": "completed" },
+        { "id": "task-24", "content": "Implement compaction algorithm (sliding window or hierarchical summarization)", "status": "completed" },
+        { "id": "task-25", "content": "Write unit tests for compaction (short, medium, long sessions)", "status": "completed" },
+        { "id": "task-26", "content": "Integrate compaction tool into main runtime", "status": "completed" },
+        { "id": "task-27", "content": "Update documentation (PROJECT_STATE, AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO)", "status": "completed" },
+        { "id": "task-28", "content": "Git commit: 'chore: evolution round - Phase 14 Context Compaction complete'", "status": "completed" }
       ]
     }
   ],
