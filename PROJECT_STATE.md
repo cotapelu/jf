@@ -234,7 +234,7 @@ src/
 - Extensions framework (registry + GitExtension: git status, diff, commit, push, pull)
 
 ⏳ **What's incomplete:**
-- WeakRef garbage collection test (remaining)
+- None (all planned phases complete)
 
 ---
 
