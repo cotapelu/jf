@@ -8,7 +8,7 @@
 
 **Project:** jf-pi-sdk - Pi Coding Agent SDK TypeScript wrapper  
 **Status:** HEALTHY ⬆️  
-**Phase:** Phases 1-15 complete - production-ready  
+**Phase:** Phases 1-16 complete - production-ready  
 **Branch:** main (clean working tree)
 
 ---
@@ -211,6 +211,15 @@ src/
 4. **Documentation** - Updated evolution docs (AGENT_METRICS, AGENT_PROFILE, EVOLUTION, TODO) for Phase 15
 5. **All Tests Passing** - 213/213
 
+## Recent Changes (Iteration 14)
+
+1. **Type Safety Improvement** - Reduced `any` usage in test mocks for core session operations
+   - Refactored session-info, session-list, session-tag, session-rename, session-export, session-delete tests
+   - Replaced `as any` with `unknown` or proper SDK interfaces (`as unknown as MultiSessionManager`)
+   - Maintained 100% test pass rate across all changes
+2. **Test Suite** - All tests passing (213/213)
+3. **Coverage** - No change (86.75% statements, 78.93% branches, 81.06% functions, 92.04% lines)
+
 ## Capabilities
 
 ✅ **What works:**
@@ -226,7 +235,6 @@ src/
 
 ⏳ **What's incomplete:**
 - WeakRef garbage collection test (remaining)
-- Reduce `any` usage in test mocks (optional improvement)
 
 ---
 

@@ -18,20 +18,20 @@ describe('operationRename', () => {
       state: 'created',
       sessionRef: undefined,
       ...overrides,
-    } as any;
+    } as SessionMetadata;
   }
 
   beforeEach(() => {
     mgr = {
       getActive: vi.fn(),
       rename: vi.fn(),
-    } as any;
+    } as unknown as MultiSessionManager;
   });
 
   it('renames session successfully', () => {
     const meta = createMeta({ name: 'New Name' });
-    (mgr.rename as any).mockReturnValue(meta);
-    const result = operationRename(mgr as any, { sessionId: 'sess1', name: 'New Name' });
+    (mgr.rename as ReturnType<typeof vi.fn>).mockReturnValue(meta);
+    const result = operationRename(mgr, { sessionId: 'sess1', name: 'New Name' });
     expect(result.details).toMatchObject({
       operation: 'rename',
       sessionId: 'sess1',
@@ -42,25 +42,25 @@ describe('operationRename', () => {
 
   it('uses active session when sessionId omitted', () => {
     const activeId = 'active1';
-    (mgr.getActive as any).mockReturnValue({ id: activeId });
-    (mgr.rename as any).mockReturnValue(createMeta({ id: activeId, name: 'Renamed' }));
-    const result = operationRename(mgr as any, { name: 'Renamed' });
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: activeId } as any);
+    (mgr.rename as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: activeId, name: 'Renamed' }));
+    const result = operationRename(mgr, { name: 'Renamed' });
     expect(result.details.sessionId).toBe(activeId);
   });
 
   it('throws when no sessionId and no active', () => {
-    (mgr.getActive as any).mockReturnValue(null);
-    expect(() => operationRename(mgr as any, { name: 'X' })).toThrow('No active session');
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(null);
+    expect(() => operationRename(mgr, { name: 'X' })).toThrow('No active session');
   });
 
   it('throws when name is missing', () => {
-    (mgr.getActive as any).mockReturnValue({ id: 's1' });
-    expect(() => operationRename(mgr as any, { sessionId: 's1' })).toThrow('Name is required');
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 's1' } as any);
+    expect(() => operationRename(mgr, { sessionId: 's1' })).toThrow('Name is required');
   });
 
   it('throws when rename returns undefined (session not found)', () => {
-    (mgr.getActive as any).mockReturnValue(null);
-    (mgr.rename as any).mockReturnValue(undefined);
-    expect(() => operationRename(mgr as any, { sessionId: 'missing', name: 'X' })).toThrow('Session not found');
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(null);
+    (mgr.rename as ReturnType<typeof vi.fn>).mockReturnValue(undefined);
+    expect(() => operationRename(mgr, { sessionId: 'missing', name: 'X' })).toThrow('Session not found');
   });
 });

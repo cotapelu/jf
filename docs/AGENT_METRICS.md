@@ -7,8 +7,8 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-17  
-**Iteration:** 15 (Skills Testing Framework)  
-**Focus:** Comprehensive unit tests for SkillEngine and built-in skills
+**Iteration:** 16 (Type Safety Improvement)  
+**Focus:** Reduced `any` usage in test mocks, improved type safety across core session operation tests
 
 ---
 
@@ -97,6 +97,8 @@ Duration  ~400ms
   - Context Compaction tool (algorithm + tool, 5 tests): +5
 - Phase 15 additions:
   - Expanded skill-tool tests (+4) and built-in skill validation (+4): +8
+- Phase 16 additions:
+  - Reduced `any` usage in test mocks (session-info, session-list, session-tag, session-rename, session-export, session-delete): +0 new tests but improved type safety
 - **Total: 213 tests passing**
 
 **Failure rate:** 0%  
