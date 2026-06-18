@@ -36,6 +36,7 @@ import {
 import { registerAllCustomTools } from './tools/index.js';
 import { getExtensionRegistry, GitExtension } from './tools/extensions/index.js';
 import { setCurrentRuntime } from './runtime-context.js';
+import { loadAll } from './auto-loader.js';
 
 // 1️⃣ PromptTemplate usage
 const myCustomPrompt: PromptTemplate = {
@@ -73,6 +74,9 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 
   const services: AgentSessionServices = await createAgentSessionServices(servicesOptions);
   const diagnostics: AgentSessionRuntimeDiagnostic[] = services.diagnostics;
+
+  // Auto-load extensions and plugins
+  await loadAll();
 
   // Register and initialize extensions
   const extensionRegistry = getExtensionRegistry();
