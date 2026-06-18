@@ -3,12 +3,12 @@
   "version": "0.0.7",
   "type": "module",
   "bin": {
-    "jf": "dist/main.js"
+    "jf": "dist/cli.js"
   },
   "scripts": {
     "start": "tsx --tsconfig ./tsconfig.json src/main.ts",
     "prebuild": "rimraf dist && mkdir -p dist/tools/skills",
-    "build": "tsc && cpx \"src/tools/skills/skills-md/**/*.md\" dist/tools/skills/skills-md && chmod +x dist/main.js",
+    "build": "tsc && node -e \"const fs=require('fs');const f='dist/main.js';const c=fs.readFileSync(f,'utf8');if(!c.startsWith('#!')) fs.writeFileSync(f,'#!/usr/bin/env node\\n'+c);\" && cpx \"src/tools/skills/skills-md/**/*.md\" dist/tools/skills/skills-md && chmod +x dist/cli.js",
     "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",

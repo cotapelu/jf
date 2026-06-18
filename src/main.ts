@@ -34,9 +34,11 @@ import {
 } from '@earendil-works/pi-coding-agent';
 
 import { registerAllCustomTools } from './tools/index.js';
-import { getExtensionRegistry, GitExtension } from './tools/extensions/index.js';
 import { setCurrentRuntime } from './runtime-context.js';
-import { loadAll } from './auto-loader.js';
+import { discoverAndLoadExtensions } from '@earendil-works/pi-coding-agent';
+import { join } from 'node:path';
+import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
+// Extensions loaded via Pi SDK's discoverAndLoadExtensions from src/extensions
 
 // 1️⃣ PromptTemplate usage
 const myCustomPrompt: PromptTemplate = {
@@ -75,17 +77,24 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   const services: AgentSessionServices = await createAgentSessionServices(servicesOptions);
   const diagnostics: AgentSessionRuntimeDiagnostic[] = services.diagnostics;
 
-  // Auto-load extensions and plugins
-  await loadAll();
-
-  // Register and initialize extensions
-  const extensionRegistry = getExtensionRegistry();
-  // Register built-in extensions (idempotent)
-  if (!extensionRegistry.has('git')) {
-    extensionRegistry.register(new GitExtension());
+  // Load extensions from src/extensions (absolute path)
+  const extensionsPath = join(cwd, 'src/extensions');
+  const { extensions, errors } = await discoverAndLoadExtensions(
+    [extensionsPath],
+    cwd,
+    agentDir
+  );
+  if (errors.length) {
+    console.error('Extension discovery errors:', errors.map(e => `${e.path}: ${e.error}`).join('\n'));
   }
-  await extensionRegistry.initializeAll(cwd);
-  const extensionTools = extensionRegistry.getAllTools(cwd);
+
+  // Extract tools from extensions (Pi SDK Extension objects have .tools map)
+  const extensionTools: ToolDefinition[] = [];
+  for (const ext of extensions) {
+    for (const toolEntry of ext.tools.values()) {
+      extensionTools.push(toolEntry.definition);
+    }
+  }
 
   // Assemble custom tools: built-in custom tools + extension tools
   const baseCustomTools = registerAllCustomTools();
@@ -133,6 +142,9 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 
 export async function main() {
   console.log('🚀 Pi SDK - FULL EXPORTS USAGE\n');
+  // Debug: write to file
+  try { require('fs').appendFileSync('/tmp/jf_debug.log', 'main started\n'); } catch {}
+
 
   // ====== RUNTIME SETUP ======
   const sessionManager: SessionManager = SessionManager.create(process.cwd());
@@ -143,6 +155,27 @@ export async function main() {
   });
 
   setCurrentRuntime(runtime);
+
+  // Load and bind extensions from src/extensions
+  try {
+    const { extensions, errors } = await discoverAndLoadExtensions(
+      ['src/extensions'],
+      process.cwd(),
+      getAgentDir()
+    );
+    if (errors?.length) {
+      console.error('Extension discovery errors:', errors.map(e => `${e.path}: ${e.error}`).join('\n'));
+    }
+    if (extensions?.length) {
+      await (runtime.session as any).bindExtensions({ extensions });
+      console.log(`✅ Bound ${extensions.length} extensions`);
+    } else {
+      console.log('ℹ️ No extensions found');
+    }
+  } catch (err) {
+    console.error('❌ Failed to bind extensions:', err);
+  }
+
   console.log(` Parent session: ${runtime.session.sessionFile}\n`);
 
   const modeOptions: InteractiveModeOptions = {
