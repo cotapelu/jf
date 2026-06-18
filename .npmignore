@@ -1,0 +1,11 @@
+src/
+tests/
+coverage/
+node_modules/
+.git/
+.github/
+.gitignore
+*.log
+.vscode/
+.idea/
+*.tsbuildinfo
