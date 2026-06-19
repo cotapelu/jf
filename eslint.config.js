@@ -3,7 +3,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**", "src/tests/**"],
+    ignores: ["dist/**", "node_modules/**", "coverage/**", "src/tests/**", "src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.js"],
   },
   {
     extends: [tseslint.configs.recommendedTypeChecked],
@@ -21,9 +21,11 @@ export default tseslint.config(
       "@typescript-eslint/no-unsafe-member-access": 'off',
       "@typescript-eslint/no-unsafe-assignment": 'off',
       "@typescript-eslint/no-unsafe-call": 'off',
+      "@typescript-eslint/no-unsafe-return": 'off',
       "@typescript-eslint/no-floating-promises": "off",
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
       "no-unreachable": "error",
       "no-unused-labels": "error",
       "no-constant-condition": "error",

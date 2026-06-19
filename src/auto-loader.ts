@@ -86,7 +86,7 @@ async function loadExtensions(): Promise<void> {
       initialize: async () => { /* already loaded */ },
       dispose: async () => { /* cleanup if needed */ }
     };
-    registry.register(aggregateExt as any); // type assertion OK (structural)
+    registry.register(aggregateExt); // type assertion OK (structural)
 
   } catch (err: any) {
     console.error('[AutoLoader] Failed to load extensions:', err);

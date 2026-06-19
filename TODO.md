@@ -109,6 +109,11 @@ All tests now pass (101).
 
 All high-priority tasks complete.
 
+## Upcoming Tasks
+
+- [ ] Phase 18: Lint Cleanup - Fix all ESLint errors to maintain code quality.
+- [ ] Reduce remaining `any` usage in test mocks.
+
 ---
 
 ## Completed Tasks Log

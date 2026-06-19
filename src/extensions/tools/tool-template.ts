@@ -235,7 +235,7 @@ export function createYourTool(): ToolDefinition {
         // Gọi command execute với typed args (nếu có schema)
         const result = await (meta?.schema
           ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx)
-          : mod.execute(args, cwd, signal, ctx)) as { stdout: string; stderr: string; code: number };
+          : mod.execute(args, cwd, signal, ctx));
 
         // Nếu code !== 0 → error
         if (result.code !== 0) {

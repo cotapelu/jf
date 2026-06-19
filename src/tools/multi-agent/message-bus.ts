@@ -33,7 +33,7 @@ export class MessageBus extends EventEmitter {
 
     const handlers = this.parentToChildHandlers.get(childId) ?? [];
     for (const handler of handlers) {
-      handler(message, envelope as any);
+      handler(message, envelope);
     }
 
     const incomingHandlers = this.childIncomingHandlers.get(childId) ?? [];
@@ -77,7 +77,7 @@ export class MessageBus extends EventEmitter {
     const envelope = this.createEnvelope('child', 'parent', message);
 
     for (const handler of this.childToParentHandlers) {
-      handler(message, envelope as any);
+      handler(message, envelope);
     }
     this.emit(`parent`, envelope);
     this.emit('message', envelope);
@@ -98,7 +98,7 @@ export class MessageBus extends EventEmitter {
         if (envelope.from === 'child' && envelope.to === 'parent' && envelope.type === type) {
           clearTimeout(timer);
           this.off(`child:${childId}`, listener);
-          resolve(envelope as any);
+          resolve(envelope);
         }
       };
 

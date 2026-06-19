@@ -11,7 +11,7 @@ export const calcAction = {
     if (!/^[0-9+\-*/().]+$/.test(expr)) {
       throw new Error('Invalid expression. Only numbers and operators (+, -, *, /) allowed.');
     }
-    // eslint-disable-next-line no-eval
+     
     const result = eval(expr);
     if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
       throw new Error('Invalid calculation result');

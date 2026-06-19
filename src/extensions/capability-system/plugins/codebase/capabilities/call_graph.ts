@@ -340,7 +340,7 @@ export async function execute(params: { file: string; entryPoints?: string[]; qu
   const roots = determineRoots(params.file, params.entryPoints);
   const allFiles = await collectAllFiles(cwd, roots, depth, includeCrossFile);
   const absToFuncs = buildAbsToFuncs(allFiles);
-  let edges = buildEdges(allFiles, absToFuncs, nameFilter, limit);
+  const edges = buildEdges(allFiles, absToFuncs, nameFilter, limit);
   const nodeSet = collectUniqueNodes(allFiles, edges);
   const result = buildResult(nodeSet, edges);
   const summary = formatSummary(params, result, edges);

@@ -128,7 +128,7 @@ function buildStats(results: MetricResult[], stats: ReturnType<typeof initStats>
 
 async function computeMetrics(cwd: string, files: string[]): Promise<{ results: MetricResult[]; stats: Result['stats'] }> {
   const results: MetricResult[] = [];
-  let stats = initStats();
+  const stats = initStats();
   for (const fileRel of files) {
     const res = await analyzeFile(cwd, fileRel);
     results.push(res);

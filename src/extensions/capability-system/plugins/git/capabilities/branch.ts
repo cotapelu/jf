@@ -19,7 +19,7 @@ export async function execute(params: { action: string; name?: string }, ctx: an
   const { action, name } = params;
 
   try {
-    let args = ["branch"];
+    const args = ["branch"];
     if (action === "create") {
       if (!name) throw new Error("name required for create");
       args.push(name);

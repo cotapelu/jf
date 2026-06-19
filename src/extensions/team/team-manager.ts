@@ -538,7 +538,7 @@ export class AgentTeam implements AgentTeamRuntime {
       if (summary.completedTasks === summary.totalTasks && summary.totalTasks > 0) {
         return;
       }
-      // eslint-disable-next-line no-await-in-loop
+       
       await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
@@ -579,7 +579,7 @@ export class AgentTeam implements AgentTeamRuntime {
       if (!agentCwd) throw new Error('agentCwd is undefined for role ' + role);
 
       // Create isolated session directory
-      const teamDir = path.join(parentRuntime.services.agentDir as string, 'teams', this.id);
+      const teamDir = path.join(parentRuntime.services.agentDir, 'teams', this.id);
       const agentSessionDir = path.join(teamDir, role);
       // Use shared session manager (parent's) for all agents
       const sessionManager = parentRuntime.session.sessionManager;
@@ -652,7 +652,7 @@ export class AgentTeam implements AgentTeamRuntime {
       if (runtime) {
         const controller = new AbortController();
         this.childControllers.set(role, controller);
-        const p = (this.runAgentLoop(role, runtime, controller) as Promise<void>).catch(err => {
+        const p = (this.runAgentLoop(role, runtime, controller)).catch(err => {
           console.error(`Agent ${role} loop crashed:`, err);
         });
         this.childPromises.push(p);
@@ -953,7 +953,7 @@ export class TeamRegistry {
       if (timeoutMs && Date.now() - startTime > timeoutMs) {
         return false;
       }
-      // eslint-disable-next-line no-await-in-loop
+       
       await new Promise(resolve => setTimeout(resolve, 200));
     }
   }

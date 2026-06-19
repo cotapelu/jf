@@ -753,7 +753,7 @@ function renderTodosCall(args: any, theme: any): Text {
 }
 
 function renderTodosResult(result: { details?: TodoToolDetails }, options: { expanded: boolean; isPartial: boolean }, theme: any): Text {
-  const details = result.details as TodoToolDetails | undefined;
+  const details = result.details;
   if (!details) return new Text("", 0, 0);
   if (details.error) return new Text(theme.fg("error", `Error: ${details.error}`), 0, 0);
   if (options.isPartial) return new Text(theme.fg("warning", "Processing..."), 0, 0);
