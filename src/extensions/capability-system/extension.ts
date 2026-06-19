@@ -47,7 +47,7 @@ const __dirname = dirname(__filename);
 /**
  * Extension factory.
  */
-export default async function capabilitySystemExtension(api: any): Promise<void> {
+export default async function capabilitySystemExtension(api: any): Promise<any> {
   console.log("[CapabilitySystem] Initializing...");
 
   const registry = getCapabilityRegistry();
@@ -115,6 +115,8 @@ export default async function capabilitySystemExtension(api: any): Promise<void>
       }
     });
   }
+  // Return empty object to satisfy extension discovery
+  return {};
 }
 
 // ============================================================================

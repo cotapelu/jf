@@ -18,7 +18,7 @@ const CONFIG_DIR_NAME = dirname(AGENT_DIR).split(/[/\\]/).pop() || ".pi";
 
 const DEFAULT_LOG_PATH = join(CONFIG_DIR_NAME, "context", "context.log");
 
-export default function (pi: ExtensionAPI) {
+export default function (pi: ExtensionAPI): any {
 	// Register CLI flags for this extension
 	pi.registerFlag("contextLogFile", {
 		description: "Path to file where LLM context will be logged (default: .piclaw/context/context.log)",
@@ -66,4 +66,6 @@ export default function (pi: ExtensionAPI) {
 			console.error("[ContextLogger] Failed to write log:", err);
 		}
 	});
+	// Return empty object to satisfy extension discovery
+	return {};
 }

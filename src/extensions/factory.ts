@@ -38,7 +38,7 @@ import { registerKeybindingExtension } from "./keybinding/keybinding-extension.j
  * Registers all custom extensions for Piclaw.
  * Called by the extension factory system.
  */
-export default async function extensionsAggregator(api: import("@earendil-works/pi-coding-agent").ExtensionAPI): Promise<void> {
+export default async function extensionsAggregator(api: import("@earendil-works/pi-coding-agent").ExtensionAPI): Promise<any> {
   // ============================================================================
   // 1. CAPABILITY SYSTEM (Plugin Architecture)
   // ============================================================================
@@ -87,6 +87,8 @@ export default async function extensionsAggregator(api: import("@earendil-works/
 
   // Register Context Logger Extension
   contextLoggerExtension(api);
+  // Return an empty object to satisfy extension discovery requirements
+  return {};
 }
 
 /**

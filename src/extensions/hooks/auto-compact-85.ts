@@ -7,11 +7,13 @@
 
 const COMPACTION_THRESHOLD_PERCENT = 85;
 
-export default function (pi: import("@earendil-works/pi-coding-agent").ExtensionAPI) {
+export default function (pi: import("@earendil-works/pi-coding-agent").ExtensionAPI): any {
   pi.on("turn_end", async (_event, ctx) => {
     const usage = ctx.getContextUsage();
     if (usage?.percent && usage.percent > COMPACTION_THRESHOLD_PERCENT) {
       ctx.compact();
     }
   });
+  // Return empty object to satisfy extension discovery
+  return {};
 }

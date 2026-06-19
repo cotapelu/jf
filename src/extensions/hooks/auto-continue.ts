@@ -50,7 +50,8 @@ function loadReminderMessage(): string {
 
 const IDLE_MESSAGE = loadReminderMessage();
 
-export default function (pi: ExtensionAPI) {
+export default function (pi: ExtensionAPI): any {
+	console.log('[AutoContinue] Extension loaded - registering gnpi command');
 	let enabled = false;
 	let idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
 	let idleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -143,4 +144,6 @@ export default function (pi: ExtensionAPI) {
 		if (!enabled) return;
 		startIdleTimer();
 	});
+	// Return empty object to satisfy extension discovery
+	return {};
 }

@@ -1,6 +1,6 @@
 # Project TODO - Tracked Tasks
 
-*Last updated: 2026-06-17T07:30:00Z*
+*Last updated: 2026-06-19T10:40:00Z*
 
 ---
 
@@ -127,6 +127,7 @@ All high-priority tasks complete.
 | 2026-06-17 | Context Compaction implementation (algorithm, tool, 5 tests) | 14 |
 | 2026-06-17 | Skills Testing Framework implementation (SkillEngine tests, built-in skills validation, 9 tests) | 15 |
 | 2026-06-17 | Type Safety Improvement (reduced any in test mocks for core operations) | 16 |
+| 2026-06-19 | Extension Loading Refactor & Tool-Template Completion (custom aggregator, commands implementation, all tests pass) | 17 |
 
 ---
 

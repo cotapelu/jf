@@ -58,7 +58,7 @@ async function checkForUpdate(): Promise<string | undefined> {
     return undefined;
 }
 
-export default function (api: ExtensionAPI): void {
+export default function (api: ExtensionAPI): any {
 	api.on("session_start", async (_event, ctx) => {
 		if (ctx.hasUI) {
 			const updateVersion = await checkForUpdate();
@@ -75,4 +75,6 @@ export default function (api: ExtensionAPI): void {
 			});
 		}
 	});
+	// Return empty object to satisfy extension discovery
+	return {};
 }

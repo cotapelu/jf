@@ -33,6 +33,8 @@
 import { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import type { Static } from "typebox";
+import { schema as exampleSchema } from './tool-template/example-command';
+import { schema as anotherSchema } from './tool-template/another-command';
 // Validation: import { validate } from "@sinclair/typebox/validate"; (optional)
 
 // Trả về help text từ schema
@@ -83,8 +85,8 @@ interface CommandModule<TInput = any> {
 type CommandLoader = () => Promise<CommandModule>;
 
 const commands: Record<string, CommandLoader> = {
-  // Add your commands here
-  // example_command: () => import('./example-command.ts'),
+  example_command: () => import('./tool-template/example-command.ts'),
+  another_command: () => import('./tool-template/another-command.ts'),
 };
 
 // ============================================================================
@@ -116,13 +118,17 @@ export function createYourTool(): ToolDefinition {
     schema: any;  // TypeBox schema
     examples: string[];
   }> = {
-    // Add your command metadata here
-    // example_command: {
-    //   description: "...",
-    //   schema: Type.Object({ ... }),
-    //   examples: ["..."]
-    // }
-  };
+  example_command: {
+    description: "Mô tả ngắn về command này",
+    schema: exampleSchema,
+    examples: ["your_tool_name({ command: 'example_command', args: { input: 'data.txt' } })"]
+  },
+  another_command: {
+    description: "Một command khác",
+    schema: anotherSchema,
+    examples: ["your_tool_name({ command: 'another_command', args: { files: ['a.txt', 'b.txt'] } })"]
+  }
+};
 
   // Capture commandMeta trong closure (không dùng this)
   const cm = commandMeta;
