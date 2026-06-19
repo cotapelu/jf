@@ -32,8 +32,8 @@
 
 import { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import type { Static } from "typebox";
-import { schema as exampleSchema } from './tool-template/example-command';
-import { schema as anotherSchema } from './tool-template/another-command';
+import { schema as exampleSchema } from './tool-template/example-command.js';
+import { schema as anotherSchema } from './tool-template/another-command.js';
 // Validation: import { validate } from "@sinclair/typebox/validate"; (optional)
 
 // Trả về help text từ schema
@@ -84,8 +84,8 @@ interface CommandModule<TInput = any> {
 type CommandLoader = () => Promise<CommandModule>;
 
 const commands: Record<string, CommandLoader> = {
-  example_command: () => import('./tool-template/example-command.ts'),
-  another_command: () => import('./tool-template/another-command.ts'),
+  example_command: () => import('./tool-template/example-command.js'),
+  another_command: () => import('./tool-template/another-command.js'),
 };
 
 // ============================================================================
