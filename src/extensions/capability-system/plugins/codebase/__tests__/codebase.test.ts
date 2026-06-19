@@ -120,6 +120,147 @@ function myFunc() {}
     expect(result.details.language).toBe("tsx");
     await unlink(file);
   });
+
+  it('should return unknown language for unsupported extension', async () => {
+    const code = "export {};";
+    const file = await writeTempFile(code, "xyz");
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.details.language).toBe("unknown");
+    await unlink(file);
+  });
+
+  it('should handle read error gracefully', async () => {
+    const dir = path.join(__dirname, 'temp_no_read');
+    await mkdir(dir, { recursive: true });
+    const ctx = { cwd: dir };
+    const result = await analyzeModule.execute({ file: '.' }, ctx as { cwd: string });
+    expect(result.isError).toBe(true);
+    expect(result.details.error).toBeDefined();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it('should handle empty file', async () => {
+    const file = await writeTempFile('');
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.lines).toBe(1);
+    await unlink(file);
+  });
+
+  // Additional branch coverage tests for analyze.ts
+
+  it('should parse re-export star', async () => {
+    const code = "export * from 'lib';";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.imports.length).toBe(0);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('named');
+    expect(result.details.exports[0].name).toBe('*');
+    await unlink(file);
+  });
+
+  it('should parse named export with alias', async () => {
+    const code = "export { foo as bar };";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('named');
+    expect(result.details.exports[0].name).toBe('foo');
+    expect(result.details.exports[0].aliases).toEqual(['bar']);
+    await unlink(file);
+  });
+
+  it('should parse export default function', async () => {
+    const code = "export default function foo() {}";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('default');
+    expect(result.details.exports[0].name).toBe('foo');
+    expect(result.details.symbols.some(s => s.kind === 'function' && s.name === 'foo')).toBe(true);
+    await unlink(file);
+  });
+
+  it('should parse export default const', async () => {
+    const code = "export default const x = 1;";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('default');
+    expect(result.details.exports[0].name).toBe('x');
+    expect(result.details.symbols.some(s => s.kind === 'variable' && s.name === 'x')).toBe(true);
+    await unlink(file);
+  });
+
+  it('should parse export default interface', async () => {
+    const code = "export default interface MyInterface {}";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('default');
+    expect(result.details.exports[0].name).toBe('MyInterface');
+    expect(result.details.symbols.some(s => s.kind === 'interface' && s.name === 'MyInterface')).toBe(true);
+    await unlink(file);
+  });
+
+  it('should parse export default type', async () => {
+    const code = "export default type MyType = string;";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('default');
+    expect(result.details.exports[0].name).toBe('MyType');
+    expect(result.details.symbols.some(s => s.kind === 'type' && s.name === 'MyType')).toBe(true);
+    await unlink(file);
+  });
+
+  it('should parse enum symbol', async () => {
+    const code = "enum Colors { Red, Green, Blue }";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.symbols.some(s => s.kind === 'enum' && s.name === 'Colors')).toBe(true);
+    await unlink(file);
+  });
+
+  it('should parse interface symbol', async () => {
+    const code = "interface MyInterface { x: number; }";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.symbols.some(s => s.kind === 'interface' && s.name === 'MyInterface')).toBe(true);
+    await unlink(file);
+  });
+
+  it('should parse export interface', async () => {
+    const code = "export interface ExportedInterface { method(): void; }";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.length).toBe(1);
+    expect(result.details.exports[0].type).toBe('named');
+    expect(result.details.exports[0].name).toBe('ExportedInterface');
+    expect(result.details.symbols.some(s => s.kind === 'interface' && s.name === 'ExportedInterface')).toBe(true);
+    await unlink(file);
+  });
 });
 
 describe("codebase.safe_edit", () => {
