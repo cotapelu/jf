@@ -31,7 +31,6 @@
  */
 
 import { ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Type } from "typebox";
 import type { Static } from "typebox";
 import { schema as exampleSchema } from './tool-template/example-command';
 import { schema as anotherSchema } from './tool-template/another-command';

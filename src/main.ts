@@ -159,8 +159,6 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 
 export async function main() {
   console.log('🚀 Pi SDK - FULL EXPORTS USAGE\n');
-  // Debug: write to file
-  try { require('fs').appendFileSync('/tmp/jf_debug.log', 'main started\n'); } catch {}
 
 
   // ====== RUNTIME SETUP ======

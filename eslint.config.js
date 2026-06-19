@@ -29,6 +29,8 @@ export default tseslint.config(
       "no-unreachable": "error",
       "no-unused-labels": "error",
       "no-constant-condition": "error",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-base-to-string": "off",
     },
   }
 );

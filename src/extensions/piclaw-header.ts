@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { fileURLToPath } from "url";
-import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { VERSION as PI_VERSION } from "@earendil-works/pi-coding-agent";
 

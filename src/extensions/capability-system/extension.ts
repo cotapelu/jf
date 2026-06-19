@@ -378,8 +378,8 @@ function createCapabilityRouterTool(api: any) {
           if (typeof value === 'object' && value !== null) {
             return `${key}: ${JSON.stringify(value)}`;
           }
-          // Simple value
-          return `${key}: ${value}`;
+          // Simple value (use String() to handle unknown)
+          return `${key}: ${String(value)}`;
         });
         command += ' (' + paramParts.join(', ') + ')';
       }

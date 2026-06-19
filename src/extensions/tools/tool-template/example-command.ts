@@ -5,7 +5,7 @@ export const schema = Type.Object({
   input: Type.String({ description: "Đường dẫn file đầu vào" })
 });
 
-export async function execute(args: Static<typeof schema>, cwd: string, signal?: AbortSignal, ctx?: any) {
+export async function execute(args: Static<typeof schema>, _cwd: string, _signal?: AbortSignal, _ctx?: any) {
   // Simple echo for example
   return {
     stdout: `Example command executed with input: ${args.input}`,
