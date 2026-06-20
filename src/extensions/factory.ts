@@ -18,6 +18,8 @@ import { registerSkillReaderExtension } from "./tools/skill-reader.js";
 import autoContinueExtension from "./hooks/auto-continue.js";
 import autoCompact85Extension from "./hooks/auto-compact-85.js";
 import contextLoggerExtension from "./context-logger.js";
+// Import custom project tools
+import { registerAllCustomTools } from "../tools/index.js";
 
 import piclawHeader from "./piclaw-header.js";
 import { registerTodosRenderer } from "./renderers/todos-renderer.js";
@@ -87,6 +89,18 @@ export default async function extensionsAggregator(api: import("@earendil-works/
 
   // Register Context Logger Extension
   contextLoggerExtension(api);
+
+  // Register custom project tools (from src/tools/)
+  try {
+    const customTools = registerAllCustomTools();
+    customTools.forEach(tool => {
+      api.registerTool(tool);
+    });
+    console.log(`[Extensions] Registered ${customTools.length} custom tools from src/tools/`);
+  } catch (err) {
+    console.error('[Extensions] Failed to register custom tools:', err);
+  }
+
   // Return an empty object to satisfy extension discovery requirements
   return {};
 }

@@ -1,3 +1,4 @@
+import path from 'path';
 import {
   type AgentSessionRuntime,
   type AgentSessionRuntimeDiagnostic,
@@ -17,10 +18,7 @@ import {
   type InteractiveModeOptions,
 } from '@earendil-works/pi-coding-agent';
 
-import { registerAllCustomTools } from './tools/index.js';
 import { setCurrentRuntime } from './runtime-context.js';
-import extensionsAggregator from './extensions/index.js';
-import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 
 // Extensions are loaded from src/extensions via extensionsAggregator
 
@@ -46,7 +44,7 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   sessionStartEvent,
   // projectTrustContext: không dùng trong hiện tại, có thể dùng sau
 }): Promise<CreateAgentSessionRuntimeResult> => {
-  // Services với PromptTemplate override
+  // Services với PromptTemplate override và extension discovery
   const servicesOptions: CreateAgentSessionServicesOptions = {
     cwd,
     agentDir,
@@ -55,6 +53,12 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
         prompts: [myCustomPrompt],
         diagnostics: [],
       }),
+      // Auto-discovery paths for extensions
+      additionalExtensionPaths: [
+        path.join(process.cwd(), 'src/extensions'), // dev
+        path.join(process.cwd(), 'dist/extensions'), // prod
+        path.join(process.cwd(), '.pi/extensions'), // local
+      ],
     },
   };
 
@@ -67,27 +71,13 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   }
   const diagnostics: AgentSessionRuntimeDiagnostic[] = services.diagnostics || [];
 
-  // Load built-in custom tools only (extensions handled in main())
-  const baseCustomTools = registerAllCustomTools();
-  const allCustomTools = baseCustomTools;
-
-  // Session options: built-in tools only (custom tools go in customTools)
-  const builtinToolNames = [
-    'read',
-    'bash',
-    'edit',
-    'write',
-    'grep',
-    'find',
-    'ls',
-  ];
+  // Session options: use default tools (all built-in) + custom tools from extensions
   const sessionOptions: CreateAgentSessionFromServicesOptions = {
     services,
     sessionManager,
     sessionStartEvent,
-    tools: builtinToolNames,
-    customTools: allCustomTools,
-    // Commands are handled by bindExtensions after session creation
+    // tools: undefined - include all built-in tools
+    // customTools: undefined - include all tools from bound extensions
   };
 
   // Create session với explicit typing
@@ -101,6 +91,18 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   if (!result?.session) {
     throw new Error('createAgentSessionFromServices returned invalid result (missing session)');
   }
+
+  // Debug: Log loaded tools
+  const extList = result.extensionsResult?.extensions || [];
+  console.log('📦 Extensions loaded:', extList.length);
+  for (const ext of extList) {
+    // Use type assertion to access properties
+    const extAny = ext as any;
+    console.log(`  - ${extAny.name || 'unknown'}: ${extAny.tools?.size || 0} tools, ${extAny.commands?.size || 0} commands`);
+  }
+  const toolNames = result.session.agent.state.tools.map(t => t.name);
+  console.log('🔧 Total tools in session:', toolNames.length);
+  console.log('📋 Tool names:', toolNames.sort());
 
   // Return full runtime result
   const runtimeResult: CreateAgentSessionRuntimeResult = {
@@ -123,7 +125,6 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 export async function main() {
   try {
     const runtime = await initializeRuntime();
-    await loadAndBindExtensions(runtime);
     await runInteractiveMode(runtime);
   } catch (err) {
     console.error('❌ Fatal error in main():', err);
@@ -143,69 +144,6 @@ async function initializeRuntime(): Promise<AgentSessionRuntime> {
   });
   setCurrentRuntime(runtime);
   return runtime;
-}
-
-async function loadAndBindExtensions(runtime: AgentSessionRuntime): Promise<void> {
-  const extensionTools: ToolDefinition[] = [];
-  const extensionCommands = new Map<string, any>();
-  const currentSession = runtime.session;
-
-  const api: any = {
-    registerTool: (tool: ToolDefinition) => { extensionTools.push(tool); },
-    registerCommand: (name: string, def: any) => { extensionCommands.set(name, def); },
-    registerProvider: (name: string, config: any) => { (runtime.services as any).registerProvider?.(name, config) || console.log(`[API] registerProvider ${name} (no-op)`); },
-    registerFlag: (name: string, def: any) => { (runtime.services as any).registerFlag?.(name, def) || console.log(`[API] registerFlag ${name} (no-op)`); },
-    registerKeybinding: (name: string, def: any) => { (runtime.services as any).registerKeybinding?.(name, def) || console.log(`[API] registerKeybinding ${name} (no-op)`); },
-    registerMessageRenderer: (name: string, fn: any) => { (runtime as any).registerMessageRenderer?.(name, fn) || console.log(`[API] registerMessageRenderer ${name} (no-op)`); },
-    on: (event: string, handler: any) => { (currentSession as any).on?.(event, handler) || console.log(`[API] on ${event} (no-op)`); },
-    sendMessage: (msg: any, opts?: any) => { (currentSession as any).sendMessage?.(msg, opts) || console.log('[API] sendMessage (no-op)'); },
-    getFlag: (name: string) => (runtime.services as any).getFlag(name),
-    exec: (cmd: string, args: string[], opts?: any) => (runtime.services as any).exec(cmd, args, opts),
-    ui: (runtime as any).ui || null,
-    notify: (msg: string, type?: string) => console[type === 'error' ? 'error' : 'log']('[Notify]', msg),
-    pluginLoader: undefined,
-  };
-
-  try {
-    await extensionsAggregator(api);
-
-    if (extensionTools.length > 0 || extensionCommands.size > 0) {
-      const toolsMap = new Map<string, any>();
-      for (const tool of extensionTools) {
-        toolsMap.set(tool.name, { definition: tool, sourceInfo: { path: '<jf>', source: 'local', scope: 'project', origin: 'top-level' } });
-      }
-      const commandsMap = new Map<string, any>();
-      for (const [name, def] of extensionCommands) {
-        commandsMap.set(name, { name, ...def, sourceInfo: { path: '<jf>', source: 'local', scope: 'project', origin: 'top-level' } });
-      }
-
-      const extObj = {
-        name: 'jf-extensions',
-        version: '1.0.0',
-        description: 'Extensions from src/extensions',
-        tools: toolsMap,
-        commands: commandsMap,
-        handlers: new Map(),
-        flags: new Map(),
-        shortcuts: new Map(),
-        messageRenderers: new Map()
-      };
-      try {
-        await (runtime.session as any).bindExtensions({ extensions: [extObj] });
-        console.log(`✅ Bound ${extensionTools.length} tools and ${extensionCommands.size} commands`);
-
-        const sess = runtime.session as any;
-        if (sess.refreshCommands) sess.refreshCommands();
-        if (sess.runtime?.refreshCommands) sess.runtime.refreshCommands();
-      } catch (err) {
-        console.error('❌ Failed to bind or refresh extensions:', err);
-      }
-    } else {
-      console.log('ℹ️ No extensions (tools/commands) collected');
-    }
-  } catch (err) {
-    console.error('❌ Failed to load extensions:', err);
-  }
 }
 
 async function runInteractiveMode(runtime: AgentSessionRuntime): Promise<void> {

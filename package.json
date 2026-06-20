@@ -7,8 +7,8 @@
   },
   "scripts": {
     "start": "tsx --tsconfig ./tsconfig.json src/main.ts",
-    "prebuild": "rimraf dist && mkdir -p dist/tools/skills",
-    "build": "tsc && node -e \"const fs=require('fs');const f='dist/main.js';const c=fs.readFileSync(f,'utf8');if(!c.startsWith('#!')) fs.writeFileSync(f,'#!/usr/bin/env node\\n'+c);\" && cpx \"src/tools/skills/skills-md/**/*.md\" dist/tools/skills/skills-md && chmod +x dist/cli.js",
+    "prebuild": "rimraf dist && mkdir -p dist/tools/skills dist/extensions",
+    "build": "tsc && cpx \"src/extensions/**/*\" dist/extensions && cpx \"src/tools/skills/skills-md/**/*.md\" dist/tools/skills/skills-md && node -e \"const fs=require('fs');const f='dist/main.js';const c=fs.readFileSync(f,'utf8');if(!c.startsWith('#!')) fs.writeFileSync(f,'#!/usr/bin/env node\\n'+c);\" && chmod +x dist/cli.js",
     "test": "vitest run",
     "test:run": "vitest run",
     "test:coverage": "vitest --coverage",
