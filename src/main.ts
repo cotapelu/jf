@@ -1,4 +1,5 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   type AgentSessionRuntime,
   type AgentSessionRuntimeDiagnostic,
@@ -19,6 +20,13 @@ import {
 } from '@earendil-works/pi-coding-agent';
 
 import { setCurrentRuntime } from './runtime-context.js';
+
+// Resolve package root dir (where src/ lives)
+// In build: dist/main.js => package root is 1 level up
+// In src: src/main.ts => package root is 1 level up
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const packageRoot = path.resolve(__dirname, '..');
 
 // Extensions are loaded from src/extensions via extensionsAggregator
 
@@ -53,11 +61,11 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
         prompts: [myCustomPrompt],
         diagnostics: [],
       }),
-      // Auto-discovery paths for extensions
+      // Auto-discovery paths for extensions - use packageRoot, not process.cwd()
       additionalExtensionPaths: [
-        path.join(process.cwd(), 'src/extensions'), // dev
-        path.join(process.cwd(), 'dist/extensions'), // prod
-        path.join(process.cwd(), '.pi/extensions'), // local
+        path.join(packageRoot, 'src/extensions'), // dev
+        path.join(packageRoot, 'dist/extensions'), // prod
+        path.join(packageRoot, '.pi/extensions'), // local
       ],
     },
   };
