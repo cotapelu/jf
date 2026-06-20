@@ -84,8 +84,8 @@ interface CommandModule<TInput = any> {
 type CommandLoader = () => Promise<CommandModule>;
 
 const commands: Record<string, CommandLoader> = {
-  example_command: () => import('./tool-template/example-command.js'),
-  another_command: () => import('./tool-template/another-command.js'),
+  example_command: async () => (await import('./tool-template/example-command.js')).default,
+  another_command: async () => (await import('./tool-template/another-command.js')).default,
 };
 
 // ============================================================================

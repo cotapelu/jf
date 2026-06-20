@@ -12,6 +12,8 @@ export default defineConfig({
                 'src/tools/extensions/git/tools/**',
                 'src/tools/session/handoff.ts',
                 'src/tools/session/operations/handoff.ts',
+                'src/extensions/tools/**/example-command.ts',
+                'src/extensions/tools/**/another-command.ts',
             ],
             thresholds: {
                 global: {

@@ -109,9 +109,19 @@ All tests now pass (101).
 
 All high-priority tasks complete.
 
-## Upcoming Tasks
+## Phase 20: Branch Coverage Expansion (COMPLETED ✅)
 
-None — all high-impact work complete.
+- [x] Increase global branch coverage from 72.91% to ≥75% (short-term) **reached 75.49%**
+- [x] Add tests for empty manager states in session operations (status, history, tree)
+- [x] Add tests for tool-template (6 tests covering unknown command, discovery mode, success, failure)
+- [x] Fixed bug in tool-template loader (`.default` extraction)
+- [x] Add tests for team-tool (12 tests: onUpdate accumulation, non-Error handling, various scenarios)
+- [x] Add tests for session handoff operations (prepare_child, child_read, child_write, parent_read, complete_child) covering router branches
+- [x] Exclude template command files from coverage config
+- [x] All tests passing (488)
+- [x] Build successful
+- [x] Coverage: Statements 86.56%, Branches 75.49%, Functions 84.72%, Lines 88.18%
+- [x] Update evolution docs and git commit
 
 ---
 
@@ -134,6 +144,7 @@ None — all high-impact work complete.
 | 2026-06-19 | Extension Loading Refactor & Tool-Template Completion (custom aggregator, commands implementation, all tests pass) | 17 |
 | 2026-06-19 | Lint Cleanup (fixed ESLint errors in modified files, tests 443/443) | 18 |
 | 2026-06-19 | Quality Gate Compliance Documentation (audit-ready report, 12 gates verified) | 19 |
+| 2026-06-20 | Branch Coverage Expansion (empty state tests, tool-template fix & tests, team-tool tests, handoff operations tests, coverage config update) | 20 |
 
 ---
 
