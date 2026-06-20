@@ -34,6 +34,29 @@ describe('Session operations - empty state', () => {
     expect(result.details.children).toEqual([]);
   });
 
+  it('operationStatus with active session having name', () => {
+    const mgr = createEmptyManager() as unknown as MultiSessionManager;
+    (mgr as any).getActive = () => ({ id: 'act', name: 'Active Session', filePath: '/a' } as any);
+    (mgr as any).getRoot = () => null;
+    (mgr as any).getChildren = () => [];
+    (mgr as any).getDiagnostics = () => ({ totalSessions: 1, activeSessionId: 'act', rootSessionId: null, childCount: 0, disposedCount: 0, historySize: 0 } as any);
+    const result = operationStatus(mgr);
+    expect(result.content[0].text).toContain('Active Session: act');
+    expect(result.content[0].text).toContain('("Active Session")');
+  });
+
+  it('operationStatus with active session having empty name', () => {
+    const mgr = createEmptyManager() as unknown as MultiSessionManager;
+    (mgr as any).getActive = () => ({ id: 'act2', name: '', filePath: '/a' } as any);
+    (mgr as any).getRoot = () => null;
+    (mgr as any).getChildren = () => [];
+    (mgr as any).getDiagnostics = () => ({ totalSessions: 1, activeSessionId: 'act2', rootSessionId: null, childCount: 0, disposedCount: 0, historySize: 0 } as any);
+    const result = operationStatus(mgr);
+    expect(result.content[0].text).toContain('Active Session: act2');
+    // Should NOT have quotes around empty name
+    expect(result.content[0].text).not.toContain('""');
+  });
+
   it('operationHistory with empty history (default limit)', () => {
     const mgr = createEmptyManager() as unknown as MultiSessionManager;
     const result = operationHistory(mgr, {});
