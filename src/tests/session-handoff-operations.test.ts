@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SessionMetadata } from '../tools/session/registry.js';
+import { SessionState } from '../tools/session/registry.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
 
 // Mock handoff operations to avoid filesystem dependencies
@@ -35,7 +36,7 @@ function mockSession(overrides: Partial<SessionMetadata> = {}): SessionMetadata 
     createdAt: new Date(),
     name: undefined,
     tags: [],
-    state: 'active' as any, // cast to satisfy enum
+    state: SessionState.ACTIVE,
     sessionRef: null,
     isActive: false,
     ...overrides,

@@ -105,7 +105,7 @@ describe('formatListOutput', () => {
   });
 
   it('formats sessions with active marker', () => {
-    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 's1' } as any);
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 's1' } as unknown as SessionMetadata);
     const sessions = [createMeta({ id: 's1', isActive: true, name: 'Active Session' }), createMeta({ id: 's2', isActive: false, name: 'Inactive' })];
     const out = formatListOutput(sessions, mgr);
     expect(out).toContain('🟢 s1');

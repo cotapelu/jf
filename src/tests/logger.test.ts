@@ -30,7 +30,7 @@ describe('logger', () => {
   });
 
   function mockConsole() {
-    const anyConsole = console as any;
+    const anyConsole = console as unknown as typeof console;
     anyConsole.log = vi.fn();
     anyConsole.debug = vi.fn();
     anyConsole.info = vi.fn();

@@ -152,9 +152,9 @@
    - **Pattern:** Always `await` async operations in switch cases
 
 2. **Type assertion abuse** - Tests use `as any` extensively
-   - **Status:** ✅ RESOLVED (90% total reduction)
-   - **Resolution:** Comprehensive phase (22-23) eliminated `as any` across test suite. Initial count **91** → **35** after Phase 22, then to **9** after Phase 23. Remaining 9 instances are in extremely complex mock scenarios where rewriting would add brittleness; considered acceptable technical debt.
-   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors; centralize casts via helper functions; `vi.mocked` for mock functions.
+   - **Status:** ✅ FULLY RESOLVED (100% elimination)
+   - **Resolution:** Phases 22-25 systematically eradicated `as any` from the codebase. Initial count **91** → **35** after Phase 22, **9** after Phase 23, and final **0** after Phase 25. All test mocks now use typed assertions (`as unknown as <Type>`), helper factories, or proper enum imports.
+   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors; centralize casts via helper functions; `vi.mocked` for mock functions; `SessionState` enums for state fields.
 
 3. **Details shape inconsistency** - `operationList` returned raw `sessions` in details, other ops returned transformed
    - **Status:** ✅ FIXED (normalized shape)

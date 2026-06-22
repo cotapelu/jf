@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { MultiSessionManager } from '../tools/session/manager.js';
 
 // Mock the operation module to throw non-Error
 vi.mock('../tools/session/operations/switch.js', () => ({
@@ -15,7 +16,7 @@ describe('Session Router Error Handling', () => {
         getRoot: () => null,
         getChildren: () => [],
         getDiagnostics: () => ({ totalSessions: 0, activeSessionId: null, rootSessionId: null, childCount: 0, disposedCount: 0, historySize: 0 }),
-      } as any),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'switch' });

@@ -48,7 +48,7 @@ describe('operationInfo', () => {
 
   it('uses active session when sessionId omitted', () => {
     const meta = createMeta({ name: 'Active' });
-    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 'sess1' } as any);
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: 'sess1' } as unknown as SessionMetadata);
     (mgr.get as ReturnType<typeof vi.fn>).mockReturnValue(meta);
     (mgr.getRegistry as ReturnType<typeof vi.fn>).mockReturnValue({ getChildren: () => [] });
 

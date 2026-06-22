@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { MultiSessionManager, SessionMetadata } from '../tools/session/manager.js';
+import { SessionState } from '../tools/session/registry.js';
 
 function mockSession(overrides: Partial<SessionMetadata> = {}): SessionMetadata {
   return {
@@ -9,7 +10,7 @@ function mockSession(overrides: Partial<SessionMetadata> = {}): SessionMetadata 
     createdAt: new Date(),
     name: undefined,
     tags: [],
-    state: 'active' as any,
+    state: SessionState.ACTIVE,
     sessionRef: null,
     isActive: false,
     ...overrides,

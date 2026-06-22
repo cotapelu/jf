@@ -8,7 +8,7 @@ export function createMockSession(name: string): AgentSession {
   return {
     sessionFile: `/path/to/${name}.jsonl`,
     dispose: async () => {},
-  } as any;
+  } as unknown as AgentSession;
 }
 
 /**

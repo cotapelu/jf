@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTeamTool } from '../extensions/team/team-tool.js';
 import { bootPiclawTeam, executeTeamTasks, TeamRegistry } from '../extensions/team/team-manager.js';
-import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
+import type { ExtensionContext, AgentSessionRuntime } from '@earendil-works/pi-coding-agent';
 
 // Mock the team manager module
 vi.mock('../extensions/team/team-manager.js', () => ({
@@ -26,7 +26,7 @@ describe('Team Tool', () => {
     tool = createTeamTool();
   });
 
-  const mockCtx: ExtensionContext = { runtime: {} as any }; // runtime minimally typed; cast ok
+  const mockCtx: ExtensionContext = { runtime: {} as unknown as AgentSessionRuntime };
 
   it('should reject call reference string', async () => {
     const invalidParam: any = 'call_abc123';

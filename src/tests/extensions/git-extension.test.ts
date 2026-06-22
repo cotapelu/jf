@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { GitExtension } from '../../tools/extensions/git/git-extension.js';
+import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 
 describe('GitExtension', () => {
   it('should have correct name and version', () => {
@@ -51,7 +52,7 @@ describe('GitExtension', () => {
 
   it('should initialize without error', () => {
     const ext = new GitExtension();
-    expect(() => ext.initialize({} as any)).not.toThrow();
+    expect(() => ext.initialize({} as unknown as ExtensionContext)).not.toThrow();
   });
 
   it('should dispose without error', () => {
