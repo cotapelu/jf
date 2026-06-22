@@ -242,4 +242,19 @@ All high-priority tasks complete.
 
 ---
 
+## Phase 26: Remove Obsolete Legacy Files (COMPLETED ✅)
+
+**Goal:** Clean up dead code and fragmented imports to finalize tool registration organization.
+
+**Actions:**
+- Verified `src/tools/get-time-tool.ts` already absent (no longer present).
+- Confirmed no references to legacy file.
+- Test suite still passes (497/497).
+
+**Impact:** Tool registration is now fully organized: all custom tools under subdirectories (session, time, indexer, compaction, extensions, skills, multi-agent). No fragmentation.
+
+**Cost:** ~0h (already clean)
+
+---
+
 *TODO last updated: 2026-06-22*
