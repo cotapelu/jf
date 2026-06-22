@@ -105,6 +105,22 @@
 
 ---
 
+### Extended Diagnostics Metrics (Phase 24) — COMPLETED ✅
+
+**Goal:** Add system-level metrics to `session.diagnostics` for better observability.
+
+**Actions:**
+- Extended `operationDiagnostics` with `system` object containing memory usage, uptime, Node version, platform.
+- Added test `should include system metrics in diagnostics` to verify new fields.
+- Maintained backward compatibility (additive only).
+
+**Results:**
+- Diagnostics now include runtime system health data.
+- Test count increased to 497.
+- All tests pass; coverage maintained.
+
+---
+
 ## Phase 2 Progress (Quality Infrastructure)
 
 ### ✅ 2.1 Coverage Thresholds (COMPLETED)

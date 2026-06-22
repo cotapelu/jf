@@ -205,6 +205,20 @@ All high-priority tasks complete.
 
 **Risk:** LOW - test-only modifications
 
+## Phase 24: Extended Diagnostics Metrics (COMPLETED ✅)
+
+**Goal:** Enhance `session.diagnostics` operation with system-level metrics (memory usage, uptime, Node version, platform) to improve observability.
+
+**Actions:**
+- [x] Modified `operationDiagnostics` to include `system` object with memory usage, uptime, node version, platform
+- [x] Added test case to validate new fields
+- [x] Maintained backward compatibility (additive only)
+- [x] All tests pass (497 total)
+
+**Impact:** Provides operators with deeper insight into runtime health.
+
+**Cost:** ~1 hour
+
 ---
 
 *TODO last updated: 2026-06-22*

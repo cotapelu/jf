@@ -479,6 +479,17 @@ describe('SessionTool', () => {
       // @ts-ignore
       expect(result.details.registryExport).toBeDefined();
     });
+
+    it('should include system metrics in diagnostics', async () => {
+      const result: any = await tool.execute('diag_sys', { operation: 'diagnostics' });
+      expect(result.details.system).toBeDefined();
+      expect(result.details.system.memory).toBeDefined();
+      expect(result.details.system.uptime).toBeGreaterThanOrEqual(0);
+      expect(result.details.system.nodeVersion).toMatch(/v\d+\.\d+\.\d+/);
+      expect(result.details.system.platform).toBeDefined();
+      expect(result.content[0].text).toContain('System Uptime');
+      expect(result.content[0].text).toContain('Node:');
+    });
   });
 
   describe('concurrency', () => {
