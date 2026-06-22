@@ -71,7 +71,7 @@ export class CommandValidator {
   /**
    * Validate args against TypeBox schema
    */
-  validateWithSchema(args: any, schema: TSchema, commandName?: string): ValidationResult {
+  validateWithSchema(args: any, schema: TSchema, _commandName?: string): ValidationResult {
     try {
       const validator = Compile(schema);
       const ok = validator.Check(args);
@@ -127,7 +127,7 @@ export class CommandValidator {
   /**
    * Validate args security
    */
-  validateSecurity(args: any, metadata: CommandMetadata): { valid: boolean; errors: string[] } {
+  validateSecurity(args: any, _metadata: CommandMetadata): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (this.hasPrototypePollution(args)) {

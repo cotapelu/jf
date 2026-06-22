@@ -18,7 +18,7 @@ let generatedModels: Record<string, Record<string, any>> = {};
 try {
   const gen = await import("./custom-models.generated.js");
   generatedModels = gen.CUSTOM_MODELS || {};  // ← ĐÚNG TÊN
-} catch (err) {
+} catch {
   // No generated models file - will use hardcoded fallbacks
 }
 

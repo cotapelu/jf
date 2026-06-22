@@ -34,9 +34,9 @@ function getSkillsDir(): string {
  */
 export async function executeLoadSkill(
   args: any,
-  cwd: string,
-  signal?: AbortSignal,
-  ctx?: any
+  _cwd: string,
+  _signal?: AbortSignal,
+  _ctx?: any
 ) {
   const { skill } = args;
   const skillsDir = getSkillsDir();

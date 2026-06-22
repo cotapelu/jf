@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 import type {
   CommandModule,
   CommandMetadata,
-  CommandRegistryEntry,
+  // CommandRegistryEntry unused - removed
   CommandLoader,
   MasterToolOptions
 } from "./types/command-module.js";
@@ -109,7 +109,7 @@ export class CommandRegistry {
         }
       }
     } catch (error) {
-      console.warn(`[CommandRegistry] Could not scan commands directory: ${error}`);
+      console.warn(`[CommandRegistry] Could not scan commands directory: ${String(error)}`);
     }
   }
 
@@ -131,7 +131,7 @@ export class CommandRegistry {
         }
       }
     } catch (error) {
-      console.warn(`[CommandRegistry] Could not scan category ${category}: ${error}`);
+      console.warn(`[CommandRegistry] Could not scan category ${category}: ${String(error)}`);
     }
   }
 
@@ -280,7 +280,7 @@ export class CommandRegistry {
         if (meta) {
           commands.push({
             name,
-            category: meta.category,
+            category: category,
             description: meta.description,
             tags: meta.tags ?? [],
             experimental: meta.experimental ?? false

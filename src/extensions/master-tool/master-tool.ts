@@ -32,7 +32,7 @@ import type {
   AgentToolResult,
   AgentToolUpdateCallback
 } from "@earendil-works/pi-coding-agent";
-import { Type } from "typebox";
+// import { Type } from "typebox"; // unused removed
 import { Text } from "@earendil-works/pi-tui";
 import { CommandRegistry } from "./command-registry.js";
 import { DEFAULT_MASTER_TOOL_OPTIONS } from "./types/command-module.js";
@@ -135,7 +135,7 @@ export function createMasterTool(options: any = {}): ToolDefinition {
         await registry.ensureInitialized();
       } catch (error) {
         return {
-          content: [{ type: "text", text: `❌ Failed to initialize command registry: ${error}` }],
+          content: [{ type: "text", text: `❌ Failed to initialize command registry: ${String(error)}` }],
           details: { error: "registry_init_failed" },
           isError: true
         };
@@ -197,7 +197,7 @@ export function createMasterTool(options: any = {}): ToolDefinition {
       result: AgentToolResult<any>,
       options: { expanded: boolean; isPartial: boolean },
       theme: Theme,
-      context?: any
+      _context?: any
     ): any {
       const details = result.details || {};
       const isError = result.isError;
@@ -259,7 +259,7 @@ export function createMasterTool(options: any = {}): ToolDefinition {
 // 3. META-COMMAND HANDLERS
 // ============================================================================
 
-function handleListCommand(registry: CommandRegistry, args: any): AgentToolResult<any> {
+function handleListCommand(registry: CommandRegistry, _args: any): AgentToolResult<any> {
   const commands = registry.getCommandList();
   const categories = registry.getExecutor().listCommandsByCategory();
 
@@ -386,8 +386,8 @@ function handleReloadCommand(registry: CommandRegistry): AgentToolResult<any> {
 
 function handleMetaCommand(
   command: string,
-  args: any,
-  ctx: ExtensionContext
+  _args: any,
+  _ctx: ExtensionContext
 ): AgentToolResult<any> {
   const registry = getRegistry();
 

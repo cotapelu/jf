@@ -13,8 +13,8 @@
 
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Mutex } from "./utils/mutex.js";
-import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
-import { join } from "path";
+// import { withFileMutationQueue } from "@earendil-works/pi-coding-agent"; // unused
+// import { join } from "path"; // unused
 
 /**
  * Base State Interface

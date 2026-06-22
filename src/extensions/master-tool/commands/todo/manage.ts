@@ -16,14 +16,13 @@ import { Text } from "@earendil-works/pi-tui";
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
+// import { fileURLToPath } from "url"; // unused
 import { Mutex } from "../../utils/mutex.js";
-import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+// import { withFileMutationQueue } from "@earendil-works/pi-coding-agent"; // unused
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// __dirname and __filename unused
 
 // ============================================================================
 // 1. STATE CLASS
@@ -135,7 +134,7 @@ export class TodoState {
         release();
       }
       return true;
-    } catch (error) {
+    } catch {
       // File doesn't exist or parse error - fresh state
       this._tasks = [];
       this._nextId = 1;
@@ -276,7 +275,6 @@ export async function execute(
         } else {
           for (const task of tasks) {
             const icon = task.done ? "✅" : "⏳";
-            const color = task.done ? "dim" : "text";
             output += `${icon} [${task.id}] ${task.content}\n`;
           }
         }

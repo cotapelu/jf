@@ -95,7 +95,7 @@ export function createCapabilityDiscoveryCapability(): Capability {
     parameters: Type.Object({
       tag: Type.Optional(Type.String({ description: "Filter by tag (e.g., 'git', 'test', 'analyze')" }))
     }),
-    execute: async (toolCallId: string, params: Record<string, any>, signal: AbortSignal | null | undefined, onUpdate: any, ctx: any) => {
+    execute: async (toolCallId: string, params: Record<string, any>, _signal: AbortSignal | null | undefined, _onUpdate: any, _ctx: any) => {
       const registry = getCapabilityRegistry();
       const filterTag = params.tag as string | undefined;
       const capabilities = filterTag

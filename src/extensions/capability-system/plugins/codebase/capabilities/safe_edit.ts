@@ -9,11 +9,10 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
+// import { fileURLToPath } from "url"; // removed unused
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url); // unused
 
 export const schema = Type.Object({
   operations: Type.Array(Type.Object({
@@ -83,7 +82,7 @@ function applyEditInMemory(op: EditOperation, content: string): string {
   } else if (op.editType === 'delete') {
     edited.splice(op.range.start, op.range.end - op.range.start);
   } else {
-    throw new Error(`Unknown editType: ${op.editType}`);
+    throw new Error('Unknown editType');
   }
   return edited.join('\n');
 }
@@ -152,23 +151,7 @@ function groupOperationsByFile(operations: EditOperation[]): Map<string, EditOpe
   return map;
 }
 
-async function validateAndDiff(file: string, cwd: string, format: boolean, fixImports: boolean, ctx: any, backup: string): Promise<EditResult> {
-  try {
-    await validateFile(file, cwd, format, fixImports, ctx);
-    const final = await fs.readFile(join(cwd, file), 'utf-8');
-    return {
-      file,
-      success: true,
-      diff: computeDiff(backup, final, file)
-    };
-  } catch (err) {
-    return {
-      file,
-      success: false,
-      error: err instanceof Error ? err.message : String(err)
-    };
-  }
-}
+// validateAndDiff unused - removed
 
 async function rollbackAll(backups: Map<string, string>, cwd: string): Promise<void> {
   for (const [f, backup] of backups) {

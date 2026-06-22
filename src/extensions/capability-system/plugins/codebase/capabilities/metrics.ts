@@ -7,14 +7,13 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
+// import { fileURLToPath } from "url"; // unused
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// __filename unused
 
 export const schema = Type.Object({
   files: Type.Array(Type.String(), { description: "List of file paths (relative to cwd)" })

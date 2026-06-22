@@ -17,7 +17,7 @@ import type {
 import { DEFAULT_MASTER_TOOL_OPTIONS } from "./types/command-module.js";
 import { CommandCache } from "./utils/command-cache.js";
 import { CommandValidator, getValidator } from "./utils/command-validator.js";
-import { Text } from "@earendil-works/pi-tui";
+// import { Text } from "@earendil-works/pi-tui"; // unused
 import { StateManager } from "./state-manager.js";
 
 export interface ExecutionContext {

@@ -26,16 +26,12 @@ interface TeamMessage {
   timestamp: string;
 }
 
-interface WorkspaceEntry {
-  key: string;
-  value: string;
-  owner?: string;
-}
+// interface WorkspaceEntry unused - removed
 
 /**
  * Register the team_ops renderer.
  */
-function renderGetTeamStatus(details: any, theme: any): string[] {
+function renderGetTeamStatus(details: any, _theme: any): string[] {
   const status = details as TeamStatusDetails;
   const lines: string[] = [];
   lines.push(`\nTeam: ${status.teamId}`);

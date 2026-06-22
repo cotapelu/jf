@@ -104,7 +104,7 @@ export async function scanCodebase(
       const sourceText = await readFile(file, 'utf-8');
       const sourceFile = ts.createSourceFile(relative(cwd, file), sourceText, ts.ScriptTarget.Latest, true);
       walk(sourceFile, sourceFile, cwd, matches, { ...options, kind, limit });
-    } catch (e) {
+    } catch {
       // ignore files that can't be read or parsed
     }
   }

@@ -14,7 +14,7 @@ export function registerTeamCommand(api: ExtensionAPI): void {
   api.registerCommand("team", {
     description: "Toggle team status widget (show/hide)",
     handler: async (_args: string, ctx: any) => {
-      const before = getTeamWidgetEnabled(ctx);
+      getTeamWidgetEnabled(ctx);
       const after = toggleTeamWidget(ctx);
       const status = after ? "shown" : "hidden";
       ctx.ui.notify(`Team widget ${status}`, "info");

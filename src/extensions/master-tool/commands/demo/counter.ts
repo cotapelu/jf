@@ -15,7 +15,7 @@ import { Text } from "@earendil-works/pi-tui";
 
 import { Type } from "typebox";
 import { Mutex } from "../../utils/mutex.js";
-import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+// import { withFileMutationQueue } from "@earendil-works/pi-coding-agent"; // unused
 import { join } from "path";
 import { promises as fs } from "fs";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";

@@ -8,11 +8,8 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join, extname, relative, dirname, parse } from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join, extname, relative } from "path";
+// removed unused url import and __filename
 
 const CODE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.json', '.md'];
 

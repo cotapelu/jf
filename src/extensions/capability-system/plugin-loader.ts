@@ -13,7 +13,7 @@ import type {
   Capability,
   PluginLoaderStats,
   CapabilityManifest,
-  CapabilityExecute
+  // CapabilityExecute removed - unused
 } from "./types.js";
 import type { ExtensionContext, AgentToolResult } from "@earendil-works/pi-coding-agent";
 import { getCapabilityRegistry } from "./registry.js";
@@ -351,18 +351,16 @@ export class PluginLoader {
       clearTimeout(existing);
     }
 
-    const timer = setTimeout(async () => {
+    const timer = setTimeout(() => {
       this.newPluginTimers.delete(pluginFolder);
       const pluginPath = join(this.options.pluginsDir, pluginFolder);
       const manifestPath = join(pluginPath, MANIFEST_FILENAME);
 
       // Only load if manifest exists now
       if (existsSync(manifestPath)) {
-        try {
-          await this.loadPlugin(pluginFolder);
-        } catch (err) {
+        this.loadPlugin(pluginFolder).catch(err => {
           console.error(`[PluginLoader] Delayed load failed for ${pluginFolder}:`, err);
-        }
+        });
       } else {
         console.warn(`[PluginLoader] Manifest not found for ${pluginFolder} after delay, skipping`);
       }
@@ -385,7 +383,7 @@ export class PluginLoader {
     this.watchHandles.set(pluginFolder, { close: () => watcher.close() });
   }
 
-  private validateManifest(manifest: PluginManifest, pluginFolder: string): void {
+  private validateManifest(manifest: PluginManifest, _pluginFolder: string): void {
     if (!manifest.id) throw new Error("Missing 'id'");
     if (!manifest.name) throw new Error("Missing 'name'");
     if (!manifest.description) throw new Error("Missing 'description'");

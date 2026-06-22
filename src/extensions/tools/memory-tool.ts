@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import type { ExtensionAPI, ExtensionContext, Theme, ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Type, StringEnum } from "@earendil-works/pi-ai";
+// import { Type, StringEnum } from "@earendil-works/pi-ai"; // unused
 import { matchesKey, Text } from "@earendil-works/pi-tui";
 
 // Simple async mutex to prevent race conditions
@@ -39,34 +39,7 @@ export interface Memory {
 }
 
 // Helper to build memory list lines (extracted to reduce render method size)
-function buildMemoryLines(memories: Memory[], theme: Theme): string[] {
-  const lines: string[] = [];
-  lines.push('');
-  lines.push(theme.fg('accent', ' Memories '));
-  lines.push('');
-  if (memories.length === 0) {
-    lines.push('  ' + theme.fg('dim', 'No memories stored.'));
-  } else {
-    lines.push('  ' + theme.fg('muted', memories.length + ' memories'));
-    lines.push('');
-    const maxShow = 50;
-    const toShow = memories.slice(0, maxShow);
-    for (const mem of toShow) {
-      const id = theme.fg('accent', '#' + mem.id);
-      const preview = mem.text.length > 60 ? mem.text.substring(0, 60) + '...' : mem.text;
-      const text = theme.fg('text', preview);
-      const tags = mem.tags && mem.tags.length > 0 ? theme.fg('dim', ' [' + mem.tags.join(', ') + ']') : '';
-      lines.push('  ' + id + ' ' + text + tags);
-    }
-    if (memories.length > maxShow) {
-      lines.push('  ' + theme.fg('dim', '...and ' + (memories.length - maxShow) + ' more.'));
-    }
-  }
-  lines.push('');
-  lines.push('  ' + theme.fg('dim', 'Escape=Close'));
-  lines.push('');
-  return lines;
-}
+// buildMemoryLines unused - removed
 
 export class MemoryListComponent {
   private memories: Memory[];
@@ -191,7 +164,7 @@ export function registerMemoryTool(api: ExtensionAPI): void {
       required: ["action"]
     },
 
-    async execute(_toolCallId: string, params: any, _signal: AbortSignal | undefined, _onUpdate: any, ctx: ExtensionContext) {
+    async execute(_toolCallId: string, params: any, _signal: AbortSignal | undefined, _onUpdate: any, _ctx: ExtensionContext) {
       const release = await stateMutex.lock();
       try {
         // Parse JSON string if needed (like todos-tool)
@@ -313,7 +286,7 @@ export function registerMemoryTool(api: ExtensionAPI): void {
         return new Text(th.fg("error", `Error: ${details.error}`), 0, 0);
       }
 
-      const { action, memories, targetId } = details || {};
+      const { action, memories } = details || {};
 
       switch (action) {
         case "add": {

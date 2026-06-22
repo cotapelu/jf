@@ -8,7 +8,7 @@
  */
 
 import type { ExtensionAPI, ExtensionContext, ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
-import { TeamRegistry, AgentTeam } from "./team-manager.js";
+import { TeamRegistry } from "./team-manager.js"; // AgentTeam unused
 
 // Unique symbol for per-session state attachment
 const TEAM_WIDGET_STATE = Symbol('teamWidgetState');
@@ -19,10 +19,7 @@ interface TeamWidgetSessionState {
   intervalId: NodeJS.Timeout | null;
 }
 
-// Extend ExtensionContext to carry our state via symbol
-interface TeamWidgetContext extends ExtensionContext {
-  // Symbol-keyed property; we'll access via any cast with ts-ignore
-}
+// Using ExtensionContext directly; state stored via symbol
 
 interface AgentStatus {
   id: string;
@@ -40,12 +37,12 @@ interface TeamStatus {
   isComplete: boolean;
 }
 
-function getState(ctx: TeamWidgetContext): TeamWidgetSessionState | undefined {
+function getState(ctx: ExtensionContext): TeamWidgetSessionState | undefined {
   // @ts-ignore - accessing symbol property
   return ctx[TEAM_WIDGET_STATE];
 }
 
-function ensureState(ctx: TeamWidgetContext): TeamWidgetSessionState {
+function ensureState(ctx: ExtensionContext): TeamWidgetSessionState {
   let state = getState(ctx);
   if (!state) {
     state = { enabled: true, ctx: ctx, intervalId: null };
@@ -109,13 +106,13 @@ function refreshWidget(ui: ExtensionUIContext): Promise<void> {
           }
         });
       });
-    } catch (e) {
+    } catch {
       resolve();
     }
   });
 }
 
-function startWidget(ctx: TeamWidgetContext) {
+function startWidget(ctx: ExtensionContext) {
   const state = ensureState(ctx);
   // Prevent double start
   if (state.intervalId) return;
@@ -150,7 +147,7 @@ function stopWidget(state: TeamWidgetSessionState) {
  * Toggle team widget visibility.
  * @returns new enabled state (true = visible)
  */
-export function toggleTeamWidget(ctx: TeamWidgetContext): boolean {
+export function toggleTeamWidget(ctx: ExtensionContext): boolean {
   const state = ensureState(ctx);
   state.enabled = !state.enabled;
   if (state.enabled) {
@@ -164,14 +161,14 @@ export function toggleTeamWidget(ctx: TeamWidgetContext): boolean {
 /**
  * Get current team widget enabled state for a given session context.
  */
-export function getTeamWidgetEnabled(ctx: TeamWidgetContext): boolean {
+export function getTeamWidgetEnabled(ctx: ExtensionContext): boolean {
   const state = getState(ctx);
   return state?.enabled ?? true;
 }
 
 export function registerTeamWidget(api: ExtensionAPI): void {
   // Set up widget on session start
-  api.on("session_start", async (_event, ctx: TeamWidgetContext) => {
+  api.on("session_start", async (_event, ctx: ExtensionContext) => {
     // Create per-session state (default enabled)
     const state: TeamWidgetSessionState = { enabled: true, ctx: ctx, intervalId: null };
     // @ts-ignore - symbol-keyed property not in type

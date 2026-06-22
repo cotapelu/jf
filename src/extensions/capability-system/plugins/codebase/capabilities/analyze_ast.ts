@@ -10,14 +10,11 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join, relative, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path"; // dirname unused removed
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// __filename unused - removed
 
 export const schema = Type.Object({
   file: Type.String({ description: "File path to analyze (relative to cwd)" })
@@ -92,7 +89,7 @@ function handleImport(node: any, result: AnalysisResult) {
     }
   });
   if (defaultImport) importInfo.importClause = defaultImport;
-  if (namespace) importInfo.importClause = `* as ${namespace}`;
+  if (namespace) importInfo.importClause = `* as ${String(namespace)}`;
   if (named.length) importInfo.namedImports = named;
   if (node.importKind === 'type') importInfo.typeOnly = true;
   result.imports.push(importInfo);

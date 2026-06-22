@@ -56,9 +56,9 @@ interface SystemInfo {
 
 export async function execute(
   args: { detailed?: boolean },
-  cwd: string,
-  signal?: AbortSignal,
-  ctx?: any
+  _cwd: string,
+  _signal?: AbortSignal,
+  _ctx?: any
 ): Promise<{ code: number; stdout: string; stderr: string; data?: SystemInfo }> {
   try {
     const cpus = os.cpus();

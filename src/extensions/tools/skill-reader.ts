@@ -1,6 +1,6 @@
 import { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import type { Static } from "typebox";
+// import type { Static } from "typebox"; // unused
 import * as fs from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -59,7 +59,7 @@ function getAvailableSkills(): string[] {
       .filter(f => f.endsWith('.md'))
       .map(f => f.slice(0, -3)) // remove '.md'
       .sort();
-  } catch (e) {
+  } catch {
     // Silently return empty if directory not accessible
     return [];
   }

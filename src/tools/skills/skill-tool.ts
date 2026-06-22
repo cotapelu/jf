@@ -58,7 +58,7 @@ You: (follow instructions and analyze code)
     },
     required: ['skill']
   },
-  async execute(toolCallId: string, params: any, _signal?: AbortSignal, _onUpdate?: (result: any) => void, ctx?: any) {
+  async execute(toolCallId: string, params: any, _signal?: AbortSignal, _onUpdate?: (result: any) => void, _ctx?: any) {
     const startTime = Date.now();
 
     try {

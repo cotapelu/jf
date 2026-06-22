@@ -62,11 +62,9 @@ export async function compactSession(
   let cutoffIndex = 0;
   if (options.preserveRecent) {
     const recentTokensEstimate = Math.floor(options.maxTokens * 0.3);
-    let recentCount = 0;
     for (let i = messages.length - 1; i >= 0; i--) {
       const tokens = estimateTokens(JSON.stringify(messages[i]));
       if (recentTokensEstimate - tokens >= 0) {
-        recentCount++;
         cutoffIndex = i;
       } else break;
     }

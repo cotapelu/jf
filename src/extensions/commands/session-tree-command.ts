@@ -6,7 +6,7 @@
  * Provides an interactive UI to navigate the session tree.
  */
 
-import type { ExtensionAPI, Theme } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"; // Theme unused
 import { DynamicBorder, TreeSelectorComponent } from "@earendil-works/pi-coding-agent";
 import { Container, Text, Spacer } from "@earendil-works/pi-tui";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";

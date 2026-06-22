@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ParentToChildMessage, ChildToParentMessage, MessageEnvelope, TaskMessage, InputMessage, CancelMessage, ProgressMessage, QuestionMessage, ResultMessage, ErrorMessage } from './types.js';
+import type { ParentToChildMessage, ChildToParentMessage, MessageEnvelope } from './types.js'; // removed unused message types
 
 type ParentToChildHandler = (msg: ParentToChildMessage, envelope: MessageEnvelope<ParentToChildMessage>) => void;
 type ChildToParentHandler = (msg: ChildToParentMessage, envelope: MessageEnvelope<ChildToParentMessage>) => void;
@@ -73,7 +73,7 @@ export class MessageBus extends EventEmitter {
     };
   }
 
-  sendToParent(message: ChildToParentMessage, childId: string): void {
+  sendToParent(message: ChildToParentMessage, _childId: string): void {
     const envelope = this.createEnvelope('child', 'parent', message);
 
     for (const handler of this.childToParentHandlers) {

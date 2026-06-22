@@ -6,8 +6,8 @@
  * Provides registration, lookup, search, and system prompt generation.
  */
 
-import type { Capability, CapabilityRegistry, CapabilityResult } from "./types.js";
-import { Type } from "typebox";
+import type { Capability, CapabilityRegistry } from "./types.js";
+// Type import removed - unused
 
 class RegistryImpl implements CapabilityRegistry {
   private capabilities: Map<string, Capability> = new Map();

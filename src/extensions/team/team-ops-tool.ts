@@ -8,7 +8,7 @@
  * - Status: update_status
  */
 
-import type { ToolDefinition, ExtensionContext, AgentToolResult, AgentToolUpdateCallback } from "@earendil-works/pi-coding-agent";
+import type { ToolDefinition, ExtensionContext,  AgentToolUpdateCallback } from "@earendil-works/pi-coding-agent"; // AgentToolResult unused
 import type { AgentTeam } from "./team-manager.js";
 
 interface TeamOpsParams {

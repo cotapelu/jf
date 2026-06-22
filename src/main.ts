@@ -9,7 +9,7 @@ import {
   type CreateAgentSessionServicesOptions,
   type CreateAgentSessionFromServicesOptions,
   type CreateAgentSessionResult,
-  type PromptTemplate,
+  // type PromptTemplate unused - removed,
   createAgentSessionRuntime,
   createAgentSessionServices,
   createAgentSessionFromServices,

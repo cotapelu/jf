@@ -76,7 +76,7 @@ export async function executeHttp(
 
     // Cleanup temp file if created
     if (tempFilePath) {
-      try { await fs.unlink(tempFilePath); } catch (e) {}
+      try { await fs.unlink(tempFilePath); } catch {}
     }
 
     return {

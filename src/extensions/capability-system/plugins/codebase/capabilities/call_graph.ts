@@ -9,13 +9,13 @@
 import { Type } from "typebox";
 import { promises as fs } from "fs";
 import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
+// import { fileURLToPath } from "url"; // unused removed
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// __filename unused
+// __dirname unused
 
 export const schema = Type.Object({
   file: Type.String({ description: "Primary entry file path (relative to cwd)" }),
@@ -104,7 +104,7 @@ async function parseFile(cwd: string, fileRel: string): Promise<ParsedFile | nul
       loc: true,
       range: false
     });
-  } catch (err: any) {
+  } catch {
     return null;
   }
 

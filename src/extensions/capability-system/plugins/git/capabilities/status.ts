@@ -9,7 +9,7 @@ export const schema = Type.Object({
   // No parameters
 }, { additionalProperties: false });
 
-export async function execute(params: Record<string, never> = {}, ctx: any): Promise<any> {
+export async function execute(_params: Record<string, never> = {}, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
 
   try {

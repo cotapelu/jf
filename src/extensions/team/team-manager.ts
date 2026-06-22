@@ -9,15 +9,15 @@ import {
   createAgentSessionRuntime,
   createAgentSessionServices,
   createAgentSessionFromServices,
-  SessionManager,
+  // SessionManager unused - removed
   type AgentToolResult,
   type CreateAgentSessionRuntimeFactory,
   type CreateAgentSessionRuntimeResult,
   type SessionStartEvent,
-  type ToolDefinition,
-  type AgentSession,
+  // type ToolDefinition unused - removed
+  // type AgentSession unused - removed
 } from "@earendil-works/pi-coding-agent";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+// import { getAgentDir } from "@earendil-works/pi-coding-agent"; // unused
 import { SharedWorkspace, type WorkspaceEntry } from "./workspace.js";
 import { createTeamOpsTool } from "./team-ops-tool.js";
 import * as path from "node:path";
@@ -235,7 +235,7 @@ export class AgentTeam implements AgentTeamRuntime {
     };
   }
 
-  async sendMessage(channel: string, content: string, to?: string): Promise<void> {
+  async sendMessage(channel: string, content: string, _to?: string): Promise<void> {
     // In simplified version, we don't support direct messages; just broadcast to channel
     // Use 'parent' as generic sender for team tool messages
     await this.publishMessage(channel, 'parent', content);
@@ -730,7 +730,7 @@ export class AgentTeam implements AgentTeamRuntime {
         text = `[${role}] Agent started`;
         break;
       case 'agent_end':
-        text = `[${role}] Agent finished: ${e.stopReason}`;
+        text = `[${role}] Agent finished: ${String(e.stopReason)}`;
         break;
       case 'message_start':
         if (e.message && typeof e.message === 'object' && 'role' in e.message) {
@@ -1010,18 +1010,19 @@ export async function bootPiclawTeam(
 }
 
 function startCompletionMonitor(team: AgentTeam): void {
-  team.monitorInterval = setInterval(async () => {
-    await team.withLock(() => team.reclaimZombieAgents());
-    const status = await team.getTeamStatus();
-    if (status.isComplete && status.totalTasks > 0) {
-      clearInterval(team.monitorInterval!);
-      team.monitorInterval = null;
-      try {
-        TeamRegistry.getInstance().resetAutoDisposeTimer(team.id);
-      } catch (e) {
-        console.warn('Failed to schedule auto-dispose:', e);
+  team.monitorInterval = setInterval(() => {
+    team.withLock(() => team.reclaimZombieAgents()).catch((e) => console.error('Reclaim error:', e));
+    team.getTeamStatus().then(status => {
+      if (status.isComplete && status.totalTasks > 0) {
+        clearInterval(team.monitorInterval!);
+        team.monitorInterval = null;
+        try {
+          TeamRegistry.getInstance().resetAutoDisposeTimer(team.id);
+        } catch (e) {
+          console.warn('Failed to schedule auto-dispose:', e);
+        }
       }
-    }
+    }).catch((e) => console.error('Status error:', e));
   }, 1000);
 }
 

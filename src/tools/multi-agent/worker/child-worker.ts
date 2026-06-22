@@ -56,24 +56,26 @@ async function main() {
 
     port.postMessage({ type: 'ready', childId: config.id });
 
-    port.on('message', async (raw: unknown) => {
-      const msg = raw as { type: string; payload?: unknown };
-      if (msg.type === 'task') {
-        try {
-          const output = await session.prompt(`Mission: ${mission}\n\nContext:\n${JSON.stringify(context, null, 2)}`);
-          port.postMessage({ type: 'result', payload: { output } });
-        } catch (err) {
-          port.postMessage({
-            type: 'error',
-            payload: { message: err instanceof Error ? err.message : String(err), recoverable: false },
-          });
+    port.on('message', (raw: unknown) => {
+      (async () => {
+        const msg = raw as { type: string; payload?: unknown };
+        if (msg.type === 'task') {
+          try {
+            const output = await session.prompt(`Mission: ${mission}\n\nContext:\n${JSON.stringify(context, null, 2)}`);
+            port.postMessage({ type: 'result', payload: { output } });
+          } catch (err) {
+            port.postMessage({
+              type: 'error',
+              payload: { message: err instanceof Error ? err.message : String(err), recoverable: false },
+            });
+          }
+        } else if (msg.type === 'cancel') {
+          port.postMessage({ type: 'error', payload: { message: 'Cancelled', recoverable: false } });
+          process.exit(1);
+        } else if (msg.type === 'input') {
+          messageBus.sendToChild(config.id, msg as any);
         }
-      } else if (msg.type === 'cancel') {
-        port.postMessage({ type: 'error', payload: { message: 'Cancelled', recoverable: false } });
-        process.exit(1);
-      } else if (msg.type === 'input') {
-        messageBus.sendToChild(config.id, msg as any);
-      }
+      })().catch(() => {}); // swallow unhandled rejections
     });
 
     port.on('close', () => process.exit(0));

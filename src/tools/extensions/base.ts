@@ -12,6 +12,6 @@ export abstract class BaseExtension implements Extension {
 
   abstract getTools(cwd: string): ToolDefinition[];
 
-  initialize?(registry: ExtensionRegistry): Promise<void> | void {}
+  initialize?(_registry: ExtensionRegistry): Promise<void> | void {}
   dispose?(): Promise<void> | void {}
 }

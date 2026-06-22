@@ -17,7 +17,6 @@ export async function execute(params: { files: string[] }, ctx: any): Promise<an
       throw new Error("files array required");
     }
 
-    const files = params.files.map(f => `"${f}"`).join(' ');
     const result = await ctx.exec("npx", ["prettier", "--write", ...params.files], { cwd });
 
     return {

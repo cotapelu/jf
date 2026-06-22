@@ -86,7 +86,7 @@ function processNamedGroup(namedGroup: string): { importClause: string; namedImp
 function tryParseImport(line: string, lineNum: number, imports: ImportInfo[]): boolean {
   const importMatch = line.match(IMPORT_DECL_REGEX);
   if (importMatch) {
-    const [_, starAs, namedGroup, defaultImport, moduleSpecifier] = importMatch;
+    const [, starAs, namedGroup, defaultImport, moduleSpecifier] = importMatch;
     const importInfo: ImportInfo = { moduleSpecifier };
     if (starAs) {
       importInfo.importClause = `* as ${starAs}`;
@@ -176,7 +176,7 @@ function handleNamedInterfaceExport(line: string, lineNum: number, exports: Expo
 function handleOtherExports(line: string, lineNum: number, exports: ExportInfo[], _symbols: SymbolDef[]): boolean {
   const exportMatch = line.match(EXPORT_DECL_REGEX);
   if (exportMatch) {
-    const [_1, starFrom, namedGroup, exportName, asAlias1, aliasName, defaultName] = exportMatch;
+    const [, starFrom, namedGroup, exportName, asAlias1, aliasName, defaultName] = exportMatch;
     if (starFrom) {
       exports.push({ type: "named", name: "*" });
     } else if (namedGroup) {

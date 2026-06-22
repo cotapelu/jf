@@ -68,7 +68,7 @@ export class ExtensionRegistry {
   /**
    * Initialize all extensions (call during startup)
    */
-  async initializeAll(cwd: string): Promise<void> {
+  async initializeAll(_cwd: string): Promise<void> {
     for (const [name, ext] of this.extensions) {
       if (ext.initialize) {
         try {

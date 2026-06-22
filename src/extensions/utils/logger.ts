@@ -7,7 +7,7 @@
  * Avoids dependency on external logging library.
  */
 
-type LogLevel = 'log' | 'error' | 'warn' | 'info' | 'debug';
+// type LogLevel = 'log' | 'error' | 'warn' | 'info' | 'debug'; // unused
 
 interface Logger {
   log: (...args: any[]) => void;

@@ -1,6 +1,6 @@
 import { messageBus } from './message-bus.js';
 import { MultiAgentRuntime } from './runtime.js';
-import type { ParentToChildMessage, ChildToParentMessage, SpawnChildParams, SendMessageParams, AwaitResultParams, ListChildrenParams, TerminateChildParams, ChildInfo, ChildStatus } from './types.js';
+import type { SpawnChildParams, SendMessageParams, AwaitResultParams, ListChildrenParams, TerminateChildParams, ChildInfo, ChildToParentMessage } from './types.js'; // removed unused types: ParentToChildMessage, ChildStatus
 
 let runtimeInstance: MultiAgentRuntime | null = null;
 

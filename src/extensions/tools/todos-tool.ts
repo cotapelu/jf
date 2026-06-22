@@ -10,13 +10,13 @@
  * @module tools/todos-tool
  */
 
-import { existsSync, mkdirSync, promises as fs } from "node:fs";
+import { existsSync, promises as fs } from "node:fs"; // mkdirSync unused
 import { dirname, join } from "node:path";
 import type { ToolDefinition, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Mutex } from "../utils/mutex.js";
 import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
-import { getAgentDir } from "@earendil-works/pi-coding-agent";
+// import { getAgentDir } from "@earendil-works/pi-coding-agent"; // unused
 
 const CONFIG_DIR_NAME = ".piclaw";
 // --- Types (migrated from tool-types.ts) ---
@@ -727,25 +727,7 @@ export class TodoState {
 // ============================================================================
 
 // BACKUP: formatTodoLine function (adapted for pi-tui Text)
-function formatTodoLineExtension(item: TodoItem, theme: any, prefix: string): string {
-  // Since we're using Text, we can't mix colors inline. We'll return plain text.
-  // For colored output, we'd need multiple Text segments or use theme.fg.
-  switch (item.status) {
-    case "completed":
-      return `${prefix}[✓] ${item.content}`;
-    case "in_progress": {
-      const main = `${prefix}[→] ${item.content}`;
-      if (!item.details) return main;
-      const detailLines = item.details.split("\n").map(l => `${prefix}  ${l}`);
-      return [main, ...detailLines].join("\n");
-    }
-    case "abandoned":
-      return `${prefix}[✗] ${item.content}`;
-    default:
-      return `${prefix}[ ] ${item.content}`;
-  }
-}
-
+// formatTodoLineExtension unused - removed
 function renderTodosCall(args: any, theme: any): Text {
   const op = args.delete !== undefined ? "delete" : args.add_phase ? "add_phase" : args.add_task ? "add_task" : args.update ? "update" : args.remove_task ? "remove_task" : args.list ? "list" : "todo";
   const text = `${theme.fg("toolTitle", theme.bold("todos"))} ${theme.fg("muted", op)}`;

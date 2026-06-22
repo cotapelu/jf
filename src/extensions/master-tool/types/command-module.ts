@@ -67,7 +67,7 @@ export interface CommandResult {
   duration?: number;
 }
 
-export interface CommandModule<TInput = any, TOutput = any, TState = any> {
+export interface CommandModule<TInput = any, TState = any> {
   /** Command metadata (REQUIRED) */
   metadata: CommandMetadata;
 

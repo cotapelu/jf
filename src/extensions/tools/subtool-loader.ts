@@ -13,7 +13,7 @@
  * - createBashToolDefinition (for HTTP via curl)
  */
 
-import type { ExtensionAPI, ToolDefinition, ExtensionContext, AgentToolResult } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ToolDefinition, ExtensionContext } from "@earendil-works/pi-coding-agent"; // AgentToolResult unused
 import {
   createReadToolDefinition,
   createLsToolDefinition,

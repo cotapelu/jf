@@ -22,7 +22,7 @@ export class GitExtension {
 
   constructor(private options: GitExtensionOptions = {}) {}
 
-  getTools(cwd: string): ToolDefinition[] {
+  getTools(_cwd: string): ToolDefinition[] {
     return [
       gitStatusTool,
       gitDiffTool,
@@ -32,7 +32,7 @@ export class GitExtension {
     ];
   }
 
-  initialize(registry: any): void {
+  initialize(_registry: any): void {
     // No special init needed
   }
 

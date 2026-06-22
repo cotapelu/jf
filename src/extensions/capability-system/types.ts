@@ -5,7 +5,7 @@
  * Types and interfaces for the plugin architecture.
  */
 
-import type { ToolDefinition, ExtensionContext, AgentToolResult, ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext, AgentToolResult, ExtensionAPI } from "@earendil-works/pi-coding-agent"; // ToolDefinition unused removed
 import type { TSchema } from "typebox";
 
 // ============================================================================
@@ -267,5 +267,5 @@ export interface PluginLoaderStats {
 export const DEFAULT_PLUGINS_DIR = "plugins";
 export const MANIFEST_FILENAME = "manifest.json";
 
-// Registry singleton key
-const REGISTRY_SYMBOL = Symbol.for("pi-claw.capability.registry");
+// Registry singleton key (unused currently)
+// const REGISTRY_SYMBOL = Symbol.for("pi-claw.capability.registry");

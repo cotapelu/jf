@@ -3,6 +3,7 @@
  * Extensions use custom properties not in official types
  */
 
+/* eslint @typescript-eslint/no-unused-vars: "off" */
 import type { AgentToolResult, ExtensionContext } from '@earendil-works/pi-coding-agent';
 
 declare module '@earendil-works/pi-coding-agent' {
