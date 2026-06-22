@@ -216,12 +216,14 @@ Nếu task phức tạp (>8h), tự động:
 // Được load bởi extensions/factory.ts
 export function createAutoRestartHook(pi: ExtensionAPI): void {
   pi.on('agent_end', () => {
-    // Gửi lại content của prompt này như một system message để tiếp tục công việc
-    pi.sendMessage({
-      customType: 'auto-restart',
-      content: defaultAssistantPrompt.content,
-      display: false
-    }, { triggerTurn: true });
+    // Delay 45 giây trước khi gửi lại
+    setTimeout(() => {
+      pi.sendMessage({
+        customType: 'auto-restart',
+        content: defaultAssistantPrompt.content,
+        display: false
+      }, { triggerTurn: true });
+    }, 45_000);
   });
 }
 
