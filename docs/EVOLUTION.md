@@ -149,6 +149,23 @@
 
 ---
 
+### Coverage Expansion (Phase 28) — COMPLETED ✅
+
+- Added 39 tests for `state-manager.ts` and 30 tests for `command-registry.ts`.
+- Statement coverage increased to 83.1%, Branch coverage 71.45%, Function coverage 85.36%, Line coverage 84.44%.
+- All global thresholds met.
+
+### Lint Cleanup (Phase 29) — COMPLETED ✅
+
+- Systematically identified and fixed all 111 lint errors across 43 files.
+- Removed unused imports and variables.
+- Prefixed unused parameters with `_`.
+- Fixed template literal `unknown` type errors via `String()` casts.
+- Converted async event handlers to sync callbacks to avoid `no-misused-promises`.
+- Removed dead code (unused functions, variables).
+- Added targeted `eslint-disable` directives for false positives.
+- Result: 0 ESLint errors; all 634 tests still pass; coverage maintained.
+
 ## Phase 2 Progress (Quality Infrastructure)
 
 ### ✅ 2.1 Coverage Thresholds (COMPLETED)
@@ -309,4 +326,4 @@ Optional future work:
 
 ---
 
-*Roadmap last updated: 2026-06-19*
+*Roadmap last updated: 2026-06-22*

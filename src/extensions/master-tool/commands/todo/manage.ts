@@ -16,7 +16,7 @@ import { Text } from "@earendil-works/pi-tui";
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
 // import { fileURLToPath } from "url"; // unused
 import { Mutex } from "../../utils/mutex.js";
 // import { withFileMutationQueue } from "@earendil-works/pi-coding-agent"; // unused

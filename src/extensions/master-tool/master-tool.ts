@@ -386,7 +386,7 @@ function handleReloadCommand(registry: CommandRegistry): AgentToolResult<any> {
 
 function handleMetaCommand(
   command: string,
-  _args: any,
+  args: any,
   _ctx: ExtensionContext
 ): AgentToolResult<any> {
   const registry = getRegistry();

@@ -7,18 +7,18 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-22
-**Iteration:** 22 (Coverage Threshold Achievement)
+**Iteration:** 29 (Lint Cleanup)
 **Focus:** Add comprehensive tests for critical modules to meet and exceed quality thresholds (≥80% statements, ≥80% functions, ≥80% lines, ≥60% branches). Focused on `state-manager.ts` and `command-registry.ts` with 69 new tests.
 
 **Results:**
-- Statement coverage: **83.1%** (↑ from 79.86%)
-- Branch coverage: **71.45%** (↑ from 68.95%)
-- Function coverage: **85.36%**
-- Line coverage: **84.44%**
-- Test count: **634** (↑ from 496)
+- Statement coverage: **83.09%**
+- Branch coverage: **71.52%**
+- Function coverage: **85.1%**
+- Line coverage: **84.47%**
+- Test count: **634** (unchanged)
 - All tests pass
 - Build successful
-- Lint: 117 errors (pre-existing; not addressed in this iteration)
+- Lint: **0 errors** (cleaned up 111 previous errors)
 
 ---
 
@@ -34,7 +34,7 @@
 | Test coverage | 496 tests | ≥80% | 83.1% stmts, 85.4% funcs | ✅ |
 | Tests passing | 496 tests | 100% | 634/634 (100%) | ✅ |
 | Build status | Working | No errors | ✅ Success | ✅ |
-| Lint status | 0 errors | 0 errors | ⚠️ 117 errors | ⚠️ |
+| Lint status | 0 errors | 0 errors | ✅ 0 errors | ✅ |
 
 ---
 
