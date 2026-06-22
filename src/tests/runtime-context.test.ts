@@ -39,9 +39,32 @@ import type {
   ToolInfo,
 } from '@earendil-works/pi-coding-agent';
 
-// Helper to create a minimal mock runtime
+// Helper to create a minimal mock runtime without using `as any`
 function createMockRuntime(overrides: Partial<AgentSessionRuntime> = {}): AgentSessionRuntime {
-  const now = new Date();
+  // Construct services object with structural compatibility
+  const services: AgentSessionServices = {
+    cwd: '/tmp',
+    agentDir: '/tmp/agent',
+    authStorage: {
+      get: vi.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
+    },
+    settingsManager: {
+      get: vi.fn(),
+      set: vi.fn(),
+    },
+    modelRegistry: {
+      getCurrentModel: vi.fn(),
+      listModels: vi.fn(),
+    },
+    resourceLoader: {
+      loadSkill: vi.fn(),
+    },
+    diagnostics: [],
+  };
+
+  // Construct session object
   const session: AgentSession = {
     sessionId: 'test-session-id',
     sessionFile: '/tmp/test-session.jsonl',
@@ -50,31 +73,20 @@ function createMockRuntime(overrides: Partial<AgentSessionRuntime> = {}): AgentS
     model: undefined,
     extensionRunner: {
       run: vi.fn().mockResolvedValue(undefined),
-    } as unknown as ExtensionRunner,
+    },
     sessionManager: {
-      // Minimal methods for runtime context tests; we can mock more as needed.
       dispose: vi.fn(),
       getActive: vi.fn(),
       list: vi.fn(),
       getRegistry: vi.fn(),
       getDiagnostics: vi.fn(),
-    } as unknown as SessionManager,
+    },
     getActiveToolNames: vi.fn().mockReturnValue(['tool1', 'tool2']),
     getAllTools: vi.fn().mockReturnValue([
       { name: 'tool1', label: 'Tool 1', description: 'Desc' },
       { name: 'tool2', label: 'Tool 2', description: 'Desc2' },
     ] as ToolInfo[]),
     getToolDefinition: vi.fn().mockName('getToolDefinition'),
-  };
-
-  const services: AgentSessionServices = {
-    cwd: '/tmp',
-    agentDir: '/tmp/agent',
-    authStorage: { get: vi.fn(), set: vi.fn(), delete: vi.fn() } as any,
-    settingsManager: { get: vi.fn(), set: vi.fn() } as any,
-    modelRegistry: { getCurrentModel: vi.fn(), listModels: vi.fn() } as any,
-    resourceLoader: { loadSkill: vi.fn() } as any,
-    diagnostics: [],
   };
 
   return {
@@ -84,7 +96,7 @@ function createMockRuntime(overrides: Partial<AgentSessionRuntime> = {}): AgentS
     diagnostics: [],
     modelFallbackMessage: undefined,
     ...overrides,
-  } as AgentSessionRuntime;
+  };
 }
 
 describe('runtime-context', () => {
@@ -186,18 +198,18 @@ describe('runtime-context', () => {
 
   describe('getCurrentExtensionRunner', () => {
     it('should return extensionRunner from session', () => {
-      const runner: ExtensionRunner = { run: vi.fn().mockResolvedValue(undefined) } as any;
-      const runtime = createMockRuntime({ session: { ...createMockRuntime().session, extensionRunner: runner } });
-      setCurrentRuntime(runtime);
+      const runner: ExtensionRunner = { run: vi.fn().mockResolvedValue(undefined) };
+      const base = createMockRuntime();
+      setCurrentRuntime({ ...base, session: { ...base.session, extensionRunner: runner } });
       expect(getCurrentExtensionRunner()).toBe(runner);
     });
   });
 
   describe('getCurrentSessionManager', () => {
     it('should return sessionManager from session', () => {
-      const manager: SessionManager = { dispose: vi.fn() } as any;
-      const runtime = createMockRuntime({ session: { ...createMockRuntime().session, sessionManager: manager } });
-      setCurrentRuntime(runtime);
+      const manager = { dispose: vi.fn() } as unknown as SessionManager;
+      const base = createMockRuntime();
+      setCurrentRuntime({ ...base, session: { ...base.session, sessionManager: manager } });
       expect(getCurrentSessionManager()).toBe(manager);
     });
   });
@@ -247,16 +259,16 @@ describe('runtime-context', () => {
   describe('getCurrentToolDefinition', () => {
     it('should return tool definition if available', () => {
       const toolDef: ToolDefinition = { name: 'test', label: 'Test', description: 'Test tool', parameters: {}, execute: vi.fn() };
-      const session = createMockRuntime().session;
-      session.getToolDefinition = vi.fn().mockReturnValue(toolDef);
-      setCurrentRuntime(createMockRuntime({ session }));
+      const base = createMockRuntime();
+      base.session.getToolDefinition = vi.fn().mockReturnValue(toolDef);
+      setCurrentRuntime(base);
       expect(getCurrentToolDefinition('test')).toBe(toolDef);
     });
 
     it('should return undefined if tool not found', () => {
-      const session = createMockRuntime().session;
-      session.getToolDefinition = vi.fn().mockReturnValue(undefined);
-      setCurrentRuntime(createMockRuntime({ session }));
+      const base = createMockRuntime();
+      base.session.getToolDefinition = vi.fn().mockReturnValue(undefined);
+      setCurrentRuntime(base);
       expect(getCurrentToolDefinition('missing')).toBeUndefined();
     });
   });
