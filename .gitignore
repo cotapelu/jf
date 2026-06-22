@@ -105,4 +105,4 @@ jspm_packages/
 /playwright/.cache/
 
 # Evolution test metrics (auto-generated)
-evo-test-metrics-*
+evo-test-metrics-*/
