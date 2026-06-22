@@ -20,6 +20,7 @@ import {
 } from '@earendil-works/pi-coding-agent';
 
 import { setCurrentRuntime } from './runtime-context.js';
+import { defaultAssistantPrompt } from './prompts/index.js';
 
 // Resolve package root dir (where src/ lives)
 // In build: dist/main.js => package root is 1 level up
@@ -30,27 +31,14 @@ const packageRoot = path.resolve(__dirname, '..');
 
 // Extensions are loaded from src/extensions via extensionsAggregator
 
-// 1️⃣ PromptTemplate usage
-const myCustomPrompt: PromptTemplate = {
-  name: 'my_custom_assistant',
-  description: 'Custom assistant prompt for Pi SDK',
-  filePath: process.argv[1] ?? '<inline:custom>',
-  sourceInfo: {
-    path: process.argv[1] ?? '<inline:custom>',
-    source: 'temporary',
-    scope: 'temporary',
-    origin: 'top-level',
-  },
-  content: `You are an AI coding assistant specialized in TypeScript and Node.js. Be concise, accurate, and provide code examples when helpful. Always explain your reasoning before providing solutions.`,
-};
+// Prompt templates loaded from src/prompts/
 
-// 2️⃣ Factory tạo runtime với tất cả factories
+// Factory tạo runtime với tất cả factories
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   cwd,
   agentDir,
   sessionManager,
   sessionStartEvent,
-  // projectTrustContext: không dùng trong hiện tại, có thể dùng sau
 }): Promise<CreateAgentSessionRuntimeResult> => {
   // Services với PromptTemplate override và extension discovery
   const servicesOptions: CreateAgentSessionServicesOptions = {
@@ -58,7 +46,7 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
     agentDir,
     resourceLoaderOptions: {
       promptsOverride: () => ({
-        prompts: [myCustomPrompt],
+        prompts: [defaultAssistantPrompt],
         diagnostics: [],
       }),
       // Auto-discovery paths for extensions - use packageRoot, not process.cwd()
