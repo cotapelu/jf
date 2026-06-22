@@ -20,6 +20,8 @@ import autoCompact85Extension from "./hooks/auto-compact-85.js";
 import contextLoggerExtension from "./context-logger.js";
 // Import custom project tools
 import { registerAllCustomTools } from "../tools/index.js";
+// Import master-tool extension
+import { registerMasterTool } from "./master-tool/index.js";
 
 import piclawHeader from "./piclaw-header.js";
 import { registerTodosRenderer } from "./renderers/todos-renderer.js";
@@ -99,6 +101,14 @@ export default async function extensionsAggregator(api: import("@earendil-works/
     console.log(`[Extensions] Registered ${customTools.length} custom tools from src/tools/`);
   } catch (err) {
     console.error('[Extensions] Failed to register custom tools:', err);
+  }
+
+  // Register master-tool extension
+  try {
+    registerMasterTool(api);
+    console.log(`[Extensions] Registered master-tool extension`);
+  } catch (err) {
+    console.error('[Extensions] Failed to register master-tool:', err);
   }
 
   // Return an empty object to satisfy extension discovery requirements

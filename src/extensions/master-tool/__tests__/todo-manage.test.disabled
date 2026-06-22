@@ -1,0 +1,85 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
+import { mkdtemp, rmdir, unlink } from 'node:fs/promises';
+import os from 'node:os';
+import { CommandRegistry } from '../command-registry.js';
+import { resetStateManager } from '../state-manager.js';
+
+describe('Todo Manage Command', () => {
+  let tempDir: string;
+  let registry: CommandRegistry;
+  let ctx: any;
+
+  beforeEach(async () => {
+    resetStateManager();
+    tempDir = await mkdtemp(join(os.tmpdir(), 'piclaw-todo-'));
+    ctx = {
+      cwd: tempDir,
+      exec: async () => ({ code: 0, stdout: '', stderr: '' })
+    } as any;
+    registry = new CommandRegistry();
+    await registry.initialize();
+  });
+
+  afterEach(async () => {
+    try {
+      const stateFile = join(tempDir, '.piclaw', 'commands', 'todo.manage.json');
+      await unlink(stateFile).catch(() => {});
+      await rmdir(join(tempDir, '.piclaw', 'commands'), { recursive: true }).catch(() => {});
+      await rmdir(join(tempDir, '.piclaw'), { recursive: true }).catch(() => {});
+      await rmdir(tempDir, { recursive: true }).catch(() => {});
+    } catch (e) {}
+    resetStateManager();
+  });
+
+  const exec = (action: string, args?: Record<string, any>) =>
+    registry.execute('todo.manage', { action, ...args } as any, {
+      toolCallId: `${Date.now()}`,
+      signal: undefined,
+      onUpdate: undefined,
+      ctx,
+      maxOutputSize: 1024 * 1024
+    });
+
+  it('should start with empty tasks', async () => {
+    const result = await exec('list');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('No tasks');
+  });
+
+  it('should add task', async () => {
+    await exec('add', { content: 'Test task' });
+    const result = await exec('list');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('Test task');
+  });
+
+  it('should add phase with tasks', async () => {
+    await exec('add_phase', { name: 'Phase 1', tasks: ['Task A', 'Task B'] });
+    const result = await exec('list');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('Phase 1');
+    expect(stdout).toContain('Task A');
+    expect(stdout).toContain('Task B');
+  });
+
+  it('should return not found for toggle with invalid id', async () => {
+    const result = await exec('toggle', { id: 999 });
+    expect(result.isError).toBe(true);
+    const stderr = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stderr).toContain('not found');
+  });
+
+  it('should return not found for remove with invalid id', async () => {
+    const result = await exec('remove', { id: 999 });
+    expect(result.isError).toBe(true);
+    const stderr = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stderr).toContain('not found');
+  });
+
+  // Unknown action is caught by schema validation, not command's default case.
+  // Skipping – covered by validator tests.
+});

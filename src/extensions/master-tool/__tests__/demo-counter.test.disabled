@@ -1,0 +1,71 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { CommandRegistry } from '../command-registry.js';
+
+describe('Demo Counter Command', () => {
+  let registry: CommandRegistry;
+  let ctx: any;
+
+  beforeEach(async () => {
+    registry = new CommandRegistry();
+    await registry.initialize();
+    ctx = {
+      cwd: '/tmp',
+      exec: async () => ({ code: 0, stdout: '', stderr: '' })
+    };
+  });
+
+  const exec = (action: string, extra: Record<string, any> = {}) =>
+    registry.execute('demo.counter', { action, ...extra } as any, {
+      toolCallId: `${Date.now()}`,
+      signal: undefined,
+      onUpdate: undefined,
+      ctx,
+      maxOutputSize: 1024 * 1024
+    });
+
+  it('starts at 0', async () => {
+    const result = await exec('get');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('0');
+  });
+
+  it('increments', async () => {
+    await exec('inc');
+    const result = await exec('get');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('1');
+  });
+
+  it('decrements', async () => {
+    await exec('dec');
+    const result = await exec('get');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('-1');
+  });
+
+  it('resets', async () => {
+    await exec('inc');
+    await exec('inc');
+    await exec('reset');
+    const result = await exec('get');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('0');
+  });
+
+  it('sets specific value', async () => {
+    await exec('set', { value: 42 });
+    const result = await exec('get');
+    expect(result.isError).toBe(false);
+    const stdout = result.content.find(c => c.type === 'text')?.text || '';
+    expect(stdout).toContain('42');
+  });
+
+  it('handles invalid action', async () => {
+    const result = await exec('unknown' as any);
+    expect(result.isError).toBe(true);
+  });
+});
