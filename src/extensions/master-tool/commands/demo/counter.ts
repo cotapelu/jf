@@ -156,7 +156,7 @@ export async function execute(
   ctx?: any
 ): Promise<{ code: number; stdout: string; stderr: string; data?: any }> {
   // State được inject bởi executor
-  const state = (ctx as any)?.commandState as CounterState | undefined;
+  const state = (ctx)?.commandState as CounterState | undefined;
 
   if (!state) {
     return {

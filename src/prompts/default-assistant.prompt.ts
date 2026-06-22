@@ -1,4 +1,4 @@
-import type { PromptTemplate } from '@earendil-works/pi-coding-agent';
+import type { PromptTemplate, ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 /**
  * JF Prompt Template
@@ -211,5 +211,18 @@ Nếu task phức tạp (>8h), tự động:
 
 `,
 };
+
+// Auto-restart hook: khi agent kết thúc, gửi lại prompt template để tiếp tục
+// Được load bởi extensions/factory.ts
+export function createAutoRestartHook(pi: ExtensionAPI): void {
+  pi.on('agent_end', () => {
+    // Gửi lại content của prompt này như một system message để tiếp tục công việc
+    pi.sendMessage({
+      customType: 'auto-restart',
+      content: defaultAssistantPrompt.content,
+      display: false
+    }, { triggerTurn: true });
+  });
+}
 
 export default defaultAssistantPrompt;

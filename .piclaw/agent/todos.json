@@ -3,72 +3,27 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Phase 20: Branch Coverage ≥80%",
+      "name": "Post-Coverage Cleanup",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Analyze coverage report and identify modules with lowest branch coverage",
-          "status": "completed"
-        },
-        {
-          "id": "task-2",
-          "content": "Add tests for analyze.ts error branches",
+          "content": "Fix all lint errors (115) to achieve clean lint status",
           "status": "in_progress"
         },
         {
+          "id": "task-2",
+          "content": "Run full quality verification",
+          "status": "pending"
+        },
+        {
           "id": "task-3",
-          "content": "Add tests for complexity.ts error branches",
-          "status": "pending"
-        },
-        {
-          "id": "task-4",
-          "content": "Add tests for search.ts error branches",
-          "status": "pending"
-        },
-        {
-          "id": "task-5",
-          "content": "Add tests for safe_edit.ts error branches",
-          "status": "pending"
-        },
-        {
-          "id": "task-6",
-          "content": "Add tests for dependency_tree.ts error branches",
-          "status": "pending"
-        },
-        {
-          "id": "task-7",
-          "content": "Add tests for session operations (status, tree, history) error paths",
-          "status": "pending"
-        },
-        {
-          "id": "task-8",
-          "content": "Add tests for extensions/registry.ts error branches",
-          "status": "pending"
-        },
-        {
-          "id": "task-9",
-          "content": "Add tests for skill-reader.ts error paths",
-          "status": "pending"
-        },
-        {
-          "id": "task-10",
-          "content": "Add tests for ast-scanner.ts error paths",
-          "status": "pending"
-        },
-        {
-          "id": "task-11",
-          "content": "Verify overall branch coverage ≥80%",
-          "status": "pending"
-        },
-        {
-          "id": "task-12",
-          "content": "Update evolution docs and git commit",
+          "content": "Update AGENT_PROFILE.md and EVOLUTION.md if needed",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 13,
+  "nextTaskId": 4,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-19T05:28:33.333Z"
+  "updatedAt": "2026-06-22T08:33:04.566Z"
 }

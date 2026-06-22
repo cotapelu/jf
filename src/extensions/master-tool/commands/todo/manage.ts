@@ -226,7 +226,7 @@ export async function execute(
   ctx?: any
 ): Promise<{ code: number; stdout: string; stderr: string; data?: any }> {
   // State được executor inject vào ctx.commandState
-  const state = (ctx as any)?.commandState as TodoState | undefined;
+  const state = (ctx)?.commandState as TodoState | undefined;
 
   if (!state) {
     // Should never happen nếu executor đã được upgrade

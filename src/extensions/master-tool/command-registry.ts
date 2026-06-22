@@ -64,7 +64,7 @@ export class CommandRegistry {
             this.executor.register({
               loader,
               metadata,
-              schema: {} as any,
+              schema: {},
               StateClass: undefined,
               getPersistencePath: undefined,
               lastLoaded: Date.now(),
@@ -184,7 +184,7 @@ export class CommandRegistry {
       this.executor.register({
         loader,
         metadata,
-        schema: {} as any, // Will be replaced after module load
+        schema: {}, // Will be replaced after module load
         StateClass: undefined, // Will be set after module load
         getPersistencePath: undefined, // Will be set after module load
         lastLoaded: Date.now(),
