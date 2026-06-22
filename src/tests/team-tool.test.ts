@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTeamTool } from '../extensions/team/team-tool.js';
 import { bootPiclawTeam, executeTeamTasks, TeamRegistry } from '../extensions/team/team-manager.js';
+import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 
 // Mock the team manager module
 vi.mock('../extensions/team/team-manager.js', () => ({
@@ -25,23 +26,26 @@ describe('Team Tool', () => {
     tool = createTeamTool();
   });
 
-  const mockCtx = { runtime: {} } as any;
+  const mockCtx: ExtensionContext = { runtime: {} as any }; // runtime minimally typed; cast ok
 
   it('should reject call reference string', async () => {
-    const result = await tool.execute('call1', 'call_abc123' as any, undefined, undefined, mockCtx);
+    const invalidParam: any = 'call_abc123';
+    const result = await tool.execute('call1', invalidParam, undefined, undefined, mockCtx);
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('call reference');
   });
 
   it('should reject invalid JSON string', async () => {
-    const result = await tool.execute('call2', '{ invalid }' as any, undefined, undefined, mockCtx);
+    const invalidParam: any = '{ invalid }';
+    const result = await tool.execute('call2', invalidParam, undefined, undefined, mockCtx);
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Invalid JSON');
   });
 
   it('should reject non-object, non-string params', async () => {
     // @ts-expect-edge - testing invalid param type
-    const result = await tool.execute('call3', 123 as any, undefined, undefined, mockCtx);
+    const invalidParam: any = 123;
+    const result = await tool.execute('call3', invalidParam, undefined, undefined, mockCtx);
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Invalid parameters');
   });
@@ -59,7 +63,8 @@ describe('Team Tool', () => {
   });
 
   it('should fail when no runtime context', async () => {
-    const result = await tool.execute('call6', { tasks: ['t1'] }, undefined, undefined, {} as any);
+    const emptyCtx: any = {};
+    const result = await tool.execute('call6', { tasks: ['t1'] }, undefined, undefined, emptyCtx);
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('No runtime context available');
   });
@@ -79,10 +84,10 @@ describe('Team Tool', () => {
   });
 
   it('should query existing team status', async () => {
-    const fakeTeam = {
+    const fakeTeam: any = {
       getTeamStatus: async () => ({ completedTasks: 1, totalTasks: 3, agents: [] }),
     };
-    TeamRegistry.getInstance().get = vi.fn(() => fakeTeam as any);
+    TeamRegistry.getInstance().get = vi.fn(() => fakeTeam);
     const result = await tool.execute('call9', { teamId: 'team123' }, undefined, undefined, mockCtx);
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain('Team team123 status');

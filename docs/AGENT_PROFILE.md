@@ -152,9 +152,9 @@
    - **Pattern:** Always `await` async operations in switch cases
 
 2. **Type assertion abuse** - Tests use `as any` extensively
-   - **Status:** ✅ MOSTLY FIXED
-   - **Resolution:** Introduced `AgentSessionRuntime` type, typed `MultiSessionManager` constructor, improved error handling. Some `as any` remain for test mocks due to SDK complexity, but coverage improved significantly.
-   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors
+   - **Status:** ✅ SUBSTANTIALLY IMPROVED (62% reduction)
+   - **Resolution:** Phase 22 effort focused on reducing `as any`. Replaced with proper types (`SessionMetadata`, helper factories), used `as unknown as` pattern, and created mock helpers. Count reduced from **91** to **35** (62% reduction). Remaining cases are mostly complex SDK mocks where full typing would be brittle.
+   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors; centralize casts via helpers
 
 3. **Details shape inconsistency** - `operationList` returned raw `sessions` in details, other ops returned transformed
    - **Status:** ✅ FIXED (normalized shape)

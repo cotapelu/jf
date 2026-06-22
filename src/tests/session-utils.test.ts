@@ -6,7 +6,9 @@ import {
   renderTree,
 } from '../tools/session/utils.js';
 import type { SessionMetadata, SessionTreeNode } from '../tools/session/registry.js';
+import { SessionState } from '../tools/session/registry.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
+import type { AgentSession } from '@earendil-works/pi-coding-agent';
 
 describe('formatSession', () => {
   it('formats active session with name and tags', () => {
@@ -17,10 +19,10 @@ describe('formatSession', () => {
       createdAt: new Date('2024-01-01T12:00:00Z'),
       filePath: '/data/s1.jsonl',
       tags: ['tag1', 'tag2'],
-      parentId: undefined,
-      state: undefined,
-      sessionRef: undefined,
-    } as any;
+      parentId: null,
+      state: SessionState.ACTIVE,
+      sessionRef: null,
+    };
     const out = formatSession(meta);
     expect(out).toContain('🟢');
     expect(out).toContain('s1');
@@ -37,10 +39,10 @@ describe('formatSession', () => {
       createdAt: new Date(),
       filePath: '/data/s2.jsonl',
       tags: [],
-      parentId: undefined,
-      state: undefined,
-      sessionRef: undefined,
-    } as any;
+      parentId: null,
+      state: SessionState.INACTIVE,
+      sessionRef: null,
+    };
     const out = formatSession(meta);
     expect(out).toContain('⚪');
     expect(out).toContain('(unnamed)');
@@ -51,7 +53,7 @@ describe('formatSession', () => {
 describe('countNodes', () => {
   it('counts a single node as 1', () => {
     const node: SessionTreeNode = {
-      session: {} as any,
+      session: {} as unknown as AgentSession,
       children: [],
     };
     expect(countNodes(node)).toBe(1);
@@ -59,12 +61,12 @@ describe('countNodes', () => {
 
   it('counts a tree correctly', () => {
     const node: SessionTreeNode = {
-      session: { id: 'root' } as any,
+      session: { id: 'root' } as unknown as AgentSession,
       children: [
-        { session: { id: 'c1' } as any, children: [] },
+        { session: { id: 'c1' } as unknown as AgentSession, children: [] },
         {
-          session: { id: 'c2' } as any,
-          children: [{ session: { id: 'gc1' } as any, children: [] }],
+          session: { id: 'c2' } as unknown as AgentSession,
+          children: [{ session: { id: 'gc1' } as unknown as AgentSession, children: [] }],
         },
       ],
     };
@@ -75,11 +77,12 @@ describe('countNodes', () => {
 
 describe('formatListOutput', () => {
   let mgr: MultiSessionManager;
-  let activeMock: any;
+  let activeMock: { id: string };
 
   beforeEach(() => {
     activeMock = { id: 'active1' };
-    mgr = { getActive: vi.fn(() => activeMock) } as any;
+    // Using type assertion to create a partial mock of MultiSessionManager
+    mgr = { getActive: vi.fn(() => activeMock) } as unknown as MultiSessionManager;
   });
 
   it('formats list of sessions with active marker', () => {
@@ -91,10 +94,10 @@ describe('formatListOutput', () => {
         createdAt: new Date(),
         filePath: '/data/a.jsonl',
         tags: [],
-        parentId: undefined,
-        state: undefined,
-        sessionRef: undefined,
-      } as any,
+        parentId: null,
+        state: SessionState.ACTIVE,
+        sessionRef: null,
+      },
       {
         id: 'inactive2',
         name: 'Inactive',
@@ -102,10 +105,10 @@ describe('formatListOutput', () => {
         createdAt: new Date(),
         filePath: '/data/i.jsonl',
         tags: ['x'],
-        parentId: undefined,
-        state: undefined,
-        sessionRef: undefined,
-      } as any,
+        parentId: null,
+        state: SessionState.INACTIVE,
+        sessionRef: null,
+      },
     ];
     const out = formatListOutput(sessions, mgr);
     expect(out).toContain('🟢 active1');
@@ -116,8 +119,8 @@ describe('formatListOutput', () => {
   });
 
   it('shows 0 active when none active', () => {
-    activeMock = null;
-    (mgr.getActive as any).mockReturnValue(null);
+    activeMock = { id: 'none' };
+    (mgr.getActive as unknown as { mockReturnValue: (v: any) => void }).mockReturnValue(null);
     const sessions: SessionMetadata[] = [
       {
         id: 'a',
@@ -126,11 +129,11 @@ describe('formatListOutput', () => {
         createdAt: new Date(),
         filePath: '/data/a.jsonl',
         tags: [],
-        parentId: undefined,
-        state: undefined,
-        sessionRef: undefined,
-      } as any,
-    ];
+        parentId: null,
+        state: SessionState.INACTIVE,
+        sessionRef: null,
+      },
+    ] as SessionMetadata[]; // casting array is okay
     const out = formatListOutput(sessions, mgr);
     expect(out).toContain('0 active');
   });
@@ -139,7 +142,7 @@ describe('formatListOutput', () => {
 describe('renderTree', () => {
   it('renders a single node', () => {
     const node: SessionTreeNode = {
-      session: { id: 'n1', name: 'Node 1', isActive: false } as any,
+      session: { id: 'n1', name: 'Node 1', isActive: false } as unknown as AgentSession,
       children: [],
     };
     const lines = renderTree([node]);
@@ -148,11 +151,11 @@ describe('renderTree', () => {
 
   it('renders nested tree with connectors', () => {
     const child: SessionTreeNode = {
-      session: { id: 'child', name: 'Child', isActive: true } as any,
+      session: { id: 'child', name: 'Child', isActive: true } as unknown as AgentSession,
       children: [],
     };
     const root: SessionTreeNode = {
-      session: { id: 'root', name: 'Root', isActive: false } as any,
+      session: { id: 'root', name: 'Root', isActive: false } as unknown as AgentSession,
       children: [child],
     };
     const lines = renderTree([root]);
@@ -162,11 +165,11 @@ describe('renderTree', () => {
 
   it('renders nested tree with connectors', () => {
     const child: SessionTreeNode = {
-      session: { id: 'child', name: 'Child', isActive: true } as any,
+      session: { id: 'child', name: 'Child', isActive: true } as unknown as AgentSession,
       children: [],
     };
     const root: SessionTreeNode = {
-      session: { id: 'root', name: 'Root', isActive: false } as any,
+      session: { id: 'root', name: 'Root', isActive: false } as unknown as AgentSession,
       children: [child],
     };
     const lines = renderTree([root]);
@@ -175,8 +178,8 @@ describe('renderTree', () => {
   });
 
   it('handles multiple siblings', () => {
-    const c1: SessionTreeNode = { session: { id: 'c1', name: 'C1', isActive: false } as any, children: [] };
-    const c2: SessionTreeNode = { session: { id: 'c2', name: 'C2', isActive: false } as any, children: [] };
+    const c1: SessionTreeNode = { session: { id: 'c1', name: 'C1', isActive: false } as unknown as AgentSession, children: [] };
+    const c2: SessionTreeNode = { session: { id: 'c2', name: 'C2', isActive: false } as unknown as AgentSession, children: [] };
     const lines = renderTree([c1, c2]);
     expect(lines[0]).toContain('├──');
     expect(lines[1]).toContain('└──');

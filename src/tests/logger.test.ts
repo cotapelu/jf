@@ -6,6 +6,11 @@ async function importLogger() {
   return import('../logger.js');
 }
 
+// Helper to safely access console.log mock
+function getConsoleLogMock() {
+  return console.log as unknown as { mock: { calls: Array<Array<any>> } };
+}
+
 describe('logger', () => {
   let originalConsoleLog: typeof console.log;
   let originalConsoleDebug: typeof console.debug;
@@ -25,12 +30,13 @@ describe('logger', () => {
   });
 
   function mockConsole() {
-    console.log = vi.fn();
-    console.debug = vi.fn();
-    console.info = vi.fn();
-    console.warn = vi.fn();
-    console.error = vi.fn();
-    console.trace = vi.fn();
+    const anyConsole = console as any;
+    anyConsole.log = vi.fn();
+    anyConsole.debug = vi.fn();
+    anyConsole.info = vi.fn();
+    anyConsole.warn = vi.fn();
+    anyConsole.error = vi.fn();
+    anyConsole.trace = vi.fn();
   }
 
   it('logs JSON format when PI_LOG_FORMAT=json and PI_LOG_LEVEL=info', async () => {
@@ -42,7 +48,7 @@ describe('logger', () => {
     reloadedLogger.info('test-message', { foo: 'bar' }, 123);
 
     expect(console.log).toHaveBeenCalledTimes(1);
-    const loggedArg = (console.log as any).mock.calls[0][0];
+    const loggedArg = getConsoleLogMock().mock.calls[0][0];
     const parsed = JSON.parse(loggedArg);
     expect(parsed).toMatchObject({
       timestamp: expect.any(String),
@@ -62,7 +68,7 @@ describe('logger', () => {
     reloadedLogger.error('error-msg'); // shouldn't log
 
     expect(console.log).toHaveBeenCalledTimes(1);
-    const loggedArg = (console.log as any).mock.calls[0][0];
+    const loggedArg = getConsoleLogMock().mock.calls[0][0];
     const parsed = JSON.parse(loggedArg);
     expect(parsed.level).toBe('warn');
     expect(parsed.message).toBe('warn-msg');
@@ -98,7 +104,7 @@ describe('logger', () => {
     reloadedLogger.error();
 
     expect(console.log).toHaveBeenCalledTimes(1);
-    const loggedArg = (console.log as any).mock.calls[0][0];
+    const loggedArg = getConsoleLogMock().mock.calls[0][0];
     const parsed = JSON.parse(loggedArg);
     expect(parsed).toHaveProperty('timestamp');
     expect(parsed.level).toBe('error');
@@ -115,7 +121,7 @@ describe('logger', () => {
       mockConsole();
 
       // dynamic level access
-      (reloadedLogger as any)[lvl](`${lvl}-msg`, 'arg2');
+      (reloadedLogger as unknown as Record<string, any>)[lvl](`${lvl}-msg`, 'arg2');
 
       const expectedFn = lvl === 'fatal' ? console.error : console[lvl as keyof typeof console];
       expect(expectedFn).toHaveBeenCalledWith(`[${lvl.toUpperCase()}]`, `${lvl}-msg`, 'arg2');
@@ -131,10 +137,10 @@ describe('logger', () => {
       mockConsole();
 
       // dynamic level access
-      (reloadedLogger as any)[lvl](`${lvl}-message`, { key: 'value' });
+      (reloadedLogger as unknown as Record<string, any>)[lvl](`${lvl}-message`, { key: 'value' });
 
       expect(console.log).toHaveBeenCalledTimes(1);
-      const loggedArg = (console.log as any).mock.calls[0][0];
+      const loggedArg = getConsoleLogMock().mock.calls[0][0];
       const parsed = JSON.parse(loggedArg);
       expect(parsed).toMatchObject({
         timestamp: expect.any(String),

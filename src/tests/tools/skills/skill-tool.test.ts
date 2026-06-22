@@ -20,6 +20,20 @@ vi.mock('../../../runtime-context.js', () => ({
   getCurrentResourceLoader: vi.fn(),
 }));
 
+// Helper type for resource loader
+interface ResourceLoader {
+  loadSkill(name: string): Promise<{ content: string }>;
+}
+
+// Cast skillTool.execute once to avoid multiple 'as any'
+const skillExecute = skillTool.execute as unknown as (
+  toolCallId: string,
+  params: { skill: string; [key: string]: any },
+  signal?: any,
+  onUpdate?: any,
+  ctx?: any
+) => Promise<any>;
+
 describe('Skill Loader Tool', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,7 +46,7 @@ describe('Skill Loader Tool', () => {
     });
 
     it('should require skill parameter', () => {
-      const params = skillTool.parameters as any;
+      const params = skillTool.parameters as unknown as Record<string, any>;
       expect(params.required).toContain('skill');
       expect(params.properties.skill.type).toBe('string');
     });
@@ -42,13 +56,7 @@ describe('Skill Loader Tool', () => {
     it('should load skill content from file', async () => {
       vi.mocked(readFile).mockResolvedValue('# Test Skill\n\nThis is a test skill.');
 
-      const result = await (skillTool.execute as any)(
-        'test-call',
-        { skill: 'test-skill' },
-        undefined,
-        undefined,
-        undefined
-      );
+      const result = await skillExecute('test-call', { skill: 'test-skill' });
 
       expect(result.details?.status).toBe('success');
       expect(result.content[0].text).toContain('Test Skill');
@@ -57,13 +65,7 @@ describe('Skill Loader Tool', () => {
     it('should return error if skill not found', async () => {
       vi.mocked(readFile).mockRejectedValue(new Error('File not found'));
 
-      const result = await (skillTool.execute as any)(
-        'test-call',
-        { skill: 'nonexistent' },
-        undefined,
-        undefined,
-        undefined
-      );
+      const result = await skillExecute('test-call', { skill: 'nonexistent' });
 
       expect(result.details?.status).toBe('error');
       expect(result.content[0].text).toContain('not found');
@@ -73,11 +75,10 @@ describe('Skill Loader Tool', () => {
   describe('listAvailableSkills', () => {
     it('should list skills from directory', async () => {
       const { readdir, readFile } = await import('fs/promises');
-      const mockFiles = ['analyze-code.md', 'refactor-extract.md'] as any;
+      const mockFiles = ['analyze-code.md', 'refactor-extract.md'];
       vi.mocked(readdir).mockResolvedValue(mockFiles);
-      vi.mocked(readFile).mockImplementation(async (path: any) => {
-        const p = path as string;
-        if (p.includes('analyze-code.md')) {
+      vi.mocked(readFile).mockImplementation(async (path: string) => {
+        if (path.includes('analyze-code.md')) {
           return '# Analyze Code\n\nPhân tích code';
         }
         return '# Refactor Extract\n\nTách hàm';
@@ -96,10 +97,10 @@ describe('Skill Loader Tool', () => {
   describe('execute fallback and error handling', () => {
     it('should fallback to resourceLoader when file not found in any path', async () => {
       vi.mocked(readFile).mockRejectedValue(new Error('ENOENT'));
-      const mockResourceLoader = { loadSkill: vi.fn().mockResolvedValue({ content: 'Skill from loader' }) };
-      vi.mocked(getCurrentResourceLoader).mockReturnValue(mockResourceLoader as any);
+      const mockResourceLoader = { loadSkill: vi.fn().mockResolvedValue({ content: 'Skill from loader' }) } as unknown as ResourceLoader;
+      vi.mocked(getCurrentResourceLoader).mockReturnValue(mockResourceLoader);
 
-      const result = await (skillTool.execute as any)('call', { skill: 'fallback-skill' }, undefined, undefined, undefined);
+      const result = await skillExecute('call', { skill: 'fallback-skill' });
 
       expect(result.details?.status).toBe('success');
       expect(result.content[0].text).toBe('Skill from loader');
@@ -108,23 +109,21 @@ describe('Skill Loader Tool', () => {
 
     it('should return error when both file and resourceLoader fail', async () => {
       vi.mocked(readFile).mockRejectedValue(new Error('ENOENT'));
-      const mockResourceLoader = { loadSkill: vi.fn().mockRejectedValue(new Error('Loader error')) };
-      vi.mocked(getCurrentResourceLoader).mockReturnValue(mockResourceLoader as any);
+      const mockResourceLoader = { loadSkill: vi.fn().mockRejectedValue(new Error('Loader error')) } as unknown as ResourceLoader;
+      vi.mocked(getCurrentResourceLoader).mockReturnValue(mockResourceLoader);
 
-      const result = await (skillTool.execute as any)('call', { skill: 'missing' }, undefined, undefined, undefined);
+      const result = await skillExecute('call', { skill: 'missing' });
 
       expect(result.details?.status).toBe('error');
-      // Both file paths and resourceLoader failed -> 'not found' message
       expect(result.content[0].text).toContain('Skill "missing" not found');
     });
 
     it('should try next path if earlier readFile fails', async () => {
-      // First attempt fails, second succeeds (no third call)
       vi.mocked(readFile)
-        .mockImplementationOnce(async () => { throw new Error('fail1'); })
+        .mockImplementationOnce(async (path: string) => { throw new Error('fail1'); })
         .mockImplementationOnce(async () => 'Second path content');
 
-      const result = await (skillTool.execute as any)('call', { skill: 'test' }, undefined, undefined, undefined);
+      const result = await skillExecute('call', { skill: 'test' });
       expect(result.details?.status).toBe('success');
       expect(result.content[0].text).toBe('Second path content');
     });

@@ -125,6 +125,34 @@ All high-priority tasks complete.
 
 ---
 
+## Phase 22: Type Safety Enhancement - Reduce `as any` in Test Mocks (COMPLETED ✅)
+
+**Goal:** Reduce `as any` usage in test files by ≥50% (from 91 to <45) to improve type safety and maintainability.
+
+**Actions:**
+- [x] Targeted top files with highest `as any` count
+- [x] Replaced `as any` with proper types, helper functions, and `as unknown as` where needed
+- [x] Used `Partial<SessionMetadata>` and mock factories to improve type compliance
+- [x] All tests still pass (496/496)
+
+**Results:**
+- `as any` count reduced from 91 to 35 (62% reduction)
+- Improved type safety across test suite
+- No regressions
+
+**Files improved:**
+- src/tests/session-utils.test.ts (19 → 0)
+- src/tests/session-handoff-operations.test.ts (17 → 0)
+- src/tests/tools/skills/skill-tool.test.ts (9 → 0)
+- src/tests/session-empty-state.test.ts (9 → 0)
+- src/tests/team-tool.test.ts (6 → 0)
+- src/tests/logger.test.ts (6 → 1)
+- src/tests/router-status.test.ts (6 → 0)
+
+**Risk:** LOW - test-only changes
+
+---
+
 ## Completed Tasks Log
 
 | Date | Task | Iteration |

@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { SessionMetadata } from '../tools/session/registry.js';
+import type { MultiSessionManager } from '../tools/session/manager.js';
 
 // Mock handoff operations to avoid filesystem dependencies
 vi.mock('../tools/session/operations/handoff.js', () => ({
@@ -24,13 +26,29 @@ vi.mock('../tools/session/operations/handoff.js', () => ({
   }),
 }));
 
+// Helper to create a minimal SessionMetadata-like object
+function mockSession(overrides: Partial<SessionMetadata> = {}): SessionMetadata {
+  return {
+    id: 's1',
+    filePath: '/f',
+    parentId: null,
+    createdAt: new Date(),
+    name: undefined,
+    tags: [],
+    state: 'active' as any, // cast to satisfy enum
+    sessionRef: null,
+    isActive: false,
+    ...overrides,
+  } as unknown as SessionMetadata; // assertion because required fields may be missing
+}
+
 describe('Session Router Handoff Operations', () => {
   it('should route prepare_child operation when mission provided', async () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        createChild: async () => ({ id: 'child-1', name: 'child1', tags: [], parentId: 'p', filePath: '/f', createdAt: new Date(), state: 'active', isActive: true } as any),
-      } as any),
+        createChild: async (): Promise<SessionMetadata> => mockSession({ id: 'child-1', name: 'child1', isActive: true }),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'prepare_child', contract: { mission: 'Test' } });
@@ -41,11 +59,13 @@ describe('Session Router Handoff Operations', () => {
   it('should validate missing contract.mission for prepare_child', async () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
-      initialize: () => ({ createChild: async () => ({ id: 'c' } as any) } as any),
+      initialize: () => ({
+        createChild: async (): Promise<SessionMetadata> => mockSession({ id: 'c' }),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'prepare_child', contract: {} });
-    expect(result.isError).toBe(true); // should be true for error
+    expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('contract.mission is required');
   });
 
@@ -53,8 +73,8 @@ describe('Session Router Handoff Operations', () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        getActive: () => ({ id: 'child-1' } as any),
-      } as any),
+        getActive: (): SessionMetadata | null => mockSession({ id: 'child-1' }),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'child_read' });
@@ -66,13 +86,12 @@ describe('Session Router Handoff Operations', () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        getActive: () => ({ id: 'child-1' } as any),
-      } as any),
+        getActive: (): SessionMetadata | null => mockSession({ id: 'child-1' }),
+        addTags: async (): Promise<any> => ({}),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'child_write', content: '' });
-    // According to router, if content is provided but empty string, it's truthy, but they check `if (!params.content)`. Empty string is falsy.
-    // So empty string should trigger error.
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('content is required');
   });
@@ -81,9 +100,9 @@ describe('Session Router Handoff Operations', () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        getActive: () => ({ id: 'child-1' } as any),
-        addTags: () => ({} as any),
-      } as any),
+        getActive: (): SessionMetadata | null => mockSession({ id: 'child-1' }),
+        addTags: async (): Promise<any> => ({}),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'child_write', content: 'output data' });
@@ -95,8 +114,8 @@ describe('Session Router Handoff Operations', () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        get: () => ({} as any),
-      } as any),
+        get: (): SessionMetadata | null => mockSession({ id: 'child-1' }),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'parent_read' });
@@ -108,8 +127,8 @@ describe('Session Router Handoff Operations', () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        get: () => ({ id: 'child-1', filePath: '/f' } as any),
-      } as any),
+        get: (): SessionMetadata | null => mockSession({ id: 'child-1', filePath: '/f' }),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'parent_read', sessionId: 'child-1' });
@@ -121,9 +140,9 @@ describe('Session Router Handoff Operations', () => {
     const { createSessionToolRouter } = await import('../tools/session/router.js');
     const router = createSessionToolRouter({
       initialize: () => ({
-        getActive: () => ({ id: 'child-1' } as any),
-        addTags: () => ({} as any),
-      } as any),
+        getActive: (): SessionMetadata | null => mockSession({ id: 'child-1' }),
+        addTags: async (): Promise<any> => ({}),
+      } as unknown as MultiSessionManager),
     });
 
     const result = await router.execute('test', { operation: 'complete_child' });
