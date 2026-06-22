@@ -27,7 +27,7 @@ describe('Context Compaction Tool', () => {
   });
 
   it('should compact session and return summary', async () => {
-    (compactSession as any).mockResolvedValue({
+    vi.mocked(compactSession).mockResolvedValue({
       originalTokens: 5000,
       compactedTokens: 3500,
       summary: 'Summary of older messages...',
@@ -39,7 +39,7 @@ describe('Context Compaction Tool', () => {
   });
 
   it('should pass options to algorithm', async () => {
-    (compactSession as any).mockResolvedValue({
+    vi.mocked(compactSession).mockResolvedValue({
       originalTokens: 8000,
       compactedTokens: 2000,
       summary: 'Compact summary',
@@ -50,7 +50,7 @@ describe('Context Compaction Tool', () => {
   });
 
   it('should handle algorithm errors', async () => {
-    (compactSession as any).mockRejectedValue(new Error('Session too large to compact'));
+    vi.mocked(compactSession).mockRejectedValue(new Error('Session too large to compact'));
     const result: any = await compactContextTool.execute('call', { messages: [{ role: 'user', content: 'x' }] }, undefined, undefined, mockCtx);
     expect(result.details?.status).toBe('error');
     expect(result.isError).toBe(true);

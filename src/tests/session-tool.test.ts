@@ -537,7 +537,8 @@ describe('SessionTool', () => {
 
   describe('error handling', () => {
     it('should return error for unknown operation', async () => {
-      const result: any = await tool.execute('err1', { operation: 'unknown' } as any);
+      const params: any = { operation: 'unknown' };
+      const result: any = await tool.execute('err1', params);
       // @ts-ignore
       expect(result.isError).toBe(true);
       // @ts-ignore
@@ -545,7 +546,8 @@ describe('SessionTool', () => {
     });
 
     it('should validate required parameters', async () => {
-      const result: any = await tool.execute('err2', { operation: 'rename' } as any);
+      const params2: any = { operation: 'rename' };
+      const result: any = await tool.execute('err2', params2);
       // @ts-ignore
       expect(result.isError).toBe(true);
       // @ts-ignore

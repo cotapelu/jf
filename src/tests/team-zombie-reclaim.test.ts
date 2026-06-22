@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AgentTeam } from '../extensions/team/team-manager.js';
 
+// Helper to access private reclaimZombieAgents method
+async function reclaimZombieAgents(team: AgentTeam): Promise<void> {
+  return (team as unknown as { reclaimZombieAgents(): Promise<void> }).reclaimZombieAgents();
+}
+
 // Mock TeamRegistry
 vi.mock('../extensions/team/team-manager.js', async () => {
   const actual = await vi.importActual('../extensions/team/team-manager.js');
@@ -49,8 +54,8 @@ describe('AgentTeam Zombie Reclamation', () => {
     setTask(0, 'in_progress', 'agent1');
     setAgent('agent1', 0, 'working', Date.now() - 2 * 60 * 1000 - 1); // older than AGENT_TIMEOUT_MS (2min)
 
-    // Call reclaim (directly as it's private; cast to access)
-    await (team as any).reclaimZombieAgents();
+    // Call reclaim
+    await reclaimZombieAgents(team);
 
     // Expect task 0 becomes pending and agent idle
     expect(team.taskStatuses.get(0)?.status).toBe('pending');
@@ -65,7 +70,7 @@ describe('AgentTeam Zombie Reclamation', () => {
     setTask(0, 'in_progress', 'agent1');
     setAgent('agent1', 0, 'working', Date.now() - 30 * 1000); // recent
 
-    await (team as any).reclaimZombieAgents();
+    await reclaimZombieAgents(team);
 
     expect(team.taskStatuses.get(0)?.status).toBe('in_progress');
     expect(team.agentStatuses.get('agent1')?.status).toBe('working');
@@ -75,7 +80,7 @@ describe('AgentTeam Zombie Reclamation', () => {
     setTask(0, 'in_progress', 'agent1');
     setAgent('agent1', 0, 'idle', Date.now() - 10000000); // old but idle
 
-    await (team as any).reclaimZombieAgents();
+    await reclaimZombieAgents(team);
 
     expect(team.taskStatuses.get(0)?.status).toBe('in_progress');
   });
@@ -88,7 +93,7 @@ describe('AgentTeam Zombie Reclamation', () => {
     task.retryCount = maxRetries - 1; // will become max on reclaim
     setAgent('agent1', 0, 'working', Date.now() - 10000000); // very old
 
-    await (team as any).reclaimZombieAgents();
+    await reclaimZombieAgents(team);
 
     expect(team.taskStatuses.get(0)?.status).toBe('failed');
     expect(team.taskStatuses.get(0)?.result).toBe('Agent zombie timeout');

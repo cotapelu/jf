@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { operationCleanup } from '../tools/session/operations/cleanup.js';
 import type { MultiSessionManager } from '../tools/session/manager.js';
+import type { AgentToolResult } from '@earendil-works/pi-coding-agent';
 
 function createMockManager(dir: string): MultiSessionManager {
   return {
@@ -55,11 +56,12 @@ describe('operationCleanup (integration)', () => {
 
     const result = await operationCleanup(mgr, { olderThanDays: 30, keepCount: 100, dryRun: true });
 
-    expect((result as any).isError).toBeUndefined();
-    expect(result.details.operation).toBe('cleanup');
-    expect(result.details.dryRun).toBe(true);
-    expect(result.details.filesConsidered).toBe(3);
-    expect(result.details.filesToDelete).toBe(2);
+    const anyResult = result as AgentToolResult<unknown>;
+    expect(anyResult.isError).toBeUndefined();
+    expect(anyResult.details?.operation).toBe('cleanup');
+    expect(anyResult.details?.dryRun).toBe(true);
+    expect(anyResult.details?.filesConsidered).toBe(3);
+    expect(anyResult.details?.filesToDelete).toBe(2);
   });
 
   it('should delete files when dryRun=false', async () => {
@@ -76,8 +78,9 @@ describe('operationCleanup (integration)', () => {
 
     const result = await operationCleanup(mgr, { olderThanDays: 30, keepCount: 100, dryRun: false });
 
-    expect((result as any).isError).toBeUndefined();
-    expect(result.details.filesDeleted).toBe(1);
+    const anyResult = result as AgentToolResult<unknown>;
+    expect(anyResult.isError).toBeUndefined();
+    expect(anyResult.details?.filesDeleted).toBe(1);
 
     // Verify file actually removed
     const exists = await fs.access(oldFile).then(() => true).catch(() => false);
@@ -101,16 +104,17 @@ describe('operationCleanup (integration)', () => {
     // Last two are recent (now)
     // run dry-run with effectively no age limit (olderThanDays very large)
     const result = await operationCleanup(mgr, { olderThanDays: 9999, keepCount: 2, dryRun: true });
-    expect(result.details.filesToDelete).toBe(3);
-    expect(result.details.deletionCandidates).toContain(path.basename(files[0]));
-    expect(result.details.deletionCandidates).toContain(path.basename(files[1]));
-    expect(result.details.deletionCandidates).toContain(path.basename(files[2]));
+    const anyResult = result as AgentToolResult<unknown>;
+    expect(anyResult.details?.filesToDelete).toBe(3);
+    expect(anyResult.details?.deletionCandidates).toContain(path.basename(files[0]));
+    expect(anyResult.details?.deletionCandidates).toContain(path.basename(files[1]));
+    expect(anyResult.details?.deletionCandidates).toContain(path.basename(files[2]));
   });
 
   it('should throw when session manager not available', async () => {
-    const badMgr = createMockManager('nonexistent' as any); // but dir not used
-    // override getRuntime to return missing services.sessionManager.dir
-    (badMgr as any).getRuntime = () => ({ services: {} });
-    await expect(operationCleanup(badMgr as any, {})).rejects.toThrow('Session manager not available');
+    const badMgr = {
+      getRuntime: () => ({ services: {} })
+    } as unknown as MultiSessionManager;
+    await expect(operationCleanup(badMgr, {})).rejects.toThrow('Session manager not available');
   });
 });

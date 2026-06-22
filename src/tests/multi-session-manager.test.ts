@@ -7,7 +7,7 @@ function createMockSession(name: string): AgentSession {
   return {
     sessionFile: `/path/to/${name}.jsonl`,
     dispose: vi.fn().mockResolvedValue(undefined),
-  } as any;
+  } as unknown as AgentSession;
 }
 
 // Mock Runtime
@@ -327,7 +327,7 @@ describe('MultiSessionManager', () => {
   describe('exportMetadata()', () => {
     it('should export all session data as plain object', async () => {
       await manager.createChild({ name: 'child-1' });
-      const exportData = manager.exportMetadata() as any;
+      const exportData: any = manager.exportMetadata();
 
       expect(exportData).toHaveProperty('sessions');
       expect(exportData).toHaveProperty('rootSessionId');

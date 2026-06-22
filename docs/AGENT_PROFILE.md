@@ -152,9 +152,9 @@
    - **Pattern:** Always `await` async operations in switch cases
 
 2. **Type assertion abuse** - Tests use `as any` extensively
-   - **Status:** ✅ SUBSTANTIALLY IMPROVED (62% reduction)
-   - **Resolution:** Phase 22 effort focused on reducing `as any`. Replaced with proper types (`SessionMetadata`, helper factories), used `as unknown as` pattern, and created mock helpers. Count reduced from **91** to **35** (62% reduction). Remaining cases are mostly complex SDK mocks where full typing would be brittle.
-   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors; centralize casts via helpers
+   - **Status:** ✅ RESOLVED (90% total reduction)
+   - **Resolution:** Comprehensive phase (22-23) eliminated `as any` across test suite. Initial count **91** → **35** after Phase 22, then to **9** after Phase 23. Remaining 9 instances are in extremely complex mock scenarios where rewriting would add brittleness; considered acceptable technical debt.
+   - **Pattern:** Prefer typed interfaces over `any`; use `unknown` for errors; centralize casts via helper functions; `vi.mocked` for mock functions.
 
 3. **Details shape inconsistency** - `operationList` returned raw `sessions` in details, other ops returned transformed
    - **Status:** ✅ FIXED (normalized shape)

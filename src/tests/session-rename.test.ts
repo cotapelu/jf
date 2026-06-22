@@ -43,7 +43,7 @@ describe('operationRename', () => {
 
   it('uses active session when sessionId omitted', () => {
     const activeId = 'active1';
-    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue({ id: activeId } as any);
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: activeId }));
     (mgr.rename as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: activeId, name: 'Renamed' }));
     const result: any = operationRename(mgr, { name: 'Renamed' });
     expect(result.details.sessionId).toBe(activeId);
@@ -55,7 +55,7 @@ describe('operationRename', () => {
   });
 
   it('throws when name is missing', () => {
-    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: 's1' } as any));
+    (mgr.getActive as ReturnType<typeof vi.fn>).mockReturnValue(createMeta({ id: 's1' }));
     expect(() => operationRename(mgr, { sessionId: 's1' })).toThrow('Name is required');
   });
 
