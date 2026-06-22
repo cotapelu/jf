@@ -192,6 +192,24 @@
 - Type safety fully restored across test suite.
 - Zero regressions.
 
+### Legacy Files Cleanup (Phase 26) — COMPLETED ✅
+
+- Verified tool registration organization is clean; no obsolete legacy files remain.
+- All custom tools properly housed under subdirectories (session, time, indexer, compaction, extensions, skills, multi-agent).
+
+---
+
+### Runtime Context Testing (Phase 27) — COMPLETED ✅
+
+**Goal:** Achieve high test coverage for `src/runtime-context.ts` (critical utility) and ensure reliability of all context getters.
+
+**Actions:**
+- Created `src/tests/runtime-context.test.ts` with 28 unit tests covering all getter functions and lifecycle.
+- Used mock `AgentSessionRuntime` with partial overrides for isolation.
+- All tests pass; test count increased from 497 → 525; coverage for runtime-context.ts now ~95%+.
+
+**Impact:** Core runtime context thoroughly tested; prevents regressions in fundamental access patterns.
+
 ---
 
 ## Test Results (Iteration 2)

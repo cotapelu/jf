@@ -8,7 +8,7 @@
 
 **Project:** jf-pi-sdk - Pi Coding Agent SDK TypeScript wrapper  
 **Status:** HEALTHY ⬆️  
-**Phase:** Phases 1-25 complete - production-ready  
+**Phase:** Phases 1-27 complete - production-ready  
 **Branch:** main (clean working tree)
 
 ---
@@ -21,19 +21,19 @@
 - Duplicate code (<5): ✅ 0 duplicates
 - Error handling: ✅ 100% public functions
 - Input validation: ✅ 100% external inputs
-- Test pass rate: ✅ 100% (496/496)
+- Test pass rate: ✅ 100% (525/525)
 - Build status: ✅ Clean
 - Lint status: ✅ Clean (fixed)
 
 ### Test Coverage
-- Statements: 86.71% (target ≥80%)
-- Branches: 75.67% (target ≥60%)
-- Functions: 84.72% (target ≥80%)
-- Lines: 88.36% (target ≥80%)
+- Statements: 87.53% (target ≥80%)
+- Branches: 75.73% (target ≥60%)
+- Functions: 88.64% (target ≥80%)
+- Lines: 89.32% (target ≥80%)
 
 ### Build & CI
 - TypeScript: ✅ Compiles clean
-- Vitest: ✅ 496 tests passing (~8s)
+- Vitest: ✅ 525 tests passing (~8s)
 - ESLint: ✅ Passing (configured with underscore-prefixed param ignore)
 - Prettier: ✅ Config present, formatting applied; format script available
 - GitHub Actions: ✅ CI workflow added (build, lint, test, audit)

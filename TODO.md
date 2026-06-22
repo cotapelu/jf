@@ -257,4 +257,24 @@ All high-priority tasks complete.
 
 ---
 
+## Phase 27: Comprehensive Runtime Context Testing (COMPLETED ✅)
+
+**Goal:** Achieve high test coverage for `src/runtime-context.ts` (critical utility) and ensure reliability of all context getters.
+
+**Actions:**
+- [x] Created `src/tests/runtime-context.test.ts` with 28 unit tests
+- [x] Covered all getter functions (set/get/clear lifecycle)
+- [x] Used mock `AgentSessionRuntime` with partial overrides for isolation
+- [x] All tests pass; test count increased from 497 → 525
+- [x] Coverage for runtime-context.ts now ~95%+
+
+**Impact:**
+- Core runtime context now thoroughly tested
+- Prevents regressions in fundamental access patterns
+- Improves confidence in tool integration
+
+**Cost:** ~1 hour
+
+---
+
 *TODO last updated: 2026-06-22*

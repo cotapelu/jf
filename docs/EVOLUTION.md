@@ -4,7 +4,7 @@
 
 ---
 
-## Current State (Phases 1-25 Complete)
+## Current State (Phases 1-27 Complete)
 
 **All Core Phases 1-20 (Complete):
 - ✅ Refactored monolithic session tool (638 lines → 13 modular functions)
@@ -134,6 +134,18 @@
 - Final `as any` count: **0** (from 9 → 0). Overall 91 → 0.
 - Full type safety restored; all tests pass (497/497).
 - Zero regressions; lint clean.
+
+### Legacy Files Cleanup (Phase 26) — COMPLETED ✅
+
+- Verified tool registration organization is clean; no obsolete legacy files remain.
+- All custom tools properly housed under subdirectories (session, time, indexer, compaction, extensions, skills, multi-agent).
+
+### Runtime Context Testing (Phase 27) — COMPLETED ✅
+
+- Created comprehensive unit tests for `runtime-context.ts` covering all getters and lifecycle.
+- Added 28 tests; total test count increased from 497 to 525.
+- Achieved ~95%+ coverage on `runtime-context.ts`.
+- Ensured reliability of fundamental runtime access patterns.
 
 ---
 
