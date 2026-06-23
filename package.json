@@ -44,5 +44,8 @@
   "piConfig": {
     "configDir": ".jf",
     "name": "jf"
+  },
+  "overrides": {
+    "chokidar": "^3.6.0"
   }
 }
