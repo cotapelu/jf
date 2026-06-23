@@ -3,11 +3,11 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "phase-1",
+      "name": "phase-2",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Verify quality gate after built-in tools registration and hook removal",
+          "content": "[T] complexity.ts: Increase branch coverage from 64.35% to >80%",
           "status": "in_progress"
         }
       ]
@@ -15,5 +15,5 @@
   ],
   "nextTaskId": 2,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-23T08:15:56.405Z"
+  "updatedAt": "2026-06-23T08:19:31.492Z"
 }
