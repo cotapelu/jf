@@ -335,19 +335,4 @@ Nếu task phức tạp (>8h), tự động:
 `,
 };
 
-// Auto-restart hook: khi agent kết thúc, gửi lại prompt template để tiếp tục
-// Được load bởi extensions/factory.ts
-export function createAutoRestartHook(pi: ExtensionAPI): void {
-  pi.on('agent_end', () => {
-    // Delay 45 giây trước khi gửi lại
-    setTimeout(() => {
-      pi.sendMessage({
-        customType: 'auto-restart',
-        content: defaultAssistantPrompt.content,
-        display: false
-      }, { triggerTurn: true });
-    }, 45_000);
-  });
-}
-
 export default defaultAssistantPrompt;

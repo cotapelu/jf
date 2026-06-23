@@ -23,7 +23,7 @@ import contextLoggerExtension from "./context-logger.js";
 import { registerAllBuiltinTools, registerAllCustomTools } from "../tools/index.js";
 // Import master-tool extension
 import { registerMasterTool } from "./master-tool/index.js";
-import { createAutoRestartHook } from "../prompts/default-assistant.prompt.js";
+
 
 import piclawHeader from "./piclaw-header.js";
 import { registerTodosRenderer } from "./renderers/todos-renderer.js";
@@ -87,9 +87,6 @@ export default async function extensionsAggregator(api: import("@earendil-works/
 
   // Register Auto Compact at 75% Extension
   autoCompact85Extension(api);
-
-  // Register Auto Restart Hook (from prompts)
-  createAutoRestartHook(api);
 
   // Register Piclaw Header
   piclawHeader(api);
