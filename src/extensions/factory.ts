@@ -18,7 +18,7 @@ import { registerSkillReaderExtension } from "./tools/skill-reader.js";
 import autoContinueExtension from "./hooks/auto-continue.js";
 import autoCompact85Extension from "./hooks/auto-compact-85.js";
 import contextLoggerExtension from "./context-logger.js";
-import autonomousAgentExtension from "./autonomous-agent/extension.js";
+
 // Import custom project tools
 import { registerAllCustomTools } from "../tools/index.js";
 // Import master-tool extension
@@ -97,13 +97,7 @@ export default async function extensionsAggregator(api: import("@earendil-works/
   // Register Context Logger Extension
   contextLoggerExtension(api);
 
-  // Register Autonomous Agent Extension
-  try {
-    await autonomousAgentExtension(api);
-    console.log(`[Extensions] Registered autonomous-agent extension`);
-  } catch (err) {
-    console.error('[Extensions] Failed to register autonomous-agent:', err);
-  }
+
 
   // Register custom project tools (from src/tools/)
   try {
