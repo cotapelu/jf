@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { AgentTeam } from '../team-manager.js';
+import { AgentTeam, executeTeamTasks } from '../team-manager.js';
 import { createMockRuntime } from './test-utils.js';
 
 describe('AgentTeam - Retry & Event Coverage', () => {
@@ -100,7 +100,6 @@ describe('AgentTeam - Retry & Event Coverage', () => {
       const teamAny = team as any;
       // @ts-ignore – passing bad event
       teamAny.handleAgentEvent('role', 'string event');
-      // No error
     });
 
     it('should ignore events without type property', () => {
