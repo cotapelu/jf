@@ -807,3 +807,31 @@ Although immediate coverage metrics unchanged (many of these branches were alrea
 **Next targets:** Continue drilling into `team-manager.ts` remaining branches (monitor loop, retry backoff timing, zombie detection) and `command-registry.ts` loader edge cases (concurrent init, metadata auto-fill, error handling). Consider increasing test complexity to reach deeper logic.
 
 *Last updated: 2026-06-23T13:50:00Z*
+
+## Cycle 12 - CommandRegistry Concurrency Guard - 2026-06-23
+
+**Task:** Increase branch coverage for `command-registry.ts`
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +1 test (total 786)
+
+**Coverage Delta:**
+- Statements: +0.03% (82.65% → 82.68%)
+- Branches: +0.05% (73.68% → 73.73%)
+- Functions: +0.00% (83.79% → 83.79%)
+- Lines: +0.00% (83.65% → 83.65%)
+
+**Notes:** Refined `command-registry-coverage.test.ts`:
+- Replaced direct promise reference equality check (which suffered from timing) with a more robust test that verifies `readdir` is called exactly once when `initialize` is invoked concurrently. This ensures the `if (this.initPromise) return this.initPromise;` guard is exercised.
+- The test now reliably covers the concurrent initialization branch.
+
+**Next targets:** Continue with `team-manager.ts` monitor loop branches (line 502), `command-registry.ts` loader validation (lines 280-286), and other high-uncovered branches.
+
+*Last updated: 2026-06-23T13:55:00Z*
