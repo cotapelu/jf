@@ -740,3 +740,38 @@ These tests cover previously uncovered branches in the loader's validation and e
 **Next targets:** Continue with `command-registry.ts` remaining branches (especially loader edge cases and error propagation). Also revisit `team-manager.ts` to cover retry/backoff branches and zombie detection logic.
 
 *Last updated: 2026-06-23T13:35:00Z*
+
+## Cycle 10 - TeamManager Coverage Gaps - 2026-06-23
+
+**Task:** Increase branch coverage for `team-manager.ts` (HIGH violation)
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +13 tests (total 784)
+
+**Coverage Delta:**
+- Statements: +0.11% (82.54% → 82.65%)
+- Branches: +0.08% (73.60% → 73.68%)
+- Functions: +0.00% (83.79% → 83.79%)
+- Lines: +0.12% (83.53% → 83.65%)
+
+**Notes:** Added targeted unit tests for `team-manager.ts` edge cases covering:
+- `releaseTask` guards: false for different agent, completed task, non-existent index
+- `completeTask` no-op for task not assigned to caller
+- `getMyCurrentTask` for unknown agent or when no task claimed
+- `handleAgentFailure` retry backoff and max-retry failure paths
+- `getTeamStatus` counting failed tasks and isComplete flag
+- `dispose` with empty childControllers/childPromises
+- Additional `claimTask` skip already claimed tasks (covered branch 326)
+
+These tests cover several previously uncovered branches, notably the high-hit `claimTask` guard (line 326, 716→707 false hits) and various release/complete guards. All tests pass; build and lint clean.
+
+**Next targets:** Continue with `team-manager.ts` remaining branches (monitor loop condition line 502 with 4072 false hits, retry/backoff branches, zombie detection). Also revisit `command-registry.ts` loader edge cases to push it above 75% branch coverage.
+
+*Last updated: 2026-06-23T13:40:00Z*
