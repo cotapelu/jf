@@ -835,3 +835,35 @@ Although immediate coverage metrics unchanged (many of these branches were alrea
 **Next targets:** Continue with `team-manager.ts` monitor loop branches (line 502), `command-registry.ts` loader validation (lines 280-286), and other high-uncovered branches.
 
 *Last updated: 2026-06-23T13:55:00Z*
+
+## Cycle 13 - TeamManager Retry/Backoff Tests - 2026-06-23
+
+**Task:** Increase branch coverage for `team-manager.ts`
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~20 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +5 tests (total 791)
+
+**Coverage Delta:**
+- Statements: +0.03% (82.68% → 82.71%)
+- Branches: +0.04% (73.73% → 73.77%)
+- Functions: +0.00% (83.79% → 83.79%)
+- Lines: +0.00% (83.65% → 83.65%)
+
+**Notes:** Added new test file `team-manager-monitor.test.ts` with 5 tests covering:
+- `handleAgentFailure` retry count < max (pending + backoff)
+- `handleAgentFailure` retry count >= max (fail)
+- Retry backoff expiry with fake timers (covers line 538 condition now)
+- `handleAgentEvent` guard for non-object and missing `type` (lines 563, 574)
+
+These tests cover previously uncovered branches, particularly the backoff time check (branch 538) and event guard branches (563, 574). All tests pass; build and lint clean.
+
+**Next targets:** Continue targeting high-uncovered branches in `team-manager.ts` (monitor loop line 502 still high false hits, zombie detection line 511, switch cases 728). Also push `command-registry.ts` toward >75% branch coverage by adding tests for loader error handling and metadata auto-fill.
+
+*Last updated: 2026-06-23T14:00:00Z*
