@@ -644,3 +644,36 @@ These tests cover previously uncovered conditional branches in the registry, inc
 **Next targets:** Continue with `session/registry.ts` remaining branches (lines ~280+), also consider `command-registry.ts` (44 branches, ~32% covered) and `team-manager.ts` (106 branches, ~42% covered).
 
 *Last updated: 2026-06-23T13:05:00Z*
+
+## Cycle 7 - CommandRegistry Help Edge Cases - 2026-06-23
+
+**Task:** Increase branch coverage for `command-registry.ts` (HIGH violation)
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~20 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +9 tests (total 754)
+
+**Coverage Delta:**
+- Statements: +0.74% (81.40% → 82.14%)
+- Branches: +1.24% (71.60% → 72.84%)
+- Functions: +0.21% (83.58% → 83.79%)
+- Lines: +0.77% (82.42% → 83.19%)
+
+**Notes:** Added edge-case unit tests for `command-registry.ts` focusing on `getCommandHelp()` method:
+- Covered longDescription inclusion
+- Examples formatting
+- DependsOn and permissions display
+- Experimental warning
+- Schema parameters displaying properties, required/optional markers
+- Unknown command returns null
+All tests pass; build and lint clean. Branch coverage progress continues toward 80% target.
+
+**Next targets:** Continue addressing `command-registry.ts` remaining branches (especially initialization concurrency, loader validation, auto-fill metadata). Also consider `team-manager.ts` (106 branches, ~42% covered).
+
+*Last updated: 2026-06-23T13:15:00Z*
