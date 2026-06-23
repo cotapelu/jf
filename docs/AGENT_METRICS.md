@@ -956,3 +956,36 @@ These tests cover previously uncovered branches in the initialization guard and 
 **Next targets:** Continue with `team-manager.ts` monitor loop (line 502, 574) and remaining `command-registry.ts` branches (loader validation, metadata auto-fill). Target overall branch coverage >75% next.
 
 *Last updated: 2026-06-23T14:35:00Z*
+
+## Cycle 17 - Built-in Tools Registration & Hook Fix - 2026-06-23
+
+**Task:** Register built-in tools (ls, find, grep, read, edit, write, bash) and remove auto-restart hook
+
+**Type:** Proactive Improvement + Violation Fix
+
+**Priority:** MEDIUM (tools registration) + HIGH (hook misbehavior)
+
+**Duration:** ~45 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 tests (756 total)
+
+**Coverage Delta:**
+- Statements: 85.56% (unchanged)
+- Branches: 75.85% (unchanged)
+- Functions: 86.62% (unchanged)
+- Lines: 86.93% (unchanged)
+
+**Notes:**
+- Fixed missing built-in tool registration in `src/extensions/factory.ts`
+  - Added call to `registerAllBuiltinTools(process.cwd())`
+  - Tools now available: read, edit, write, find, grep, ls, bash
+- Removed problematic `createAutoRestartHook` that was triggering globally on app startup instead of only when `/jf` prompt is active
+  - Hook removed from `factory.ts` and function deleted from `default-assistant.prompt.ts`
+  - Agent no longer auto-restarts unnecessarily
+- Lint cleanup: removed unused `ExtensionAPI` import after hook removal
+- All quality gates pass: lint clean, TypeScript clean, tests 756/756, build successful
+
+**Impact:** Improved tool availability and corrected agent lifecycle behavior. No breaking changes.
+
