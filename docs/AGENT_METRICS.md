@@ -893,3 +893,35 @@ These tests cover previously uncovered branches, particularly the backoff time c
 **Next targets:** Revisit `team-manager.ts` monitor loop (line 502) with a more robust integration test in future cycles. Continue incremental coverage improvements in `command-registry.ts` and other high-gap modules.
 
 *Last updated: 2026-06-23T14:15:00Z*
+
+## Cycle 15 - TeamRegistry Unit Tests - 2026-06-23
+
+**Task:** Expand test coverage for team subsystem
+
+**Type:** Proactive Improvement (Test Enhancement)
+
+**Priority:** MEDIUM
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +4 tests (total 799)
+
+**Coverage Delta:**
+- Statements: 0.00% (82.71% → 82.71%)
+- Branches: 0.00% (73.77% → 73.77%)
+- Functions: 0.00% (83.79% → 83.79%)
+- Lines: 0.00% (83.65% → 83.65%)
+
+**Notes:** Added `team-registry.test.ts` covering:
+- Singleton instance stability (`getInstance` returns same instance)
+- Team registration and unregistration
+- Unregister of non-existent team (no error)
+- Auto-dispose timer cleanup on unregister
+
+This strengthens the team management test suite but does not immediately increase branch coverage metrics. All tests pass; build and lint clean.
+
+**Next targets:** Continue pursuing high‑impact branch coverage improvements in `team-manager.ts` (monitor loop, retry logic) and `command-registry.ts` (loader edge cases).
+
+*Last updated: 2026-06-23T14:30:00Z*
