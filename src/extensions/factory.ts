@@ -20,7 +20,7 @@ import autoCompact85Extension from "./hooks/auto-compact-85.js";
 import contextLoggerExtension from "./context-logger.js";
 
 // Import custom project tools
-import { registerAllCustomTools } from "../tools/index.js";
+import { registerAllBuiltinTools, registerAllCustomTools } from "../tools/index.js";
 // Import master-tool extension
 import { registerMasterTool } from "./master-tool/index.js";
 import { createAutoRestartHook } from "../prompts/default-assistant.prompt.js";
@@ -98,6 +98,17 @@ export default async function extensionsAggregator(api: import("@earendil-works/
   contextLoggerExtension(api);
 
 
+
+  // Register built-in tools (from src/tools/)
+  try {
+    const builtinTools = registerAllBuiltinTools(process.cwd());
+    builtinTools.forEach(tool => {
+      api.registerTool(tool);
+    });
+    console.log(`[Extensions] Registered ${builtinTools.length} built-in tools from src/tools/`);
+  } catch (err) {
+    console.error('[Extensions] Failed to register built-in tools:', err);
+  }
 
   // Register custom project tools (from src/tools/)
   try {
