@@ -1,7 +1,19 @@
 {
   "version": 1,
-  "phases": [],
-  "nextTaskId": 1,
-  "nextPhaseId": 1,
-  "updatedAt": "2026-06-23T07:58:29.424Z"
+  "phases": [
+    {
+      "id": "phase-1",
+      "name": "phase-1",
+      "tasks": [
+        {
+          "id": "task-1",
+          "content": "Verify quality gate after built-in tools registration and hook removal",
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "nextTaskId": 2,
+  "nextPhaseId": 2,
+  "updatedAt": "2026-06-23T08:15:56.405Z"
 }

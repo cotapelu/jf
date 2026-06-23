@@ -1,4 +1,4 @@
-import type { PromptTemplate, ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { PromptTemplate } from '@earendil-works/pi-coding-agent';
 
 /**
  * JF Prompt Template
