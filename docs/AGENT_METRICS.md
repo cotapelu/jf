@@ -608,3 +608,39 @@ Duration  ~400ms
 **Next targets:** `session/registry.ts` (40 branches, ~53% covered), `command-registry.ts` (44 branches, ~32% covered), `team-manager.ts` (106 branches, ~42% covered).
 
 *Last updated: 2026-06-23T00:00:00Z*
+
+
+## Cycle 6 - SessionRegistry Edge Cases - 2026-06-23
+
+**Task:** Increase branch coverage for `session/registry.ts` (HIGH violation)
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~20 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +7 tests (total 745)
+
+**Coverage Delta:**
+- Statements: +0.00% (81.40% → 81.40%) [unchanged]
+- Branches: +0.09% (71.51% → 71.60%)
+- Functions: +0.07% (83.51% → 83.58%)
+- Lines: +0.00% (82.42% → 82.42%) [unchanged]
+
+**Notes:** Added edge-case unit tests for `session/registry.ts` covering:
+- generateSessionId fallback when sessionFile is undefined
+- recordHistory truncation when exceeding maxHistoryEntries
+- getActive() with no registered sessions
+- setActive after disposing previous active session
+- getChildren with unknown parent
+- findByFilePath for disposed session
+- has for disposed session
+
+These tests cover previously uncovered conditional branches in the registry, including fallback logic, history eviction, and state transition handling. All tests pass; build and lint clean. Branch coverage continues to inch toward 80% target.
+
+**Next targets:** Continue with `session/registry.ts` remaining branches (lines ~280+), also consider `command-registry.ts` (44 branches, ~32% covered) and `team-manager.ts` (106 branches, ~42% covered).
+
+*Last updated: 2026-06-23T13:05:00Z*
