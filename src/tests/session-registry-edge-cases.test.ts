@@ -91,4 +91,31 @@ describe('SessionRegistry - Branch Coverage Gaps', () => {
       expect(registry.has(meta.id)).toBe(false);
     });
   });
+
+  describe('getHistory', () => {
+    it('returns all entries when limit not provided', () => {
+      const session = createMockSession();
+      const meta = registry.register(session); // records 'create'
+      registry.update(meta.id, { name: 'a' }); // records 'update'
+
+      const history = registry.getHistory();
+      expect(history.length).toBe(2);
+      expect(history[0].operation).toBe('create');
+      expect(history[1].operation).toBe('update');
+    });
+
+    it('returns last N entries when limit provided', () => {
+      const r = new SessionRegistry({ maxHistoryEntries: 100 });
+      // Register multiple sessions to generate multiple history entries
+      for (let i = 0; i < 5; i++) {
+        const s = createMockSession(`s${i}`);
+        r.register(s);
+      }
+      const history = r.getHistory(3);
+      expect(history).toHaveLength(3);
+      // Should be the last 3 in reverse chronological order? getHistory(limit) returns last entries via slice(-limit), preserving order (oldest first within the slice? Actually slice(-3) returns last 3 in order). It returns array from -limit index to end. So earliest of the last three first.
+      const ops = history.map(e => e.operation);
+      expect(ops).toEqual(['create', 'create', 'create']); // all are 'create' but we can check positions
+    });
+  });
 });

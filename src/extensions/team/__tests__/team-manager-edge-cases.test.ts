@@ -93,4 +93,117 @@ describe('AgentTeam - Edge Cases', () => {
       await team.initialize(['task1']);
     });
   });
+
+  describe('handleAgentFailure', () => {
+    it('should retry task when retryCount below max', async () => {
+      const runtime = createMockRuntime();
+      runtime.session.sessionId = 'agent-1';
+      team.registerRuntime(runtime, 'agent-1');
+      await team.initialize(['taskA']);
+
+      // Agent claims task
+      const idx = await team.claimTask('agent-1');
+      expect(idx).toBe(0);
+
+      // Simulate failure
+      await team.handleAgentFailure('agent-1', idx!, new Error('oops'));
+
+      // Task should be back to pending with retryCount = 1 and retryAvailableAt set
+      const teamAny = team as any;
+      const task = teamAny.taskStatuses.get(0);
+      expect(task.status).toBe('pending');
+      expect(task.retryCount).toBe(1);
+      expect(task.retryAvailableAt).toBeGreaterThan(Date.now());
+      // Should be back in pendingIndices
+      expect(teamAny.pendingIndices).toContain(0);
+    });
+
+    it('should mark task as failed after max retries', async () => {
+      const runtime = createMockRuntime();
+      runtime.session.sessionId = 'agent-1';
+      team.registerRuntime(runtime, 'agent-1');
+      await team.initialize(['taskB']);
+
+      const teamAny = team as any;
+      // Manually set retryCount to max-1 to simulate near limit
+      const idx = await team.claimTask('agent-1');
+      expect(idx).toBe(0);
+      // Directly set retryCount to 2 (DEFAULT_MAX_RETRIES=3, so one more failure will exceed)
+      const task = teamAny.taskStatuses.get(0);
+      task.retryCount = 2;
+
+      // Simulate failure
+      await team.handleAgentFailure('agent-1', 0, new Error('fail'));
+
+      // After this, retryCount becomes 3 (>=3) so task should be failed
+      expect(task.status).toBe('failed');
+      expect(task.result).toBe('fail');
+      // Should be removed from pendingIndices
+      expect(teamAny.pendingIndices).not.toContain(0);
+    });
+  });
+
+  describe('getTeamStatus', () => {
+    it('should report correct counts after tasks complete', async () => {
+      const runtime = createMockRuntime();
+      runtime.session.sessionId = 'agent-1';
+      team.registerRuntime(runtime, 'agent-1');
+      await team.initialize(['task1', 'task2']);
+
+      const status1 = await team.getTeamStatus();
+      expect(status1.totalTasks).toBe(2);
+      expect(status1.completedTasks).toBe(0);
+      expect(status1.pendingTasks).toBe(2);
+
+      // Complete first task via reportResult
+      await team.reportResult(0, 'done');
+
+      const status2 = await team.getTeamStatus();
+      expect(status2.completedTasks).toBe(1);
+      expect(status2.pendingTasks).toBe(1);
+      expect(status2.isComplete).toBe(false);
+
+      await team.reportResult(1, 'done');
+      const status3 = await team.getTeamStatus();
+      expect(status3.completedTasks).toBe(2);
+      expect(status3.isComplete).toBe(true);
+    });
+  });
+
+  describe('releaseTask', () => {
+    it('should return false when task does not exist', async () => {
+      const runtime = createMockRuntime();
+      runtime.session.sessionId = 'agent-1';
+      team.registerRuntime(runtime, 'agent-1');
+      await team.initialize(['task0']);
+      const result = await team.releaseTask('agent-1', 99);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when task assigned to another agent', async () => {
+      const r1 = createMockRuntime(); r1.session.sessionId = 'agent1'; team.registerRuntime(r1, 'agent-1');
+      const r2 = createMockRuntime(); r2.session.sessionId = 'agent2'; team.registerRuntime(r2, 'agent-2');
+      await team.initialize(['task0']);
+      await team.claimTask('agent1');
+      const result = await team.releaseTask('agent2', 0);
+      expect(result).toBe(false);
+    });
+
+    it('should release successfully when assigned to same agent', async () => {
+      const runtime = createMockRuntime();
+      runtime.session.sessionId = 'agent-1';
+      team.registerRuntime(runtime, 'agent-1');
+      await team.initialize(['task0']);
+      const idx = await team.claimTask('agent-1');
+      expect(idx).toBe(0);
+      const released = await team.releaseTask('agent-1', 0);
+      expect(released).toBe(true);
+      // Task should be back to pending
+      const teamAny = team as any;
+      const task = teamAny.taskStatuses.get(0);
+      expect(task.status).toBe('pending');
+      expect(teamAny.pendingIndices).toContain(0);
+      expect(task.assignee).toBeNull();
+    });
+  });
 });
