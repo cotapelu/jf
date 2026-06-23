@@ -711,3 +711,32 @@ These tests cover previously uncovered branches in dispose early-return, interva
 **Next targets:** Continue with `team-manager.ts` remaining branches (retry/backoff logic, zombie detection, lock queue, agent failure handlers). Also consider `command-registry.ts` loader validation and `session/registry.ts` history truncation limit branches.
 
 *Last updated: 2026-06-23T13:22:00Z*
+
+## Cycle 9 - CommandRegistry Loader Integration - 2026-06-23
+
+**Task:** Increase branch coverage for `command-registry.ts` (HIGH violation)
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~25 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +2 tests (total 771)
+
+**Coverage Delta:**
+- Statements: +0.30% (82.24% → 82.54%)
+- Branches: +0.58% (73.02% → 73.6%)
+- Functions: +0.00% (83.79% → 83.79%)
+- Lines: +0.28% (83.25% → 83.53%)
+
+**Notes:** Added integration tests for `CommandRegistry` loader:
+- `valid.js` command auto-fills missing metadata fields (name, category) and executes successfully.
+- `invalid.js` command (missing required exports) fails gracefully with proper error result.
+These tests cover previously uncovered branches in the loader's validation and error handling logic, including dynamic import success path and missing exports detection. All tests pass; build and lint clean.
+
+**Next targets:** Continue with `command-registry.ts` remaining branches (especially loader edge cases and error propagation). Also revisit `team-manager.ts` to cover retry/backoff branches and zombie detection logic.
+
+*Last updated: 2026-06-23T13:35:00Z*
