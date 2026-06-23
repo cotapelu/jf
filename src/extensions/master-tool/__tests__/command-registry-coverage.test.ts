@@ -33,4 +33,34 @@ describe('CommandRegistry - Coverage Gaps', () => {
       expect(text).toContain('Command not found');
     });
   });
+
+  describe('initialize() concurrency guard', () => {
+    it('should avoid duplicate scan when called during initialization', async () => {
+      // Delay the first scan indefinitely
+      let resolveScan: (value: void) => null;
+      const scanPending = new Promise<void>((resolve) => { resolveScan = resolve; });
+      readdir.mockImplementation(async () => {
+        await scanPending;
+        return [];
+      });
+
+      const r = new CommandRegistry({ commandsDir: '/fake' });
+
+      // Start first init
+      const p1 = r.initialize();
+      // Allow microtask to set initPromise
+      await Promise.resolve();
+
+      // Second call during init
+      const p2 = r.initialize();
+
+      // readdir should have been called exactly once (first init only)
+      expect(readdir).toHaveBeenCalledTimes(1);
+
+      // Complete initialization
+      resolveScan();
+      await p1;
+      await p2;
+    });
+  });
 });
