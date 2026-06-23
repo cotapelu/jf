@@ -925,3 +925,34 @@ This strengthens the team management test suite but does not immediately increas
 **Next targets:** Continue pursuing high‑impact branch coverage improvements in `team-manager.ts` (monitor loop, retry logic) and `command-registry.ts` (loader edge cases).
 
 *Last updated: 2026-06-23T14:30:00Z*
+
+## Cycle 16 - CommandRegistry Edge Cases - 2026-06-23
+
+**Task:** Increase branch coverage for `command-registry.ts`
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +3 tests (total 801)
+
+**Coverage Delta:**
+- Statements: +0.03% (82.71% → 82.74%)
+- Branches: +0.04% (73.77% → 73.81%)
+- Functions: +0.00% (83.79% → 83.79%)
+- Lines: +0.00% (83.65% → 83.65%)
+
+**Notes:** Added `command-registry-edge-cases.test.ts` covering:
+- `initialize` without customCommands
+- `ensureInitialized` early return when already initialized
+- `execute` loader error propagation (throws during module load)
+
+These tests cover previously uncovered branches in the initialization guard and error handling paths. All tests pass; build and lint clean.
+
+**Next targets:** Continue with `team-manager.ts` monitor loop (line 502, 574) and remaining `command-registry.ts` branches (loader validation, metadata auto-fill). Target overall branch coverage >75% next.
+
+*Last updated: 2026-06-23T14:35:00Z*
