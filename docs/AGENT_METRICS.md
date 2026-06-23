@@ -677,3 +677,37 @@ All tests pass; build and lint clean. Branch coverage progress continues toward 
 **Next targets:** Continue addressing `command-registry.ts` remaining branches (especially initialization concurrency, loader validation, auto-fill metadata). Also consider `team-manager.ts` (106 branches, ~42% covered).
 
 *Last updated: 2026-06-23T13:15:00Z*
+
+## Cycle 8 - TeamManager Edge Cases - 2026-06-23
+
+**Task:** Increase branch coverage for `team-manager.ts` (HIGH violation)
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~20 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +7 tests (total 763)
+
+**Coverage Delta:**
+- Statements: +0.10% (82.14% → 82.24%)
+- Branches: +0.18% (72.84% → 73.02%)
+- Functions: +0.00% (83.79% → 83.79%)
+- Lines: +0.06% (83.19% → 83.25%)
+
+**Notes:** Added edge-case unit tests for `team-manager.ts` covering:
+- `dispose` idempotency (multiple calls safe)
+- `dispose` when monitorInterval set (clears correctly)
+- `insertPendingIndexSorted` duplicate avoidance and sorted order
+- `claimTask` with no tasks (returns null)
+- `getResults` with no tasks (returns empty array)
+- `initialize` idempotency (multiple calls safe)
+
+These tests cover previously uncovered branches in dispose early-return, interval cleanup, binary search duplicate check, task claim failure, and empty state handling. All tests pass; build and lint clean.
+
+**Next targets:** Continue with `team-manager.ts` remaining branches (retry/backoff logic, zombie detection, lock queue, agent failure handlers). Also consider `command-registry.ts` loader validation and `session/registry.ts` history truncation limit branches.
+
+*Last updated: 2026-06-23T13:22:00Z*
