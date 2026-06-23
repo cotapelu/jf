@@ -9,7 +9,6 @@ import {
   type CreateAgentSessionServicesOptions,
   type CreateAgentSessionFromServicesOptions,
   type CreateAgentSessionResult,
-  // type PromptTemplate unused - removed,
   createAgentSessionRuntime,
   createAgentSessionServices,
   createAgentSessionFromServices,
@@ -21,17 +20,10 @@ import {
 
 import { setCurrentRuntime } from './runtime-context.js';
 import { defaultAssistantPrompt } from './prompts/index.js';
-
-// Resolve package root dir (where src/ lives)
-// In build: dist/main.js => package root is 1 level up
-// In src: src/main.ts => package root is 1 level up
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const packageRoot = path.resolve(__dirname, '..');
-
-// Extensions are loaded from src/extensions via extensionsAggregator
-
-// Prompt templates loaded from src/prompts/
+// Import custom tools from src/tools/
+import { registerAllBuiltinTools, registerAllCustomTools } from './tools/index.js';
+// Import extensions aggregator to manually load extensions
+import extensionsAggregator from './extensions/index.js';
 
 // Factory tạo runtime với tất cả factories
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({
@@ -40,7 +32,7 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   sessionManager,
   sessionStartEvent,
 }): Promise<CreateAgentSessionRuntimeResult> => {
-  // Services với PromptTemplate override và extension discovery
+  // Services với extensionFactories và PromptTemplate override
   const servicesOptions: CreateAgentSessionServicesOptions = {
     cwd,
     agentDir,
@@ -49,12 +41,7 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
         prompts: [defaultAssistantPrompt],
         diagnostics: [],
       }),
-      // Auto-discovery paths for extensions - use packageRoot, not process.cwd()
-      additionalExtensionPaths: [
-        path.join(packageRoot, 'src/extensions'), // dev
-        path.join(packageRoot, 'dist/extensions'), // prod
-        path.join(packageRoot, '.pi/extensions'), // local
-      ],
+      extensionFactories: [extensionsAggregator],
     },
   };
 
@@ -65,15 +52,26 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
     console.error('❌ Failed to create agent session services:', err);
     throw err;
   }
+
+  // Extensions are automatically loaded by the resourceLoader via extensionFactories
+
   const diagnostics: AgentSessionRuntimeDiagnostic[] = services.diagnostics || [];
 
-  // Session options: use default tools (all built-in) + custom tools from extensions
+  // Get ALL tool definitions (built-in + custom)
+  const builtinToolDefs = registerAllBuiltinTools(cwd);
+  const customToolDefs = registerAllCustomTools();
+  const allTools = [...builtinToolDefs, ...customToolDefs];
+
+  console.log('🛠️ Built-in tools:', builtinToolDefs.map(t => t.name));
+  console.log('🛠️ Custom tools:', customToolDefs.map(t => t.name));
+  console.log('🛠️ Total tools to register:', allTools.length);
+
+  // Session options: pass all tools via customTools (no built-in tools parameter)
   const sessionOptions: CreateAgentSessionFromServicesOptions = {
     services,
     sessionManager,
     sessionStartEvent,
-    // tools: undefined - include all built-in tools
-    // customTools: undefined - include all tools from bound extensions
+    customTools: allTools,
   };
 
   // Create session với explicit typing
@@ -88,14 +86,6 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
     throw new Error('createAgentSessionFromServices returned invalid result (missing session)');
   }
 
-  // Debug: Log loaded tools
-  const extList = result.extensionsResult?.extensions || [];
-  console.log('📦 Extensions loaded:', extList.length);
-  for (const ext of extList) {
-    // Use type assertion to access properties
-    const extAny = ext as any;
-    console.log(`  - ${extAny.name || 'unknown'}: ${extAny.tools?.size || 0} tools, ${extAny.commands?.size || 0} commands`);
-  }
   const toolNames = result.session.agent.state.tools.map(t => t.name);
   console.log('🔧 Total tools in session:', toolNames.length);
   console.log('📋 Tool names:', toolNames.sort());

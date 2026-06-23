@@ -14,15 +14,17 @@ import { createSessionTool, initializeSessionTool, resetSessionTool as resetSess
 import { createMultiAgentTool } from './multi-agent/index.js';
 import { skillTool } from './skills/index.js';
 
-// Re-export get_time tool for convenience
+// Re-export tools for convenience
 export { getTimeTool } from './time/index.js';
+export { codebaseIndexTool } from './indexer/index.js';
+export { initializeSessionTool, createSessionTool } from './session/index.js';
+export { createMultiAgentTool } from './multi-agent/index.js';
+export { compactContextTool } from './compaction/index.js';
+export { skillTool } from './skills/index.js';
 
 /**
-
-/**
- * Register ALL built-in tools with enhanced metadata
- *
- * Each tool added individually to control metadata and avoid duplicates.
+ * Register ALL built-in tools (including file discovery tools)
+ * These will be treated as custom tools and passed via customTools array.
  */
 export function registerAllBuiltinTools(cwd: string): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
@@ -33,7 +35,7 @@ export function registerAllBuiltinTools(cwd: string): ToolDefinition[] {
   tools.push(createEditTool(cwd));
   tools.push(createWriteTool(cwd));
 
-  // File discovery tools
+  // File discovery tools (each is a single ToolDefinition)
   tools.push(createFindTool(cwd));
   tools.push(createGrepTool(cwd));
   tools.push(createLsTool(cwd));
