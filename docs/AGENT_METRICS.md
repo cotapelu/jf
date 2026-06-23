@@ -556,3 +556,29 @@ Duration  ~400ms
 **Next targets:** `team-manager.ts` (106 branches, ~42% covered), `command-registry.ts` (44 branches, ~32% covered), `session/registry.ts` (40 branches, ~53% covered).
 
 *Last updated: 2026-06-23T00:00:00Z*
+
+## Cycle 4 - Edge Case Tests & Coverage Increment - 2026-06-23
+
+**Task:** Increase branch coverage via targeted unit tests (cleanup operation)
+
+**Type:** Violation Fix (Branch coverage <80%)
+
+**Priority:** HIGH
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +7 tests (total 732)
+
+**Coverage Delta:**
+- Statements: +0.06% (81.13% → 81.19%)
+- Branches: +0.18% (70.57% → 70.75%)
+- Functions: +0.13% (83.24% → 83.37%)
+- Lines: +0.03% (82.14% → 82.17%)
+
+**Notes:** Added unit tests for `operationCleanup` covering missing parameters, default values, error handling, and file filtering edge cases. Branch coverage improved modestly; still below 80% target. Next cycles will target critical modules like `team-manager.ts`, `command-registry.ts`, and `session/registry.ts`.
+
+**Next targets:** `session/registry.ts` (40 branches, ~53% covered), `command-registry.ts` (44 branches, ~32% covered), `team-manager.ts` (106 branches, ~42% covered).
+
+*Last updated: 2026-06-23T00:00:00Z*
