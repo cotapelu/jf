@@ -23,6 +23,8 @@ import { defaultAssistantPrompt } from './prompts/index.js';
 import { registerAllBuiltinTools, registerAllCustomTools } from './tools/index.js';
 // Import extensions aggregator to manually load extensions
 import extensionsAggregator from './extensions/index.js';
+// Import settings configurator
+import { configureSettings } from './settings-config.js';
 
 // Factory tạo runtime với tất cả factories
 const createRuntime: CreateAgentSessionRuntimeFactory = async ({
@@ -47,6 +49,8 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   let services: AgentSessionServices;
   try {
     services = await createAgentSessionServices(servicesOptions);
+    // Apply custom settings configuration
+    configureSettings(services.settingsManager);
   } catch (err) {
     console.error('❌ Failed to create agent session services:', err);
     throw err;
