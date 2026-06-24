@@ -59,18 +59,18 @@ const createRuntime: CreateAgentSessionRuntimeFactory = async ({
   // Get ALL tool definitions (built-in + custom)
   const builtinToolDefs = registerAllBuiltinTools(cwd);
   const customToolDefs = registerAllCustomTools();
-  const allTools = [...builtinToolDefs, ...customToolDefs];
+  const allBuiltinAndCustomTools = [...builtinToolDefs, ...customToolDefs];
 
   console.log('🛠️ Built-in tools:', builtinToolDefs.map(t => t.name));
   console.log('🛠️ Custom tools:', customToolDefs.map(t => t.name));
-  console.log('🛠️ Total tools to register:', allTools.length);
+  console.log('🛠️ Total tools to register:', allBuiltinAndCustomTools.length);
 
   // Session options: pass all tools via customTools (no built-in tools parameter)
   const sessionOptions: CreateAgentSessionFromServicesOptions = {
     services,
     sessionManager,
     sessionStartEvent,
-    customTools: allTools,
+    customTools: allBuiltinAndCustomTools,
   };
 
   // Create session với explicit typing
