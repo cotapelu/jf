@@ -989,3 +989,30 @@ These tests cover previously uncovered branches in the initialization guard and 
 
 **Impact:** Improved tool availability and corrected agent lifecycle behavior. No breaking changes.
 
+---
+## Cycle 18 - Mutex Test Coverage - 2026-06-23
+
+**Task:** Increase branch coverage for `master-tool/utils/mutex.ts` (Proactive improvement)
+
+**Type:** Proactive Improvement (Test Coverage)
+
+**Priority:** HIGH
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +5 tests (total 761)
+
+**Coverage Delta:**
+- Statements: **85.57%** (↑0.01% from 85.56%)
+- Branches: **75.85%** (unchanged)
+- Functions: **86.63%** (↑0.01% from 86.62%)
+- Lines: **86.94%** (↑0.01% from 86.93%)
+
+**Notes:** Added comprehensive unit tests for Mutex utility covering lock acquisition, queuing, order preservation, and unlock with/without waiters. Achieved full branch coverage for this module (100% locally). Overall branch coverage remains at 75.85%, still below 80% target; continues to be a focus area in upcoming cycles.
+
+**Next targets:** Further branch coverage improvements in `team-manager.ts` and `command-registry.ts` to reach global branch coverage ≥80%.
+
+---
+
