@@ -3,52 +3,42 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Autonomous Cycle 2026-06-25",
+      "name": "Autonomous Cycle 2026-06-25 - Round 4",
       "tasks": [
         {
           "id": "task-1",
           "content": "Run quality gates (lint, type-check, test, build)",
-          "status": "completed"
-        },
-        {
-          "id": "task-2",
-          "content": "Parse quality gate outputs into violations database",
-          "status": "completed"
-        },
-        {
-          "id": "task-3",
-          "content": "Perform proactive analysis (coverage, complexity, security, performance)",
-          "status": "completed"
-        },
-        {
-          "id": "task-4",
-          "content": "Generate improvement task queue with priorities",
-          "status": "completed"
-        },
-        {
-          "id": "task-5",
-          "content": "Select highest priority task and create execution plan",
-          "status": "completed"
-        },
-        {
-          "id": "task-6",
-          "content": "Execute task with verification (test-first, quality gate)",
-          "status": "completed"
-        },
-        {
-          "id": "task-7",
-          "content": "Update metrics, profile, evolution docs",
           "status": "in_progress"
         },
         {
-          "id": "task-8",
-          "content": "Commit changes with conventional commits",
+          "id": "task-2",
+          "content": "Perform proactive analysis - select next coverage target",
+          "status": "pending"
+        },
+        {
+          "id": "task-3",
+          "content": "Write tests for low-coverage module",
+          "status": "pending"
+        },
+        {
+          "id": "task-4",
+          "content": "Verify coverage improvement",
+          "status": "pending"
+        },
+        {
+          "id": "task-5",
+          "content": "Update docs (AGENT_METRICS.md, EVOLUTION.md)",
+          "status": "pending"
+        },
+        {
+          "id": "task-6",
+          "content": "Commit and push",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 9,
+  "nextTaskId": 7,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-25T00:59:50.124Z"
+  "updatedAt": "2026-06-25T01:32:42.868Z"
 }
