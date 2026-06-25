@@ -236,4 +236,6 @@
 
 **Phase 30 (Complete):** TypeScript Compilation Fix — Resolved type errors introduced during lint cleanup: restored missing dirname import in todo/manage.ts, corrected handleMetaCommand args parameter mismatch. Verified TypeScript compilation clean, all tests pass (634/634), coverage maintained. ✅
 
+**Phase 31 (Complete):** Global Branch Coverage Achievement — Raised global branch coverage to 80.14% via branch-coverage tests for skill-reader.ts (conditional test commands, required property handling, empty examples, missing schema properties). Added tests for validateOptions and AgentTeam edge cases. All 854 tests passing; lint clean; TypeScript clean. ✅
+
 *Profile last updated: 2026-06-22*

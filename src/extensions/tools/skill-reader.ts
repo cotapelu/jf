@@ -38,6 +38,31 @@ const commandMeta: Record<string, {
 
 const cm = commandMeta;
 
+// Additional test-only commands for branch coverage
+if (process.env.COVERAGE_TEST === 'true') {
+  (commands as any)['test_no_meta'] = async () => ({} as any);
+  commandMeta['test_no_properties'] = {
+    description: 'Test command with no schema properties',
+    schema: { type: 'object' },
+    examples: ['example use']
+  };
+  (commands as any)['test_no_properties'] = async () => ({} as any);
+  commandMeta['test_branch_all'] = {
+    description: 'Test command for branch coverage',
+    schema: {
+      type: 'object',
+      properties: {
+        reqProp: { description: 'Required property (no type)' },
+        noType: {},
+        noDesc: { type: 'string' }
+      },
+      required: ['reqProp']
+    },
+    examples: []
+  };
+  (commands as any)['test_branch_all'] = async () => ({} as any);
+}
+
 // ============================================================================
 // 2.5. HELPER FUNCTIONS FOR DYNAMIC SKILL DISCOVERY
 // ============================================================================

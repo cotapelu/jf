@@ -22,7 +22,7 @@ import { SharedWorkspace, type WorkspaceEntry } from "./workspace.js";
 import { createTeamOpsTool } from "./team-ops-tool.js";
 import * as path from "node:path";
 
-const MAX_TEAM_SIZE = 4;
+export const MAX_TEAM_SIZE = 4;
 const DEFAULT_MAX_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 1000; // 1 second
 const MAX_RETRY_DELAY_MS = 60000; // 60 seconds
@@ -33,7 +33,7 @@ function calculateRetryDelay(retryCount: number): number {
   return Math.min(delay, MAX_RETRY_DELAY_MS);
 }
 
-function validateOptions(teamSize: number, teamRoles: string[]): { size: number; roles: string[] } {
+export function validateOptions(teamSize: number, teamRoles: string[]): { size: number; roles: string[] } {
   const size = Math.max(1, Math.min(teamSize, MAX_TEAM_SIZE));
   const roles: string[] = [];
   for (let i = 0; i < size; i++) {
