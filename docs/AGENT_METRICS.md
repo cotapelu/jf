@@ -1016,3 +1016,41 @@ These tests cover previously uncovered branches in the initialization guard and 
 
 ---
 
+## Cycle 19 - ExtensionRegistry Coverage - 2026-06-25 (Autonomous)
+
+**Task:** Increase branch coverage for `tools/extensions/registry.ts` (Quality Gate improvement)
+
+**Type:** Proactive Improvement (Test Coverage)
+
+**Priority:** HIGH (branch coverage 50% → target ≥80%)
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +5 tests (total 766)
+
+**Coverage Delta:**
+- Statements: **85.98%** (↑0.15% from 85.83%)
+- Branches: **76.23%** (↑0.19% from 76.04%)
+- Functions: **87.38%** (↑0.30% from 87.08%)
+- Lines: **87.39%** (↑0.18% from 87.21%)
+
+**Notes:** Added comprehensive unit tests for `ExtensionRegistry` covering:
+- initializeAll with extension lacking initialize method (skip without error)
+- disposeAll with extension lacking dispose method
+- disposeAll error handling when one extension's dispose throws (continues, clears)
+- Singleton behavior via getExtensionRegistry() and resetExtensionRegistry()
+
+All tests pass; lint clean; TypeScript compilation clean.
+
+**Improvement Impact:**
+- Branch coverage for `registry.ts` improved from ~50% to >85% locally
+- Overall branch coverage increased to 76.23%, still below 80% target
+- Test count increased to 766
+- All quality gates maintained (functions ≤20 lines, complexity ≤10, 0 duplicates, 100% error handling, 100% validation)
+
+**Next targets:** Continue with low coverage modules: `team-manager.ts` (65%), `skill-reader.ts` (65.38%), `tool-template.ts` (68.75%), `search.ts` (62.5%), `complexity.ts` (64.35%).
+
+---
+
