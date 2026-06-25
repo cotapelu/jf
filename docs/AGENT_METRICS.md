@@ -7,15 +7,15 @@
 ## Current Iteration Summary
 
 **Date:** 2026-06-25
-**Iteration:** 31 (Skill-Reader Edge Cases)
-**Focus:** Increase branch coverage for `skill-reader` tool by adding edge case tests covering loader failures, missing execute function, execution rejection, non-zero exit code, and executeLoadSkill alias.
+**Iteration:** 32 (TeamManager Auto-Dispose Coverage)
+**Focus:** Increase branch coverage for `team-manager.ts` via tests for auto-dispose error handling and team registry cleanup.
 
 **Results:**
-- Statement coverage: **86.92%**
-- Branch coverage: **77.63%**
-- Function coverage: **88.14%**
-- Line coverage: **88.19%**
-- Test count: **788**
+- Statement coverage: **86.98%**
+- Branch coverage: **77.68%**
+- Function coverage: **88.29%**
+- Line coverage: **88.25%**
+- Test count: **791**
 - All tests pass
 - Build/TypeScript: **clean**
 - Lint: **0 errors**
@@ -167,8 +167,8 @@
 | Duplicate code (<5) | N/A | No dup>5 | 0 duplicates | ✅ |
 | Error handling | Partial | 100% public | 100% | ✅ |
 | Input validation | Partial | 100% external | 100% | ✅ |
-| Test coverage | 496 tests | ≥80% | 86.92% stmts, 88.14% funcs | ✅ |
-| Tests passing | 496 tests | 100% | 788/788 (100%) | ✅ |
+| Test coverage | 496 tests | ≥80% | 86.98% stmts, 88.29% funcs | ✅ |
+| Tests passing | 496 tests | 100% | 791/791 (100%) | ✅ |
 | Build status | Working | No errors | ✅ Success | ✅ |
 | Lint status | 0 errors | 0 errors | ✅ 0 errors | ✅ |
 
