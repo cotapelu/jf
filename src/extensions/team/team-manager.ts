@@ -1009,7 +1009,7 @@ export async function bootPiclawTeam(
   return team;
 }
 
-function startCompletionMonitor(team: AgentTeam): void {
+export function startCompletionMonitor(team: AgentTeam): void {
   team.monitorInterval = setInterval(() => {
     team.withLock(() => team.reclaimZombieAgents()).catch((e) => console.error('Reclaim error:', e));
     team.getTeamStatus().then(status => {
