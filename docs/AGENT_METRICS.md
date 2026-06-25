@@ -1289,3 +1289,30 @@ All tests pass; lint clean; TypeScript clean.
 
 ---
 
+
+## Cycle 35 - MultiSessionManager Coverage Expansion - 2025-06-25 (Autonomous)
+
+**Task:** Increase global branch coverage (79.21%, target ≥80%) by covering missing branches in MultiSessionManager.
+**Type:** Violation Fix (Coverage)
+**Priority:** HIGH
+**Duration:** ~40 minutes
+**Status:** ⚠️ Partial Progress (still below target)
+
+**Test Delta:** +4 tests (total 829 passing, 1 skipped)
+**Coverage Delta:**
+- Statements: **88.07%** (↑0.36% from 87.71%)
+- Branches: **79.21%** (↑0.39% from 78.82%)
+- Functions: **89.42%** (↑0.45% from 88.97%)
+- Lines: **88.81%** (unchanged)
+
+**Notes:** Added targeted unit tests for `MultiSessionManager` covering previously uncovered branches:
+- `createChild` throws when `runtime.newSession` returns cancelled.
+- `switchToChild` with numeric index (both success and out-of-range).
+- `getDiagnostics` includes `cleanup` stats after `recordCleanup` is called.
+
+These tests expose error paths and numeric indexing behavior. Branch coverage improved but still below 80% target. Additional branches remain uncovered in `session/manager.ts` (line 4) and other modules (e.g., `extensions/team/team-manager.ts` at 71.81% branch). Next cycle will continue targeted coverage expansion.
+
+**Next targets:** Cover remaining branches in `session/manager.ts` (e.g., `createChild` parentId unavailable, `switchTo` setActive failure), and improve `team-manager.ts` coverage (monitor loop, `executeTeamTasks` onUpdate undefined).
+
+---
+
