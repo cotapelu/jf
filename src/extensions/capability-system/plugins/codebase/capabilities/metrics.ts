@@ -174,7 +174,8 @@ export async function execute(params: { files: string[] }, ctx: any): Promise<an
 
   return {
     content,
-    details: { results, stats },
+    results,
+    stats,
     isError: false
   };
 }
