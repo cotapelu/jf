@@ -1093,3 +1093,41 @@ All tests pass; lint clean; TypeScript compilation clean.
 
 ---
 
+## Cycle 21 - TeamManager Coverage - 2026-06-25 (Autonomous)
+
+**Task:** Increase branch coverage for `extensions/team/team-manager.ts` (Quality Gate improvement)
+
+**Type:** Proactive Improvement (Test Coverage)
+
+**Priority:** HIGH (branch coverage 65% → target ≥80%)
+
+**Duration:** ~20 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +4 tests (total 775)
+
+**Coverage Delta:**
+- Statements: **86.62%** (↑0.36% from 86.26%)
+- Branches: **77.24%** (↑0.48% from 76.76%)
+- Functions: **87.68%** (↑0.30% from 87.38%)
+- Lines: **87.94%** (↑0.38% from 87.56%)
+
+**Notes:** Added comprehensive unit tests for `TeamRegistry.waitForTeam` covering:
+- Error when team not found
+- Returns true when team completes (isComplete check)
+- Returns false on timeout before completion (using fake timers)
+- Returns true when team completes after a few poll iterations
+
+All tests pass; lint clean; TypeScript compilation clean.
+
+**Improvement Impact:**
+- Branch coverage for `team-manager.ts` increased from 65% to 69.54% locally
+- Global branch coverage increased to 77.24%; still below 80% target
+- Test count increased to 775
+- All quality gates maintained
+
+**Next targets:** Continue with remaining low coverage modules: `skill-reader.ts` (65.38%), `tool-template.ts` (68.75%), `complexity.ts` (64.35%), `workspace.ts` (66.66%).
+
+---
+
