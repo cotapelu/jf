@@ -102,5 +102,50 @@ describe('MultiSessionManager Coverage Gaps', () => {
       expect(diag.cleanup!.totalCleaned).toBe(5);
       expect(diag.cleanup!.lastCleanup).toBeDefined();
     });
+
+    it('should count disposed sessions correctly', async () => {
+      const child = await manager.createChild();
+      await manager.switchToParent(); // root active to avoid auto-switch on dispose
+      await manager.dispose(child.id);
+      const diag = manager.getDiagnostics();
+      expect(diag.disposedCount).toBe(1);
+    });
+  });
+
+  describe('list()', () => {
+    it('should include disposed sessions when includeDisposed=true', async () => {
+      const child = await manager.createChild();
+      await manager.switchToParent(); // root active
+      await manager.dispose(child.id);
+      const all = manager.list({ includeDisposed: true });
+      // Parent + disposed child
+      expect(all).toHaveLength(2);
+      expect(all.some(m => m.id === child.id && m.state === 'disposed')).toBe(true);
+    });
+  });
+
+  describe('dispose()', () => {
+    it('should throw when called with no active session', async () => {
+      // Dispose everything first
+      await manager.dispose(null, true);
+      // Now there is no active session
+      await expect(manager.dispose(null)).rejects.toThrow('No session specified');
+    });
+  });
+
+  describe('createChild()', () => {
+    it('should propagate error when runtime.newSession throws', async () => {
+      runtime.newSession = vi.fn().mockRejectedValue(new Error('IO failure'));
+      await expect(manager.createChild()).rejects.toThrow('IO failure');
+    });
+  });
+
+  describe('switchTo()', () => {
+    it('should propagate error when runtime.switchSession fails', async () => {
+      const child = await manager.createChild();
+      await manager.switchToParent(); // root active
+      runtime.switchSession = vi.fn().mockRejectedValue(new Error('switch failed'));
+      await expect(manager.switchTo(child.id)).rejects.toThrow('switch failed');
+    });
   });
 });

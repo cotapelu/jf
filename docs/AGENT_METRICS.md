@@ -1316,3 +1316,33 @@ These tests expose error paths and numeric indexing behavior. Branch coverage im
 
 ---
 
+
+## Cycle 36 - MultiSessionManager & Safe Edit Coverage - 2025-06-25 (Autonomous)
+
+**Task:** Increase global branch coverage (still below 80% target).
+**Type:** Violation Fix (Coverage)
+**Priority:** HIGH
+**Duration:** ~45 minutes
+**Status:** ⚠️ Partial Progress (coverage improved but still below threshold)
+
+**Test Delta:** +6 tests (total 835 passing, 1 skipped)
+**Coverage Delta:**
+- Statements: **88.16%** (↑0.09% from 88.07%)
+- Branches: **79.35%** (↑0.14% from 79.21%)
+- Functions: **89.42%** (unchanged)
+- Lines: **88.84%** (↑0.03% from 88.81%)
+
+**Notes:** Added targeted unit tests covering previously uncovered error paths:
+- `MultiSessionManager`: `dispose(null)` with no active session throws, `createChild` propagates `newSession` errors, `switchTo` propagates `switchSession` failures, `list({ includeDisposed: true })` after disposal, `getDiagnostics` `disposedCount` calculation.
+- `safe_edit` capability: non-existent file returns proper error.
+
+These tests covered several missing branches, yielding a modest coverage increase. However, global branch coverage remains at 79.35%, still below the 80% quality gate threshold. Significant uncovered branches remain in `session/manager.ts` (e.g., `setActive` failure paths), as well as low-coverage modules `skill-reader.ts` (69.23%) and `team-manager.ts` (71.81%). 
+
+**Next targets:** 
+- Address remaining branches in `session/manager.ts` (e.g., `setActive` false branch via test of post-failure state, if reachable).
+- Expand coverage in `team-manager.ts` by exporting and testing `validateOptions` and other error-handling logic.
+- Continue with `skill-reader.ts` (uncovered catch in `getAvailableSkills` or execution error paths).
+- Consider additional edge cases in `safe_edit` to further increment coverage.
+
+---
+
