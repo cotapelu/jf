@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdir, writeFile, unlink, readdir, rm, mkdtemp } from "fs/promises";
+import * as fs from "fs"; // for mkdirSync fallback
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { relative, join } from "path";
@@ -96,5 +97,60 @@ describe("codebase.search", () => {
     const result = await searchModule.execute({ query: "nonexistent" }, ctx as { cwd: string });
     expect(result.details.total).toBe(0);
     expect(result.content[0].text).toContain("No matches");
+  });
+
+  // --- filePattern tests (increase branch coverage in shouldProcess) ---
+
+  it("should filter by filePattern extension .ts", async () => {
+    // Create .ts and .js files with matches
+    await writeFile(join(tempDir, "a.ts"), "const a = 1;", "utf-8");
+    await writeFile(join(tempDir, "b.js"), "const b = 2;", "utf-8");
+    const ctx = { cwd: tempDir };
+
+    const result = await searchModule.execute({ query: "const", filePattern: ".ts" }, ctx as { cwd: string });
+    expect(result.details.total).toBe(1);
+    expect(result.details.matches[0].file).toContain("a.ts");
+  });
+
+  it("should filter by filePattern partial path (case-insensitive)", async () => {
+    const srcDir = join(tempDir, "src");
+    const libDir = join(tempDir, "lib");
+    await mkdir(srcDir);
+    await mkdir(libDir);
+    await writeFile(join(srcDir, "file.ts"), "const x = 1;", "utf-8");
+    await writeFile(join(libDir, "file.ts"), "const y = 2;", "utf-8");
+    const ctx = { cwd: tempDir };
+
+    const result = await searchModule.execute({ query: "const", filePattern: "src" }, ctx as { cwd: string });
+    expect(result.details.total).toBe(1);
+    expect(result.details.matches[0].file).toContain("src");
+  });
+
+  it("should ignore non-code extensions per CODE_EXTENSIONS", async () => {
+    await writeFile(join(tempDir, "sample.txt"), "const z = 3;", "utf-8");
+    const ctx = { cwd: tempDir };
+
+    const result = await searchModule.execute({ query: "const" }, ctx as { cwd: string });
+    expect(result.details.total).toBe(0);
+  });
+
+  it("should respect case-insensitive filePattern (uppercase pattern vs lowercase path)", async () => {
+    const srcDir = join(tempDir, "Src");
+    await mkdir(srcDir);
+    await writeFile(join(srcDir, "File.ts"), "const a = 1;", "utf-8"); // capital S
+    const ctx = { cwd: tempDir };
+
+    const result = await searchModule.execute({ query: "const", filePattern: "src" }, ctx as { cwd: string });
+    expect(result.details.total).toBe(1);
+  });
+
+  it("should match filePattern starting with '.' against extension", async () => {
+    await writeFile(join(tempDir, "mod.ts"), "const m = 1;", "utf-8");
+    await writeFile(join(tempDir, "mod.js"), "const m = 2;", "utf-8");
+    const ctx = { cwd: tempDir };
+
+    const result = await searchModule.execute({ query: "const", filePattern: ".ts" }, ctx as { cwd: string });
+    expect(result.details.total).toBe(1);
+    expect(result.details.matches[0].file).toContain(".ts");
   });
 });

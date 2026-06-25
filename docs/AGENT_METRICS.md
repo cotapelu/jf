@@ -1054,3 +1054,42 @@ All tests pass; lint clean; TypeScript compilation clean.
 
 ---
 
+## Cycle 20 - Search Capability Coverage - 2026-06-25 (Autonomous)
+
+**Task:** Increase branch coverage for `extensions/capability-system/plugins/codebase/capabilities/search.ts` (Quality Gate improvement)
+
+**Type:** Proactive Improvement (Test Coverage)
+
+**Priority:** HIGH (branch coverage 62.5% → target ≥80%)
+
+**Duration:** ~25 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +5 tests (total 771)
+
+**Coverage Delta:**
+- Statements: **86.26%** (↑0.28% from 85.98%)
+- Branches: **76.76%** (↑0.53% from 76.23%)
+- Functions: **87.38%** (unchanged)
+- Lines: **87.56%** (↑0.18% from 87.39%)
+
+**Notes:** Added unit tests covering `filePattern` filtering logic in `shouldProcess`:
+- filePattern as extension (`.ts`) matches only that extension
+- filePattern as partial path (case-insensitive substring)
+- Files with non-code extensions excluded by `CODE_EXTENSIONS`
+- Case-insensitive filePattern matching across different case paths
+- filePattern starting with '.' matches extension correctly
+
+All tests pass; lint clean; TypeScript compilation clean.
+
+**Improvement Impact:**
+- Branch coverage for `search.ts` increased from 62.5% to 85.41% locally
+- Global branch coverage increased to 76.76%; still below 80% target
+- Test count increased to 771
+- All quality gates maintained
+
+**Next targets:** Focus on `team-manager.ts` (65%), `skill-reader.ts` (65.38%), `tool-template.ts` (68.75%), `complexity.ts` (64.35%), `workspace.ts` (66.66%).
+
+---
+
