@@ -23,7 +23,7 @@ import { SettingsManager } from '@earendil-works/pi-coding-agent';
  * - Chỉ uncomment cái thực sự cần, tránh unused config
  */
 
-export function configureSettings(settingsManager: SettingsManager): void {
+export function configureSettings(_settingsManager: SettingsManager): void {
   // ============================================
   // ⚡ HIỆN TẠI: CHỈ DÙNG ĐIỂN NÀY (main.ts)
   // ============================================
