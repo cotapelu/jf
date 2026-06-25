@@ -49,16 +49,19 @@ describe('skill-reader tool', () => {
 
   it('execute with real command loads skill content (integration)', async () => {
     const tool = createSkillLoaderTool();
-    // Use the real command module (no mocking)
-    // @ts-ignore - integration test needs proper context but works with empty
-    const result = (await tool.execute('test-call', { command: 'read_skill', args: { skill: 'audit' } }, undefined, undefined, {})) as ToolResult;
-
-    // If there's an error, print for debugging
+    const result = (await tool.execute('test-call', { command: 'read_skill', args: { skill: 'audit' } }, undefined, undefined, {})) as any;
     if (result.isError) {
       console.error('Integration error:', result.content[0].text);
     }
     expect(result.isError).toBe(false);
-    // Audit skill should contain header
     expect(result.content[0].text).toContain('# Audit');
+  });
+
+  it('should return error for non-existent skill', async () => {
+    const tool = createSkillLoaderTool();
+    const result = (await tool.execute('test-call', { command: 'read_skill', args: { skill: 'nonexistent-nonexistent' } }, undefined, undefined, {})) as any;
+    expect(result.isError).toBe(true);
+    // Error message is in details.stderr
+    expect(result.details?.stderr || result.content[0].text).toContain('not found');
   });
 });
