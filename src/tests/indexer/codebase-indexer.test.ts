@@ -55,4 +55,79 @@ describe('Codebase Indexer Tool', () => {
     expect(result.content[0].text).toContain('MyClass');
     expect(result.content[0].text).toContain('class');
   });
+
+  it('should find variable declarations', async () => {
+    const code = `
+      const myVar = 123;
+      let other = 'x';
+    `;
+    await writeFile(join(tempDir, 'sample.ts'), code);
+    const result: any = await tool.execute('call', { query: 'myVar', kind: 'variable' }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toContain('myVar');
+    expect(result.content[0].text).toContain('variable');
+  });
+
+  it('should find constructor symbols', async () => {
+    const code = `
+      class C {
+        constructor() {}
+      }
+    `;
+    await writeFile(join(tempDir, 'sample.ts'), code);
+    const result: any = await tool.execute('call', { query: 'constructor', kind: 'constructor' }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toContain('constructor');
+    expect(result.content[0].text).toContain('constructor');
+  });
+
+  it('should find type aliases', async () => {
+    const code = `
+      type MyType = string;
+    `;
+    await writeFile(join(tempDir, 'sample.ts'), code);
+    const result: any = await tool.execute('call', { query: 'MyType', kind: 'type' }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toContain('MyType');
+    expect(result.content[0].text).toContain('type');
+  });
+
+  it('should perform case-insensitive search', async () => {
+    const code = `
+      function Foo() {}
+    `;
+    await writeFile(join(tempDir, 'sample.ts'), code);
+    const result: any = await tool.execute('call', { query: 'FOO', kind: 'function' }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toContain('Foo');
+  });
+
+  it('should ignore non-TypeScript files (.js)', async () => {
+    // Create a .js file with a function
+    const jsCode = `function jsFunc() {}`;
+    await writeFile(join(tempDir, 'sample.js'), jsCode);
+    // Also create a .ts file with a different symbol to ensure the tool is working
+    const tsCode = `function tsFunc() {}`;
+    await writeFile(join(tempDir, 'tsfile.ts'), tsCode);
+    const result: any = await tool.execute('call', { query: 'jsFunc' }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toBe('No symbols found');
+  });
+
+  it('should respect result limit', async () => {
+    // Create a file with many functions
+    const functions = Array.from({ length: 10 }, (_, i) => `function func${i}() {}`).join('\n');
+    await writeFile(join(tempDir, 'many.ts'), functions);
+    const result: any = await tool.execute('call', { query: 'func', kind: 'function', limit: 5 }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    const matches = result.content[0].text.split('\n');
+    // matches could be up to 5
+    expect(matches.length).toBeLessThanOrEqual(5);
+  });
+
+  it('should return empty matches when cwd does not exist', async () => {
+    const result: any = await tool.execute('call', { query: 'anything' }, undefined, undefined, { cwd: '/non/existent/path' });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toBe('No symbols found');
+  });
 });

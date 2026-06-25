@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createSkillLoaderTool, registerSkillReaderExtension } from './skill-reader.js';
+import * as fs from 'fs';
 
 type ToolResult = {
   isError: boolean;
@@ -75,7 +76,6 @@ describe('skill-reader tool', () => {
   });
 
   it('should handle command module missing execute function', async () => {
-    // Mock module with execute and executeLoadSkill explicitly undefined
     vi.doMock('./skill-reader/read-skill.js', () => ({
       execute: undefined,
       executeLoadSkill: undefined,
@@ -120,4 +120,6 @@ describe('skill-reader tool', () => {
     expect(result.isError).toBe(false);
     vi.unmock('./skill-reader/read-skill.js');
   });
+
+  // Additional edge cases for getAvailableSkills could be added here if needed.
 });

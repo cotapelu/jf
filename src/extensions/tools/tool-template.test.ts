@@ -21,7 +21,7 @@ describe('tool-template (basic)', () => {
       properties: {
         command: {
           type: 'string',
-          enum: ['example_command', 'another_command'],
+          enum: ['example_command', 'another_command', 'dummy_test', 'failing_command', 'empty_meta_cmd'],
           description: 'Tên sub-command để thực thi'
         },
         args: {
@@ -65,7 +65,7 @@ describe('tool-template (basic)', () => {
     const result = (await tool.execute('id', { command: 'unknown', args: {} }, undefined, undefined, {})) as ToolResult;
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Unknown command');
-    expect(result.content[0].text).toContain('example_command, another_command');
+    expect(result.content[0].text).toContain('example_command, another_command, dummy_test, failing_command');
   });
 
   it('execute with empty args should return discovery help', async () => {

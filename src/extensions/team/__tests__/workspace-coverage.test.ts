@@ -30,4 +30,15 @@ describe('SharedWorkspace coverage gaps', () => {
     const obj = ws.toObject();
     expect(obj).toEqual({ k1: 'v1', k2: 123 });
   });
+
+  it('should get return value for existing key', () => {
+    const ws = new SharedWorkspace();
+    ws.set('key', 'value', 'owner');
+    expect(ws.get('key')).toBe('value');
+  });
+
+  it('should get return undefined for missing key', () => {
+    const ws = new SharedWorkspace();
+    expect(ws.get('missing')).toBeUndefined();
+  });
 });

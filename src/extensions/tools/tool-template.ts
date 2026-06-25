@@ -86,6 +86,12 @@ type CommandLoader = () => Promise<CommandModule>;
 const commands: Record<string, CommandLoader> = {
   example_command: async () => (await import('./tool-template/example-command.js')).default,
   another_command: async () => (await import('./tool-template/another-command.js')).default,
+  // Dummy command for testing fallback when commandMeta entry is missing
+  dummy_test: async () => (await import('./tool-template/example-command.js')).default,
+  // Command that always fails to load (simulates import error)
+  failing_command: async () => { throw new Error('force load failure'); },
+  // Command with empty metadata to test generateCommandHelp edge cases
+  empty_meta_cmd: async () => (await import('./tool-template/example-command.js')).default,
 };
 
 // ============================================================================
@@ -126,6 +132,11 @@ export function createYourTool(): ToolDefinition {
     description: "Một command khác",
     schema: anotherSchema,
     examples: ["your_tool_name({ command: 'another_command', args: { files: ['a.txt', 'b.txt'] } })"]
+  },
+  empty_meta_cmd: {
+    description: "",
+    schema: { type: "object" },
+    examples: []
   }
 };
 

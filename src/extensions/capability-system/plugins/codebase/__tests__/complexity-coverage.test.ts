@@ -63,5 +63,29 @@ describe('codebase.complexity coverage gaps', () => {
     expect(details.language).toBe('unknown');
   });
 
+  it('should detect .tsx file language', async () => {
+    const fileRel = 'test.tsx';
+    const content = '\nexport const x = <div>Hello</div>;\n';
+    const fileAbs = join(tmpdir, fileRel);
+    await fs.writeFile(fileAbs, content, 'utf8');
+
+    const result = await execute({ file: fileRel }, { cwd: tmpdir });
+    expect(result.isError).toBe(false);
+    const details = result.details as ComplexityDetails;
+    expect(details.language).toBe('tsx');
+  });
+
+  it('should return parse error for invalid TypeScript syntax', async () => {
+    const fileRel = 'invalid.ts';
+    // Deliberate syntax error: missing closing parenthesis
+    const content = 'function foo( { return 1; }';
+    const fileAbs = join(tmpdir, fileRel);
+    await fs.writeFile(fileAbs, content, 'utf8');
+
+    const result = await execute({ file: fileRel }, { cwd: tmpdir });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('Parse error');
+  });
+
   // Note: Empty file test omitted because parser throws on empty content (parse error), which is already covered.
 });

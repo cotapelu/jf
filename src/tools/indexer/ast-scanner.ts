@@ -28,6 +28,10 @@ function getSymbolName(node: ts.Node): string | null {
   if (ts.isVariableDeclaration(node)) {
     return (node.name as ts.Identifier).text;
   }
+  // Constructors don't have a name property; they are identified by the 'constructor' keyword
+  if (node.kind === ts.SyntaxKind.Constructor) {
+    return 'constructor';
+  }
   const named = node as any;
   if (named.name) {
     return named.name.getText?.() ?? named.name?.text ?? null;
@@ -95,7 +99,13 @@ export async function scanCodebase(
   } = {}
 ): Promise<{ matches: SymbolMatch[] }> {
   const { kind = 'all', limit = 50 } = options;
-  const files = await collectTsFiles(cwd);
+  let files: string[];
+  try {
+    files = await collectTsFiles(cwd);
+  } catch {
+    // cwd does not exist or cannot be read
+    return { matches: [] };
+  }
   const matches: SymbolMatch[] = [];
 
   for (const file of files) {
