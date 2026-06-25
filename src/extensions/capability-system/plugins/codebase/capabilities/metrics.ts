@@ -136,8 +136,45 @@ async function computeMetrics(cwd: string, files: string[]): Promise<{ results: 
   return { results, stats: buildStats(results, stats) };
 }
 
-export async function execute(params: { files: string[] }, ctx: any): Promise<Result> {
+function formatResultsAsText(results: MetricResult[], stats: Result['stats']): string {
+  const lines: string[] = [];
+  lines.push("📊 Code Metrics");
+  lines.push("=".repeat(40));
+  lines.push(`Total Files: ${stats.totalFiles}`);
+  lines.push(`Total Lines: ${stats.totalLines}`);
+  lines.push(`Total Functions: ${stats.totalFunctions}`);
+  lines.push(`Total Classes: ${stats.totalClasses}`);
+  lines.push(`Total Imports: ${stats.totalImports}`);
+  lines.push(`Total Exports: ${stats.totalExports}`);
+  lines.push("\nPer File:");
+  lines.push("-".repeat(40));
+  for (const r of results) {
+    if (r.error) {
+      lines.push(`❌ ${r.file}: ${r.error}`);
+    } else {
+      lines.push(`${r.file}:`);
+      lines.push(`  Lines: ${r.lines}, Functions: ${r.functions}, Classes: ${r.classes}`);
+      lines.push(`  Imports: ${r.imports}, Exports: ${r.exports}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+export async function execute(params: { files: string[] }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const { results, stats } = await computeMetrics(cwd, params.files);
-  return { results, stats };
+
+  // Format as CapabilityResult with text content for UI
+  const content = [
+    {
+      type: "text" as const,
+      text: formatResultsAsText(results, stats)
+    }
+  ];
+
+  return {
+    content,
+    details: { results, stats },
+    isError: false
+  };
 }
