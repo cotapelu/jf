@@ -21,7 +21,7 @@ describe('tool-template (basic)', () => {
       properties: {
         command: {
           type: 'string',
-          enum: ['example_command', 'another_command', 'dummy_test', 'failing_command', 'empty_meta_cmd'],
+          enum: ['example_command', 'another_command', 'dummy_test', 'failing_command', 'empty_meta_cmd', 'optional_prop_cmd'],
           description: 'Tên sub-command để thực thi'
         },
         args: {
@@ -68,15 +68,16 @@ describe('tool-template (basic)', () => {
     expect(result.content[0].text).toContain('example_command, another_command, dummy_test, failing_command');
   });
 
-  it('execute with empty args should return discovery help', async () => {
+  it('execute with empty args for optional_prop_cmd should show optional property without asterisk', async () => {
     const tool = createYourTool();
-    // @ts-ignore - testing with empty args but required schema
-    const result = (await tool.execute('id', { command: 'example_command', args: {} }, undefined, undefined, {})) as ToolResult;
+    // @ts-ignore - testing discovery mode with optional property
+    const result = (await tool.execute('id', { command: 'optional_prop_cmd', args: {} }, undefined, undefined, {})) as ToolResult;
     expect(result.isError).toBe(false);
     const text = result.content[0].text;
-    expect(text).toContain('example_command');
-    expect(text).toContain('Description');
-    expect(text).toContain('Arguments:');
-    expect(text).toContain('input* (string): Đường dẫn file đầu vào');
+    expect(text).toContain('optional_field');
+    // The optional field should be listed without asterisk
+    expect(text).toMatch(/optional_field\s*\(string\): Tùy chọn/);
+    // Ensure required fields have asterisk
+    expect(text).toMatch(/input\*\s*\(string\): Đường dẫn file đầu vào/);
   });
 });

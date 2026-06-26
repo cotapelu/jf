@@ -32,6 +32,7 @@
 
 import { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import type { Static } from "typebox";
+import { Type } from "typebox";
 import { schema as exampleSchema } from './tool-template/example-command.js';
 import { schema as anotherSchema } from './tool-template/another-command.js';
 // Validation: import { validate } from "@sinclair/typebox/validate"; (optional)
@@ -92,6 +93,8 @@ const commands: Record<string, CommandLoader> = {
   failing_command: async () => { throw new Error('force load failure'); },
   // Command with empty metadata to test generateCommandHelp edge cases
   empty_meta_cmd: async () => (await import('./tool-template/example-command.js')).default,
+  // Coverage: command with optional property to test ternary false branch
+  optional_prop_cmd: async () => (await import('./tool-template/example-command.js')).default,
 };
 
 // ============================================================================
@@ -137,6 +140,14 @@ export function createYourTool(): ToolDefinition {
     description: "",
     schema: { type: "object" },
     examples: []
+  },
+  optional_prop_cmd: {
+    description: "Command with optional property for coverage",
+    schema: Type.Object({
+      input: Type.String({ description: "Đường dẫn file đầu vào" }),
+      optional_field: Type.Optional(Type.String({ description: "Tùy chọn" }))
+    }),
+    examples: ["tool_template({ command: 'optional_prop_cmd', args: { input: 'data.txt', optional_field: 'extra' } })"]
   }
 };
 

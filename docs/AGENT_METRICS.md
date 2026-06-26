@@ -1338,13 +1338,38 @@ These tests expose error paths and numeric indexing behavior. Branch coverage im
 
 These tests covered several missing branches, yielding a modest coverage increase. However, global branch coverage remains at 79.35%, still below the 80% quality gate threshold. Significant uncovered branches remain in `session/manager.ts` (e.g., `setActive` failure paths), as well as low-coverage modules `skill-reader.ts` (69.23%) and `team-manager.ts` (71.81%). 
 
-**Next targets:** 
+**Next targets:**
 - Address remaining branches in `session/manager.ts` (e.g., `setActive` false branch via test of post-failure state, if reachable).
 - Expand coverage in `team-manager.ts` by exporting and testing `validateOptions` and other error-handling logic.
 - Continue with `skill-reader.ts` (uncovered catch in `getAvailableSkills` or execution error paths).
 - Consider additional edge cases in `safe_edit` to further increment coverage.
 
 ---
+
+
+## Cycle 38 - tool-template Branch Coverage Increase - 2026-06-26 (Autonomous)
+
+**Task:** Increase branch coverage for `src/extensions/tools/tool-template.ts` (84.38% → 87.5%) to maintain proactive improvement above 85% per-file target.
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~15 minutes
+**Status:** ✅ Success
+
+**Test Delta:** 0 net new tests (modified existing test to target optional property branch)
+**Coverage Delta:**
+- Statements: 88.4% (unchanged)
+- Branches: 80.19% (↑0.05% from 80.14%)
+- Functions: 89.03% (unchanged)
+- Lines: 89.11% (unchanged)
+
+**Notes:** Added `optional_prop_cmd` command with an optional property to exercise the ternary false branch in `generateCommandHelp`: `required ? '*' : ''`. Updated `tool-template.test.ts` to test discovery mode for this command, ensuring optional properties are listed without asterisk. This covered the previously missing false branch (line 57) in tool-template.ts, raising its branch coverage from 84.38% to 87.5% (28/32 branches). All tests pass (854 passing, 1 skipped); lint clean; build clean.
+
+**Impact:** Tool-template now exceeds 85% branch coverage target. No regressions introduced.
+
+**Next targets:** Cover remaining partially uncovered branches in tool-template (lines 56, 257, 263, 276) via additional edge case tests (e.g., property without type, code===0 with empty stderr, non-Error exceptions). Continue proactive coverage in other modules <85%: team-manager.ts (71.8%), dependency_tree.ts (70.9%), analyze_ast.ts (76%).
+
+---
+
 
 
 ## Cycle 37 - Skill-Reader Branch Coverage - 2025-06-25 (Autonomous)
