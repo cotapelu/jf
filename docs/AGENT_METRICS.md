@@ -1401,3 +1401,25 @@ Added comprehensive `branch-coverage.test.ts` to trigger these branches. Also ad
 **Next targets:** Maintain coverage levels; continue incremental improvements in other modules (team-manager, tool-template, ast-scanner).
 
 ---
+
+## Cycle 39 - ast-scanner Subdirectory Coverage - 2026-06-26 (Autonomous)
+
+**Task:** Increase branch coverage for `src/tools/indexer/ast-scanner.ts` (82.98% → 85.1%) to maintain proactive improvement above 85% per-file target.
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~15 minutes
+**Status:** ✅ Success
+
+**Test Delta:** +1 test (total 855 passing, 1 skipped)
+**Coverage Delta:**
+- Statements: 88.43% (unchanged)
+- Branches: 80.23% (↑0.04% from 80.19%)
+- Functions: 89.03% (unchanged)
+- Lines: 89.14% (unchanged)
+
+**Notes:** Added test for subdirectory scanning in `codebase-indexer.test.ts` to cover the `entry.isDirectory()` true branch in `collectTsFiles`. This ensures that files in nested directories are discovered and scanned. The test creates a subdirectory with a TypeScript file containing a symbol, and verifies the tool finds it. All tests pass; lint clean; build clean.
+
+**Impact:** ast-scanner branch coverage increased from 82.98% to 85.1%, exceeding the 85% target. Overall branch coverage now 80.23%. No regressions.
+
+**Next targets:** Continue coverage improvements for remaining modules <85%: team-manager.ts (71.8%), dependency_tree.ts (70.9%), analyze_ast.ts (76%).
+---

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { codebaseIndexTool as rawTool } from '../../tools/indexer/index.js';
 
@@ -129,5 +129,15 @@ describe('Codebase Indexer Tool', () => {
     const result: any = await tool.execute('call', { query: 'anything' }, undefined, undefined, { cwd: '/non/existent/path' });
     expect(result.details?.status).toBe('success');
     expect(result.content[0].text).toBe('No symbols found');
+  });
+
+  it('should scan files in subdirectories', async () => {
+    const subdir = join(tempDir, 'sub');
+    await mkdir(subdir, { recursive: true });
+    const code = `function nestedFunc() {}`;
+    await writeFile(join(subdir, 'nested.ts'), code);
+    const result: any = await tool.execute('call', { query: 'nestedFunc', kind: 'function' }, undefined, undefined, { cwd: tempDir });
+    expect(result.details?.status).toBe('success');
+    expect(result.content[0].text).toContain('nestedFunc');
   });
 });
