@@ -1,4 +1,4 @@
-import { AgentTeam } from '../team-manager.js';
+import { AgentTeam, DEFAULT_MAX_RETRIES, startCompletionMonitor } from '../team-manager.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMockRuntime } from './test-utils.js';
 
@@ -166,5 +166,64 @@ describe('AgentTeam coverage gaps', () => {
   it('dispose can be called multiple times safely', async () => {
     await team.dispose();
     await team.dispose(); // should not throw
+  });
+});
+
+// Additional coverage tests (Cycle 54)
+describe('AgentTeam remaining branches', () => {
+  let team: AgentTeam;
+
+  beforeEach(() => {
+    team = new AgentTeam();
+    team.setTeamId('coverage');
+  });
+
+  afterEach(async () => {
+    if (team) await team.dispose();
+  });
+
+  it('getTeamStatus with no tasks', async () => {
+    await team.initialize([]);
+    const status = await team.getTeamStatus();
+    expect(status.totalTasks).toBe(0);
+    expect(status.isComplete).toBe(false);
+  });
+
+  it('claimTask returns null when no pending tasks', async () => {
+    await team.initialize(['t1']);
+    const idx1 = await team.claimTask('agent-1');
+    expect(idx1).toBe(0);
+    // No more tasks
+    expect(await team.claimTask('agent-1')).toBeNull();
+  });
+
+  it('releaseTask with no claim returns false', async () => {
+    await team.initialize(['t1']);
+    expect(await team.releaseTask('agent-1', 0)).toBe(false);
+  });
+
+  it('completeTask for unassigned task is no-op', async () => {
+    await team.initialize(['t1']);
+    await team.completeTask('agent-1', 0, 'result');
+    const results = await team.getResults();
+    expect(results[0]).toBe(''); // unchanged
+  });
+
+  it('getResults returns empty for unstarted tasks', async () => {
+    await team.initialize(['t1', 't2']);
+    const results = await team.getResults();
+    expect(results).toEqual(['', '']);
+  });
+
+  it('setOnUpdate stores callback', () => {
+    const cb = vi.fn();
+    team.setOnUpdate(cb);
+    expect((team as any).onUpdate).toBe(cb);
+  });
+
+  it('handleAgentEvent ignores unknown event type', () => {
+    const notifySpy = vi.spyOn(team, 'notifyUpdate');
+    (team as any).handleAgentEvent({ type: 'unknown_event' } as any);
+    expect(notifySpy).not.toHaveBeenCalled();
   });
 });

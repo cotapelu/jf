@@ -301,4 +301,23 @@ describe('codebase.ast_query coverage gaps', () => {
     expect(names).toContain("NamedClass");
     await unlink(file);
   });
+
+  it('should return no matches when parent does not match', async () => {
+    const code = `
+class OtherClass {
+  method() {}
+}
+function standalone() {}
+`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    // Query for functions inside MyClass (not present)
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "function", parent: "MyClass" } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(0);
+    await unlink(file);
+  });
 });
