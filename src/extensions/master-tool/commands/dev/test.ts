@@ -113,7 +113,7 @@ export async function execute(
 }
 
 // Simple parser for test output (customize based on your test runner)
-function parseTestOutput(stdout: string): TestResult {
+export function parseTestOutput(stdout: string): TestResult {
   const result: TestResult = {
     passed: 0,
     failed: 0,

@@ -135,3 +135,36 @@ describe('AgentTeam', () => {
     });
   });
 });
+
+// Additional coverage tests for team-manager (Cycle 53)
+describe('AgentTeam coverage gaps', () => {
+  let team: AgentTeam;
+
+  beforeEach(() => {
+    team = new AgentTeam();
+    team.setTeamId('coverage-test');
+  });
+
+  afterEach(async () => {
+    if (team) {
+      await team.dispose();
+    }
+  });
+
+  it('getMyCurrentTask returns null for unknown agent', async () => {
+    await team.initialize(['task1']);
+    const result = await team.getMyCurrentTask('unknown-agent');
+    expect(result).toBeNull();
+  });
+
+  it('claimTask returns null when no tasks', async () => {
+    await team.initialize([]);
+    const idx = await team.claimTask('agent-1');
+    expect(idx).toBeNull();
+  });
+
+  it('dispose can be called multiple times safely', async () => {
+    await team.dispose();
+    await team.dispose(); // should not throw
+  });
+});

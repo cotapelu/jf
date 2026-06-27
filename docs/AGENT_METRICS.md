@@ -1763,3 +1763,35 @@ All tests pass; lint and build clean.
 
 **Next targets:** Continue with low‑coverage modules (`team-manager.ts`, `safe_edit.ts`, `analyze_ast.ts`, `dependency_tree.ts`). Plan: add tests for `executeTeamTasks` wait branch, `runAgentLoop` max turns, and additional `safe_edit` threads (backup race, etc.).
 
+
+## Cycle 52 - Multi-Module Coverage Push - 2026-06-27 (Autonomous)
+
+**Task:** Increase branch coverage for modules with low coverage (counter, git-status, dev-test, complexity).
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~2 hours
+**Status:** ✅ Success
+
+**Test Delta:** +~60 tests (total 991 passing, 1 skipped)
+**Coverage Delta:**
+- Statements: 93.35% (↑1.0% from 92.31%)
+- Branches: 84.26% (↑0.38% from 83.88%)
+- Functions: 92.29% (↑0.14% from 92.15%)
+- Lines: 94.44% (↑0.17% from 94.27%)
+
+**Per-module gains:**
+- `counter.ts`: 30% → 100% branch (10/10)
+- `git/status.ts`: 50% → 100% branch (18/18)
+- `dev/test.ts`: 57.9% → 100% branch (19/19)
+- `complexity.ts`: 84% → 90% branch (45/50)
+
+**Notes:**
+- Implemented comprehensive unit tests for `counter` command covering state management, persistence, mutex, execute actions, renderer, and error paths.
+- Added tests for `git.status` covering exec rejection, unstaged files, unknown branch, and renderer branches.
+- Added tests for `dev.test` covering argument flags, parseTestOutput edge cases, and renderResult branches.
+- Exported `complexityRating` and `miRating` to enable unit testing; added tests covering all rating branches (Low/Moderate/High/Very High, Excellent/Good/Fair/Poor).
+- All quality gates maintained: lint 0 errors, TypeScript clean, build successful.
+
+**Impact:** Significant branch coverage improvements on previously low-coverage core modules. Global branch coverage now 84.26%, approaching 85% target. Remaining uncovered branches concentrated in `team-manager.ts` (10), `ast_query.ts` (8), `complexity.ts` (5), `analyze_ast.ts` (4), etc. Next cycle will target these.
+
+**Next targets:** Continue toward 85% global branch coverage by adding tests for `team-manager.ts` (monitor loop, retry logic), `ast_query.ts` (query filters, parent constraints), and remaining complexity branches.

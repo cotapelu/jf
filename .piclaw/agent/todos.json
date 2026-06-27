@@ -3,47 +3,37 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Phase 31: Branch Coverage ≥85%",
+      "name": "Autonomous Cycle 52",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Add missing tests for path-security.ts (invalid input + resolve error)",
-          "status": "completed"
-        },
-        {
-          "id": "task-2",
-          "content": "Add missing tests for command-cache.ts (edge cases)",
+          "content": "Run discovery scan (lint, type-check, tests, build, security)",
           "status": "in_progress"
         },
         {
+          "id": "task-2",
+          "content": "Analyze coverage and identify remaining low-coverage files",
+          "status": "pending"
+        },
+        {
           "id": "task-3",
-          "content": "Add missing tests for team-manager.ts (conditional branches)",
+          "content": "Plan and execute tests for team-manager, ast_query to reach 85% global branch",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Add tests for session/definition.ts exported constants (if needed)",
+          "content": "Update metrics, commit, push",
           "status": "pending"
         },
         {
           "id": "task-5",
-          "content": "Add tests for session/concurrency.ts missing function coverage",
-          "status": "pending"
-        },
-        {
-          "id": "task-6",
-          "content": "Run coverage to verify ≥85% global branch coverage",
-          "status": "pending"
-        },
-        {
-          "id": "task-7",
-          "content": "Update evolution docs and git commit",
+          "content": "Sleep 2h and repeat",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 8,
+  "nextTaskId": 6,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-27T07:22:39.622Z"
+  "updatedAt": "2026-06-27T11:07:20.151Z"
 }

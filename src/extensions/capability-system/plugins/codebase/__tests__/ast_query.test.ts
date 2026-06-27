@@ -227,3 +227,78 @@ function standalone() {}
     await unlink(file);
   });
 });
+
+// Additional coverage tests (Cycle 53)
+describe('codebase.ast_query coverage gaps', () => {
+  it('should handle invalid regex pattern gracefully', async () => {
+    const code = `function foo() {}`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    // Invalid regex pattern (unclosed bracket) - nameMatches catch returns false
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "function", name: "[" } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(0);
+    await unlink(file);
+  });
+
+  it('should find ExportAllDeclaration', async () => {
+    const code = `export * from "another-module";`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "export" } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(1);
+    expect(result.details.matches[0].name).toBe("*");
+    await unlink(file);
+  });
+
+  it('should find call expressions with member callee', async () => {
+    const code = `obj.method();\nobj.deep.prop();`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "call", name: "method" } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(1);
+    expect(result.details.matches[0].name).toBe("method");
+    await unlink(file);
+  });
+
+  it('should find function expressions', async () => {
+    const code = `const f = function() {};\nconst g = function namedFunc() {};`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "function" } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    const names = result.details.matches.map(m => m.name);
+    expect(names).toContain("<anonymous>");
+    expect(names).toContain("namedFunc");
+    await unlink(file);
+  });
+
+  it('should find class expressions', async () => {
+    const code = `const C = class {};\nconst D = class NamedClass {};`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "class" } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    const names = result.details.matches.map(m => m.name);
+    expect(names).toContain("<anonymous>");
+    expect(names).toContain("NamedClass");
+    await unlink(file);
+  });
+});
