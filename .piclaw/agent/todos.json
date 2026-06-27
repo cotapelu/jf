@@ -3,31 +3,31 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Autonomous Cycle 52",
+      "name": "Autonomous Cycle 53 - Reach 85% Branch",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Run discovery scan (lint, type-check, tests, build, security)",
+          "content": "Run quality gates (test, coverage) and identify remaining low-coverage files",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Analyze coverage and identify remaining low-coverage files",
+          "content": "Add tests for analyze.ts, dependency_tree.ts, call_graph.ts, command-cache, command-executor, task-manager",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Plan and execute tests for team-manager, ast_query to reach 85% global branch",
+          "content": "Verify coverage >=85% global branch",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Update metrics, commit, push",
+          "content": "Commit, push, update metrics",
           "status": "pending"
         },
         {
           "id": "task-5",
-          "content": "Sleep 2h and repeat",
+          "content": "Sleep 2h and continue improvement loop",
           "status": "pending"
         }
       ]
@@ -35,5 +35,5 @@
   ],
   "nextTaskId": 6,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-27T11:07:20.151Z"
+  "updatedAt": "2026-06-27T11:31:01.829Z"
 }

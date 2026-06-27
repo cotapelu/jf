@@ -171,8 +171,6 @@ describe('CommandCache', () => {
       const mod = createMockModule('test');
       cache.set('test', mod, { name: 'test', category: 'test' });
 
-      // Manually adjust lastLoaded for predictable age
-      // (can't set directly, but we can infer it's recent)
       const stats = cache.getStats();
       expect(stats.size).toBe(1);
       expect(stats.entries[0].name).toBe('test');
@@ -180,6 +178,12 @@ describe('CommandCache', () => {
       expect(stats.entries[0].loadCount).toBe(1);
       expect(stats.entries[0].errorCount).toBe(0);
       expect(stats.entries[0].ageMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should return empty array when cache empty', () => {
+      const stats = cache.getStats();
+      expect(stats.size).toBe(0);
+      expect(stats.entries).toEqual([]);
     });
   });
 });
