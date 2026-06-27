@@ -1680,3 +1680,34 @@ All tests pass; lint and build clean.
 
 **Next targets:** Continue targeting the lowest branch coverage modules: `team-manager.ts` (~70%), `safe_edit.ts` (~70%), `workspace.ts` (~67%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%). Planned actions: add tests for remaining branches in `safe_edit` (write failure, other error paths), `workspace` (untested methods), and deeper `team-manager` integration scenarios.
 
+
+## Cycle 49 - safe_edit & Monitor Test Coverage - 2026-06-27 (Autonomous)
+
+**Task:** Cover missing branches in `safe_edit` and `startCompletionMonitor`.
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~45 minutes
+**Status:** ✅ Success
+
+**Test Delta:** +4 tests (total 934 passing, 1 skipped)
+**Coverage Delta:** 
+- Statements: **88.79%** (unchanged)
+- Branches: **80.58%** (unchanged, local increases within rounding)
+- Functions: **89.66%** (↑0.28%)
+- Lines: **89.59%** ( unchanged)
+
+**Notes:**
+- Added `safe-edit-coverage.test.ts` covering `tsc` exit code 2 branch (diagnostics allowed) — a previously uncovered path in `validateAllAndDiff`.
+- Fixed `startCompletionMonitor.coverage.test.ts`:
+  - Enabled skipped `getTeamStatus rejection` test (corrected `console.error` expectation, added extra microtask flush)
+  - Added `totalTasks===0` test to exercise else‑branch of `status.totalTasks > 0` condition.
+- Maintained `safe-edit-edge-cases.test.ts` with tests for:
+  - `fixImports=false` branch (eslint not called)
+  - `eslint` throw handling when `fixImports=true` (caught and ignored)
+- Already added `team-manager-lock-order.test.ts` covering `withLock` ordering and error paths.
+- All tests pass; lint and build clean.
+
+**Impact:** Incremental branch coverage growth; Phase 31 target ≥85% still in progress.
+
+**Next targets:** Focus on modules with lowest branch coverage: `team-manager.ts` (~70%), `safe_edit.ts` (~70%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%). Need 2–3× similar cycles to reach 85%.
+
