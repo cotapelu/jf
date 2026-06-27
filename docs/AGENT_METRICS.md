@@ -1711,3 +1711,33 @@ All tests pass; lint and build clean.
 
 **Next targets:** Focus on modules with lowest branch coverage: `team-manager.ts` (~70%), `safe_edit.ts` (~70%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%). Need 2–3× similar cycles to reach 85%.
 
+
+## Cycle 50 - Finalize safe_edit & Monitor Tests - 2026-06-27 (Autonomous)
+
+**Task:** Add missing branch coverage for `safe_edit` (tsc code 2, backup error, edit error) and `startCompletionMonitor` (totalTasks===0, getTeamStatus rejection).
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~45 minutes
+**Status:** ✅ Success
+
+**Test Delta:** +5 tests (total 934 passing, 1 skipped)
+**Coverage Delta:** 
+- Global branch coverage: **80.58%** → (modest increase within rounding, module‑level gains)
+- Safe_edit branch coverage improved by covering:
+  - `tsc` exit code 2 path (diagnostics allowed)
+  - `backupFiles` file‑not‑found error short‑circuit
+  - `applyEditInMemory` failing edit (invalid range)
+  - `eslint` error catch when `fixImports=true` (already caught, now explicitly tested)
+  - `fixImports=false` branch (eslint not invoked)
+- `startCompletionMonitor` now covers:
+  - `getTeamStatus` rejection branch (console.error)
+  - `totalTasks > 0` false path (no clear when zero tasks)
+
+**Notes:** All tests pass; lint clean; build clean. Phase 31 (≥85% branches) still in progress.
+
+**Next targets:** Continue with low‑coverage modules:
+- `team-manager.ts` (~70%): add tests for `handleAgentEvent` unknown type, zero‑task `getTeamStatus`, and `executeTeamTasks` wait=false branch.
+- `analyze_ast.ts` (76%): fix non‑existent file test, add parse‑error test, .js detection.
+- `dependency_tree.ts` (76%): edge cases (`export =`, `import type`, mixed specifiers).
+- `workspace.ts` (likely <70%): ensure all public methods covered.
+
