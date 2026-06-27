@@ -143,7 +143,9 @@ function evaluateRPN(rpn: number[]): number {
     } else {
       // Map precedence back to operator
       const operators = ['+', '-', '*', '/'];
-      const operator = operators[-token - 1]!;
+      const opIndex = -token - 1;
+      if (opIndex < 0 || opIndex >= operators.length) throw new Error('Invalid operator index');
+      const operator = operators[opIndex];
       if (stack.length < 2) throw new Error('Insufficient operands');
       const b = stack.pop()!;
       const a = stack.pop()!;

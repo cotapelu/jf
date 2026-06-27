@@ -10,7 +10,6 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join } from "path";
 import { resolveSecurePath } from "../../../../tools/utils/path-security.js";
 import { CircuitBreaker } from "../../../../tools/utils/circuit-breaker.js";
 // import { fileURLToPath } from "url"; // removed unused
@@ -93,26 +92,6 @@ function createExecWithCircuitBreaker(ctx: any, cwd: string) {
   return async (cmd: string, args: string[], options?: any) => {
     return await breaker.execute(() => ctx.exec(cmd, args, { ...options, cwd }));
   };
-}
-
-async function validateFile(file: string, cwd: string, format: boolean, fixImports: boolean, ctx: any): Promise<void> {
-  const securePath = resolveSecurePath(cwd, file);
-  const exec = createExecWithCircuitBreaker(ctx, cwd);
-
-  // Type check
-  const tsc: any = await exec('npx', ['tsc', '--noEmit', securePath]);
-  if (tsc.code !== 0 && tsc.code !== 2) {
-    throw new Error(`TypeScript check failed: exit code ${tsc.code}, stderr: ${tsc.stderr || 'none'}`);
-  }
-  // Fix imports
-  if (fixImports) {
-    try { await exec('npx', ['eslint', '--fix', securePath]); } catch {}
-  }
-  // Format
-  if (format) {
-    const fmt: any = await exec('npx', ['prettier', '--write', securePath]);
-    if (fmt.code !== 0) throw new Error(`Prettier formatting failed: exit ${fmt.code}, stderr: ${fmt.stderr || 'none'}`);
-  }
 }
 
 async function backupFiles(operations: EditOperation[], cwd: string): Promise<Map<string, string>> {

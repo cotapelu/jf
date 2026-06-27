@@ -10,7 +10,6 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join } from "path";
 import { resolveSecurePath } from "../../../../tools/utils/path-security.js";
 import { createRequire } from "module";
 

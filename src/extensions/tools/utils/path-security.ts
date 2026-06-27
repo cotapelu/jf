@@ -5,7 +5,7 @@
  * stay within the allowed working directory.
  */
 
-import { resolve, isAbsolute } from 'path';
+import { resolve } from 'path';
 
 /**
  * Normalizes and validates that a user-provided path resolves within the cwd.
@@ -26,7 +26,7 @@ export function resolveSecurePath(cwd: string, userPath: string): string {
   
   try {
     absolutePath = resolve(absoluteCwd, userPath);
-  } catch (err) {
+  } catch {
     throw new Error(`Invalid path: ${userPath}`);
   }
 

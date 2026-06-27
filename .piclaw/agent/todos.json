@@ -3,27 +3,47 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Phase 28: Refactor AgentTeam - TaskManager",
+      "name": "Phase 31: Branch Coverage ≥85%",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Extract TaskManager class from AgentTeam (task lifecycle, claim, complete, status)",
+          "content": "Add missing tests for path-security.ts (invalid input + resolve error)",
           "status": "completed"
         },
         {
           "id": "task-2",
-          "content": "Write unit tests for TaskManager (isolated from AgentTeam)",
-          "status": "completed"
+          "content": "Add missing tests for command-cache.ts (edge cases)",
+          "status": "in_progress"
         },
         {
           "id": "task-3",
-          "content": "Integrate TaskManager back into AgentTeam and verify tests pass",
-          "status": "completed"
+          "content": "Add missing tests for team-manager.ts (conditional branches)",
+          "status": "pending"
+        },
+        {
+          "id": "task-4",
+          "content": "Add tests for session/definition.ts exported constants (if needed)",
+          "status": "pending"
+        },
+        {
+          "id": "task-5",
+          "content": "Add tests for session/concurrency.ts missing function coverage",
+          "status": "pending"
+        },
+        {
+          "id": "task-6",
+          "content": "Run coverage to verify ≥85% global branch coverage",
+          "status": "pending"
+        },
+        {
+          "id": "task-7",
+          "content": "Update evolution docs and git commit",
+          "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 4,
+  "nextTaskId": 8,
   "nextPhaseId": 2,
-  "updatedAt": "2026-06-27T03:10:09.903Z"
+  "updatedAt": "2026-06-27T07:22:39.622Z"
 }

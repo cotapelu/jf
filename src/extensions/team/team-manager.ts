@@ -30,11 +30,6 @@ const BASE_RETRY_DELAY_MS = 1000; // 1 second
 const MAX_RETRY_DELAY_MS = 60000; // 60 seconds
 const AGENT_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes for zombie detection
 
-function calculateRetryDelay(retryCount: number): number {
-  const delay = BASE_RETRY_DELAY_MS * Math.pow(2, retryCount - 1);
-  return Math.min(delay, MAX_RETRY_DELAY_MS);
-}
-
 export function validateOptions(teamSize: number, teamRoles: string[]): { size: number; roles: string[] } {
   const size = Math.max(1, Math.min(teamSize, MAX_TEAM_SIZE));
   const roles: string[] = [];
