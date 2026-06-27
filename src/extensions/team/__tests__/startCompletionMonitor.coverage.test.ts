@@ -45,12 +45,14 @@ describe('startCompletionMonitor Coverage', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it.skip('should handle getTeamStatus rejection', async () => {
+  it('should handle getTeamStatus rejection', async () => {
     const getStatusSpy = vi.spyOn(team, 'getTeamStatus').mockRejectedValue(new Error('status fail'));
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     startCompletionMonitor(team);
     vi.advanceTimersByTime(1100);
+    // Flush microtasks from the interval callback
+    await Promise.resolve();
     await Promise.resolve();
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Status error'), expect.anything());
