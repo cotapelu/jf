@@ -1541,3 +1541,37 @@ All tests pass; lint clean; build clean.
 **Risk:** LOW - similar to prior extraction patterns; backward compatibility preserved.
 
 **Next targets:** Continue modular decomposition: consider extracting message bus or lock manager, or focus on pushing branch coverage to ≥85% by targeting low-coverage modules (team-manager.ts, skill-reader.ts, tool-template.ts, ast-scanner.ts).
+
+## Cycle 44 - CircuitBreaker Test Coverage - 2026-06-27 (Autonomous)
+
+**Task:** Increase branch coverage for `circuit-breaker.ts` (from ~38% to >85% locally).
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~30 minutes
+**Status:** ✅ Success
+
+**Test Delta:** +9 tests (total 916 passing, 1 skipped)
+**Coverage Delta:**
+- Statements: **88.7%** (↑0.55% from 88.15%)
+- Branches: **80.54%** (↑0.47% from 80.07%)
+- Functions: **89.38%** (↑0.70% from 88.68%)
+- Lines: **89.52%** (↑0.63% from 88.89%)
+
+**Notes:** Added comprehensive unit tests for `CircuitBreaker` covering:
+- Initial state (closed)
+- Success and failure handling
+- Threshold breach and open state
+- Open state rejection (fail-fast)
+- Half-open transition after timeout (using fake timers)
+- Success in half-open closing the circuit
+- Reset method
+- halfOpenMax behavior
+
+All tests pass; lint clean; build clean.
+
+**Impact:** 
+- circuit-breaker.ts branch coverage increased from ~38% to >85% locally.
+- Global branch coverage increased to 80.54%, moving towards 85% target.
+- Improved reliability of circuit breaker utility used in safe_edit and other capabilities.
+
+**Next targets:** Continue with other low-coverage modules: `path-security.ts` (~58% branches), `workspace.ts` (~?%), `team-manager.ts` (~70%), `analyze_ast.ts` (~76%).
