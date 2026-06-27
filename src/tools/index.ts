@@ -1,18 +1,18 @@
 /**
  * Custom Tools Registry
  *
- * Demonstrates usage of ALL tool factories from sdk.ts by calling each one.
- * Note: Most factories take `cwd` and optional `options`.
+ * Re-exports from builtin-tools and custom modules.
+ * Provides single entry point for all tool definitions.
  */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { BashToolOptions, ToolDefinition } from '@earendil-works/pi-coding-agent';
-import { createBashTool, createCodingTools, createEditTool, createFindTool, createGrepTool, createLsTool, createReadOnlyTools, createReadTool, createWriteTool, } from '@earendil-works/pi-coding-agent';
+import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { getTimeTool } from './time/index.js';
 import { codebaseIndexTool } from './indexer/index.js';
 import { compactContextTool } from './compaction/index.js';
 import { createSessionTool, initializeSessionTool, resetSessionTool as resetSessionToolInternal, } from './session/index.js';
 import { createMultiAgentTool } from './multi-agent/index.js';
 import { skillTool } from './skills/index.js';
+import { registerAllBuiltinTools } from './builtin-tools.js';
 
 // Re-export tools for convenience
 export { getTimeTool } from './time/index.js';
@@ -21,27 +21,7 @@ export { initializeSessionTool, createSessionTool } from './session/index.js';
 export { createMultiAgentTool } from './multi-agent/index.js';
 export { compactContextTool } from './compaction/index.js';
 export { skillTool } from './skills/index.js';
-
-/**
- * Register ALL built-in tools (including file discovery tools)
- * These will be treated as custom tools and passed via customTools array.
- */
-export function registerAllBuiltinTools(cwd: string): ToolDefinition[] {
-  const tools: ToolDefinition[] = [];
-
-  // Core file operations
-  tools.push(createReadTool(cwd));
-  tools.push(createBashTool(cwd));
-  tools.push(createEditTool(cwd));
-  tools.push(createWriteTool(cwd));
-
-  // File discovery tools (each is a single ToolDefinition)
-  tools.push(createFindTool(cwd));
-  tools.push(createGrepTool(cwd));
-  tools.push(createLsTool(cwd));
-
-  return tools;
-}
+export { registerAllBuiltinTools } from './builtin-tools.js';
 
 /**
  * Register session tool (manager initializes lazily on first use)
@@ -68,7 +48,7 @@ export function registerAllCustomTools(): ToolDefinition[] {
 /**
  * Combined: ALL tools (built-in via all factories + custom)
  */
-export function registerAllTools(cwd: string): ToolDefinition[] {
+export function registerAllBuiltinAndCustomTools(cwd: string): ToolDefinition[] {
 	return [...registerAllBuiltinTools(cwd), ...registerAllCustomTools()];
 }
 
