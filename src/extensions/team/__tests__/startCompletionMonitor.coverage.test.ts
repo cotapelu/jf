@@ -111,6 +111,30 @@ describe('startCompletionMonitor Coverage', () => {
     resetTimerSpy.mockRestore();
   });
 
+  it('should NOT clear interval when isComplete true but totalTasks is zero', async () => {
+    const getStatusSpy = vi.spyOn(team, 'getTeamStatus').mockResolvedValue({
+      completedTasks: 0,
+      failedTasks: 0,
+      pendingTasks: 0,
+      totalTasks: 0,
+      isComplete: true,
+      agents: [],
+      tasks: [],
+    } as any);
+    const resetTimerSpy = vi.spyOn(TeamRegistry.getInstance(), 'resetAutoDisposeTimer');
+
+    startCompletionMonitor(team);
+    vi.advanceTimersByTime(1100);
+    await Promise.resolve();
+
+    // totalTasks is 0, condition false -> interval remains
+    expect(team.monitorInterval).not.toBeNull();
+    expect(resetTimerSpy).not.toHaveBeenCalled();
+
+    getStatusSpy.mockRestore();
+    resetTimerSpy.mockRestore();
+  });
+
   it('should handle exception from resetAutoDisposeTimer and still clear interval', async () => {
     const getStatusSpy = vi.spyOn(team, 'getTeamStatus').mockResolvedValue({
       completedTasks: 1,

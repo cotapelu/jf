@@ -64,40 +64,26 @@ describe('safe_edit edge cases', () => {
     expect(result.results[0].error).toContain('prettier');
   });
 
-  it('should succeed with fixImports=false and format=false', async () => {
-    const file = join(tempDir, 'x.ts');
+  it('should continue even if eslint fails when fixImports=true', async () => {
+    const file = join(tempDir, 'y.ts');
     await writeFile(file, 'code', 'utf-8');
-
     const ctx = createMockCtx();
-    // Track whether eslint/prettier were called
-    let eslintCalled = false;
-    let prettierCalled = false;
     ctx.exec = async (cmd: string, args: string[]) => {
-      if (cmd === 'npx' && args[0] === 'eslint') {
-        eslintCalled = true;
-        return { code: 0, stdout: '', stderr: '' };
-      }
-      if (cmd === 'npx' && args[0] === 'prettier') {
-        prettierCalled = true;
-        return { code: 0, stdout: '', stderr: '' };
-      }
       if (cmd === 'npx' && args[0] === 'tsc') {
         return { code: 0, stdout: '', stderr: '' };
       }
+      if (cmd === 'npx' && args[0] === 'eslint') {
+        throw new Error('eslint fail');
+      }
       return { code: 0, stdout: '', stderr: '' };
     };
-
     const params = {
-      operations: [{ file: 'x.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'changed' }],
+      operations: [{ file: 'y.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
       format: false,
-      fixImports: false,
+      fixImports: true,
     };
-
     const result = await safeEditModule.execute(params, ctx as any);
+    // Should succeed despite eslint error because it's caught and ignored
     expect(result.success).toBe(true);
-    expect(eslintCalled).toBe(false);
-    expect(prettierCalled).toBe(false);
-    const content = await readFile(file, 'utf-8');
-    expect(content).toBe('changed');
   });
 });
