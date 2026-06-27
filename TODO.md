@@ -278,3 +278,48 @@ All high-priority tasks complete.
 ---
 
 *TODO last updated: 2026-06-22*
+
+## Phase 28: Extract TaskManager from AgentTeam (COMPLETED ✅)
+
+**Goal:** Reduce AgentTeam complexity by extracting task lifecycle management.
+
+**Actions:**
+- [x] Create `TaskManager` class with full task distribution logic
+- [x] Write 24 unit tests for TaskManager (isolated)
+- [x] Integrate TaskManager into AgentTeam
+- [x] Maintain backward compatibility for existing tests
+- [x] All tests pass (25 files, 195 passing)
+
+**Results:**
+- AgentTeam reduced from ~1069 lines to ~X lines (core logic extracted)
+- TaskManager: 250 lines, single responsibility
+- Zero test regressions
+- Risk: LOW
+
+---
+
+## Phase 29: Extract AgentMonitor (TODO)
+
+**Goal:** Further reduce AgentTeam complexity by extracting agent lifecycle management.
+
+**Tasks:**
+- [ ] Create `AgentMonitor` class handling:
+  - Heartbeat tracking (`agentLastSeen`)
+  - Agent status (`agentStatuses`)
+  - Zombie detection & reclamation logic
+  - Role ↔ session ID mapping (`roleByAgentId`)
+- [ ] Write comprehensive unit tests for AgentMonitor
+- [ ] Integrate AgentMonitor into AgentTeam
+- [ ] Update `reclaimZombieAgents()` to delegate to AgentMonitor
+- [ ] Ensure all team tests still pass
+- [ ] Verify build successful
+
+**Impact:**
+- AgentTeam complexity ↓ further (target ~400-500 lines)
+- Separation: TaskManager (tasks) + AgentMonitor (agents) + TeamWorkspace (data) + TeamCoordinator (orchestration)
+- Easier to test each concern independently
+
+**Risk:** LOW (similar to TaskManager extraction pattern)
+
+**Estimated effort:** 1-2 days
+

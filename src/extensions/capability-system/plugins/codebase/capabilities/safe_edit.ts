@@ -5,14 +5,15 @@
  * Edits code with validation: syntax check, optional import fixing, formatting.
  * Rolls back on any failure to preserve working tree.
  * Supports atomic multi-file and multi-operation edits.
+ * Includes path traversal protection and circuit breaker for external commands.
  */
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
 import { join } from "path";
+import { resolveSecurePath } from "../../../../tools/utils/path-security.js";
+import { CircuitBreaker } from "../../../../tools/utils/circuit-breaker.js";
 // import { fileURLToPath } from "url"; // removed unused
-
-// const __filename = fileURLToPath(import.meta.url); // unused
 
 export const schema = Type.Object({
   operations: Type.Array(Type.Object({
@@ -87,19 +88,29 @@ function applyEditInMemory(op: EditOperation, content: string): string {
   return edited.join('\n');
 }
 
+function createExecWithCircuitBreaker(ctx: any, cwd: string) {
+  const breaker = new CircuitBreaker({ failureThreshold: 5, timeoutMs: 60_000 });
+  return async (cmd: string, args: string[], options?: any) => {
+    return await breaker.execute(() => ctx.exec(cmd, args, { ...options, cwd }));
+  };
+}
+
 async function validateFile(file: string, cwd: string, format: boolean, fixImports: boolean, ctx: any): Promise<void> {
+  const securePath = resolveSecurePath(cwd, file);
+  const exec = createExecWithCircuitBreaker(ctx, cwd);
+
   // Type check
-  const tsc = await ctx.exec('npx', ['tsc', '--noEmit', file], { cwd });
+  const tsc: any = await exec('npx', ['tsc', '--noEmit', securePath]);
   if (tsc.code !== 0 && tsc.code !== 2) {
     throw new Error(`TypeScript check failed: exit code ${tsc.code}, stderr: ${tsc.stderr || 'none'}`);
   }
   // Fix imports
   if (fixImports) {
-    try { await ctx.exec('npx', ['eslint', '--fix', file], { cwd }); } catch {}
+    try { await exec('npx', ['eslint', '--fix', securePath]); } catch {}
   }
   // Format
   if (format) {
-    const fmt = await ctx.exec('npx', ['prettier', '--write', file], { cwd });
+    const fmt: any = await exec('npx', ['prettier', '--write', securePath]);
     if (fmt.code !== 0) throw new Error(`Prettier formatting failed: exit ${fmt.code}, stderr: ${fmt.stderr || 'none'}`);
   }
 }
@@ -109,7 +120,8 @@ async function backupFiles(operations: EditOperation[], cwd: string): Promise<Ma
   for (const op of operations) {
     if (!backups.has(op.file)) {
       try {
-        backups.set(op.file, await fs.readFile(join(cwd, op.file), 'utf-8'));
+        const securePath = resolveSecurePath(cwd, op.file);
+        backups.set(op.file, await fs.readFile(securePath, 'utf-8'));
       } catch (err) {
         throw new Error(`Cannot read file ${op.file}: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -137,7 +149,8 @@ function computeFinalContents(opsByFile: Map<string, EditOperation[]>, backups: 
 
 async function writeFiles(finalContents: Map<string, string>, cwd: string): Promise<void> {
   for (const [file, content] of finalContents) {
-    await fs.writeFile(join(cwd, file), content, 'utf-8');
+    const securePath = resolveSecurePath(cwd, file);
+    await fs.writeFile(securePath, content, 'utf-8');
   }
 }
 
@@ -151,11 +164,12 @@ function groupOperationsByFile(operations: EditOperation[]): Map<string, EditOpe
   return map;
 }
 
-// validateAndDiff unused - removed
-
 async function rollbackAll(backups: Map<string, string>, cwd: string): Promise<void> {
   for (const [f, backup] of backups) {
-    try { await fs.writeFile(join(cwd, f), backup, 'utf-8'); } catch {}
+    try {
+      const securePath = resolveSecurePath(cwd, f);
+      await fs.writeFile(securePath, backup, 'utf-8');
+    } catch {}
   }
 }
 
@@ -168,10 +182,26 @@ async function validateAllAndDiff(
   ctx: any
 ): Promise<EditResult[]> {
   const results: EditResult[] = [];
+  const exec = createExecWithCircuitBreaker(ctx, cwd);
   for (const [file] of finalContents) {
     try {
-      await validateFile(file, cwd, format, fixImports, ctx);
-      const final = await fs.readFile(join(cwd, file), 'utf-8');
+      const securePath = resolveSecurePath(cwd, file);
+      // Type check using circuit breaker
+      const tsc: any = await exec('npx', ['tsc', '--noEmit', securePath]);
+      if (tsc.code !== 0 && tsc.code !== 2) {
+        throw new Error(`TypeScript check failed: exit code ${tsc.code}, stderr: ${tsc.stderr || 'none'}`);
+      }
+      // Fix imports
+      if (fixImports) {
+        try { await exec('npx', ['eslint', '--fix', securePath]); } catch {}
+      }
+      // Format
+      if (format) {
+        const fmt: any = await exec('npx', ['prettier', '--write', securePath]);
+        if (fmt.code !== 0) throw new Error(`Prettier formatting failed: exit ${fmt.code}, stderr: ${fmt.stderr || 'none'}`);
+      }
+      // Get final content for diff
+      const final = await fs.readFile(securePath, 'utf-8');
       results.push({ file, success: true, diff: computeDiff(backups.get(file)!, final, file) });
     } catch (err) {
       await rollbackAll(backups, cwd);
@@ -183,10 +213,16 @@ async function validateAllAndDiff(
   return results;
 }
 
-function validateOperations(operations: EditOperation[]): { valid: boolean; file?: string; error?: string } {
+function validateOperations(operations: EditOperation[], cwd: string): { valid: boolean; file?: string; error?: string } {
   for (const op of operations) {
     if ((op.editType === 'replace' || op.editType === 'insert') && op.newCode === undefined) {
       return { valid: false, file: op.file, error: 'newCode is required for replace/insert' };
+    }
+    // Path traversal protection
+    try {
+      resolveSecurePath(cwd, op.file);
+    } catch (err) {
+      return { valid: false, file: op.file, error: `Access denied: ${String(err)}` };
     }
   }
   return { valid: true };
@@ -197,7 +233,7 @@ export async function execute(params: { operations: EditOperation[]; format?: bo
   const format = params.format !== false;
   const fixImports = params.fixImports !== false;
   const { operations } = params;
-  const inputCheck = validateOperations(operations);
+  const inputCheck = validateOperations(operations, cwd);
   if (!inputCheck.valid) {
     return { success: false, results: [{ file: inputCheck.file || '', success: false, error: inputCheck.error || 'Invalid input' }] };
   }

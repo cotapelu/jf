@@ -20,6 +20,7 @@ import {
 // import { getAgentDir } from "@earendil-works/pi-coding-agent"; // unused
 import { SharedWorkspace, type WorkspaceEntry } from "./workspace.js";
 import { createTeamOpsTool } from "./team-ops-tool.js";
+import { TaskManager } from "./task-manager.js";
 import * as path from "node:path";
 
 export const MAX_TEAM_SIZE = 4;
@@ -54,21 +55,13 @@ export class AgentTeam implements AgentTeamRuntime {
   runtimes: AgentSessionRuntime[] = [];
   roles: string[] = [];
   size = 0;
+  private taskManager: TaskManager;
   dispose: () => Promise<void>;
   childPromises: Promise<void>[] = [];
   private childControllers: Map<string, AbortController> = new Map();
   private disposed = false;
 
-  // State
-  tasks: string[] = [];
-  private taskStatuses: Map<number, {
-    assignee: string | null;
-    status: 'pending' | 'in_progress' | 'completed' | 'failed';
-    result: string;
-    retryCount: number;
-    retryAvailableAt?: number; // timestamp when task becomes claimable again after backoff
-  }> = new Map();
-  private pendingIndices: number[] = []; // sorted list of indices with status 'pending' (including backoff)
+  // Task state managed by TaskManager
   agentStatuses: Map<string, { currentTaskIndex: number | null; status: string }> = new Map();
   private roleByAgentId: Map<string, string> = new Map(); // maps session.id -> role
   private agentLastSeen: Map<string, number> = new Map(); // role -> timestamp of last activity
@@ -108,17 +101,14 @@ export class AgentTeam implements AgentTeamRuntime {
         this.monitorInterval = null;
       }
       this.disposed = true;
-      // Abort all child agent loops
       for (const controller of this.childControllers.values()) {
         controller.abort();
       }
-      // Wait for all child agent loops to finish (if any)
       if (this.childPromises && this.childPromises.length > 0) {
         await Promise.allSettled(this.childPromises);
       }
       this.childControllers.clear();
       this.childPromises = [];
-      // Dispose all runtimes (children)
       await Promise.allSettled(
         this.runtimes.map(rt =>
           (rt.dispose ? rt.dispose() : Promise.resolve()).catch(err =>
@@ -127,7 +117,6 @@ export class AgentTeam implements AgentTeamRuntime {
         )
       );
       this.runtimes = [];
-      // Unregister from TeamRegistry
       try {
         const registry = TeamRegistry.getInstance();
         if (this.id) {
@@ -138,6 +127,13 @@ export class AgentTeam implements AgentTeamRuntime {
       }
     };
     this.workspace = new SharedWorkspace();
+    // Initialize TaskManager
+    this.taskManager = new TaskManager({
+      maxRetries: DEFAULT_MAX_RETRIES,
+      baseRetryDelayMs: BASE_RETRY_DELAY_MS,
+      maxRetryDelayMs: MAX_RETRY_DELAY_MS,
+    });
+    this.taskManager.setOnUpdate((update) => this.notifyUpdate(update));
   }
 
   setTeamId(id: string): void {
@@ -146,6 +142,28 @@ export class AgentTeam implements AgentTeamRuntime {
 
   setOnUpdate(fn: ((update: AgentToolResult<unknown>) => void) | undefined): void {
     this.onUpdate = fn;
+    // Also forward to TaskManager
+    this.taskManager.setOnUpdate(fn);
+  }
+
+  // Expose tasks (for compatibility, e.g., team-ops-tool)
+  get tasks(): string[] {
+    return this.taskManager.getTasks();
+  }
+  set tasks(value: string[]) {
+    this.taskManager.initialize(value);
+  }
+
+  // For tests that directly access internal state
+  get taskStatuses(): Map<number, any> {
+    return this.taskManager.getAllTaskStatuses();
+  }
+
+  get pendingIndices(): number[] {
+    return this.taskManager.pendingIndices;
+  }
+  set pendingIndices(v: number[]) {
+    this.taskManager.pendingIndices = v;
   }
 
   getWorkspace(): SharedWorkspace {
@@ -227,11 +245,15 @@ export class AgentTeam implements AgentTeamRuntime {
   // Compatibility for team-tool
   getContext(): { getTeamSummary: () => { totalTasks: number; completedTasks: number; activeAgents: number } } {
     return {
-      getTeamSummary: () => ({
-        totalTasks: this.tasks.length,
-        completedTasks: Array.from(this.taskStatuses.values()).filter(t => t.status === 'completed').length,
-        activeAgents: Array.from(this.agentStatuses.values()).filter(s => s.status === 'working').length,
-      }),
+      getTeamSummary: () => {
+        const taskStats = this.taskManager.getTeamStatus();
+        const activeAgents = Array.from(this.agentStatuses.values()).filter(s => s.status === 'working').length;
+        return {
+          totalTasks: taskStats.totalTasks,
+          completedTasks: taskStats.completedTasks,
+          activeAgents,
+        };
+      },
     };
   }
 
@@ -269,22 +291,19 @@ export class AgentTeam implements AgentTeamRuntime {
     failedTasks: number;
     pendingTasks: number;
     totalTasks: number;
-    isComplete: boolean; // true when all tasks are either completed or failed
+    isComplete: boolean;
   }> {
     return this.withLock(() => {
-      const tasksArray = Array.from(this.taskStatuses.entries()).map(([idx, status]) => ({ index: idx, ...status }));
-      const completed = Array.from(this.taskStatuses.values()).filter(t => t.status === 'completed').length;
-      const failed = Array.from(this.taskStatuses.values()).filter(t => t.status === 'failed').length;
-      const pending = Array.from(this.taskStatuses.values()).filter(t => t.status === 'pending').length;
-      const total = this.tasks.length;
+      const taskStats = this.taskManager.getTeamStatus();
+      const agents = Array.from(this.agentStatuses.entries()).map(([id, status]) => ({ id, ...status }));
       return {
-        agents: Array.from(this.agentStatuses.entries()).map(([id, status]) => ({ id, ...status })),
-        tasks: tasksArray,
-        completedTasks: completed,
-        failedTasks: failed,
-        pendingTasks: pending,
-        totalTasks: total,
-        isComplete: completed + failed === total && total > 0,
+        agents,
+        tasks: taskStats.tasks,
+        completedTasks: taskStats.completedTasks,
+        failedTasks: taskStats.failedTasks,
+        pendingTasks: taskStats.pendingTasks,
+        totalTasks: taskStats.totalTasks,
+        isComplete: taskStats.isComplete,
       };
     });
   }
@@ -296,56 +315,23 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  // Compatibility for tests
+  insertPendingIndexSorted(idx: number): void {
+    this.taskManager.insertPendingIndexSorted(idx);
+  }
+
   // Heartbeat để theo dõi agent còn sống không
   public updateHeartbeat(role: string): void {
     this.agentLastSeen.set(role, Date.now());
   }
-
-  // Helper: insert index into pendingIndices while maintaining sorted order
-  private insertPendingIndexSorted(idx: number): void {
-    // Binary search để tìm vị trí insert
-    let low = 0;
-    let high = this.pendingIndices.length;
-    while (low < high) {
-      const mid = (low + high) >>> 1;
-      if (this.pendingIndices[mid] < idx) low = mid + 1;
-      else high = mid;
-    }
-    // Check not already present (to avoid duplicates)
-    if (low > 0 && this.pendingIndices[low - 1] === idx) return; // already there
-    if (low < this.pendingIndices.length && this.pendingIndices[low] === idx) return;
-    this.pendingIndices.splice(low, 0, idx);
-  }
-
   async claimTask(agentId: string): Promise<number | null> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     return this.withLock(() => {
-      for (let i = 0; i < this.pendingIndices.length; i++) {
-        const idx = this.pendingIndices[i];
-        const task = this.taskStatuses.get(idx);
-        if (!task || task.status !== 'pending') continue; // should not happen, but safe
-        // Check backoff
-        if (task.retryAvailableAt && task.retryAvailableAt > Date.now()) {
-          continue; // not yet claimable
-        }
-        // Claim this task
-        task.retryAvailableAt = undefined; // clear any backoff
-        task.assignee = role;
-        task.status = 'in_progress';
+      const idx = this.taskManager.claimTask(role);
+      if (idx !== null) {
         this.agentStatuses.set(role, { currentTaskIndex: idx, status: 'working' });
-        // Efficient removal: use shift() if at start
-        if (i === 0) {
-          this.pendingIndices.shift();
-        } else {
-          this.pendingIndices.splice(i, 1);
-        }
-        this.notifyUpdate(this.createUpdate(
-          `🔨 Agent ${role} claimed task ${idx}: ${this.tasks[idx].substring(0, 80)}...`,
-          { agent: role, taskIndex: idx, taskPreview: this.tasks[idx].substring(0, 200), retryCount: task.retryCount }
-        ));
-        return idx;
       }
-      return null;
+      return idx;
     });
   }
 
@@ -364,107 +350,65 @@ export class AgentTeam implements AgentTeamRuntime {
     if (zombies.length === 0) return;
 
     for (const role of zombies) {
+      // Reset agent status
       this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
       this.agentLastSeen.delete(role);
-
-      for (const [taskIndex, task] of this.taskStatuses.entries()) {
-        if (task.assignee === role && task.status === 'in_progress') {
-          task.assignee = null;
-          task.retryCount++;
-          if (task.retryCount >= DEFAULT_MAX_RETRIES) {
-            task.status = 'failed';
-            task.result = 'Agent zombie timeout';
-            const pendingIdx = this.pendingIndices.indexOf(taskIndex);
-            if (pendingIdx !== -1) {
-              this.pendingIndices.splice(pendingIdx, 1);
-            }
-          } else {
-            task.status = 'pending';
-            const delay = calculateRetryDelay(task.retryCount);
-            task.retryAvailableAt = now + delay;
-            this.insertPendingIndexSorted(taskIndex);
-          }
-          this.notifyUpdate(this.createUpdate(
-            `🧟 Zombie agent ${role} detected on task ${taskIndex}, reclaiming${task.status === 'failed' ? '' : `, retry ${task.retryCount}/${DEFAULT_MAX_RETRIES}`}`,
-            { agent: role, taskIndex, status: task.status, retryCount: task.retryCount },
-            task.status === 'failed'
-          ));
-        }
-      }
+      // Delegate task reclamation to TaskManager (includes notifications)
+      this.taskManager.reclaimZombieTasks(role, now);
     }
   }
 
   async releaseTask(agentId: string, taskIndex: number): Promise<boolean> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     return this.withLock(() => {
-      const task = this.taskStatuses.get(taskIndex);
-      if (!task || task.assignee !== role || task.status === 'completed' || task.status === 'failed') {
-        return false;
+      const released = this.taskManager.releaseTask(role, taskIndex);
+      if (released) {
+        // Clear agent status
+        const agentStatus = this.agentStatuses.get(role);
+        if (agentStatus) {
+          agentStatus.currentTaskIndex = null;
+          agentStatus.status = 'idle';
+        }
       }
-      task.assignee = null;
-      task.status = 'pending';
-      task.retryAvailableAt = undefined; // immediate claimable
-      this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
-      // Re-add to pendingIndices
-      this.insertPendingIndexSorted(taskIndex);
-      // Notify task released
-      this.notifyUpdate(this.createUpdate(
-        `↩️ Agent ${role} released task ${taskIndex}`,
-        { agent: role, taskIndex: taskIndex, retryCount: task.retryCount }
-      ));
-      return true;
+      return released;
     });
   }
 
   async handleAgentFailure(agentId: string, taskIndex: number, error?: unknown): Promise<void> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     await this.withLock(() => {
-      const task = this.taskStatuses.get(taskIndex);
-      if (!task || task.assignee !== role) {
-        return; // Not assigned to this agent or task doesn't exist
-      }
-
-      task.assignee = null;
-      task.retryCount++;
-
-      if (task.retryCount >= DEFAULT_MAX_RETRIES) {
-        // Max retries exceeded - mark as failed
-        task.status = 'failed';
-        // Determine error message
-        let errorMessage: string;
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else if (error !== undefined && error !== null) {
-          errorMessage = String(error);
-        } else {
-          errorMessage = 'Unknown error';
+      const success = this.taskManager.handleAgentFailure(role, taskIndex, error);
+      if (success) {
+        // Update agent status to idle
+        const agentStatus = this.agentStatuses.get(role);
+        if (agentStatus) {
+          agentStatus.currentTaskIndex = null;
+          agentStatus.status = 'idle';
         }
-        task.result = errorMessage;
-        task.retryAvailableAt = undefined;
-        // Remove from pendingIndices if present
-        const pendingIdx = this.pendingIndices.indexOf(taskIndex);
-        if (pendingIdx !== -1) {
-          this.pendingIndices.splice(pendingIdx, 1);
-        }
-        this.notifyUpdate(this.createUpdate(
-          `❌ Task ${taskIndex} failed after ${task.retryCount} retries (agent: ${role})`,
-          { agent: role, taskIndex, retryCount: task.retryCount, error: task.result },
-          true
-        ));
-      } else {
-        // Retry with backoff
-        const delay = calculateRetryDelay(task.retryCount);
-        task.status = 'pending';
-        task.retryAvailableAt = Date.now() + delay;
-        // Re-add to pendingIndices so it can be claimed after backoff
-        this.insertPendingIndexSorted(taskIndex);
-        this.notifyUpdate(this.createUpdate(
-          `⚠️ Agent ${role} failed task ${taskIndex} (retry ${task.retryCount}/${DEFAULT_MAX_RETRIES}), retry in ${delay}ms`,
-          { agent: role, taskIndex, retryCount: task.retryCount, delay }
-        ));
       }
+    });
+  }
 
-      // Clear agent's current task
+  async reportResult(taskIndex: number, result: string): Promise<void> {
+    await this.withLock(() => {
+      const task = this.taskManager.getTaskStatus(taskIndex);
+      const agentId = task?.assignee;
+      this.taskManager.reportResult(taskIndex, result);
+      if (agentId) {
+        const status = this.agentStatuses.get(agentId);
+        if (status) {
+          status.currentTaskIndex = null;
+          status.status = 'idle';
+        }
+      }
+    });
+  }
+
+  async completeTask(agentId: string, taskIndex: number, result: string): Promise<void> {
+    const role = this.roleByAgentId.get(agentId) ?? agentId;
+    await this.withLock(() => {
+      this.taskManager.completeTask(role, taskIndex, result);
+      // Update agent status
       const agentStatus = this.agentStatuses.get(role);
       if (agentStatus) {
         agentStatus.currentTaskIndex = null;
@@ -473,63 +417,8 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
-  async reportResult(taskIndex: number, result: string): Promise<void> {
-    await this.withLock(() => {
-      const task = this.taskStatuses.get(taskIndex);
-      if (!task) {
-        // Warning: task not found (silenced for cleaner logs)
-        return;
-      }
-      const agentId = task.assignee;
-      task.status = 'completed';
-      task.result = result;
-      task.assignee = null; // Clear assignment if any
-      if (agentId) {
-        const status = this.agentStatuses.get(agentId);
-        if (status) {
-          status.currentTaskIndex = null;
-          status.status = 'idle';
-        }
-      }
-      // Debug: task completed (silenced)
-    });
-  }
-
-  async completeTask(agentId: string, taskIndex: number, result: string): Promise<void> {
-    const role = this.roleByAgentId.get(agentId) ?? agentId;
-    await this.withLock(() => {
-      const task = this.taskStatuses.get(taskIndex);
-      if (!task) return;
-      if (task.assignee !== role) return;
-      task.status = 'completed';
-      task.result = result;
-      task.assignee = null; // Clear assignment on completion
-      // Remove from pendingIndices if present
-      const pendingIdx = this.pendingIndices.indexOf(taskIndex);
-      if (pendingIdx !== -1) {
-        this.pendingIndices.splice(pendingIdx, 1);
-      }
-      const status = this.agentStatuses.get(role);
-      if (status) {
-        status.currentTaskIndex = null;
-        status.status = 'idle';
-      }
-      // Notify task completed
-      this.notifyUpdate(this.createUpdate(
-        `✅ Agent ${role} completed task ${taskIndex}`,
-        { agent: role, taskIndex: taskIndex, resultPreview: result.substring(0, 150) }
-      ));
-    });
-  }
-
   async getResults(): Promise<string[]> {
-    return this.withLock(() => {
-      const results: string[] = new Array(this.tasks.length).fill('');
-      this.taskStatuses.forEach((task, idx) => {
-        results[idx] = task.result;
-      });
-      return results;
-    });
+    return this.withLock(() => this.taskManager.getResults());
   }
 
   async waitForCompletion(): Promise<void> {
@@ -779,17 +668,7 @@ export class AgentTeam implements AgentTeamRuntime {
     return texts.join('');
   }
 
-  // --- Team initialization helpers (refactored) ---
-  private resetTaskState(tasks: string[]): void {
-    this.tasks = tasks;
-    this.taskStatuses.clear();
-    this.pendingIndices = [];
-    for (let i = 0; i < tasks.length; i++) {
-      this.taskStatuses.set(i, { assignee: null, status: 'pending', result: '', retryCount: 0 });
-      this.pendingIndices.push(i);
-    }
-  }
-
+  // resetTaskState removed – TaskManager.initialize() replaces it
   private async clearTransientState(): Promise<void> {
     this.messageBus.clear();
     await this.workspaceClear();
@@ -812,7 +691,7 @@ export class AgentTeam implements AgentTeamRuntime {
 
   async initialize(tasks: string[]): Promise<void> {
     await this.withLock(async () => {
-      this.resetTaskState(tasks);
+      this.taskManager.initialize(tasks);
       await this.clearTransientState();
       this.resetAgentStatuses();
     });
@@ -821,7 +700,7 @@ export class AgentTeam implements AgentTeamRuntime {
 
 
   private getBootstrapPrompt(role: string): string {
-    const bootstrapTasksList = this.tasks.map((t, i) => `[${i}] ${t}`).join("\n");
+    const bootstrapTasksList = this.taskManager.getTasks().map((t, i) => `[${i}] ${t}`).join("\n");
     return `You are ${role}, an AI agent in a collaborative team.
 
 Team tasks:

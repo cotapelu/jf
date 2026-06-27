@@ -10,11 +10,11 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join } from "path"; // dirname unused removed
+import { join } from "path";
+import { resolveSecurePath } from "../../../../tools/utils/path-security.js";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-// __filename unused - removed
 
 export const schema = Type.Object({
   file: Type.String({ description: "File path to analyze (relative to cwd)" })
@@ -278,7 +278,18 @@ async function executeInternal(filePath: string, file: string, language: "ts" | 
 
 export async function execute(params: { file: string }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
-  const filePath = join(cwd, params.file);
+  
+  // Path traversal protection
+  let filePath: string;
+  try {
+    filePath = resolveSecurePath(cwd, params.file);
+  } catch (err) {
+    return { 
+      content: [{ type: "text" as const, text: `Access denied: ${String(err)}` }], 
+      isError: true, 
+      details: { file: params.file, error: 'path_traversal' } 
+    };
+  }
 
   try { await fs.access(filePath); } catch {
     return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } };
