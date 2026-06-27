@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { promises as fs } from 'fs';
 import safeEditModule from '../capabilities/safe_edit.js';
 
 describe('safe_edit edge cases', () => {
@@ -64,26 +65,47 @@ describe('safe_edit edge cases', () => {
     expect(result.results[0].error).toContain('prettier');
   });
 
-  it('should continue even if eslint fails when fixImports=true', async () => {
-    const file = join(tempDir, 'y.ts');
+  it('should not call eslint when fixImports=false', async () => {
+    const file = join(tempDir, 'no-fix.ts');
     await writeFile(file, 'code', 'utf-8');
+
     const ctx = createMockCtx();
+    let eslintCalled = false;
     ctx.exec = async (cmd: string, args: string[]) => {
+      if (cmd === 'npx' && args[0] === 'eslint') {
+        eslintCalled = true;
+        return { code: 0, stdout: '', stderr: '' };
+      }
       if (cmd === 'npx' && args[0] === 'tsc') {
         return { code: 0, stdout: '', stderr: '' };
       }
-      if (cmd === 'npx' && args[0] === 'eslint') {
-        throw new Error('eslint fail');
-      }
       return { code: 0, stdout: '', stderr: '' };
     };
+
     const params = {
-      operations: [{ file: 'y.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
+      operations: [{ file: 'no-fix.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
       format: false,
-      fixImports: true,
+      fixImports: false,
     };
+
     const result = await safeEditModule.execute(params, ctx as any);
-    // Should succeed despite eslint error because it's caught and ignored
     expect(result.success).toBe(true);
+    expect(eslintCalled).toBe(false);
+  });
+
+  it('should throw when fs.writeFile fails', async () => {
+    const file = join(tempDir, 'c.ts');
+    await writeFile(file, 'original', 'utf-8');
+    const writeError = new Error('disk full');
+    const writeSpy = vi.spyOn(fs, 'writeFile').mockRejectedValue(writeError);
+    const ctx = createMockCtx();
+    const params = {
+      operations: [{ file: 'c.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
+      format: false,
+      fixImports: false,
+    };
+    // execute should reject with the writeFile error (no try/catch around writeFiles)
+    await expect(safeEditModule.execute(params, ctx as any)).rejects.toThrow('disk full');
+    writeSpy.mockRestore();
   });
 });

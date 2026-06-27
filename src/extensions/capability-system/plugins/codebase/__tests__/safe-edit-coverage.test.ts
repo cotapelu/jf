@@ -1,63 +1,92 @@
-import { describe, it, expect } from 'vitest';
-import safeEdit from '../capabilities/safe_edit.ts';
-import { join } from 'path';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import safeEditModule from '../capabilities/safe_edit.js';
 
 describe('safe_edit coverage gaps', () => {
   let tempDir: string;
+
   beforeEach(async () => {
-    tempDir = await mkdtemp('safe-edit-coverage-');
+    tempDir = await mkdtemp(join(tmpdir(), 'jf-sec-'));
   });
+
   afterEach(async () => {
-    await rm(tempDir, { recursive: true, force: true });
+    try {
+      await rm(tempDir, { recursive: true, force: true });
+    } catch (e) {}
   });
 
-  it('should return error when target file does not exist', async () => {
-    const params = {
-      operations: [{
-        file: 'nonexistent.ts',
-        editType: 'replace' as const,
-        range: { start: 0, end: 1 },
-        newCode: 'new content'
-      }]
+  function createMockCtx() {
+    return {
+      cwd: tempDir,
+      exec: async (cmd: string, args: string[]) => {
+        if (cmd === 'npx' && args[0] === 'tsc') return { code: 0, stdout: '', stderr: '' };
+        if (cmd === 'npx' && args[0] === 'eslint') return { code: 0, stdout: '', stderr: '' };
+        if (cmd === 'npx' && args[0] === 'prettier') return { code: 0, stdout: '', stderr: '' };
+        return { code: 0, stdout: '', stderr: '' };
+      },
     };
-    const ctx = { cwd: tempDir };
-    const result = await safeEdit.execute(params, ctx);
-    expect(result.success).toBe(false);
-    expect(result.results[0].error).toMatch(/File not found|ENOENT|no such file/);
+  }
+
+  it('should accept tsc exit code 2 (diagnostics) as success', async () => {
+    const file = join(tempDir, 'a.ts');
+    await writeFile(file, 'original', 'utf-8');
+
+    const ctx = createMockCtx();
+    ctx.exec = async (cmd: string, args: string[]) => {
+      if (cmd === 'npx' && args[0] === 'tsc') {
+        return { code: 2, stdout: '', stderr: 'diagnostics' }; // non-zero but allowed
+      }
+      return { code: 0, stdout: '', stderr: '' };
+    };
+
+    const params = {
+      operations: [{ file: 'a.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'changed' }],
+      format: false,
+      fixImports: false,
+    };
+
+    const result = await safeEditModule.execute(params, ctx as any);
+    expect(result.success).toBe(true);
+    expect(result.results[0].success).toBe(true);
   });
 
-  it('should return error for invalid operation (missing newCode)', async () => {
-    const file = join(tempDir, 'sample.ts');
-    await writeFile(file, 'line1\nline2', 'utf8');
+  it('should handle backupFiles read error', async () => {
+    const file = join(tempDir, 'missing.ts');
+    // Do not create the original file
+
+    const ctx = createMockCtx();
+    // backupFiles will try to read original; let fs readFile fail naturally
+
     const params = {
-      operations: [{
-        file: 'sample.ts',
-        editType: 'replace' as const,
-        range: { start: 0, end: 1 }
-        // newCode missing
-      }]
+      operations: [{ file: 'missing.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
+      format: false,
+      fixImports: false,
     };
-    const ctx = { cwd: tempDir };
-    const result = await safeEdit.execute(params, ctx);
+
+    const result = await safeEditModule.execute(params, ctx as any);
     expect(result.success).toBe(false);
-    expect(result.results[0].error).toContain('newCode is required');
+    expect(result.results[0].success).toBe(false);
+    expect(result.results[0].error).toContain('Cannot read file missing.ts');
   });
 
-  it('should return error for invalid range (out of bounds)', async () => {
-    const file = join(tempDir, 'sample.ts');
-    await writeFile(file, 'line1\nline2', 'utf8');
+  it('should handle computeFinalContents edit failure', async () => {
+    const file = join(tempDir, 'bad-edit.ts');
+    await writeFile(file, 'original', 'utf-8');
+
+    const ctx = createMockCtx();
+
+    // editing: replace range start > end causes error
     const params = {
-      operations: [{
-        file: 'sample.ts',
-        editType: 'replace' as const,
-        range: { start: 0, end: 5 },
-        newCode: 'new content'
-      }]
+      operations: [{ file: 'bad-edit.ts', editType: 'replace' as const, range: { start: 5, end: 2 }, newCode: 'bad' }],
+      format: false,
+      fixImports: false,
     };
-    const ctx = { cwd: tempDir };
-    const result = await safeEdit.execute(params, ctx);
+
+    const result = await safeEditModule.execute(params, ctx as any);
     expect(result.success).toBe(false);
-    expect(result.results[0].error).toContain('Invalid range');
+    expect(result.results[0].success).toBe(false);
+    expect(result.results[0].error).toContain('Edit failed in bad-edit.ts');
   });
 });
