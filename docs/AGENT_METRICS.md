@@ -1659,3 +1659,24 @@ All tests pass; lint and build clean.
 
 **Next targets:** Continue covering remaining low‑coverage modules: `team-manager.ts` (now ~71%), `safe_edit.ts` (~70%), `workspace.ts` (~67%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%).
 
+
+## Cycle 48 - Additional Test Refinements - 2026-06-27 (Autonomous)
+
+**Task:** Increase coverage of edge branches in `startCompletionMonitor` and `safe_edit`.
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~30 minutes
+**Status:** ✅ Success
+
+**Test Delta:** +1 test (total 930 passing, 1 skipped)
+**Coverage Delta:** (Global branch coverage steady at 80.58%)
+
+**Notes:**
+- Added test for `startCompletionMonitor` where `status.totalTasks === 0` (else branch of `status.totalTasks > 0` condition). This ensures the monitor does **not** clear interval when team is complete but has no tasks.
+- Enhanced `safe-edit-edge-cases.test.ts` to cover the `eslint` error catch path when `fixImports=true`. This tests the try-catch within `validateAllAndDiff`.
+- Verified all tests pass; lint and build clean.
+
+**Impact:** Incremental branch coverage increase; Phase 31 (≥85% global branch coverage) still in progress.
+
+**Next targets:** Continue targeting the lowest branch coverage modules: `team-manager.ts` (~70%), `safe_edit.ts` (~70%), `workspace.ts` (~67%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%). Planned actions: add tests for remaining branches in `safe_edit` (write failure, other error paths), `workspace` (untested methods), and deeper `team-manager` integration scenarios.
+
