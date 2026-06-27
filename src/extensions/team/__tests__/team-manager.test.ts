@@ -226,4 +226,85 @@ describe('AgentTeam remaining branches', () => {
     (team as any).handleAgentEvent({ type: 'unknown_event' } as any);
     expect(notifySpy).not.toHaveBeenCalled();
   });
+
+  describe('handleAgentFailure', () => {
+    it('should increment retry and schedule backoff', async () => {
+      await team.initialize(['t1']);
+      await team.claimTask('agent-1'); // assign task 0
+      const notifySpy = vi.spyOn(team, 'notifyUpdate');
+      await (team as any).handleAgentFailure('agent-1', 0, new Error('fail'));
+      const status = await team.getTeamStatus();
+      const task = status.tasks.find(t => t.index === 0);
+      expect(task?.status).toBe('pending');
+      expect(task?.retryCount).toBe(1);
+      expect((task as any).retryAvailableAt).toBeGreaterThan(Date.now());
+      expect(notifySpy).toHaveBeenCalledWith(expect.objectContaining({
+        details: expect.objectContaining({ retryCount: 1 })
+      }));
+    });
+
+    it('should mark task failed after reaching max retries', async () => {
+      await team.initialize(['t1']);
+      await team.claimTask('agent-1'); // task now in_progress with assignee agent-1, retryCount=0
+      // Set retryCount to max-1 (maxRetries=3), then call failure -> increments to max (3) -> fails
+      const tm = (team as any).taskManager;
+      const task = tm.getTaskStatus(0);
+      task.retryCount = 2; // (3-1)
+      const notifySpy = vi.spyOn(team, 'notifyUpdate');
+      await (team as any).handleAgentFailure('agent-1', 0, new Error('boom'));
+      const status = await team.getTeamStatus();
+      const after = status.tasks.find(t => t.index === 0);
+      expect(after?.status).toBe('failed');
+      expect(after?.result).toContain('boom');
+      // Notify should include error message and retryCount
+      expect(notifySpy).toHaveBeenCalledWith(expect.objectContaining({
+        details: expect.objectContaining({ error: 'boom', retryCount: 3 })
+      }));
+      // Also check that failure update includes retryCount=3
+      expect(notifySpy).toHaveBeenCalledWith(expect.objectContaining({
+        details: expect.objectContaining({ retryCount: 3 })
+      }));
+    });
+  });
+
+  describe('reclaimZombieAgents', () => {
+    it('should reclaim zombie task with retry', async () => {
+      await team.initialize(['t1']);
+      await team.claimTask('agent-1');
+      // Simulate zombie: set lastSeen very old so agent is considered zombie
+      const monitor = (team as any).agentMonitor;
+      monitor.agentLastSeen.set('agent-1', Date.now() - 150000);
+      const notifySpy = vi.spyOn(team, 'notifyUpdate');
+      (team as any).reclaimZombieAgents();
+      const status = await team.getTeamStatus();
+      const task = status.tasks.find(t => t.index === 0);
+      expect(task?.status).toBe('pending');
+      expect(task?.retryCount).toBe(1);
+      expect((task as any).retryAvailableAt).toBeGreaterThan(Date.now());
+      expect(notifySpy).toHaveBeenCalledWith(expect.objectContaining({
+        details: expect.objectContaining({ status: 'pending', retryCount: 1 })
+      }));
+    });
+
+    it('should fail zombie task after max retries', async () => {
+      await team.initialize(['t1']);
+      await team.claimTask('agent-1');
+      // Set retryCount to max-1 (maxRetries=3), then reclaim will increment to max (3) and fail
+      const tm = (team as any).taskManager;
+      const task = tm.getTaskStatus(0);
+      task.retryCount = 2; // (3-1)
+      // Simulate zombie
+      const monitor = (team as any).agentMonitor;
+      monitor.agentLastSeen.set('agent-1', Date.now() - 150000);
+      const notifySpy = vi.spyOn(team, 'notifyUpdate');
+      (team as any).reclaimZombieAgents();
+      const status = await team.getTeamStatus();
+      const taskAfter = status.tasks.find(t => t.index === 0);
+      expect(taskAfter?.status).toBe('failed');
+      expect(taskAfter?.result).toContain('zombie');
+      expect(notifySpy).toHaveBeenCalledWith(expect.objectContaining({
+        details: expect.objectContaining({ status: 'failed', retryCount: 3 })
+      }));
+    });
+  });
 });

@@ -238,4 +238,25 @@
 
 **Phase 31 (Complete):** Global Branch Coverage Achievement — Raised global branch coverage to 80.14% via branch-coverage tests for skill-reader.ts (conditional test commands, required property handling, empty examples, missing schema properties). Added tests for validateOptions and AgentTeam edge cases. All 854 tests passing; lint clean; TypeScript clean. ✅
 
+**Phase 32 (In Progress):** Coverage Push Toward 85% — Autonomous cycles 52–55 focused on expanding test coverage for modules with high uncovered branch counts. Achievements:
+- Tests increased from 991 → 1010 passing (+19 tests).
+- Added `analyze-coverage.test.ts` (13 tests) covering many analysis branches.
+- Added `task-manager-coverage.test.ts` (5 tests) for task state edge cases.
+- Extended `ast_query.test.ts` (parent filter no-match) and `team-manager.test.ts` (failure/zombie tests).
+- Fixed existing `team-manager` tests to use correct status inspection.
+
+**Current Coverage:** Branch coverage stands at 83.88% (still below 85% target). High-uncovered modules remain:
+- `team-manager.ts`: 22 uncovered branches
+- `ast_query.ts`: 14 uncovered
+- `analyze.ts`: 11 uncovered
+- `dependency_tree.ts`: 9 uncovered
+- `call_graph.ts`: 8 uncovered
+- `complexity.ts`: 6 uncovered
+- `analyze_ast.ts`: 6 uncovered
+- `command-executor.ts`: 5 uncovered
+- `command-cache.ts`: 4 uncovered
+- `task-manager.ts`: 3 uncovered
+
+All tests pass; lint clean; build clean. Next phase will target these modules intensively to reach ≥85% global branch coverage.
+
 *Profile last updated: 2026-06-27*

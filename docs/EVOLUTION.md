@@ -349,7 +349,7 @@ Optional future work:
 - ✅ Unit tests passing (36 agent tests + 12 concurrency tests, 100% pass)
 - ✅ Documentation (README)
 - ✅ Multiple autonomous cycles completed: lint fixes, security scanning, coverage improvements
-- ✅ Current global coverage: Statements 88.43%, Branches 80.14%, Functions 89.17%, Lines 89.14% (all thresholds met, branch coverage ≥80% achieved)
+- ✅ Current global coverage: Statements 93.03%, Branches 83.88%, Functions 92.15%, Lines 94.14% (all quality gates maintained)
 - ✅ All quality gates maintained (functions ≤20, complexity ≤10, 0 duplicates, 100% error handling, 100% validation)
 
 **Production Compliance:**
@@ -358,13 +358,22 @@ Optional future work:
 - Error handling: 100% on public methods
 - Input validation: N/A (internal)
 - Testable architecture: Yes
-- Coverage target: Met ≥80% statements (88.43%), branch coverage 80.14% (≥80% target achieved)
+- Coverage status: Statements ~93%, Branch 83.88% (target ≥85% not yet reached), Functions ~92%, Lines ~94%
+
+**Current Focus (Phase 32):**
+- Push branch coverage from 83.88% to ≥85% by adding targeted unit tests for high-uncovered modules.
+- High-uncovered modules: `team-manager.ts` (22), `ast_query.ts` (14), `analyze.ts` (11), `dependency_tree.ts` (9), `call_graph.ts` (8), `complexity.ts` (6), `analyze_ast.ts` (6), `command-executor.ts` (5), `command-cache.ts` (4), `task-manager.ts` (3).
+- Strategy: Write comprehensive tests for each capability covering all branch paths, including error handling, edge cases, and unusual inputs.
 
 **Next Steps:**
-- Increase test coverage of agent utilities (coverage, complexity, security)
-- Implement auto-fix strategies for violations
-- Add performance benchmarking
-- Add observability instrumentation (metrics, tracing)
-- Extend proactive analysis: concurrency safety, documentation gaps
+- Implement dedicated test suites for `ast_query` (query filters, regex patterns, parent constraints)
+- Expand `analyze` tests to cover more language features and export forms
+- Add tests for `analyze_ast` node handling and error conditions
+- Cover `dependency_tree` cycle detection and multiple entry points
+- Add tests for `call_graph` limit handling and recursion
+- Increase `complexity` branch coverage via additional decision point tests
+- Improve `command-executor` error paths and output truncation
+- Verify `command-cache` eviction and stats
+- Re-evaluate coverage after each batch; aim for ≥85% within next 2-3 cycles.
 
 *Roadmap last updated: 2026-06-27*
