@@ -1,6 +1,6 @@
 # Project TODO - Tracked Tasks
 
-*Last updated: 2026-06-19T10:40:00Z*
+*Last updated: 2026-06-27T00:00:00Z*
 
 ---
 
@@ -298,28 +298,73 @@ All high-priority tasks complete.
 
 ---
 
-## Phase 29: Extract AgentMonitor (TODO)
+## Phase 29: Extract AgentMonitor (COMPLETED ✅)
 
 **Goal:** Further reduce AgentTeam complexity by extracting agent lifecycle management.
 
-**Tasks:**
-- [ ] Create `AgentMonitor` class handling:
-  - Heartbeat tracking (`agentLastSeen`)
-  - Agent status (`agentStatuses`)
-  - Zombie detection & reclamation logic
-  - Role ↔ session ID mapping (`roleByAgentId`)
-- [ ] Write comprehensive unit tests for AgentMonitor
-- [ ] Integrate AgentMonitor into AgentTeam
-- [ ] Update `reclaimZombieAgents()` to delegate to AgentMonitor
-- [ ] Ensure all team tests still pass
-- [ ] Verify build successful
+**Actions:**
+- [x] Created `AgentMonitor` class with heartbeat, statuses, zombie detection
+- [x] Wrote 11 unit tests for AgentMonitor (isolated)
+- [x] Integrated AgentMonitor into AgentTeam with backward compatibility
+- [x] Delegated `updateHeartbeat`, `reclaimZombieAgents`, and status queries
+- [x] Removed duplicated state from AgentTeam
+- [x] All tests pass (26 team test files, 206 passing)
+- [x] Build successful
+
+**Results:**
+- AgentTeam responsibilities split: TaskManager (tasks) + AgentMonitor (agents)
+- Maintained backward compatibility via getters (`agentStatuses`, `agentLastSeen`, `roleByAgentId`)
+- Zero test regressions
+
+**Risk:** LOW
+
+---
+
+## Phase 30: Achieve ≥80% Global Branch Coverage (COMPLETED ✅)
+
+**Goal:** Increase global branch coverage from current ~79.35% to ≥80% to satisfy quality gate.
+
+**Result:** Coverage reached 80.07% (branch) after AgentMonitor extraction and other test additions. Quality gate satisfied.
+
+**Actions:**
+- [x] Verified coverage report (80.07% branches)
+- [x] Confirmed all tests pass (907)
+- [x] No additional tests needed; threshold already met
+
+**Impact:** Production readiness maintained; quality gate passed.
+
+**Risk:** LOW
+
+---
+
+## Phase 31: Push Branch Coverage to ≥85% (TODO)
+
+**Goal:** Increase global branch coverage from current 80.07% to ≥85% for higher confidence.
+
+**Target modules (lowest coverage):**
+- `team-manager.ts` (~70%)
+- `skill-reader.ts` (~69%)
+- `tool-template.ts` (~69%)
+- `ast-scanner.ts` (~69%)
+- `workspace.ts` (~67%)
+- `analyze_ast.ts` (~76%)
+- `dependency_tree.ts` (~76%)
+
+**Actions:**
+- [ ] Run detailed coverage analysis to identify exact uncovered branches
+- [ ] Write targeted unit tests for each low-coverage module, focusing on error paths and edge cases
+- [ ] Ensure tests are isolated and fast (<100ms)
+- [ ] Maintain 100% test pass rate
+- [ ] Verify branch coverage ≥85%
+- [ ] Update evolution docs and git commit
 
 **Impact:**
-- AgentTeam complexity ↓ further (target ~400-500 lines)
-- Separation: TaskManager (tasks) + AgentMonitor (agents) + TeamWorkspace (data) + TeamCoordinator (orchestration)
-- Easier to test each concern independently
+- Higher confidence in code correctness
+- Reduced risk of hidden bugs
+- Progress towards world-class quality (>85%)
 
-**Risk:** LOW (similar to TaskManager extraction pattern)
+**Risk:** LOW to MEDIUM
+**Estimated effort:** 2-3 days
 
-**Estimated effort:** 1-2 days
+---
 

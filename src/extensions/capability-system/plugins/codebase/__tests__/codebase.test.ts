@@ -499,7 +499,9 @@ describe("codebase.safe_edit", () => {
     // Simulate tsc fail on second file only
     ctx.exec = async (cmd: string, args: string[], opts?: any) => {
       if (cmd === "npx" && args[0] === "tsc") {
-        if (args.includes("b.ts")) {
+        // args: ['tsc', '--noEmit', absolutePath]
+        const fileArg = args[2];
+        if (fileArg?.includes("b.ts")) {
           return { code: 1, stdout: "", stderr: "error" };
         }
         return { code: 0, stdout: "", stderr: "" };

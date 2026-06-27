@@ -367,4 +367,4 @@ Optional future work:
 - Add observability instrumentation (metrics, tracing)
 - Extend proactive analysis: concurrency safety, documentation gaps
 
-*Roadmap last updated: 2026-06-25*
+*Roadmap last updated: 2026-06-27*

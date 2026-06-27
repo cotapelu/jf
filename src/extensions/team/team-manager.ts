@@ -21,6 +21,7 @@ import {
 import { SharedWorkspace, type WorkspaceEntry } from "./workspace.js";
 import { createTeamOpsTool } from "./team-ops-tool.js";
 import { TaskManager } from "./task-manager.js";
+import { AgentMonitor } from "./agent-monitor.js";
 import * as path from "node:path";
 
 export const MAX_TEAM_SIZE = 4;
@@ -56,15 +57,12 @@ export class AgentTeam implements AgentTeamRuntime {
   roles: string[] = [];
   size = 0;
   private taskManager: TaskManager;
+  private agentMonitor: AgentMonitor;
   dispose: () => Promise<void>;
   childPromises: Promise<void>[] = [];
   private childControllers: Map<string, AbortController> = new Map();
   private disposed = false;
 
-  // Task state managed by TaskManager
-  agentStatuses: Map<string, { currentTaskIndex: number | null; status: string }> = new Map();
-  private roleByAgentId: Map<string, string> = new Map(); // maps session.id -> role
-  private agentLastSeen: Map<string, number> = new Map(); // role -> timestamp of last activity
   private workspace: SharedWorkspace;
   private messageBus: Map<string, Array<{ from: string; content: string; timestamp: number }>> = new Map();
   private lockQueue: (() => void)[] = [];
@@ -117,6 +115,7 @@ export class AgentTeam implements AgentTeamRuntime {
         )
       );
       this.runtimes = [];
+      this.agentMonitor.clear();
       try {
         const registry = TeamRegistry.getInstance();
         if (this.id) {
@@ -134,6 +133,9 @@ export class AgentTeam implements AgentTeamRuntime {
       maxRetryDelayMs: MAX_RETRY_DELAY_MS,
     });
     this.taskManager.setOnUpdate((update) => this.notifyUpdate(update));
+    // Initialize AgentMonitor
+    this.agentMonitor = new AgentMonitor(this.taskManager, { agentTimeoutMs: AGENT_TIMEOUT_MS });
+    this.agentMonitor.setOnUpdate((update) => this.notifyUpdate(update));
   }
 
   setTeamId(id: string): void {
@@ -168,6 +170,17 @@ export class AgentTeam implements AgentTeamRuntime {
 
   getWorkspace(): SharedWorkspace {
     return this.workspace;
+  }
+
+  // Backward compatibility for tests
+  get agentStatuses(): Map<string, { currentTaskIndex: number | null; status: 'idle' | 'working' }> {
+    return this.agentMonitor.agentStatuses;
+  }
+  get agentLastSeen(): Map<string, number> {
+    return this.agentMonitor.agentLastSeen;
+  }
+  get roleByAgentId(): Map<string, string> {
+    return this.agentMonitor.roleByAgentId;
   }
 
   // Locking mechanism for concurrency control
@@ -322,14 +335,14 @@ export class AgentTeam implements AgentTeamRuntime {
 
   // Heartbeat để theo dõi agent còn sống không
   public updateHeartbeat(role: string): void {
-    this.agentLastSeen.set(role, Date.now());
+    this.agentMonitor.updateHeartbeat(role);
   }
   async claimTask(agentId: string): Promise<number | null> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     return this.withLock(() => {
       const idx = this.taskManager.claimTask(role);
       if (idx !== null) {
-        this.agentStatuses.set(role, { currentTaskIndex: idx, status: 'working' });
+        this.agentMonitor.setAgentStatus(role, { currentTaskIndex: idx, status: 'working' });
       }
       return idx;
     });
@@ -337,25 +350,7 @@ export class AgentTeam implements AgentTeamRuntime {
 
   // Reclaim tasks from zombie agents (no heartbeat within timeout)
   public reclaimZombieAgents(): void {
-    const now = Date.now();
-    const zombies: string[] = [];
-
-    for (const [role, lastSeen] of this.agentLastSeen.entries()) {
-      const status = this.agentStatuses.get(role);
-      if (status && status.status === 'working' && now - lastSeen > AGENT_TIMEOUT_MS) {
-        zombies.push(role);
-      }
-    }
-
-    if (zombies.length === 0) return;
-
-    for (const role of zombies) {
-      // Reset agent status
-      this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
-      this.agentLastSeen.delete(role);
-      // Delegate task reclamation to TaskManager (includes notifications)
-      this.taskManager.reclaimZombieTasks(role, now);
-    }
+    this.agentMonitor.reclaimZombieAgents();
   }
 
   async releaseTask(agentId: string, taskIndex: number): Promise<boolean> {
@@ -363,12 +358,7 @@ export class AgentTeam implements AgentTeamRuntime {
     return this.withLock(() => {
       const released = this.taskManager.releaseTask(role, taskIndex);
       if (released) {
-        // Clear agent status
-        const agentStatus = this.agentStatuses.get(role);
-        if (agentStatus) {
-          agentStatus.currentTaskIndex = null;
-          agentStatus.status = 'idle';
-        }
+        this.agentMonitor.setAgentStatus(role, { currentTaskIndex: null, status: 'idle' });
       }
       return released;
     });
@@ -379,12 +369,7 @@ export class AgentTeam implements AgentTeamRuntime {
     await this.withLock(() => {
       const success = this.taskManager.handleAgentFailure(role, taskIndex, error);
       if (success) {
-        // Update agent status to idle
-        const agentStatus = this.agentStatuses.get(role);
-        if (agentStatus) {
-          agentStatus.currentTaskIndex = null;
-          agentStatus.status = 'idle';
-        }
+        this.agentMonitor.setAgentStatus(role, { currentTaskIndex: null, status: 'idle' });
       }
     });
   }
@@ -408,12 +393,7 @@ export class AgentTeam implements AgentTeamRuntime {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     await this.withLock(() => {
       this.taskManager.completeTask(role, taskIndex, result);
-      // Update agent status
-      const agentStatus = this.agentStatuses.get(role);
-      if (agentStatus) {
-        agentStatus.currentTaskIndex = null;
-        agentStatus.status = 'idle';
-      }
+      this.agentMonitor.setAgentStatus(role, { currentTaskIndex: null, status: 'idle' });
     });
   }
 
@@ -435,8 +415,7 @@ export class AgentTeam implements AgentTeamRuntime {
   registerRuntime(runtime: AgentSessionRuntime, role: string): void {
     this.runtimes.push(runtime);
     this.roles.push(role);
-    this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
-    this.roleByAgentId.set(runtime.session.sessionId, role);
+    this.agentMonitor.registerAgent(runtime.session.sessionId, role);
     this.size = this.roles.length;
   }
 
@@ -669,18 +648,6 @@ export class AgentTeam implements AgentTeamRuntime {
   }
 
   // resetTaskState removed – TaskManager.initialize() replaces it
-  private async clearTransientState(): Promise<void> {
-    this.messageBus.clear();
-    await this.workspaceClear();
-    this.agentLastSeen.clear();
-  }
-
-  private resetAgentStatuses(): void {
-    this.agentStatuses.clear();
-    for (const role of this.roles) {
-      this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
-    }
-  }
 
   private sendInitializationUpdate(tasks: string[]): void {
     this.notifyUpdate(this.createUpdate(
@@ -692,8 +659,9 @@ export class AgentTeam implements AgentTeamRuntime {
   async initialize(tasks: string[]): Promise<void> {
     await this.withLock(async () => {
       this.taskManager.initialize(tasks);
-      await this.clearTransientState();
-      this.resetAgentStatuses();
+      this.messageBus.clear();
+      await this.workspaceClear();
+      this.agentMonitor.resetAll();
     });
     this.sendInitializationUpdate(tasks);
   }

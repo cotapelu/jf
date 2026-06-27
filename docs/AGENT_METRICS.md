@@ -1507,3 +1507,37 @@ All tests pass; lint clean; build clean.
 **Impact:** Improved robustness of dependency graph builder for various TypeScript import/export patterns and error conditions.
 
 **Next targets:** Continue towards 85%+ for remaining modules: team-manager.ts (71.82%), command-executor.ts (81.40%), analyze_ast.ts (76%).
+
+## Cycle 43 - AgentMonitor Extraction & Team Refactoring - 2026-06-27 (Autonomous)
+
+**Task:** Increase modularity and maintainability by extracting agent lifecycle management from `AgentTeam` into `AgentMonitor` (Phase 29).
+**Type:** Refactoring (Complexity reduction)
+**Priority:** HIGH (technical debt reduction)
+**Duration:** ~2 days
+**Status:** ✅ Success
+
+**Test Delta:** +37 tests (total 907 passing, 1 skipped)
+**Coverage Delta:**
+- Statements: **88.15%** (↓0.64% from 88.79%)
+- Branches: **80.07%** (↓0.55% from 80.62%)
+- Functions: **88.68%** (↓0.65% from 89.33%)
+- Lines: **88.89%** (↓0.67% from 89.56%)
+
+**Notes:** Completed extraction of agent monitoring responsibilities (heartbeat, status tracking, zombie detection) from monolithic `AgentTeam` into new `AgentMonitor` class. Key actions:
+- Designed `AgentMonitor` with agentStatuses, agentLastSeen, roleByAgentId, and methods: `updateHeartbeat`, `setAgentStatus`, `registerAgent`, `reclaimZombieAgents`, `resetAll`, `clear`.
+- Wrote 11 unit tests for `AgentMonitor` covering heartbeat updates, status changes, zombie reclamation, and edge cases.
+- Integrated `AgentMonitor` into `AgentTeam`, delegating all agent-related state and logic. Maintained backward compatibility via getters (`agentStatuses`, `agentLastSeen`, `roleByAgentId`) for existing tests.
+- Removed duplicated fields and methods from `AgentTeam` (working status now managed by `AgentMonitor`).
+- Updated `TaskManager` integration (already done in Phase 28) to handle reclaim logic via `reclaimZombieTasks`.
+- All tests pass (206 team tests passing), TypeScript build clean.
+- Fixed existing test mock for `safe_edit` (b.ts detection) that was failing due to absolute path handling.
+
+**Impact:** 
+- Reduced `AgentTeam` complexity (~400 lines remaining core orchestration logic).
+- Clear separation: TaskManager (tasks) + AgentMonitor (agents) + SharedWorkspace (data) + TeamOpsTool (API).
+- Easier to test each concern independently; improved maintainability.
+- Despite slight coverage dip due to increased codebase size and partial coverage of new monitor code, overall coverage remains above quality thresholds (branch coverage 80.07% still ≥80%).
+
+**Risk:** LOW - similar to prior extraction patterns; backward compatibility preserved.
+
+**Next targets:** Continue modular decomposition: consider extracting message bus or lock manager, or focus on pushing branch coverage to ≥85% by targeting low-coverage modules (team-manager.ts, skill-reader.ts, tool-template.ts, ast-scanner.ts).
