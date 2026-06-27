@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { mkdtemp, rm } from 'fs/promises';
-import { execute } from '../capabilities/complexity';
+import { execute, complexityRating, miRating } from '../capabilities/complexity';
 
 // Define type for details (matches ComplexityResult from capability)
 interface ComplexityDetails {
@@ -193,5 +193,37 @@ function broken(
     const result = await execute({ file: fileRel }, { cwd: tmpdir });
     expect(result.isError).toBe(true);
     expect(result.details?.error).toBeDefined();
+  });
+});
+
+// Additional branch coverage for rating functions
+
+describe('complexityRating', () => {
+  it('returns Low for cc=5', () => {
+    expect(complexityRating(5)).toBe('Low (simple)');
+  });
+  it('returns Moderate for cc=15', () => {
+    expect(complexityRating(15)).toBe('Moderate');
+  });
+  it('returns High for cc=30', () => {
+    expect(complexityRating(30)).toBe('High (complex)');
+  });
+  it('returns Very High for cc=60', () => {
+    expect(complexityRating(60)).toBe('Very High (risky)');
+  });
+});
+
+describe('miRating', () => {
+  it('returns Excellent for mi=90', () => {
+    expect(miRating(90)).toBe('Excellent');
+  });
+  it('returns Good for mi=70', () => {
+    expect(miRating(70)).toBe('Good');
+  });
+  it('returns Fair for mi=50', () => {
+    expect(miRating(50)).toBe('Fair');
+  });
+  it('returns Poor for mi=30', () => {
+    expect(miRating(30)).toBe('Poor');
   });
 });

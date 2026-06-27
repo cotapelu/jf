@@ -293,14 +293,14 @@ function formatOutput(r: ComplexityResult): string {
 `.trim();
 }
 
-function complexityRating(cc: number): string {
+export function complexityRating(cc: number): string {
   if (cc <= 10) return 'Low (simple)';
   if (cc <= 20) return 'Moderate';
   if (cc <= 50) return 'High (complex)';
   return 'Very High (risky)';
 }
 
-function miRating(mi: number): string {
+export function miRating(mi: number): string {
   if (mi >= 85) return 'Excellent';
   if (mi >= 65) return 'Good';
   if (mi >= 40) return 'Fair';
