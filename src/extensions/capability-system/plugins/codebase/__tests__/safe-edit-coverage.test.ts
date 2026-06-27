@@ -91,6 +91,20 @@ describe('safe_edit coverage gaps', () => {
     expect(result.results[0].error).toContain('Edit failed in bad-edit.ts');
   });
 
+  it('should reject when writeFiles fails', async () => {
+    const file = join(tempDir, 'a.ts');
+    await writeFile(file, 'original', 'utf-8');
+    const writeSpy = vi.spyOn(fs, 'writeFile').mockRejectedValue(new Error('disk full'));
+    const ctx = createMockCtx();
+    const params = {
+      operations: [{ file: 'a.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'changed' }],
+      format: false,
+      fixImports: false,
+    };
+    await expect(safeEditModule.execute(params, ctx as any)).rejects.toThrow('disk full');
+    writeSpy.mockRestore();
+  });
+
   it('should rollback on readFile error after successful tsc', async () => {
     const file = join(tempDir, 'a.ts');
     await writeFile(file, 'original', 'utf-8');
