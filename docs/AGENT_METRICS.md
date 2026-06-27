@@ -1633,3 +1633,29 @@ All tests pass; lint clean; build clean.
 
 **Next targets:** Continue with high‑branch modules: `team-manager.ts` (69.67%), `workspace.ts` (~67%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%), `tool-template.ts` functions gap.
 
+
+## Cycle 47 - TeamManager Lock Ordering Tests - 2026-06-27 (Autonomous)
+
+**Task:** Cover missing concurrency branches in AgentTeam's `withLock` mechanism.
+**Type:** Proactive Improvement (Test Coverage)
+**Priority:** HIGH
+**Duration:** ~45 minutes
+**Status:** ✅ Success
+
+**Test Delta:** +2 tests (total 928 passing, 1 skipped)
+**Coverage Delta:** (Global branch coverage remains at 80.58% – modest increase within rounding)
+
+**Notes:** Added `team-manager-lock-order.test.ts` with two deterministic tests:
+- FIFO ordering of queued `withLock` calls verified via controlled async pauses.
+- Correct execution order even when first function throws.
+
+These tests cover previously uncovered branches:
+- `acquireLock` false branch (`if (!this.locked)`) when lock is already held.
+- `runNext` true branch (`if (this.lockQueue.length > 0)`) when releasing to a queued caller.
+
+All tests pass; lint and build clean.
+
+**Impact:** Strengthened confidence in locking correctness under concurrent usage. Incremental branch coverage improvement toward Phase 31 target (≥85%).
+
+**Next targets:** Continue covering remaining low‑coverage modules: `team-manager.ts` (now ~71%), `safe_edit.ts` (~70%), `workspace.ts` (~67%), `analyze_ast.ts` (76%), `dependency_tree.ts` (76%).
+
