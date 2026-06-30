@@ -1,4 +1,4 @@
-import type { AgentSession, AgentSessionRuntime, AgentSessionServices, AgentSessionRuntimeDiagnostic } from '@earendil-works/pi-coding-agent';
+import type { AgentSession, AgentSessionRuntime } from '@earendil-works/pi-coding-agent';
 
 /**
  * Create a minimal mock AgentSession
@@ -35,7 +35,7 @@ export function createMockRuntime(initialSession: AgentSession = createMockSessi
     set session(s) {
       currentSession = s;
     },
-    async newSession(options?: { parentSession?: string }) {
+    async newSession(_options?: { parentSession?: string }) {
       const newSession = createMockSession(`child-${++counter}`);
       sessions.push(newSession);
       currentSession = newSession;
