@@ -409,7 +409,7 @@
 // --- utils/shell.ts ---
 // export { getShellConfig } from "./utils/shell.ts";
 
-import { main } from './main.js';
+import { main } from './addon/main.js';
 console.error('cli starting...');
 main().catch((err: unknown) => {
   console.error('Fatal:', err);

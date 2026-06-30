@@ -68,7 +68,7 @@ You: (follow instructions and analyze code)
       // Build skill file path
       // Look in src/tools/skills/skills-md (dev) and dist/tools/skills/skills-md (production)
       const possiblePaths = [
-        join(cwd, 'src', 'tools', 'skills', 'skills-md', `${params.skill}.md`),
+        join(cwd, 'src', 'addon', 'tools', 'skills', 'skills-md', `${params.skill}.md`),
         join(cwd, 'dist', 'tools', 'skills', 'skills-md', `${params.skill}.md`),
         join(cwd, 'tools', 'skills', 'skills-md', `${params.skill}.md`),
       ];
@@ -133,7 +133,7 @@ You: (follow instructions and analyze code)
  * Called during runtime initialization to populate skill list
  */
 export async function listAvailableSkills(cwd: string): Promise<Array<{ name: string; description: string }>> {
-  const skillsDir = join(cwd, 'src', 'tools', 'skills', 'skills-md');
+  const skillsDir = join(cwd, 'src', 'addon', 'tools', 'skills', 'skills-md');
   const skills: Array<{ name: string; description: string }> = [];
 
   try {

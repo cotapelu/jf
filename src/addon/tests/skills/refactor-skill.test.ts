@@ -9,7 +9,7 @@ import { join } from 'path';
 
 describe('Refactor Extract Skill', () => {
   it('should contain required sections and keywords', async () => {
-    const filePath = join(process.cwd(), 'src', 'tools', 'skills', 'skills-md', 'refactor-extract.md');
+    const filePath = join(process.cwd(), 'src', 'addon', 'tools', 'skills', 'skills-md', 'refactor-extract.md');
     const content = await readFile(filePath, 'utf-8');
 
     // Title
