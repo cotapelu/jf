@@ -1,32 +1,26 @@
-// src/tools/builtin-tools.ts
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import {
-  createReadTool,
-  createBashTool,
-  createEditTool,
-  createWriteTool,
-  createFindTool,
-  createGrepTool,
-  createLsTool,
+  createBashToolDefinition,
+  createReadToolDefinition,
+  createEditToolDefinition,
+  createWriteToolDefinition,
+  createFindToolDefinition,
+  createGrepToolDefinition,
+  createLsToolDefinition,
 } from '@earendil-works/pi-coding-agent';
 
 /**
- * Register ALL built-in tools (including file discovery tools)
- * These will be treated as custom tools and passed via customTools array.
+ * Register ALL built-in tools by calling individual factory functions.
+ * Cast each to ToolDefinition to satisfy TypeScript due to generic variance.
  */
 export function registerAllBuiltinTools(cwd: string): ToolDefinition[] {
-  const tools: ToolDefinition[] = [];
-
-  // Core file operations
-  tools.push(createReadTool(cwd));
-  tools.push(createBashTool(cwd));
-  tools.push(createEditTool(cwd));
-  tools.push(createWriteTool(cwd));
-
-  // File discovery tools (each is a single ToolDefinition)
-  tools.push(createFindTool(cwd));
-  tools.push(createGrepTool(cwd));
-  tools.push(createLsTool(cwd));
-
-  return tools;
+  return [
+    createBashToolDefinition(cwd) as ToolDefinition,
+    createReadToolDefinition(cwd) as ToolDefinition,
+    createEditToolDefinition(cwd) as ToolDefinition,
+    createWriteToolDefinition(cwd) as ToolDefinition,
+    createFindToolDefinition(cwd) as ToolDefinition,
+    createGrepToolDefinition(cwd) as ToolDefinition,
+    createLsToolDefinition(cwd) as ToolDefinition,
+  ];
 }
