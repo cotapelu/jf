@@ -20,7 +20,7 @@ import type {
 } from '@earendil-works/pi-coding-agent';
 
 import { defaultAssistantPrompt } from './prompts/index.js';
-import { configureSettings } from './settings-config.js';
+
 import { setCurrentRuntime } from './runtime-context.js';
 import { registerAllAddon } from './index.js';
 
@@ -42,7 +42,7 @@ export function createRuntimeFactory(): CreateAgentSessionRuntimeFactory {
     };
 
     const services = await createAgentSessionServices(servicesOptions);
-    configureSettings(services.settingsManager);
+
 
     const sessionOptions: CreateAgentSessionFromServicesOptions = {
       services,

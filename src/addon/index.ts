@@ -25,5 +25,4 @@ export function registerAllAddon(cwd: string) {
 // Default export
 export default registerAllAddon;
 
-// Export runner
-export { runAddon } from './runner.js';
+

@@ -18,6 +18,7 @@ import { registerSkillReaderExtension } from "./tools/skill-reader.js";
 import autoContinueExtension from "./hooks/auto-continue.js";
 import autoCompact85Extension from "./hooks/auto-compact-85.js";
 import contextLoggerExtension from "./context-logger.js";
+import promptHookExtension from "./prompt-hooks/index.js";
 
 // Import master-tool extension
 import { registerMasterTool } from "./master-tool/index.js";
@@ -91,6 +92,9 @@ export default async function extensionsAggregator(api: import("@earendil-works/
 
   // Register Context Logger Extension
   contextLoggerExtension(api);
+
+  // Register Prompt Hooks Extension
+  promptHookExtension(api);
 
   // Register master-tool extension
   try {
