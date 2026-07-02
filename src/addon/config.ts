@@ -30,7 +30,7 @@ import { registerAllAddon } from './index.js';
 export function createRuntimeFactory(): CreateAgentSessionRuntimeFactory {
   return async (options) => {
     const { cwd, agentDir, sessionManager, sessionStartEvent } = options;
-    const { extensions, tools } = registerAllAddon(cwd);
+    const { tools, extensions } = registerAllAddon(cwd);
 
     const servicesOptions: CreateAgentSessionServicesOptions = {
       cwd,

@@ -17,8 +17,8 @@ import { registerAllBuiltinAndCustomTools } from './tools/index.js';
  */
 export function registerAllAddon(cwd: string) {
   return {
-    extensions: [extensionsAggregator],
     tools: registerAllBuiltinAndCustomTools(cwd),
+    extensions: [extensionsAggregator],
   };
 }
 
