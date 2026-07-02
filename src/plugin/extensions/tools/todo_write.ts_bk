@@ -1,0 +1,732 @@
+cat todo-write.ts 
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@quangtynu/pi-agent-core";
+import { StringEnum } from "@quangtynu/pi-ai";
+import type { Component } from "@quangtynu/pi-tui";
+import { Text } from "@quangtynu/pi-tui";
+import { type Static, Type } from "@sinclair/typebox";
+import chalk from "chalk";
+import type { Theme } from "../../modes/interactive/theme/theme.js";
+import type { AgentSession } from "../agent-session.js";
+import type { SessionEntry } from "../session-manager.js";
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export type TodoStatus = "pending" | "in_progress" | "completed" | "abandoned";
+
+export interface TodoItem {
+	id: string;
+	content: string;
+	status: TodoStatus;
+	notes?: string;
+	details?: string;
+}
+
+export interface TodoPhase {
+	id: string;
+	name: string;
+	tasks: TodoItem[];
+}
+
+export interface TodoWriteToolDetails {
+	phases: TodoPhase[];
+	storage: "session" | "memory";
+}
+
+// =============================================================================
+// Schema - Nested format (like memory tool)
+// =============================================================================
+
+const StatusEnum = StringEnum(["pending", "in_progress", "completed", "abandoned"] as const, {
+	description: "Task status: pending, in_progress, completed, or abandoned",
+});
+
+const InputTask = Type.Object({
+	content: Type.String({ description: "Task description (required)" }),
+	status: Type.Optional(StatusEnum),
+	notes: Type.Optional(Type.String({ description: "Additional context or notes (optional)" })),
+	details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics (optional)" })),
+});
+
+const InputPhase = Type.Object({
+	name: Type.String({ description: "Phase name (required)" }),
+	tasks: Type.Optional(Type.Array(InputTask)),
+});
+
+// Ops without the "op" field - nested under key
+const ReplaceOp = Type.Object({
+	phases: Type.Array(InputPhase),
+});
+
+const AddPhaseOp = Type.Object({
+	name: Type.String({ description: "Phase name (required) - must be a string, not an object" }),
+	tasks: Type.Optional(Type.Array(InputTask)),
+});
+
+const AddTaskOp = Type.Object({
+	phase: Type.String({ description: "Phase ID, e.g. phase-1 (required)" }),
+	content: Type.String({ description: "Task description (required)" }),
+	notes: Type.Optional(Type.String({ description: "Additional context or notes (optional)" })),
+	details: Type.Optional(Type.String({ description: "Implementation details, file paths, and specifics (optional)" })),
+});
+
+const UpdateOp = Type.Object({
+	id: Type.String({ description: "Task ID, e.g. task-3 (required)" }),
+	status: Type.Optional(StatusEnum),
+	content: Type.Optional(Type.String({ description: "Updated task description (optional)" })),
+	notes: Type.Optional(Type.String({ description: "Updated notes (optional)" })),
+	details: Type.Optional(Type.String({ description: "Updated details (optional)" })),
+});
+
+const RemoveTaskOp = Type.Object({
+	id: Type.String({ description: "Task ID, e.g. task-3 (required)" }),
+});
+
+const ListOp = Type.Object(
+	{
+		// No parameters needed - just list current todos
+	},
+	{
+		description: "List current todo list without modification",
+	},
+);
+
+// Nested schema - object with optional keys for each operation
+const todoWriteSchema = Type.Object({
+	replace: Type.Optional(ReplaceOp),
+	add_phase: Type.Optional(AddPhaseOp),
+	add_task: Type.Optional(AddTaskOp),
+	update: Type.Optional(UpdateOp),
+	remove_task: Type.Optional(RemoveTaskOp),
+	list: Type.Optional(ListOp),
+});
+
+type TodoWriteParams = Static<typeof todoWriteSchema>;
+
+// =============================================================================
+// Input normalization - Handle string fallback and common LLM errors
+// =============================================================================
+
+/**
+ * Normalizes input parameters to handle common LLM errors:
+ * - Stringified JSON objects
+ * - Missing required fields
+ * - Wrong data types
+ */
+export function normalizeParams(params: unknown): TodoWriteParams {
+	// If params is a string, try to parse it
+	if (typeof params === "string") {
+		try {
+			params = JSON.parse(params);
+		} catch (e) {
+			throw new Error(`Invalid JSON string: ${e instanceof Error ? e.message : String(e)}`);
+		}
+	}
+
+	// Ensure params is an object
+	if (typeof params !== "object" || params === null) {
+		throw new Error("Parameters must be an object");
+	}
+
+	const normalized = params as Record<string, unknown>;
+
+	// Handle add_phase being a string instead of object
+	if (normalized.add_phase && typeof normalized.add_phase === "string") {
+		try {
+			normalized.add_phase = JSON.parse(normalized.add_phase);
+		} catch (e) {
+			throw new Error(
+				`add_phase must be an object, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+			);
+		}
+	}
+
+	// Handle add_phase.name being a stringified object
+	if (normalized.add_phase && typeof normalized.add_phase === "object") {
+		const addPhase = normalized.add_phase as Record<string, unknown>;
+		if (addPhase.name && typeof addPhase.name === "string" && addPhase.name.startsWith("{")) {
+			try {
+				const parsed = JSON.parse(addPhase.name);
+				if (typeof parsed === "object" && parsed !== null) {
+					// LLM put the whole object in name field
+					normalized.add_phase = parsed;
+				}
+			} catch {
+				// Keep original if parse fails
+			}
+		}
+	}
+
+	// Handle tasks being a string instead of array
+	if (normalized.add_phase && typeof normalized.add_phase === "object") {
+		const addPhase = normalized.add_phase as Record<string, unknown>;
+		if (addPhase.tasks && typeof addPhase.tasks === "string") {
+			try {
+				addPhase.tasks = JSON.parse(addPhase.tasks);
+			} catch {
+				// If it's a comma-separated string, split it
+				addPhase.tasks = (addPhase.tasks as string).split(",").map((s) => ({ content: s.trim() }));
+			}
+		}
+	}
+
+	// Handle replace.phases being a string
+	if (normalized.replace && typeof normalized.replace === "object") {
+		const replace = normalized.replace as Record<string, unknown>;
+		if (replace.phases && typeof replace.phases === "string") {
+			try {
+				replace.phases = JSON.parse(replace.phases);
+			} catch (e) {
+				throw new Error(
+					`replace.phases must be an array, not a string. Error parsing: ${e instanceof Error ? e.message : String(e)}`,
+				);
+			}
+		}
+	}
+
+	return normalized as TodoWriteParams;
+}
+
+// =============================================================================
+// File format
+// =============================================================================
+
+interface TodoFile {
+	phases: TodoPhase[];
+	nextTaskId: number;
+	nextPhaseId: number;
+}
+
+interface PersistedTodo {
+	version: 1;
+	phases: TodoPhase[];
+	nextTaskId: number;
+	nextPhaseId: number;
+	updatedAt: string;
+}
+
+// =============================================================================
+// Persistence helpers
+// =============================================================================
+
+// Project-based storage: store todos in ././.pi/agent/todos.json within the project directory
+function getProjectTodoFilePath(): string {
+	return join(process.cwd(), ".pi", "agent", "todos.json");
+}
+
+/**
+ * @deprecated Use project-based storage. This function now returns the project path regardless of sessionDir.
+ */
+export function getTodoFilePath(_sessionDir: string): string {
+	return getProjectTodoFilePath();
+}
+
+export function loadTodoFromFile(_sessionDir: string): TodoFile | null {
+	const filePath = getProjectTodoFilePath();
+	if (!existsSync(filePath)) return null;
+
+	try {
+		const content = readFileSync(filePath, "utf-8");
+		const parsed: PersistedTodo = JSON.parse(content);
+		if (parsed.version !== 1) return null;
+		return { phases: parsed.phases, nextTaskId: parsed.nextTaskId, nextPhaseId: parsed.nextPhaseId };
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Saves todo to the project-local file: ./.pi/agent/todos.json
+ */
+export function saveTodoToFile(_sessionDir: string, todo: TodoFile): void {
+	const filePath = getProjectTodoFilePath();
+	const dir = dirname(filePath);
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
+
+	const persisted: PersistedTodo = {
+		version: 1,
+		phases: todo.phases,
+		nextTaskId: todo.nextTaskId,
+		nextPhaseId: todo.nextPhaseId,
+		updatedAt: new Date().toISOString(),
+	};
+	writeFileSync(filePath, JSON.stringify(persisted, null, 2));
+}
+
+// =============================================================================
+// State helpers
+// =============================================================================
+
+function makeEmptyFile(): TodoFile {
+	return { phases: [], nextTaskId: 1, nextPhaseId: 1 };
+}
+
+function findTask(phases: TodoPhase[], id: string): TodoItem | undefined {
+	for (const phase of phases) {
+		const task = phase.tasks.find((t) => t.id === id);
+		if (task) return task;
+	}
+	return undefined;
+}
+
+function buildPhaseFromInput(
+	input: { name: string; tasks?: Array<{ content: string; status?: TodoStatus; notes?: string; details?: string }> },
+	phaseId: string,
+	nextTaskId: number,
+): { phase: TodoPhase; nextTaskId: number } {
+	const tasks: TodoItem[] = [];
+	let tid = nextTaskId;
+	for (const t of input.tasks ?? []) {
+		tasks.push({
+			id: `task-${tid++}`,
+			content: t.content,
+			status: t.status ?? "pending",
+			notes: t.notes,
+			details: t.details,
+		});
+	}
+	return { phase: { id: phaseId, name: input.name, tasks }, nextTaskId: tid };
+}
+
+function getNextIds(phases: TodoPhase[]): { nextTaskId: number; nextPhaseId: number } {
+	let maxTaskId = 0;
+	let maxPhaseId = 0;
+
+	for (const phase of phases) {
+		const phaseMatch = /^phase-(\d+)$/.exec(phase.id);
+		if (phaseMatch) {
+			const value = Number.parseInt(phaseMatch[1], 10);
+			if (Number.isFinite(value) && value > maxPhaseId) maxPhaseId = value;
+		}
+
+		for (const task of phase.tasks) {
+			const taskMatch = /^task-(\d+)$/.exec(task.id);
+			if (!taskMatch) continue;
+			const value = Number.parseInt(taskMatch[1], 10);
+			if (Number.isFinite(value) && value > maxTaskId) maxTaskId = value;
+		}
+	}
+
+	return { nextTaskId: maxTaskId + 1, nextPhaseId: maxPhaseId + 1 };
+}
+
+function fileFromPhases(phases: TodoPhase[]): TodoFile {
+	const { nextTaskId, nextPhaseId } = getNextIds(phases);
+	return { phases, nextTaskId, nextPhaseId };
+}
+
+function clonePhases(phases: TodoPhase[]): TodoPhase[] {
+	return phases.map((phase) => ({ ...phase, tasks: phase.tasks.map((task) => ({ ...task })) }));
+}
+
+export function normalizeInProgressTask(phases: TodoPhase[]): void {
+	const orderedTasks = phases.flatMap((phase) => phase.tasks);
+	if (orderedTasks.length === 0) return;
+
+	const inProgressTasks = orderedTasks.filter((task) => task.status === "in_progress");
+	if (inProgressTasks.length > 1) {
+		for (const task of inProgressTasks.slice(1)) {
+			task.status = "pending";
+		}
+	}
+
+	if (inProgressTasks.length > 0) return;
+
+	const firstPendingTask = orderedTasks.find((task) => task.status === "pending");
+	if (firstPendingTask) firstPendingTask.status = "in_progress";
+}
+
+export function getLatestTodoPhasesFromEntries(entries: SessionEntry[]): TodoPhase[] {
+	for (let i = entries.length - 1; i >= 0; i--) {
+		const entry = entries[i];
+		if (entry.type !== "message") continue;
+
+		const message = entry.message as { role?: string; toolName?: string; details?: unknown; isError?: boolean };
+		if (message.role !== "toolResult" || message.toolName !== "todo_write" || message.isError) continue;
+
+		const details = message.details as { phases?: unknown } | undefined;
+		if (!details || !Array.isArray(details.phases)) continue;
+
+		return clonePhases(details.phases as TodoPhase[]);
+	}
+
+	return [];
+}
+
+// =============================================================================
+// Apply single op (nested format detection)
+// =============================================================================
+
+/**
+ * Applies a single operation to the todo file.
+ * This is the main operation handler for the nested format.
+ */
+export function applySingleOp(file: TodoFile, params: TodoWriteParams): { file: TodoFile; errors: string[] } {
+	const errors: string[] = [];
+
+	// Detect which operation is being called
+	if (params.replace) {
+		const op = params.replace;
+		if (!Array.isArray(op.phases)) {
+			errors.push("replace.phases must be an array");
+			return { file, errors };
+		}
+		const next = makeEmptyFile();
+		for (const inputPhase of op.phases) {
+			if (!inputPhase || typeof inputPhase !== "object") {
+				errors.push("Each phase must be an object");
+				continue;
+			}
+			if (!inputPhase.name || typeof inputPhase.name !== "string") {
+				errors.push("Each phase must have a name (string)");
+				continue;
+			}
+			const phaseId = `phase-${next.nextPhaseId++}`;
+			const { phase, nextTaskId } = buildPhaseFromInput(inputPhase, phaseId, next.nextTaskId);
+			next.phases.push(phase);
+			next.nextTaskId = nextTaskId;
+		}
+		file = next;
+		normalizeInProgressTask(file.phases);
+		return { file, errors };
+	}
+
+	if (params.add_phase) {
+		const op = params.add_phase;
+		if (!op || typeof op !== "object") {
+			errors.push("add_phase must be an object");
+			return { file, errors };
+		}
+		if (!op.name || typeof op.name !== "string") {
+			errors.push("add_phase.name must be a string (not an object or array)");
+			return { file, errors };
+		}
+		if (op.tasks && !Array.isArray(op.tasks)) {
+			errors.push("add_phase.tasks must be an array");
+			return { file, errors };
+		}
+		const phaseId = `phase-${file.nextPhaseId++}`;
+		const { phase, nextTaskId } = buildPhaseFromInput(op, phaseId, file.nextTaskId);
+		file.phases.push(phase);
+		file.nextTaskId = nextTaskId;
+		normalizeInProgressTask(file.phases);
+		return { file, errors };
+	}
+
+	if (params.add_task) {
+		const op = params.add_task;
+		if (!op || typeof op !== "object") {
+			errors.push("add_task must be an object");
+			return { file, errors };
+		}
+		if (!op.phase || typeof op.phase !== "string") {
+			errors.push("add_task.phase must be a string (e.g., 'phase-1')");
+			return { file, errors };
+		}
+		if (!op.content || typeof op.content !== "string") {
+			errors.push("add_task.content must be a string");
+			return { file, errors };
+		}
+		const target = file.phases.find((p) => p.id === op.phase);
+		if (!target) {
+			errors.push(`Phase "${op.phase}" not found`);
+		} else {
+			target.tasks.push({
+				id: `task-${file.nextTaskId++}`,
+				content: op.content,
+				status: "pending",
+				notes: op.notes,
+				details: op.details,
+			});
+		}
+		normalizeInProgressTask(file.phases);
+		return { file, errors };
+	}
+
+	if (params.update) {
+		const op = params.update;
+		if (!op || typeof op !== "object") {
+			errors.push("update must be an object");
+			return { file, errors };
+		}
+		if (!op.id || typeof op.id !== "string") {
+			errors.push("update.id must be a string (e.g., 'task-1')");
+			return { file, errors };
+		}
+		const task = findTask(file.phases, op.id);
+		if (!task) {
+			errors.push(`Task "${op.id}" not found`);
+		} else {
+			if (op.status !== undefined) task.status = op.status;
+			if (op.content !== undefined) task.content = op.content;
+			if (op.notes !== undefined) task.notes = op.notes;
+			if (op.details !== undefined) task.details = op.details;
+		}
+		normalizeInProgressTask(file.phases);
+		return { file, errors };
+	}
+
+	if (params.remove_task) {
+		const op = params.remove_task;
+		if (!op || typeof op !== "object") {
+			errors.push("remove_task must be an object");
+			return { file, errors };
+		}
+		if (!op.id || typeof op.id !== "string") {
+			errors.push("remove_task.id must be a string (e.g., 'task-1')");
+			return { file, errors };
+		}
+		let removed = false;
+		for (const phase of file.phases) {
+			const idx = phase.tasks.findIndex((t) => t.id === op.id);
+			if (idx !== -1) {
+				phase.tasks.splice(idx, 1);
+				removed = true;
+				break;
+			}
+		}
+		if (!removed) {
+			errors.push(`Task "${op.id}" not found`);
+		}
+		normalizeInProgressTask(file.phases);
+		return { file, errors };
+	}
+
+	if (params.list !== undefined) {
+		// List operation - no modification, just return current state
+		return { file, errors };
+	}
+
+	// No operation specified
+	errors.push("No operation specified");
+	normalizeInProgressTask(file.phases);
+	return { file, errors };
+}
+
+export function formatSummary(phases: TodoPhase[], errors: string[]): string {
+	const tasks = phases.flatMap((p) => p.tasks);
+	if (tasks.length === 0) return errors.length > 0 ? `Errors: ${errors.join("; ")}` : "Todo list cleared.";
+
+	const remainingByPhase = phases
+		.map((phase) => ({
+			name: phase.name,
+			tasks: phase.tasks.filter((task) => task.status === "pending" || task.status === "in_progress"),
+		}))
+		.filter((phase) => phase.tasks.length > 0);
+	const remainingTasks = remainingByPhase.flatMap((phase) =>
+		phase.tasks.map((task) => ({ ...task, phase: phase.name })),
+	);
+
+	// Find current phase
+	let currentIdx = phases.findIndex((p) => p.tasks.some((t) => t.status === "pending" || t.status === "in_progress"));
+	if (currentIdx === -1) currentIdx = phases.length - 1;
+	const current = phases[currentIdx];
+	const done = current?.tasks.filter((t) => t.status === "completed" || t.status === "abandoned").length ?? 0;
+
+	const lines: string[] = [];
+	if (errors.length > 0) {
+		lines.push(`⚠️ Errors: ${errors.join("; ")}`);
+	} else {
+		const pending = tasks.filter((t) => t.status === "pending" || t.status === "in_progress").length;
+		const completed = tasks.filter((t) => t.status === "completed" || t.status === "abandoned").length;
+		lines.push(`✅ Todo updated: ${pending} remaining, ${completed} completed.`);
+		lines.push(`📊 Use /todos to view, or continue with next task.`);
+		lines.push("");
+	}
+	if (remainingTasks.length === 0) {
+		lines.push("Remaining items: none.");
+	} else {
+		lines.push(`Remaining items (${remainingTasks.length}):`);
+		for (const task of remainingTasks) {
+			lines.push(`  - ${task.id} ${task.content} [${task.status}] (${task.phase})`);
+			if (task.status === "in_progress" && task.details) {
+				for (const line of task.details.split("\n")) {
+					lines.push(`      ${line}`);
+				}
+			}
+		}
+	}
+	lines.push(
+		`Phase ${currentIdx + 1}/${phases.length} "${current?.name ?? "unknown"}" — ${done}/${current?.tasks.length ?? 0} tasks complete`,
+	);
+	return lines.join("\n");
+}
+
+// =============================================================================
+// Tool Class
+// =============================================================================
+
+export class TodoWriteTool implements AgentTool<typeof todoWriteSchema, TodoWriteToolDetails> {
+	private autoTriggerInProgress = false;
+	readonly name = "todo_write";
+	readonly label = "Todo Write";
+	readonly description =
+		"Manages a structured todo list that persists across turns. NEVER create TODO.md files - always use this tool for task tracking. View progress with /todos command.";
+	readonly promptSnippet =
+		"Todo: { add_phase:{ name:'Phase 1', tasks:[{content:'Task 1'}] }, add_task:{ phase:'phase-1', content:'Task 2' }, update:{ id:'task-1', status:'completed' }, list:{} }";
+	readonly promptGuidelines = [
+		"IMPORTANT: All parameters must be OBJECTS, not strings. Do not JSON.stringify any values.",
+		"Nested format: { op: { params } } e.g., { add_phase: { name: 'Phase 1', tasks: [{ content: 'Task 1' }] } }",
+		"Ops: add_phase(name, tasks[]), add_task(phase, content), update(id, status|content), remove_task(id), replace(phases[]), list()",
+		"Status: pending, in_progress, completed, abandoned. Keep ONE in_progress at a time.",
+		"After todo_write, state: 'Todo updated: X remaining, Y completed'. Suggest next action.",
+		"Examples:",
+		"  - Add phase: { add_phase: { name: 'Build API', tasks: [{ content: 'Design endpoints', status: 'pending' }] } }",
+		"  - Add task: { add_task: { phase: 'phase-1', content: 'Implement auth' } }",
+		"  - Update task: { update: { id: 'task-1', status: 'completed' } }",
+		"  - Remove task: { remove_task: { id: 'task-2' } }",
+		"  - List todos: { list: {} }",
+	];
+	readonly parameters = todoWriteSchema;
+	readonly concurrency = "exclusive";
+	readonly strict = true;
+
+	constructor(private session: AgentSession) {
+		// Description is set inline
+	}
+
+	async execute(
+		_toolCallId: string,
+		params: TodoWriteParams,
+		_signal?: AbortSignal,
+		_onUpdate?: AgentToolUpdateCallback<TodoWriteToolDetails>,
+		_context?: unknown,
+	): Promise<AgentToolResult<TodoWriteToolDetails>> {
+		try {
+			// Normalize params to handle common LLM errors
+			params = normalizeParams(params);
+		} catch (e) {
+			return {
+				content: [{ type: "text", text: `❌ Error: ${e instanceof Error ? e.message : String(e)}` }],
+				details: { phases: [], storage: "memory" },
+			};
+		}
+
+		// Load persisted todo if not in memory
+		let previousPhases = this.session.getTodoPhases();
+		if (previousPhases.length === 0 && this.session.sessionFile) {
+			const loaded = loadTodoFromFile(this.session.sessionDir);
+			if (loaded) {
+				previousPhases = loaded.phases;
+				this.session.setTodoPhases(previousPhases);
+			}
+		}
+
+		const current = fileFromPhases(previousPhases);
+		const { file: updated, errors } = applySingleOp(current, params);
+		this.session.setTodoPhases(updated.phases);
+
+		// Always save to project-local file for persistence
+		saveTodoToFile("", updated);
+
+		const storage = this.session.sessionFile ? "session" : "memory";
+
+		// Detect which op was used
+		const hasNewOrUpdatedTodos =
+			params.replace !== undefined ||
+			params.add_phase !== undefined ||
+			params.add_task !== undefined ||
+			params.update !== undefined;
+
+		// list operation is read-only, don't trigger auto-continue
+		const isListOperation = params.list !== undefined;
+
+		if (hasNewOrUpdatedTodos && !isListOperation && !this.autoTriggerInProgress) {
+			this.autoTriggerInProgress = true;
+			this.session.sendCustomMessage(
+				{
+					customType: "todo-auto-continue",
+					content:
+						"Continue with the next task. If no tasks remain, validate the work and immediately add new tasks.",
+					display: false,
+					details: { autoTrigger: true, timestamp: Date.now() },
+				},
+				{ deliverAs: "followUp" },
+			);
+			// Wait for agent to finish, then continue to process follow-up queue
+			this.session.agent.waitForIdle().then(() => {
+				this.session.agent.continue().catch(() => {});
+			});
+			setTimeout(() => {
+				this.autoTriggerInProgress = false;
+			}, 500);
+		}
+
+		return {
+			content: [{ type: "text", text: formatSummary(updated.phases, errors) }],
+			details: { phases: updated.phases, storage },
+		};
+	}
+}
+
+// =============================================================================
+// TUI Renderer
+// =============================================================================
+
+interface TodoWriteRenderArgs {
+	op?: string;
+}
+
+function formatTodoLine(item: TodoItem, theme: Theme, prefix: string): string {
+	switch (item.status) {
+		case "completed":
+			return theme.fg("success", `${prefix}[✓] ${chalk.strikethrough(item.content)}`);
+		case "in_progress": {
+			const main = theme.fg("accent", `${prefix}[→] ${item.content}`);
+			if (!item.details) return main;
+			const detailLines = item.details.split("\n").map((l) => theme.fg("dim", `${prefix}  ${l}`));
+			return [main, ...detailLines].join("\n");
+		}
+		case "abandoned":
+			return theme.fg("error", `${prefix}[✗] ${chalk.strikethrough(item.content)}`);
+		default:
+			return theme.fg("dim", `${prefix}[ ] ${item.content}`);
+	}
+}
+
+export const todoWriteToolRenderer = {
+	renderCall(args: TodoWriteRenderArgs, _options: unknown, theme: Theme): Component {
+		const label = args.op ?? "update";
+		const text = `Todo Write: ${label}`;
+		return new Text(theme.fg("toolTitle", text), 0, 0);
+	},
+
+	renderResult(
+		result: { content: Array<{ type: string; text?: string }>; details?: TodoWriteToolDetails },
+		options: { expanded?: boolean },
+		theme: Theme,
+		_args?: TodoWriteRenderArgs,
+	): Component {
+		const phases = (result.details?.phases ?? []).filter((p) => p.tasks.length > 0);
+		const allTasks = phases.flatMap((p) => p.tasks);
+
+		const header = `Todo Write: ${allTasks.length} tasks`;
+		if (allTasks.length === 0) {
+			const fallback = result.content?.find((c) => c.type === "text")?.text ?? "No todos";
+			return new Text(`${theme.fg("dim", header)}\n${theme.fg("dim", fallback)}`, 0, 0);
+		}
+
+		const { expanded } = options;
+		const lines: string[] = [theme.fg("toolTitle", header)];
+
+		for (const phase of phases) {
+			if (phases.length > 1) {
+				lines.push(theme.fg("accent", `  ▼ ${phase.name}`));
+			}
+			const displayTasks = expanded ? phase.tasks : phase.tasks.slice(0, 5);
+			for (const task of displayTasks) {
+				lines.push(formatTodoLine(task, theme, "    "));
+			}
+			if (!expanded && phase.tasks.length > 5) {
+				lines.push(theme.fg("dim", `    ... ${phase.tasks.length - 5} more`));
+			}
+		}
+		return new Text(lines.join("\n"), 0, 0);
+	},
+	mergeCallAndResult: true,
+};

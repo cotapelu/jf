@@ -1,0 +1,513 @@
+#!/usr/bin/env node
+/**
+ * Tests for codebase plugin capabilities
+ */
+
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { mkdir, writeFile, readFile, unlink, readdir, rm, mkdtemp } from "fs/promises";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import os from "os";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Helper to create temp files
+async function writeTempFile(content: string, ext = "ts"): Promise<string> {
+  const timestamp = Date.now();
+  const dir = path.join(__dirname, "temp");
+  await mkdir(dir, { recursive: true });
+  const file = path.join(dir, `test-${timestamp}.${ext}`);
+  await writeFile(file, content, "utf-8");
+  return file;
+}
+
+// Mock context with exec
+function createMockCtx(cwd: string) {
+  const execCommands: Array<{ cmd: string; args: string[]; opts?: any }> = [];
+  return {
+    cwd,
+    exec: async (cmd: string, args: string[], opts?: any) => {
+      execCommands.push({ cmd, args, opts });
+      // Simulate success for prettier/eslint/tsc
+      if (cmd === "npx" && args[0] === "tsc") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      if (cmd === "npx" && (args[0] === "eslint" || args[0] === "prettier")) {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    }
+  };
+}
+
+// Import capabilities
+const analyzeModule = await import("../capabilities/analyze.ts");
+const safeEditModule = await import("../capabilities/safe_edit.ts");
+
+// Types for analyze and safe_edit results
+interface AnalyzeDetails {
+  file?: string;
+  exists: boolean;
+  imports: Array<{ moduleSpecifier: string; importClause?: string; namedImports?: string[]; typeOnly?: boolean }>;
+  exports: Array<{ type: string; name?: string; aliases?: string[] }>;
+  symbols: Array<{ name: string; kind: string; line: number; column?: number }>;
+  language?: string;
+  lines?: number;
+  error?: string;
+}
+
+interface SafeEditDetails {
+  success: boolean;
+  file: string;
+  message: string;
+  backupPath?: string;
+  diff?: string;
+}
+
+describe("codebase.analyze", () => {
+  it("should parse simple imports and exports", async () => {
+    const code = `
+import { foo, bar as baz } from "lib";
+import * as ns from "ns";
+import defaultImport from "def";
+export { foo, bar };
+export default class MyClass {}
+export type MyType = string;
+const x = 1;
+let y = 2;
+function myFunc() {}
+    `;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    if (result.isError) console.error('ANALYZE ERROR:', result.content, result.details);
+    else console.log('ANALYZE RESULT:', { imports: result.details.imports.length, exports: result.details.exports.length, symbols: result.details.symbols.map(s => `${s.kind} ${s.name}`) });
+
+    expect(result.isError).toBe(false);
+    expect(result.details.imports.length).toBeGreaterThanOrEqual(3);
+    expect(result.details.exports.length).toBeGreaterThanOrEqual(3);
+    expect(result.details.symbols.some(s => s.name === "MyClass" && s.kind === "class")).toBe(true);
+    expect(result.details.symbols.some(s => s.name === "MyType" && s.kind === "type")).toBe(true);
+    expect(result.details.symbols.some(s => s.name === "myFunc" && s.kind === "function")).toBe(true);
+    expect(result.details.symbols.some(s => s.name === "x" && s.kind === "variable")).toBe(true);
+
+    // Cleanup
+    await unlink(file);
+  });
+
+  it("should report missing file as error", async () => {
+    const ctx = { cwd: __dirname };
+    const result = await analyzeModule.execute({ file: "nonexistent.ts" }, ctx as { cwd: string });
+    expect(result.isError).toBe(true);
+    expect(result.details.exists).toBe(false);
+  });
+
+  it("should count lines correctly", async () => {
+    const code = "line1\nline2\nline3";
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.details.lines).toBe(3);
+    await unlink(file);
+  });
+
+  it("should detect language from extension", async () => {
+    const code = "export {};";
+    const file = await writeTempFile(code, "tsx");
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    expect(result.details.language).toBe("tsx");
+    await unlink(file);
+  });
+});
+
+describe("codebase.safe_edit", () => {
+  let tempDir: string;
+  beforeEach(async () => {
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "codebase-safe-"));
+  });
+
+  afterEach(async () => {
+    try {
+      await rm(tempDir, { recursive: true, force: true });
+    } catch { /* ignore */ }
+  });
+
+  it("should replace lines successfully", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "line1\nline2\nline3", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "replace" as const,
+        range: { start: 1, end: 2 }, // replace line2 (index1)
+        newCode: "modified"
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    console.log('SAFE_EDIT REPLACE RESULT:', JSON.stringify(result, null, 2));
+    if (!result.success) console.error('SAFE_EDIT REPLACE ERROR:', JSON.stringify(result, null, 2));
+    expect(result.success).toBe(true);
+    expect(result.results[0].success).toBe(true);
+    expect(result.results[0].diff).toContain("+ modified");
+    expect(result.results[0].diff).toContain("- line2");
+
+    const content = await readFile(file, "utf-8");
+    expect(content).toBe("line1\nmodified\nline3");
+  });
+
+  it("should insert lines successfully", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "line1\nline3", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "insert" as const,
+        range: { start: 1, end: 1 }, // insert at line 2 (between line1 and line3)
+        newCode: "inserted"
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(true);
+    const content = await readFile(file, "utf-8");
+    expect(content).toBe("line1\ninserted\nline3");
+  });
+
+  it("should delete lines successfully", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "line1\nline2\nline3", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "delete" as const,
+        range: { start: 1, end: 2 },
+        newCode: ""
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(true);
+    const content = await readFile(file, "utf-8");
+    expect(content).toBe("line1\nline3");
+  });
+
+  it("should rollback on syntax error", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    const original = "export const x = 1;";
+    await writeFile(file, original, "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    // Simulate tsc failure by modifying mock
+    ctx.exec = async (cmd: string, args: string[], opts?: any) => {
+      if (cmd === "npx" && args[0] === "tsc") {
+        return { code: 1, stdout: "", stderr: "error TS" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    };
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "replace",
+        range: { start: 0, end: 1 },
+        newCode: "const x: number = 'str';" // type error
+      }],
+      format: false,
+      fixImports: false
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].backupRestored).toBe(true);
+
+    const content = await readFile(file, "utf-8");
+    expect(content).toBe(original); // rolled back
+  });
+
+  it("should rollback on prettier failure", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    const original = "export const x = 1;";
+    await writeFile(file, original, "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    ctx.exec = async (cmd: string, args: string[], opts?: any) => {
+      if (cmd === "npx" && args[0] === "prettier") {
+        return { code: 1, stdout: "", stderr: "prettier fail" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    };
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "replace",
+        range: { start: 0, end: 1 },
+        newCode: "export const x = 2;"
+      }],
+      format: true,
+      fixImports: false
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].backupRestored).toBe(true);
+    const content = await readFile(file, "utf-8");
+    expect(content).toBe(original);
+  });
+
+  it("should handle invalid range", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "line1\nline2", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "replace",
+        range: { start: 0, end: 10 }, // out of bounds
+        newCode: "new"
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].error).toContain("Invalid range");
+  });
+
+  it("should require newCode for replace/insert", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "content", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: "sample.ts",
+        editType: "replace" as const,
+        range: { start: 0, end: 1 },
+        // @ts-ignore - intentionally missing newCode for error test
+        newCode: undefined
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].error).toContain("newCode is required");
+  });
+
+  it("should apply multiple operations on same file atomically", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "a\nb\nc\nd", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [
+        { file: "sample.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "A" },
+        { file: "sample.ts", editType: "replace" as const, range: { start: 1, end: 2 }, newCode: "B" }
+      ]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(true);
+    const content = await readFile(file, "utf-8");
+    expect(content).toBe("A\nB\nc\nd");
+  });
+
+  it("should apply multiple operations on different files atomically", async () => {
+    const file1 = path.join(tempDir, "a.ts");
+    const file2 = path.join(tempDir, "b.ts");
+    await writeFile(file1, "orig1", "utf-8");
+    await writeFile(file2, "orig2", "utf-8");
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [
+        { file: "a.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "changed1" },
+        { file: "b.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "changed2" }
+      ],
+      format: false,
+      fixImports: false
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(true);
+    expect(result.results).toHaveLength(2);
+    expect(result.results[0].success).toBe(true);
+    expect(result.results[1].success).toBe(true);
+    const content1 = await readFile(file1, "utf-8");
+    const content2 = await readFile(file2, "utf-8");
+    expect(content1).toBe("changed1");
+    expect(content2).toBe("changed2");
+  });
+
+  it("should rollback all files if one fails (atomic across files)", async () => {
+    const file1 = path.join(tempDir, "a.ts");
+    const file2 = path.join(tempDir, "b.ts");
+    await writeFile(file1, "original1", "utf-8");
+    await writeFile(file2, "original2", "utf-8");
+
+    const ctx = createMockCtx(tempDir);
+    // Simulate tsc fail on second file only
+    ctx.exec = async (cmd: string, args: string[], opts?: any) => {
+      if (cmd === "npx" && args[0] === "tsc") {
+        if (args.includes("b.ts")) {
+          return { code: 1, stdout: "", stderr: "error" };
+        }
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    };
+
+    const params = {
+      operations: [
+        { file: "a.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "changed1" },
+        { file: "b.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "changed2" }
+      ],
+      format: false,
+      fixImports: false
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    // Both files should be rolled back to original
+    const content1 = await readFile(file1, "utf-8");
+    const content2 = await readFile(file2, "utf-8");
+    expect(content1).toBe("original1");
+    expect(content2).toBe("original2");
+    // Results should indicate all operations failed and were rolled back
+    expect(result.results).toHaveLength(2);
+    expect(result.results.every(r => !r.success && r.backupRestored)).toBe(true);
+  });
+
+  it("should skip format when format=false", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "code", "utf-8");
+    const ctx = createMockCtx(tempDir);
+    let prettierCalled = false;
+    ctx.exec = async (cmd: string, args: string[]) => {
+      if (cmd === "npx" && args[0] === "prettier") prettierCalled = true;
+      return { code: 0, stdout: "", stderr: "" };
+    };
+
+    const params = {
+      operations: [{ file: "sample.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "new" }],
+      format: false
+    };
+    await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(prettierCalled).toBe(false);
+  });
+
+  it("should skip eslint when fixImports=false", async () => {
+    const file = path.join(tempDir, "sample.ts");
+    await writeFile(file, "code", "utf-8");
+    const ctx = createMockCtx(tempDir);
+    let eslintCalled = false;
+    ctx.exec = async (cmd: string, args: string[]) => {
+      if (cmd === "npx" && args[0] === "eslint") eslintCalled = true;
+      return { code: 0, stdout: "", stderr: "" };
+    };
+
+    const params = {
+      operations: [{ file: "sample.ts", editType: "replace" as const, range: { start: 0, end: 1 }, newCode: "new" }],
+      fixImports: false
+    };
+    await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(eslintCalled).toBe(false);
+  });
+
+  // Additional branch coverage tests for safe_edit
+  it('should require newCode for insert operation', async () => {
+    const file = path.join(tempDir, 'sample.ts');
+    await writeFile(file, 'content', 'utf-8');
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: 'sample.ts',
+        editType: 'insert' as const,
+        range: { start: 0, end: 0 },
+        // @ts-ignore - intentionally missing newCode
+        newCode: undefined
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].error).toContain('newCode is required');
+  });
+
+  it('should reject negative range start', async () => {
+    const file = path.join(tempDir, 'sample.ts');
+    await writeFile(file, 'line1\nline2', 'utf-8');
+    const ctx = createMockCtx(tempDir);
+
+    const params = {
+      operations: [{
+        file: 'sample.ts',
+        editType: 'replace' as const,
+        range: { start: -1, end: 1 },
+        newCode: 'new'
+      }]
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].error).toContain('Invalid range');
+  });
+
+  it('should handle backup of non-existent file', async () => {
+    const ctx = createMockCtx(tempDir);
+    // No file created for operation
+
+    const params = {
+      operations: [{
+        file: 'nonexistent.ts',
+        editType: 'replace' as const,
+        range: { start: 0, end: 1 },
+        newCode: 'new'
+      }],
+      format: false,
+      fixImports: false
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(false);
+    expect(result.results[0].error).toMatch(/Cannot read file|nonexistent/);
+  });
+
+  it('should accept tsc exit code 2 without throwing', async () => {
+    const file = path.join(tempDir, 'sample.ts');
+    await writeFile(file, 'export const x = 1;', 'utf-8');
+    const ctx = createMockCtx(tempDir);
+
+    ctx.exec = async (cmd: string, args: string[], opts?: any) => {
+      if (cmd === 'npx' && args[0] === 'tsc') {
+        return { code: 2, stdout: '', stderr: 'usage error' };
+      }
+      return { code: 0, stdout: '', stderr: '' };
+    };
+
+    const params = {
+      operations: [{
+        file: 'sample.ts',
+        editType: 'replace' as const,
+        range: { start: 0, end: 1 },
+        newCode: 'export const x = 2;'
+      }],
+      format: false,
+      fixImports: false
+    };
+
+    const result = await safeEditModule.execute(params, ctx as { cwd: string });
+    expect(result.success).toBe(true);
+  });
+
+});

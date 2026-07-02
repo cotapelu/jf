@@ -23,6 +23,7 @@ import { defaultAssistantPrompt } from './prompts/index.js';
 
 import { setCurrentRuntime } from './runtime-context.js';
 import { registerAllAddon } from './index.js';
+import { registerAllPlugin } from '../plugin/index.js';
 
 /**
  * Tạo runtime factory sử dụng addon đã đăng ký
@@ -30,14 +31,15 @@ import { registerAllAddon } from './index.js';
 export function createRuntimeFactory(): CreateAgentSessionRuntimeFactory {
   return async (options) => {
     const { cwd, agentDir, sessionManager, sessionStartEvent } = options;
-    const { tools, extensions } = registerAllAddon(cwd);
+    const { tools, extensions: addonExtensions } = registerAllAddon(cwd);
+    const { extensions: pluginExtensions } = registerAllPlugin();
 
     const servicesOptions: CreateAgentSessionServicesOptions = {
       cwd,
       agentDir,
       resourceLoaderOptions: {
         promptsOverride: () => ({ prompts: [defaultAssistantPrompt], diagnostics: [] }),
-        extensionFactories: extensions,
+        extensionFactories: [...addonExtensions, ...pluginExtensions],
       },
     };
 

@@ -1,0 +1,255 @@
+{
+  "id": "git",
+  "name": "Git Operations",
+  "description": "Complete Git version control toolset",
+  "version": "1.0.0",
+  "tags": ["vcs", "git", "version-control"],
+  "capabilities": [
+    {
+      "id": "status",
+      "name": "Git Status",
+      "description": "Show working tree status",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "execute": "capabilities/status.ts",
+      "renderer": "renderers/status-renderer.ts",
+      "promptGuidelines": [
+        "Use git.status to see current branch, staged/unstaged changes, and untracked files.",
+        "Example: { capability: 'git.status', params: {} }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "diff",
+      "name": "Git Diff",
+      "description": "Show changes between commits, branches, or working tree",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string",
+            "description": "Revision to diff against (default: HEAD)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "execute": "capabilities/diff.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Use git.diff to see unstaged changes (default) or compare revisions.",
+        "Example: { capability: 'git.diff', params: { revision: 'HEAD~1' } }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "log",
+      "name": "Git Log",
+      "description": "Show commit history",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "description": "Number of commits to show (default: 10)",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10
+          }
+        },
+        "additionalProperties": false
+      },
+      "execute": "capabilities/log.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Use git.log to see recent commit history.",
+        "Example: { capability: 'git.log', params: { count: 20 } }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "commit",
+      "name": "Git Commit",
+      "description": "Commit staged changes with a message",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Commit message"
+          },
+          "all": {
+            "type": "boolean",
+            "description": "Stage all changes before commit (git commit -a)"
+          },
+          "amend": {
+            "type": "boolean",
+            "description": "Amend previous commit"
+          }
+        },
+        "required": ["message"],
+        "additionalProperties": false
+      },
+      "execute": "capabilities/commit.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Always provide a clear, conventional commit message.",
+        "Use amend with caution - it rewrites history.",
+        "Example: { capability: 'git.commit', params: { message: 'feat: add login' } }"
+      ],
+      "dependencies": ["git.status"]
+    },
+    {
+      "id": "branch",
+      "name": "Git Branch",
+      "description": "List, create, or delete branches",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["list", "create", "delete"],
+            "description": "Branch action"
+          },
+          "name": {
+            "type": "string",
+            "description": "Branch name (required for create/delete)"
+          }
+        },
+        "required": ["action"],
+        "additionalProperties": false
+      },
+      "execute": "capabilities/branch.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "action: 'list' (default), 'create', 'delete'",
+        "Example list: { capability: 'git.branch', params: { action: 'list' } }",
+        "Example create: { capability: 'git.branch', params: { action: 'create', name: 'feature-x' } }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "checkout",
+      "name": "Git Checkout",
+      "description": "Switch branches or restore files",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": "string",
+            "description": "Branch name to checkout"
+          },
+          "create": {
+            "type": "boolean",
+            "description": "Create new branch if not exists"
+          }
+        },
+        "required": ["branch"],
+        "additionalProperties": false
+      },
+      "execute": "capabilities/checkout.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Use to switch branches or create new ones.",
+        "Example: { capability: 'git.checkout', params: { branch: 'main' } }",
+        "Create branch: { capability: 'git.checkout', params: { branch: 'new-feature', create: true } }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "add",
+      "name": "Git Add",
+      "description": "Stage files for commit",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "File paths to stage"
+          },
+          "all": {
+            "type": "boolean",
+            "description": "Stage all changes (git add -A)"
+          }
+        },
+        "oneOf": [
+          { "required": ["files"] },
+          { "required": ["all"] }
+        ],
+        "additionalProperties": false
+      },
+      "execute": "capabilities/add.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Stage specific files or all changes.",
+        "Example files: { capability: 'git.add', params: { files: ['src/index.ts'] } }",
+        "Example all: { capability: 'git.add', params: { all: true } }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "push",
+      "name": "Git Push",
+      "description": "Push commits to remote repository",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "remote": {
+            "type": "string",
+            "description": "Remote name (default: origin)"
+          },
+          "branch": {
+            "type": "string",
+            "description": "Branch to push (default: current branch)"
+          },
+          "setUpstream": {
+            "type": "boolean",
+            "description": "Set upstream tracking"
+          }
+        },
+        "additionalProperties": false
+      },
+      "execute": "capabilities/push.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Push current branch to origin by default.",
+        "Example: { capability: 'git.push', params: {} }",
+        "Specify: { capability: 'git.push', params: { remote: 'upstream', branch: 'main' } }"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "pull",
+      "name": "Git Pull",
+      "description": "Fetch and integrate changes from remote",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "remote": {
+            "type": "string",
+            "description": "Remote name (default: origin)"
+          },
+          "branch": {
+            "type": "string",
+            "description": "Branch to pull (default: current branch)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "execute": "capabilities/pull.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Pull from upstream to sync local branch.",
+        "Example: { capability: 'git.pull', params: {} }",
+        "Specify: { capability: 'git.pull', params: { remote: 'origin', branch: 'main' } }"
+      ],
+      "dependencies": []
+    }
+  ],
+  "settings": {
+    "enabledByDefault": true
+  }
+}

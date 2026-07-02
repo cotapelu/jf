@@ -1,0 +1,29 @@
+{
+  "id": "system",
+  "name": "System Tools",
+  "description": "System metrics and diagnostics",
+  "version": "1.0.0",
+  "tags": ["system", "metrics"],
+  "capabilities": [
+    {
+      "id": "metrics",
+      "name": "System Metrics",
+      "description": "Show system usage statistics (memory, uptime, session info)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "execute": "capabilities/metrics.ts",
+      "renderer": null,
+      "promptGuidelines": [
+        "Use system.metrics to see system health and performance stats.",
+        "Example: { capability: 'system.metrics', params: {} }"
+      ],
+      "dependencies": []
+    }
+  ],
+  "settings": {
+    "enabledByDefault": true
+  }
+}

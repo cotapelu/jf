@@ -13,6 +13,7 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
+      "@extensions/*": ["src/plugin/extensions/*"],
       "*.js": ["*.ts"]
     }
   },
