@@ -1,1 +1,1 @@
-export { startAgent as main } from './addon/config.js';
+export { startAgent as main } from './runner.js';
