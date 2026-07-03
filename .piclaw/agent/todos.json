@@ -3,37 +3,42 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Codebase Analysis",
+      "name": "CodebaseScan",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Explore project structure and identify technology stack",
+          "content": "Khám phá cấu trúc project và xác định loại codebase",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Scan all source files for code quality issues",
+          "content": "Phân tích code: metrics, complexity, dependencies",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Check for security vulnerabilities",
+          "content": "Scan bảo mật: tìm secrets, vulnerabilities",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Analyze test coverage and quality",
+          "content": "Đánh giá chất lượng: anti-patterns, best practices",
           "status": "pending"
         },
         {
           "id": "task-5",
-          "content": "Generate comprehensive report",
+          "content": "Kiểm tra tests và coverage",
+          "status": "pending"
+        },
+        {
+          "id": "task-6",
+          "content": "Tạo báo cáo tổng hợp với khuyến nghị",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 6,
+  "nextTaskId": 7,
   "nextPhaseId": 2,
-  "updatedAt": "2026-07-02T01:02:34.269Z"
+  "updatedAt": "2026-07-02T10:08:51.959Z"
 }
