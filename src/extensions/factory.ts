@@ -30,10 +30,7 @@ import { registerTeamWidget } from "./team/team-widget.js";
 import { registerMemoryRenderer } from "./renderers/memory-renderer.js";
 import { registerBranchSummaryRenderer } from "./renderers/branch-summary-renderer.js";
 import { registerTeamOpsRenderer } from "./renderers/team-ops-renderer.js";
-import { registerSessionTreeCommand } from "./commands/session-tree-command.js";
-import { registerSettingsCommand } from "./commands/settings-command.js";
 import { registerProviderCommand } from "./commands/provider-command.js";
-import { registerCopyCommand } from "./commands/copy-command.js";
 import { registerTeamCommand } from "./commands/team-command.js";
 import { registerKeybindingExtension } from "./keybinding/keybinding-extension.js";
 
@@ -73,10 +70,7 @@ export default async function extensionsAggregator(api: import("@earendil-works/
   registerTeamOpsRenderer(api);
 
   // Register commands
-  registerSessionTreeCommand(api);
-  registerSettingsCommand(api);
   registerProviderCommand(api);
-  registerCopyCommand(api);
   registerTeamCommand(api);
   // Register keybinding extension
   registerKeybindingExtension(api);
