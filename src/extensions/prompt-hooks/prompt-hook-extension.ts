@@ -47,7 +47,7 @@ export default function(pi: ExtensionAPI) {
   const prompts = getAllBuiltinPrompts();
 
   pi.registerCommand('prompt', {
-    description: 'Execute a built-in prompt with optional argument substitution. Usage: /prompt <prompt-name> [args...]',
+    description: `Built-in prompts: ${prompts.map(p => p.name).join(', ')}. Usage: /prompt <prompt-name> [args...]`,
     getArgumentCompletions: (prefix: string) => {
       return prompts
         .filter(p => p.name.startsWith(prefix))
@@ -61,7 +61,7 @@ export default function(pi: ExtensionAPI) {
       const args = parseCommandArgs(_argsString);
       if (args.length === 0) {
         const names = prompts.map(p => p.name).join(', ');
-        ctx.ui.notify(`Usage: /prompt <prompt-name> [args...]\nAvailable prompts: ${names}`, 'info');
+        ctx.ui.notify(`Usage: /prompt <prompt-name> [args...]\nAvailable prompts: ${names}`, 'warning');
         return;
       }
       const promptName = args[0];
