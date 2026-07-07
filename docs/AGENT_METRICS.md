@@ -1967,3 +1967,25 @@ All tests pass; lint and build clean.
 - All tests pass; lint clean; build successful.
 
 **Next targets:** Continue toward 85% branch coverage; consider adding metrics endpoint or integration with monitoring system.
+
+## Cycle 60 - Documentation API Compatibility - 2026-07-07 (Autonomous)
+
+**Task:** Add API Compatibility section to README as required by GOAL §13.1.
+
+**Type:** D (Documentation)
+
+**Priority:** LOW (compliance evidence)
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Changes:**
+- Added `## API Compatibility` section in README.md.
+- Documents APIs used, deprecation status, fallback strategy, migration plan, version pinning.
+- No code changes; documentation only.
+
+**Impact:** Improves traceability for compliance; satisfies mandatory documentation requirement.
+
+**Next:** Consider expanding COMPLIANCE.md if compliance scope expands (GDPR, PCI, etc.). Not needed currently.
+

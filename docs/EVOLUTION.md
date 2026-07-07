@@ -430,3 +430,12 @@ Optional future work:
 - Implement command-injection detection in `CommandValidator`
 - Add rate limiting default (with backward compatibility considerations)
 - Deep-dive coverage of `team-manager` runAgentLoop (complex, high risk of flaky tests)
+
+## Cycle 60 Update - 2026-07-07
+
+**Documentation:** Added API Compatibility section to README.  
+- Covers APIs used, deprecation status, fallback, migration, version pinning.  
+- Meets GOAL §13.1 requirement.  
+
+**Status:** All quality gates maintained; branch coverage 83.97%; production-ready.  
+**Note:** Coverage approach to 85% is diminishing returns; will reassess priority in next planning.
