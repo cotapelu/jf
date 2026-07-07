@@ -3,42 +3,52 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "CodebaseScan",
+      "name": "Autonomous Discovery Phase",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Khám phá cấu trúc project và xác định loại codebase",
+          "content": "Đọc toàn bộ codebase structure và xác định loại project",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Phân tích code: metrics, complexity, dependencies",
+          "content": "Scan quality gates: lint, type-check, test, coverage, build",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Scan bảo mật: tìm secrets, vulnerabilities",
+          "content": "Identify violations và proactive analysis (10 steps)",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Đánh giá chất lượng: anti-patterns, best practices",
+          "content": "Phân tích branch coverage gaps và high-uncovered modules",
           "status": "pending"
         },
         {
           "id": "task-5",
-          "content": "Kiểm tra tests và coverage",
+          "content": "Tạo improvement plan - prioritize CRITICAL/HIGH/MEDIUM/LOW",
           "status": "pending"
         },
         {
           "id": "task-6",
-          "content": "Tạo báo cáo tổng hợp với khuyến nghị",
+          "content": "Execute highest-impact task (branch coverage >=85%)",
+          "status": "pending"
+        },
+        {
+          "id": "task-7",
+          "content": "Run tests, verify no regression, update metrics",
+          "status": "pending"
+        },
+        {
+          "id": "task-8",
+          "content": "Git commit và update evolution docs",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 7,
+  "nextTaskId": 9,
   "nextPhaseId": 2,
-  "updatedAt": "2026-07-02T10:08:51.959Z"
+  "updatedAt": "2026-07-07T11:06:33.759Z"
 }

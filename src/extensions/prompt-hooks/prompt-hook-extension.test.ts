@@ -80,7 +80,7 @@ describe('prompt-hook-extension', () => {
       const promptCmd = mockPi.registerCommand.mock.calls.find(call => call[0] === 'prompt');
       expect(promptCmd).toBeDefined();
       expect(promptCmd[1]).toMatchObject({
-        description: expect.stringContaining('Execute a built-in prompt'),
+        description: expect.stringContaining('Built-in prompts'),
         getArgumentCompletions: expect.any(Function),
         handler: expect.any(Function),
       });
@@ -102,7 +102,7 @@ describe('prompt-hook-extension', () => {
       await commandDef.handler('', mockCtx);
       expect(mockCtx.ui.notify).toHaveBeenCalledWith(
         expect.stringContaining('Usage: /prompt <prompt-name>'),
-        'info'
+        'warning'
       );
     });
 

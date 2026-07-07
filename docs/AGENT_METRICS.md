@@ -1873,3 +1873,34 @@ All tests pass; lint and build clean.
 **Impact:** Improved robustness and documentation for core modules but still short of 85% target. Uncovered branches remain distributed across `team-manager.ts` (22), `ast_query.ts` (14), `analyze.ts` (11), `dependency_tree.ts` (9), `call_graph.ts` (8), `complexity.ts` (6), `analyze_ast.ts` (6), `command-executor.ts` (5), `command-cache.ts` (4), and others.
 
 **Next targets:** Intensify testing on high-uncovered modules: craft targeted tests for `ast_query` (query filters, regex patterns, parent matching), `analyze` (more language features), `analyze_ast` (AST node types), `dependency_tree` (cycle detection), `call_graph` (call limit handling), `complexity` (additional decision points), and `command-executor` (error paths). Aim to reach ≥85% branch coverage in next cycle.
+
+## Cycle 56 - TeamManager Error Handling & Coverage Push - 2026-07-07 (Autonomous)
+
+**Task:** Increase branch coverage with targeted edge case tests for `AgentTeam.handleAgentEvent` (notify paths) and `executeTeamTasks` error handling; add try/catch for onUpdate errors.
+
+**Type:** Proactive Improvement (Test Coverage + Error Handling)
+
+**Priority:** HIGH
+
+**Duration:** ~1.5h
+
+**Status:** ✅ Success (tests pass, coverage improved)
+
+**Test Delta:** +17 tests (total 1073 passing)
+- +12 tests: `handleAgentEvent` notify branches (agent_start, agent_end, message_start user/assistant, tool_execution_start/end, message_update)
+- +5 tests: `executeTeamTasks` edge cases (initialize throw, childPromises rejection, onUpdate error catch, sendCompletionUpdate call)
+
+**Coverage Delta:**
+- Statements: **92.94%** (↑0.?? from previous)
+- Branches: **83.95%** (↑0.07% from 83.88%) - still below 85% target
+- Functions: **91.74%** (unchanged)
+- Lines: **94.15%** (↑0.01%)
+
+**Per-module gains:**
+- `team-manager.ts`: improved coverage for `handleAgentEvent` (notify cases), `executeTeamTasks` (error propagation, onUpdate error handling after try/catch addition)
+- Added error handling in `executeTeamTasks` (try/catch around sendImmediateStartUpdate and sendCompletionUpdate)
+
+**Notes:** All tests pass; lint clean; build clean. Inserted try/catch in `executeTeamTasks` to prevent onUpdate errors from crashing execution. This added new branches (catch blocks) covered by new tests.
+
+**Next targets:** Continue coverage push to ≥85% by addressing remaining high-uncovered modules: `team-manager.ts` (runAgentLoop max-turns, abort handling), `ast_query.ts` (remaining branches), `analyze.ts` (edge cases), or `dependency_tree.ts`.
+

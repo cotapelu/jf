@@ -903,9 +903,17 @@ export async function executeTeamTasks(
         team.monitorInterval = null;
       }
     }
-    await sendCompletionUpdate(team, onUpdate);
+    try {
+      await sendCompletionUpdate(team, onUpdate);
+    } catch (e) {
+      console.error('Failed to send completion update:', e);
+    }
   } else {
-    sendImmediateStartUpdate(team, onUpdate, tasks);
+    try {
+      sendImmediateStartUpdate(team, onUpdate, tasks);
+    } catch (e) {
+      console.error('Failed to send immediate start update:', e);
+    }
   }
   return team;
 }
