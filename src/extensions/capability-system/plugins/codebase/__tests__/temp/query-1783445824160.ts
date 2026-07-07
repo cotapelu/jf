@@ -1,4 +1,0 @@
-
-function target() {}
-function other() {}
-    

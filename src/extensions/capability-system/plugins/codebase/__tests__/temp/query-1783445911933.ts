@@ -1,4 +1,0 @@
-
-class MyClass {}
-interface MyInterface {}
-    
