@@ -88,50 +88,71 @@ export class AgentTeam implements AgentTeamRuntime {
   // Locking mechanism for concurrency control
 
   constructor() {
-    this.dispose = async () => {
-      if (this.monitorInterval) {
-        clearInterval(this.monitorInterval);
-        this.monitorInterval = null;
-      }
-      this.disposed = true;
-      for (const controller of this.childControllers.values()) {
-        controller.abort();
-      }
-      if (this.childPromises && this.childPromises.length > 0) {
-        await Promise.allSettled(this.childPromises);
-      }
-      this.childControllers.clear();
-      this.childPromises = [];
-      await Promise.allSettled(
-        this.runtimes.map(rt =>
-          (rt.dispose ? rt.dispose() : Promise.resolve()).catch(err =>
-            console.error("Failed to dispose agent runtime:", err)
-          )
-        )
-      );
-      this.runtimes = [];
-      this.agentMonitor.clear();
-      try {
-        const registry = TeamRegistry.getInstance();
-        if (this.id) {
-          registry.unregister(this.id);
-        }
-      } catch (e) {
-        console.warn('Failed to unregister team from registry:', e);
-      }
-    };
+    this.dispose = this.performDispose.bind(this);
     this.workspace = new SharedWorkspace();
-    // Initialize TaskManager
     this.taskManager = new TaskManager({
       maxRetries: DEFAULT_MAX_RETRIES,
       baseRetryDelayMs: BASE_RETRY_DELAY_MS,
       maxRetryDelayMs: MAX_RETRY_DELAY_MS,
     });
     this.taskManager.setOnUpdate((update) => this.notifyUpdate(update));
-    // Initialize AgentMonitor
     this.agentMonitor = new AgentMonitor(this.taskManager, { agentTimeoutMs: AGENT_TIMEOUT_MS });
     this.agentMonitor.setOnUpdate((update) => this.notifyUpdate(update));
   }
+
+  private async performDispose(): Promise<void> {
+    await this.abortControllers();
+    await this.waitForChildPromises();
+    this.clearCollections();
+    await this.disposeRuntimes();
+    this.unregisterTeam();
+    this.agentMonitor.clear();
+  }
+
+  private abortControllers(): void {
+    if (this.monitorInterval) {
+      clearInterval(this.monitorInterval);
+      this.monitorInterval = null;
+    }
+    this.disposed = true;
+    for (const controller of this.childControllers.values()) {
+      controller.abort();
+    }
+  }
+
+  private async waitForChildPromises(): Promise<void> {
+    if (this.childPromises && this.childPromises.length > 0) {
+      await Promise.allSettled(this.childPromises);
+    }
+  }
+
+  private clearCollections(): void {
+    this.childControllers.clear();
+    this.childPromises = [];
+  }
+
+  private async disposeRuntimes(): Promise<void> {
+    await Promise.allSettled(
+      this.runtimes.map(rt =>
+        (rt.dispose ? rt.dispose() : Promise.resolve()).catch(err =>
+          console.error("Failed to dispose agent runtime:", err)
+        )
+      )
+    );
+    this.runtimes = [];
+  }
+
+  private unregisterTeam(): void {
+    try {
+      const registry = TeamRegistry.getInstance();
+      if (this.id) {
+        registry.unregister(this.id);
+      }
+    } catch (e) {
+      console.warn('Failed to unregister team from registry:', e);
+    }
+  }
+
 
   setTeamId(id: string): void {
     this.id = id;
@@ -423,86 +444,86 @@ export class AgentTeam implements AgentTeamRuntime {
     baseCwd?: string | ((role: string) => string),
     options?: { createRuntime?: (factory: CreateAgentSessionRuntimeFactory, opts: unknown) => Promise<AgentSessionRuntime> }
   ): Promise<void> {
+    this.validateSetupPreconditions();
+    for (const role of this.roles) {
+      if (role === "parent") continue;
+      await this.createRuntimeForRole(role, parentRuntime, baseCwd, options);
+    }
+  }
+
+  private validateSetupPreconditions(): void {
     if (this.disposed) throw new Error('Team disposed');
-    // roles should already be defined via initialize options or registerRuntime
     if (this.roles.length === 0) {
       throw new Error('No agent roles defined. Call initialize() with teamSize or registerRuntime() first.');
     }
+  }
 
-    for (const role of this.roles) {
-      // Skip parent role (not a child agent)
-      if (role === "parent") continue;
-      // Determine agent cwd
-      let agentCwd: string;
-      if (typeof baseCwd === 'function') {
-        agentCwd = baseCwd(role);
-      } else {
-        agentCwd = baseCwd ?? parentRuntime.cwd;
-      }
-      if (!agentCwd) throw new Error('agentCwd is undefined for role ' + role);
+  private computeAgentCwd(baseCwd: string | ((role: string) => string) | undefined, role: string, parentCwd: string): string {
+    let agentCwd: string;
+    if (typeof baseCwd === 'function') {
+      agentCwd = baseCwd(role);
+    } else {
+      agentCwd = baseCwd ?? parentCwd;
+    }
+    if (!agentCwd) throw new Error('agentCwd is undefined for role ' + role);
+    return agentCwd;
+  }
 
-      // Create isolated session directory
-      const teamDir = path.join(parentRuntime.services.agentDir, 'teams', this.id);
-      const agentSessionDir = path.join(teamDir, role);
-      // Use shared session manager (parent's) for all agents
-      const sessionManager = parentRuntime.session.sessionManager;
+  private createSessionStartEvent(): SessionStartEvent {
+    return { type: 'session_start', reason: 'new' };
+  }
 
-      // Create session start event
-      const sessionStartEvent: SessionStartEvent = {
-        type: 'session_start',
-        reason: 'new'
-      };
-
-      // Create child runtime using parent's services and new sessionManager
-      // We'll use a factory similar to bootPiclawTeam but without reusing parent's sessionManager
-      const factory: CreateAgentSessionRuntimeFactory = async ({
-        cwd: sessionCwd,
-        agentDir: sessionAgentDir,
-        sessionManager: providedSessionManager,
-        sessionStartEvent: startEvent,
-      }) => {
-        // Use parent's shared services (auth, settings, model) but isolated session
-        const services = await createAgentSessionServices({
-          cwd: sessionCwd,
-          agentDir: sessionAgentDir,
-          authStorage: parentRuntime.services.authStorage,
-          settingsManager: parentRuntime.services.settingsManager,
-          modelRegistry: parentRuntime.services.modelRegistry,
-        });
-
-        const sessionResult = await createAgentSessionFromServices({
-          services,
-          sessionManager: providedSessionManager,
-          sessionStartEvent: startEvent,
-          tools: [], // no tools initially; team_ops will be added separately?
-          customTools: [createTeamOpsTool(this)],
-        });
-
-        return {
-          session: sessionResult.session,
-          services,
-          diagnostics: services.diagnostics,
-        } as CreateAgentSessionRuntimeResult;
-      };
-
-      const createRuntimeImpl = options?.createRuntime ?? createAgentSessionRuntime;
-      const runtime = await createRuntimeImpl(factory, {
-        cwd: agentCwd,
-        agentDir: agentSessionDir,
+  private createChildFactory(parentRuntime: AgentSessionRuntime): CreateAgentSessionRuntimeFactory {
+    return async ({ cwd, agentDir, sessionManager, sessionStartEvent }) => {
+      const services = await createAgentSessionServices({
+        cwd,
+        agentDir,
+        authStorage: parentRuntime.services.authStorage,
+        settingsManager: parentRuntime.services.settingsManager,
+        modelRegistry: parentRuntime.services.modelRegistry,
+      });
+      const sessionResult = await createAgentSessionFromServices({
+        services,
         sessionManager,
         sessionStartEvent,
+        tools: [],
+        customTools: [createTeamOpsTool(this)],
       });
+      return {
+        session: sessionResult.session,
+        services,
+        diagnostics: services.diagnostics,
+      } as CreateAgentSessionRuntimeResult;
+    };
+  }
 
-      // Register
-      this.runtimes.push(runtime);
-      // roles already exists; we push agent status
-      this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
-      this.roleByAgentId.set(runtime.session.sessionId, role);
-      this.size = this.roles.length;
+  private async createRuntimeForRole(
+    role: string,
+    parentRuntime: AgentSessionRuntime,
+    baseCwd?: string | ((role: string) => string),
+    options?: { createRuntime?: (factory: CreateAgentSessionRuntimeFactory, opts: unknown) => Promise<AgentSessionRuntime> }
+  ): Promise<void> {
+    const agentCwd = this.computeAgentCwd(baseCwd, role, parentRuntime.cwd);
+    const teamDir = path.join(parentRuntime.services.agentDir, 'teams', this.id);
+    const agentSessionDir = path.join(teamDir, role);
+    const sessionManager = parentRuntime.session.sessionManager;
+    const sessionStartEvent = this.createSessionStartEvent();
 
-      // Subscribe to child session events
-      runtime.session.subscribe((event: unknown) => this.handleAgentEvent(role, event));
-    }
+    const factory = this.createChildFactory(parentRuntime);
+    const createRuntimeImpl = options?.createRuntime ?? createAgentSessionRuntime;
+    const runtime = await createRuntimeImpl(factory, {
+      cwd: agentCwd,
+      agentDir: agentSessionDir,
+      sessionManager,
+      sessionStartEvent,
+    });
+
+    this.runtimes.push(runtime);
+    this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
+    this.roleByAgentId.set(runtime.session.sessionId, role);
+    this.size = this.roles.length;
+
+    runtime.session.subscribe((event: unknown) => this.handleAgentEvent(role, event));
   }
 
   /**
