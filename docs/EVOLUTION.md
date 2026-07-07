@@ -509,3 +509,26 @@ Optional future work:
 
 **Next:** Continue refactoring other long methods in `team-manager.ts` (e.g., `handleAgentEvent`, `getBootstrapPrompt`) to reach full compliance. Target next: `handleAgentEvent` (~30 lines).
 
+## Cycle 64 - Refactor: Simplify handleAgentEvent - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `handleAgentEvent` length to ≤20 lines.
+
+**Type:** R (Refactor) + T (Tests)
+
+**Priority:** HIGH
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (tests still pass)
+
+**Refactor Details:**
+- Extracted `renderAgentStart`, `renderAgentEnd`, `renderMessageStart`, `renderToolExecution` helper methods.
+- Simplified `handleAgentEvent` to ~15 lines (was ~42).
+- No functional changes; all tests (1087) pass; build clean.
+
+**Impact:** Improved readability, maintainability. Brings another method into compliance.
+
+**Next:** Continue with remaining long methods (`getBootstrapPrompt`, `getContinuationPrompt`, `startCompletionMonitor`) if needed. Evaluate overall class size to split further into helper classes.
+
