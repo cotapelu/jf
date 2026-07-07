@@ -260,3 +260,22 @@
 All tests pass; lint clean; build clean. Next phase will target these modules intensively to reach ≥85% global branch coverage.
 
 *Profile last updated: 2026-06-27*
+
+## 3. Coverage Gap (ACTIVE)
+**Severity:** MEDIUM  
+**Issue:** Global branch coverage at 83.95%, below Phase 31 target of 85%.  
+**Impact:** Some error paths and edge cases remain untested, particularly in:
+- `team-manager.ts` (runAgentLoop concurrency, abort handling)
+- `ast_query.ts` (AST parent resolution, regex fallback)
+- `analyze.ts` (import/export edge forms)
+- `dependency_tree.ts` (cycle detection edge cases)
+- `complexity.ts` (Halstead operator/operand branches)
+
+**Plan:** Targeted test campaigns in upcoming cycles; aim to reach 85% within 5 cycles.
+
+---
+
+## 4. Improvement Velocity
+**Current:** ~10-20 tests added per cycle, coverage ↑0.1-0.5% per cycle  
+**Trend:** Steady but slowing as easy branches covered; remaining branches require deeper integration tests.
+
