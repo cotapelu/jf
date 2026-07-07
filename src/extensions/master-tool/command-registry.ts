@@ -319,41 +319,38 @@ export class CommandRegistry {
       `Description: ${meta.description}`
     ];
 
-    if (meta.longDescription) {
-      lines.push(`\n${meta.longDescription}`);
-    }
-
-    if (meta.examples && meta.examples.length > 0) {
-      lines.push("\nExamples:");
-      meta.examples.forEach(ex => lines.push(`  ${ex}`));
-    }
-
-    if (meta.dependsOn && meta.dependsOn.length > 0) {
-      lines.push(`\nDepends on: ${meta.dependsOn.join(', ')}`);
-    }
-
-    if (meta.permissions && meta.permissions.length > 0) {
-      lines.push(`\nPermissions: ${meta.permissions.join(', ')}`);
-    }
-
-    if (meta.experimental) {
-      lines.push("\n⚠️  EXPERIMENTAL - May change or be removed");
-    }
+    if (meta.longDescription) lines.push(`\n${meta.longDescription}`);
+    if (meta.examples?.length) lines.push(...this.formatExamples(meta.examples));
+    if (meta.dependsOn?.length) lines.push(`\nDepends on: ${meta.dependsOn.join(', ')}`);
+    if (meta.permissions?.length) lines.push(`\nPermissions: ${meta.permissions.join(', ')}`);
+    if (meta.experimental) lines.push("\n⚠️  EXPERIMENTAL - May change or be removed");
 
     const schema = this.executor.getSchema(commandName);
     if (schema?.properties) {
       lines.push("\nParameters:");
-      const props = schema.properties as Record<string, any>;
-      const required = schema.required || [];
-      for (const [key, prop] of Object.entries(props)) {
-        const req = required.includes(key) ? "(required)" : "(optional)";
-        const type = prop.type ?? "any";
-        const desc = prop.description ?? "";
-        lines.push(`  ${key}: ${type} ${req}${desc ? ` - ${desc}` : ""}`);
-      }
+      lines.push(...this.formatParameters(schema));
     }
 
     return lines.join("\n");
+  }
+
+  private formatExamples(examples: string[]): string[] {
+    const lines: string[] = ["\nExamples:"];
+    examples.forEach(ex => lines.push(`  ${ex}`));
+    return lines;
+  }
+
+  private formatParameters(schema: any): string[] {
+    const props = schema.properties as Record<string, any>;
+    const required = schema.required || [];
+    const lines: string[] = [];
+    for (const [key, prop] of Object.entries(props)) {
+      const req = required.includes(key) ? "(required)" : "(optional)";
+      const type = prop.type ?? "any";
+      const desc = prop.description ?? "";
+      lines.push(`  ${key}: ${type} ${req}${desc ? ` - ${desc}` : ""}`);
+    }
+    return lines;
   }
 
   /**

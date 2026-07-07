@@ -21,10 +21,12 @@ export const metadata: CommandMetadata = {
 
 export const schema = {
   type: 'object',
-  properties: {}
+  properties: {
+    format: { type: 'string', enum: ['text', 'json'], default: 'text' }
+  }
 };
 
-export async function execute(_args: any, _cwd: string, _signal: any, _ctx: any): Promise<CommandResult> {
+export async function execute(args: any, _cwd: string, _signal: any, _ctx: any): Promise<CommandResult> {
   try {
     const registry = getRegistry();
     if (!registry) {
@@ -36,6 +38,9 @@ export async function execute(_args: any, _cwd: string, _signal: any, _ctx: any)
       } as CommandResult;
     }
     const stats = registry.getStats();
+    if (args.format === 'json') {
+      return { code: 0, stdout: JSON.stringify(stats, null, 2), stderr: '' };
+    }
     const lines = [
       '📊 CommandExecutor Statistics',
       '',
@@ -55,7 +60,6 @@ export async function execute(_args: any, _cwd: string, _signal: any, _ctx: any)
         ? stats.recentErrors.map((e: any) => `  ${e.command}: ${e.count} errors – ${e.error}`) 
         : ['  (none)'])
     ];
-
     const output = lines.join('\n');
     return { code: 0, stdout: output, stderr: '' };
   } catch (err: any) {
