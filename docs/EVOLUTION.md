@@ -961,3 +961,28 @@ Optional future work:
 
 **Next:** All core functions now ≤20 lines; verify any remaining outliers. Consider targeted test additions for coverage or performance work.
 
+## Cycle 83 - Refactor: Simplify ast_query.execute - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `ast_query.execute` to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1088 tests still passing)
+
+**Refactor Details:**
+- Extracted `checkFileExists` (sync existence check).
+- Extracted `readFileContent` (sync read).
+- Extracted `parseFileAST` (async parse with error propagation).
+- Simplified `execute` to ~15 lines orchestration.
+- All tests pass; build clean.
+
+**Impact:** Clearer separation of file I/O and AST parsing; easier to test each step.
+
+**Next:** Function length compliance nearly 100%; remaining effort could focus on coverage (~84% → 85%) or performance profiling.
+

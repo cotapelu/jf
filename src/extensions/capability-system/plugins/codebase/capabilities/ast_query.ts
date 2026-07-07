@@ -7,6 +7,7 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
+import * as fsSync from "fs";
 import { join } from "path";
 // import { fileURLToPath } from "url"; // unused
 import { createRequire } from "module";
@@ -257,19 +258,32 @@ ${matches.map((m, i) => `  ${i+1}. ${m.kind} ${m.name || ''} (line ${m.line}${m.
 `.trim();
 }
 
+function checkFileExists(filePath: string): boolean {
+  try { fsSync.accessSync(filePath); return true; } catch { return false; }
+}
+
+function readFileContent(filePath: string): string {
+  return fsSync.readFileSync(filePath, "utf-8");
+}
+
+function parseFileAST(content: string): any {
+  try { return parseAST(content); }
+  catch (err: any) { throw err; }
+}
+
 export async function execute(params: { file: string; query: any }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const filePath = join(cwd, params.file);
 
-  try { await fs.access(filePath); } catch {
+  if (!checkFileExists(filePath)) {
     return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } };
   }
 
-  const content = await fs.readFile(filePath, "utf-8");
+  const content = readFileContent(filePath);
 
   let ast;
   try {
-    ast = await parseAST(content);
+    ast = await parseFileAST(content);
   } catch (err: any) {
     return { content: [{ type: "text" as const, text: `Parse error: ${err.message}` }], isError: true, details: { file: params.file, error: err.message } };
   }
