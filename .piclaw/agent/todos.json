@@ -3,26 +3,26 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Coverage Verification",
+      "name": "Final Coverage Push to 85%",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Add team-manager coverage tests for shouldTerminate, executeAgentPrompt error, handleAgentEvent extra cases",
+          "content": "Analyze uncovered branches in team-tool.ts and dependency_tree.ts",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Add ast_query tests for invalid regex",
+          "content": "Write tests for team-tool error paths (missing parentRuntime, onUpdate edge cases)",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Add path-security tests for empty/undefined",
+          "content": "Write tests for dependency_tree cycle detection edge cases",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Run full coverage to verify global branch ≥85%",
+          "content": "Run coverage and verify global branch ≥85%",
           "status": "pending"
         }
       ]
@@ -30,5 +30,5 @@
   ],
   "nextTaskId": 5,
   "nextPhaseId": 2,
-  "updatedAt": "2026-07-07T23:10:10.874Z"
+  "updatedAt": "2026-07-07T23:21:29.137Z"
 }

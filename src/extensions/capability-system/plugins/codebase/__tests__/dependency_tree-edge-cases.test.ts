@@ -131,4 +131,48 @@ describe('dependency_tree edge cases', () => {
     const userToApi = details.edges.find(e => e.from.endsWith('user.ts') && e.to.endsWith('api.ts'));
     expect(userToApi).toBeDefined();
   });
+
+  it('handles exported function declarations', async () => {
+    await fs.writeFile('func.ts', `export function myFunc() { return 42; }`);
+    await fs.writeFile('app.ts', `import { myFunc } from './func'; const x = myFunc();`);
+
+    const result = await execute({ files: ['func.ts', 'app.ts'] }, { cwd: tmpDir } as any);
+    expect(result.isError).toBe(false);
+    const details = result.details as any;
+    const funcNode = details.nodes.find((n: any) => n.file.endsWith('func.ts'));
+    expect(funcNode).toBeDefined();
+    expect(funcNode.exports).toContain('myFunc');
+  });
+
+  it('handles exported class declarations', async () => {
+    await fs.writeFile('clazz.ts', `export class MyClass { static greet() { return 'hi'; } }`);
+    await fs.writeFile('consumer.ts', `import { MyClass } from './clazz'; const c = new MyClass();`);
+
+    const result = await execute({ files: ['clazz.ts', 'consumer.ts'] }, { cwd: tmpDir } as any);
+    expect(result.isError).toBe(false);
+    const details = result.details as any;
+    const classNode = details.nodes.find((n: any) => n.file.endsWith('clazz.ts'));
+    expect(classNode).toBeDefined();
+    expect(classNode.exports).toContain('MyClass');
+  });
+
+  it('ignores external package imports', async () => {
+    await fs.writeFile('ext.ts', `import _ from 'lodash';
+import React from 'react';
+import { readFile } from 'fs';
+console.log('hi');`);
+    await fs.writeFile('local.ts', `export const x = 1;`);
+
+    const result = await execute({ files: ['ext.ts', 'local.ts'] }, { cwd: tmpDir } as any);
+    expect(result.isError).toBe(false);
+    const details = result.details as any;
+    // Only local files should be in nodes; external imports are skipped
+    expect(details.nodes.some((n: any) => n.file.endsWith('ext.ts'))).toBe(true);
+    expect(details.nodes.some((n: any) => n.file.endsWith('local.ts'))).toBe(true);
+    // No edge should point to an external package (edges.to should be file paths with extensions)
+    const externalTargets = details.edges.filter((e: any) =>
+      !e.to.endsWith('.ts') && !e.to.endsWith('.js') && !e.to.endsWith('.jsx') && !e.to.endsWith('.tsx')
+    );
+    expect(externalTargets).toHaveLength(0);
+  });
 });

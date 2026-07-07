@@ -43,6 +43,13 @@ describe('team_run tool', () => {
       expect(result.details?.error).not.toBe('Invalid JSON');
       expect(result.details?.error).not.toBe('Unresolved call reference');
     });
+
+    it('should reject non-object/non-string params', async () => {
+      // @ts-ignore - testing runtime type handling
+      const result: any = await tool.execute(toolCallId, 12345, undefined, undefined, mockCtx);
+      expect(result.isError).toBe(true);
+      expect(result.details?.error).toBe('Invalid parameters');
+    });
   });
 
   describe('JSON string parsing', () => {

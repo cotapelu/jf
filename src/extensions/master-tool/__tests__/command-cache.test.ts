@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CommandCache } from '../utils/command-cache.js';
+import { CommandCache, getGlobalCache, setGlobalCache, resetGlobalCache } from '../utils/command-cache.js';
 import type { CommandModule, CommandRegistryEntry } from '../types/command-module.js';
 
 // Mock module
@@ -184,6 +184,24 @@ describe('CommandCache', () => {
       const stats = cache.getStats();
       expect(stats.size).toBe(0);
       expect(stats.entries).toEqual([]);
+    });
+  });
+
+  describe('Global Cache', () => {
+    it('should create singleton on first call', () => {
+      resetGlobalCache();
+      const cache1 = getGlobalCache();
+      expect(cache1).toBeInstanceOf(CommandCache);
+      const cache2 = getGlobalCache();
+      expect(cache2).toBe(cache1);
+    });
+
+    it('should allow overriding singleton', () => {
+      resetGlobalCache();
+      const custom = new CommandCache({ ttl: 1234 });
+      setGlobalCache(custom);
+      const retrieved = getGlobalCache();
+      expect(retrieved).toBe(custom);
     });
   });
 });

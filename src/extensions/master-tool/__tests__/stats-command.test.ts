@@ -73,4 +73,41 @@ describe('master_tool.stats command', () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toContain('Command registry not initialized');
   });
+
+  it('should output JSON when format=json', async () => {
+    const fakeRegistry = {
+      getStats: () => ({
+        registeredCommands: 1,
+        totalExecutions: 10,
+        successRate: 100,
+        commandStats: [{ command: 'test.cmd', count: 10, avgDuration: 50 }],
+        cacheStats: { size: 1, hits: 10, misses: 0 },
+        recentErrors: []
+      })
+    };
+    (getRegistry as any).mockReturnValue(fakeRegistry);
+
+    const result = await execute({ format: 'json' }, '/tmp', undefined, {} as any);
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe('');
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.registeredCommands).toBe(1);
+    expect(parsed.totalExecutions).toBe(10);
+    expect(parsed.successRate).toBe(100);
+    expect(parsed.commandStats).toHaveLength(1);
+    expect(parsed.commandStats[0].command).toBe('test.cmd');
+  });
+
+  it('handles exception from getStats', async () => {
+    (getRegistry as any).mockReturnValue({
+      getStats: () => { throw new Error('DB failure'); }
+    });
+
+    const result = await execute({}, '/tmp', undefined, {} as any);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('Error retrieving stats');
+    expect(result.data?.error).toBe('stats_failed');
+  });
 });
