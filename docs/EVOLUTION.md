@@ -485,3 +485,27 @@ Optional future work:
 
 **Next:** Consider exposing metrics in JSON format for automated consumption; integrate with Prometheus endpoint if required.
 
+## Cycle 63 - Refactor: Simplify runAgentLoop - 2026-07-07 (Autonomous)
+
+**Task:** Reduce complexity of `AgentTeam.runAgentLoop` to satisfy Functions ≤20 lines quality gate.
+
+**Type:** R (Refactor) + T (Tests)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (existing tests still validate behavior)
+
+**Refactor Details:**
+- Extracted `executeAgentPrompt` method to encapsulate prompt selection and error handling.
+- Extracted `shouldTerminate` method to handle completion and max‑turn checks with appropriate notifications.
+- Simplified `runAgentLoop` to ~18 lines (was ~37).
+- No functional changes; all existing tests (1087) pass; build clean.
+
+**Impact:** Improved readability, maintainability, and adherence to quality gates. Easier to unit‑test individual parts in future.
+
+**Next:** Continue refactoring other long methods in `team-manager.ts` (e.g., `handleAgentEvent`, `getBootstrapPrompt`) to reach full compliance. Target next: `handleAgentEvent` (~30 lines).
+

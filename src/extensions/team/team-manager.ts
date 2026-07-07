@@ -543,41 +543,55 @@ export class AgentTeam implements AgentTeamRuntime {
         ));
       }
 
-      if (status.completedTasks === status.totalTasks && status.totalTasks > 0) {
-        this.notifyUpdate(this.createUpdate(
-          `✅ Agent ${role}: all tasks completed!`,
-          { role, status: 'finished' }
-        ));
-        break;
-      }
+      if (this.shouldTerminate(role, status, turnCount, MAX_TURNS)) break;
 
-      if (turnCount >= MAX_TURNS) {
-        this.notifyUpdate(this.createUpdate(
-          `⚠️ Agent ${role}: max turns (${MAX_TURNS}) reached`,
-          { role, status: 'max_turns' }
-        ));
-        break;
-      }
-
-      try {
-        const prompt = turnCount === 0
-          ? this.getBootstrapPrompt(role)
-          : await this.getContinuationPrompt(turnCount);
-
-        await runtime.session.prompt(prompt);
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`Agent ${role} prompt error:`, error);
-        this.notifyUpdate(this.createUpdate(
-          `❌ Agent ${role} error: ${errorMessage}`,
-          { role, error: errorMessage },
-          true
-        ));
-      }
+      await this.executeAgentPrompt(role, runtime, turnCount);
 
       turnCount++;
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
+  }
+
+  /**
+   * Execute a single agent turn: select prompt and send to session, with error handling.
+   */
+  private async executeAgentPrompt(role: string, runtime: AgentSessionRuntime, turnCount: number): Promise<void> {
+    try {
+      const prompt = turnCount === 0
+        ? this.getBootstrapPrompt(role)
+        : await this.getContinuationPrompt(turnCount);
+      await runtime.session.prompt(prompt);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Agent ${role} prompt error:`, error);
+      this.notifyUpdate(this.createUpdate(
+        `❌ Agent ${role} error: ${errorMessage}`,
+        { role, error: errorMessage },
+        true
+      ));
+    }
+  }
+
+  /**
+   * Check if the agent loop should terminate. Sends terminal update if needed.
+   * @returns true if loop should break
+   */
+  private shouldTerminate(role: string, status: any, turnCount: number, maxTurns: number): boolean {
+    if (status.completedTasks === status.totalTasks && status.totalTasks > 0) {
+      this.notifyUpdate(this.createUpdate(
+        `✅ Agent ${role}: all tasks completed!`,
+        { role, status: 'finished' }
+      ));
+      return true;
+    }
+    if (turnCount >= maxTurns) {
+      this.notifyUpdate(this.createUpdate(
+        `⚠️ Agent ${role}: max turns (${maxTurns}) reached`,
+        { role, status: 'max_turns' }
+      ));
+      return true;
+    }
+    return false;
   }
 
   /**
