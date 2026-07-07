@@ -81,6 +81,20 @@ npm test
 - Exact versions committed in `package-lock.json`.
 - Update schedule: monthly or as needed for security patches.
 
+## Observability
+
+Master tool provides a built-in `master_tool.stats` command to retrieve executor metrics:
+
+```bash
+# Human-readable (default)
+master_tool({ command: "master_tool.stats", args: {} })
+
+# Machine-readable JSON
+master_tool({ command: "master_tool.stats", args: { format: "json" } })
+```
+
+Metrics include registered commands, total executions, success rate, per‑command count & average duration, cache stats, and recent errors. Useful for SLO monitoring and capacity planning.
+
 ## License
 
 Apache License 2.0 - xem file [LICENSE](LICENSE).
