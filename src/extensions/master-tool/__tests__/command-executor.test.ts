@@ -414,5 +414,38 @@ describe('CommandExecutor', () => {
         expect(executor.getStats().totalExecutions).toBe(0);
       });
     });
+
+    describe('command execution stats (observability)', () => {
+      it('should accumulate count and average duration for successful commands', async () => {
+        const newExecutor = new CommandExecutor();
+        newExecutor['register'](mockEntry);
+        const mockExecute = vi.fn().mockResolvedValue({ code: 0, stdout: 'OK', stderr: '' });
+        mockModule.execute = mockExecute;
+
+        await newExecutor.execute('test.cmd', {}, defaultExecCtx);
+        await newExecutor.execute('test.cmd', {}, defaultExecCtx);
+
+        const stats = newExecutor.getStats();
+        const cmdStat = stats.commandStats.find((cs: any) => cs.command === 'test.cmd');
+        expect(cmdStat).toBeDefined();
+        expect(cmdStat.count).toBe(2);
+        expect(cmdStat.avgDuration).toBeGreaterThanOrEqual(0);
+      });
+
+      it('should include failed executions in stats', async () => {
+        const newExecutor = new CommandExecutor();
+        newExecutor['register'](mockEntry);
+        // Simulate failure
+        vi.mocked(mockModule.execute).mockRejectedValue(new Error('exec failed'));
+
+        const result = await newExecutor.execute('test.cmd', {}, defaultExecCtx);
+        expect(result.code).toBe(1);
+
+        const stats = newExecutor.getStats();
+        const cmdStat = stats.commandStats.find((cs: any) => cs.command === 'test.cmd');
+        expect(cmdStat).toBeDefined();
+        expect(cmdStat.count).toBe(1);
+      });
+    });
   });
 });

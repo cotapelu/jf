@@ -51,6 +51,7 @@ export class CommandExecutor {
   private auditLogs: AuditLog[] = [];
   private enableAudit: boolean;
   private stateManager: StateManager;
+  private commandStats: Map<string, { count: number; totalDuration: number }> = new Map();
 
   constructor(options: MasterToolOptions = {}) {
     this.options = { ...DEFAULT_MASTER_TOOL_OPTIONS, ...options };
@@ -61,6 +62,14 @@ export class CommandExecutor {
     this.validator = getValidator({ rateLimitPerMinute: this.options.rateLimitPerMinute });
     this.enableAudit = this.options.enableAudit ?? false;
     this.stateManager = new StateManager();
+    this.commandStats = new Map();
+  }
+
+  private updateCommandStats(commandName: string, duration: number): void {
+    const stats = this.commandStats.get(commandName) ?? { count: 0, totalDuration: 0 };
+    stats.count++;
+    stats.totalDuration += duration;
+    this.commandStats.set(commandName, stats);
   }
 
   /**
@@ -251,6 +260,10 @@ export class CommandExecutor {
       entry.loadCount++;
       entry.lastLoaded = Date.now();
 
+      // 13. Record command stats for observability
+      const duration = Date.now() - startTime;
+      this.updateCommandStats(commandName, duration);
+
       return result;
 
     } catch (error: any) {
@@ -276,6 +289,10 @@ export class CommandExecutor {
         entry.lastError = msg;
         this.cache.markError(commandName, msg);
       }
+
+      // Record command stats for observability (even on error)
+      const duration = Date.now() - startTime;
+      this.updateCommandStats(commandName, duration);
 
       return this.makeErrorResult(msg, "execution_error", { stack: error instanceof Error ? error.stack : undefined });
     } finally {
@@ -371,6 +388,7 @@ export class CommandExecutor {
     recentErrors: Array<{ command: string; error: string; count: number }>;
     totalExecutions: number;
     successRate: number;
+    commandStats: Array<{ command: string; count: number; avgDuration: number }>;
   } {
     const totalExecutions = this.auditLogs.length;
     const successful = this.auditLogs.filter(l => l.success).length;
@@ -388,6 +406,12 @@ export class CommandExecutor {
       }
     }
 
+    const commandStatsArray = Array.from(this.commandStats.entries()).map(([command, stats]) => ({
+      command,
+      count: stats.count,
+      avgDuration: stats.totalDuration / stats.count
+    }));
+
     return {
       registeredCommands: this.registry.size,
       cacheStats: this.cache.getStats(),
@@ -396,7 +420,8 @@ export class CommandExecutor {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10),
       totalExecutions,
-      successRate: Math.round(successRate * 10) / 10
+      successRate: Math.round(successRate * 10) / 10,
+      commandStats: commandStatsArray
     };
   }
 
