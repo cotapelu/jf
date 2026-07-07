@@ -558,3 +558,27 @@ Optional future work:
 
 **Next:** Refactor remaining long methods (e.g., `sendInitializationUpdate`, `getTeamStatus` wrapper, `initialize`), then assess if class needs splitting into sub‑components.
 
+## Cycle 66 - Refactor: Simplify CommandRegistry.loadCommandMetadata - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `loadCommandMetadata` function length to satisfy ≤20 lines quality gate.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~40 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (all 1087 tests still passing)
+
+**Refactor Details:**
+- Extracted `createCommandMetadata` helper to construct minimal metadata.
+- Extracted `createCommandLoader` to encapsulate dynamic import logic, validation, and auto‑fill.
+- Simplified `loadCommandMetadata` to ~14 lines (was ~45).
+- No functional changes; all tests pass; build clean.
+
+**Impact:** Improved readability of command discovery process. Prepares for future enhancements.
+
+**Next:** Refactor CommandRegistry `initialize` method and then target `CommandExecutor.execute` for similar decomposition.
+

@@ -139,59 +139,53 @@ export class CommandRegistry {
    * Load command metadata WITHOUT loading the full module
    * Uses static analysis to extract metadata quickly
    */
+  private createCommandMetadata(commandName: string, category: string, _filePath: string): CommandMetadata {
+    return {
+      name: commandName,
+      category,
+      description: "Loading...",
+      longDescription: undefined,
+      examples: [`master_tool({ command: '${commandName}', args: {} })`],
+      tags: [category],
+      experimental: false
+    };
+  }
+
+  private createCommandLoader(filePath: string, commandName: string): CommandLoader {
+    return async () => {
+      const fileUrl = `file://${filePath}`;
+      const module = await import(fileUrl);
+      if (!module.metadata || !module.schema || !module.execute) {
+        throw new Error(`Invalid command module: ${commandName}. Must export metadata, schema, execute`);
+      }
+      if (!module.metadata.name) module.metadata.name = commandName;
+      if (!module.metadata.category) module.metadata.category = commandName.split('.')[0]; // derive from commandName
+      if (!module.metadata.examples && module.metadata.description) {
+        module.metadata.examples = [`master_tool({ command: '${commandName}', args: {...} })`];
+      }
+      return module as CommandModule;
+    };
+  }
+
   private async loadCommandMetadata(
     commandName: string,
     category: string,
     filePath: string
   ): Promise<void> {
     try {
-      // Quick check: can we read file?
-      // For now, we'll defer full metadata loading until first execution
-      // Store minimal info for discovery
-      const metadata: CommandMetadata = {
-        name: commandName,
-        category,
-        description: "Loading...", // Will be replaced on first load
-        longDescription: undefined,
-        examples: [`master_tool({ command: '${commandName}', args: {} })`],
-        tags: [category],
-        experimental: false
-      };
-
+      const metadata = this.createCommandMetadata(commandName, category, filePath);
       this.loadedCommandFiles.set(commandName, { path: filePath, metadata });
-      
-      // Create loader that will load full module on demand
-      const loader: CommandLoader = async () => {
-        // Dynamic import
-        const fileUrl = `file://${filePath}`;
-        const module = await import(fileUrl);
-        
-        // Validate module shape
-        if (!module.metadata || !module.schema || !module.execute) {
-          throw new Error(`Invalid command module: ${commandName}. Must export metadata, schema, execute`);
-        }
-
-        // Auto-fill missing metadata fields
-        if (!module.metadata.name) module.metadata.name = commandName;
-        if (!module.metadata.category) module.metadata.category = category;
-        if (!module.metadata.examples && module.metadata.description) {
-          module.metadata.examples = [`master_tool({ command: '${commandName}', args: {...} })`];
-        }
-
-        return module as CommandModule;
-      };
-
+      const loader = this.createCommandLoader(filePath, commandName);
       this.executor.register({
         loader,
         metadata,
-        schema: {}, // Will be replaced after module load
-        StateClass: undefined, // Will be set after module load
-        getPersistencePath: undefined, // Will be set after module load
+        schema: {},
+        StateClass: undefined,
+        getPersistencePath: undefined,
         lastLoaded: Date.now(),
         loadCount: 0,
         errorCount: 0
       });
-
     } catch (error) {
       console.error(`[CommandRegistry] Failed to load metadata for ${commandName}:`, error);
     }
