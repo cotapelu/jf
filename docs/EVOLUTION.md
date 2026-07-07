@@ -822,3 +822,23 @@ Optional future work:
 
 **Next:** Continue adding tests for other error paths to achieve ≥85% branch coverage.
 
+## Cycle 77 - Documentation: master_tool.stats usage - 2026-07-07 (Autonomous)
+
+**Task:** Document the `master_tool.stats` command in README.
+
+**Type:** D (Documentation)
+
+**Priority:** MEDIUM
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Changes:**
+- Added "Observability" section to README with usage examples (text and json formats).
+- No code changes.
+
+**Impact:** Better user experience; compliance with documentation standards.
+
+**Next:** Expand documentation for other commands and capabilities as needed.
+

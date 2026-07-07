@@ -2393,3 +2393,24 @@ All tests pass; lint and build clean.
 
 **Next:** Continue targeted test additions to push overall branch coverage toward 85%.
 
+## Cycle 77 - Documentation: master_tool.stats usage - 2026-07-07 (Autonomous)
+
+**Task:** Document the new `master_tool.stats` command in README.
+
+**Type:** D (Documentation)
+
+**Priority:** MEDIUM
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Changes:**
+- Added "Observability" section to README.md describing `master_tool.stats` command and its `format` parameter (text/json).
+- Provided example usage snippets.
+- No code changes.
+
+**Impact:** Improves user discoverability of built-in metrics; satisfies documentation compliance.
+
+**Next:** Consider adding more comprehensive docs for other commands and capabilities.
+
