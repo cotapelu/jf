@@ -889,3 +889,27 @@ Optional future work:
 
 **Next:** Address remaining long functions (e.g., `AgentTeam.setupChildRuntimes`, `AgentTeam.dispose`) to achieve full compliance.
 
+## Cycle 80 - Refactor: Decompose AgentTeam.dispose - 2026-07-07 (Autonomous)
+
+**Task:** Reduce dispose logic to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0
+
+**Refactor Details:**
+- Replaced monolithic dispose arrow with `performDispose` method (bound in constructor).
+- Extracted helpers: `abortControllers`, `waitForChildPromises`, `clearCollections`, `disposeRuntimes`, `unregisterTeam`.
+- Simplified `performDispose` to ~5 lines.
+- All 1088 tests pass; build clean.
+
+**Impact:** Very clear disposal sequence; each step independently testable.
+
+**Next:** Continue verification of other modules; if all functions comply, consider shifting to coverage improvement or performance work.
+

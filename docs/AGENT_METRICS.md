@@ -2439,6 +2439,30 @@ All tests pass; lint and build clean.
 
 **Next:** Ensure no remaining functions exceed 20 lines; verify across codebase.
 
+## Cycle 80 - Refactor: Decompose AgentTeam.dispose - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `dispose` logic to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1088 tests still passing)
+
+**Refactor Details:**
+- Introduced `performDispose` orchestration (now arrow bound in constructor).
+- Extracted helpers: `abortControllers`, `waitForChildPromises`, `clearCollections`, `disposeRuntimes`, `unregisterTeam`.
+- All helpers ≤20 lines; `performDispose` ~5 lines.
+- No functional changes; build clean.
+
+**Impact:** Very clear disposal sequence; easier to test each step in isolation.
+
+**Next:** Continue scanning for any remaining long functions (e.g., `setupChildRuntimes` already small). Coverage still ~84%; consider targeted tests to reach 85%.
+
 ## Cycle 79 - Refactor: Split TaskManager.handleAgentFailure - 2026-07-07 (Autonomous)
 
 **Task:** Reduce `handleAgentFailure` to ≤20 lines.
