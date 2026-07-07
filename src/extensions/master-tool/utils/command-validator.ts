@@ -125,6 +125,31 @@ export class CommandValidator {
   }
 
   /**
+   * Detect potential command injection patterns in arguments.
+   * Looks for shell metacharacters that could be used to chain commands.
+   * This is a heuristic and may produce false positives; use with caution.
+   */
+  private hasCommandInjection(value: any): boolean {
+    const visited = new WeakSet();
+    const check = (v: any): boolean => {
+      if (typeof v === 'string') {
+        // Dangerous shell metacharacters: semicolon, &&, ||, pipe, backticks, $(, newline
+        return /[;&|`$()\n]/.test(v);
+      }
+      if (Array.isArray(v)) {
+        return v.some(item => check(item));
+      }
+      if (v && typeof v === 'object') {
+        if (visited.has(v)) return false;
+        visited.add(v);
+        return Object.values(v).some(val => check(val));
+      }
+      return false;
+    };
+    return check(value);
+  }
+
+  /**
    * Validate args security
    */
   validateSecurity(args: any, _metadata: CommandMetadata): { valid: boolean; errors: string[] } {
@@ -132,6 +157,10 @@ export class CommandValidator {
 
     if (this.hasPrototypePollution(args)) {
       errors.push("Potential prototype pollution detected");
+    }
+
+    if (this.hasCommandInjection(args)) {
+      errors.push("Potential command injection pattern detected");
     }
 
     try {

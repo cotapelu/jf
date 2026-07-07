@@ -136,6 +136,37 @@ describe('CommandValidator', () => {
     });
   });
 
+  describe('validateSecurity command injection detection', () => {
+    it('should detect command injection patterns in strings', () => {
+      const v = new CommandValidator();
+      const args = { cmd: 'echo hello; rm -rf /' };
+      const res = v.validateSecurity(args, { name: 'test' } as any);
+      expect(res.valid).toBe(false);
+      expect(res.errors).toContain('Potential command injection pattern detected');
+    });
+
+    it('should accept clean arguments without shell metacharacters', () => {
+      const v = new CommandValidator();
+      const args = { cmd: 'echo hello', path: '/tmp/clean' };
+      const res = v.validateSecurity(args, { name: 'test' } as any);
+      expect(res.valid).toBe(true);
+    });
+
+    it('should detect injection in nested objects and arrays', () => {
+      const v = new CommandValidator();
+      const args = { nested: { deep: 'value$(whoami)' } };
+      const res = v.validateSecurity(args, { name: 'test' } as any);
+      expect(res.valid).toBe(false);
+    });
+
+    it('should not flag non-string types', () => {
+      const v = new CommandValidator();
+      const args = { num: 42, bool: true, obj: { x: 1 } };
+      const res = v.validateSecurity(args, { name: 'test' } as any);
+      expect(res.valid).toBe(true);
+    });
+  });
+
   describe('clearRateLimits', () => {
     it('should reset all rate limit counters', () => {
       validator.checkRateLimit('cmd1');

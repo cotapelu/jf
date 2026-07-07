@@ -139,7 +139,7 @@ export const DEFAULT_MASTER_TOOL_OPTIONS: MasterToolOptions = {
   cacheTTL: 5 * 60 * 1000, // 5 minutes
   enableAudit: false,
   maxOutputSize: 1024 * 1024, // 1MB
-  rateLimitPerMinute: 0, // unlimited
+  rateLimitPerMinute: 1000, // default safe limit
   excludeCategories: [],
   excludeCommands: []
 };
