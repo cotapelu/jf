@@ -598,38 +598,24 @@ export class AgentTeam implements AgentTeamRuntime {
    * Handle events from child sessions and forward to UI updates.
    */
   private handleAgentEvent(role: string, event: unknown): void {
-    // Guard: ensure event is an object with a type property
     if (typeof event !== 'object' || event === null || !('type' in event)) return;
     const e = event as { type: string; stopReason?: unknown; message?: unknown; toolName?: unknown };
     let text: string | null = null;
     switch (e.type) {
       case 'agent_start':
-        text = `[${role}] Agent started`;
+        text = this.renderAgentStart(role);
         break;
       case 'agent_end':
-        text = `[${role}] Agent finished: ${String(e.stopReason)}`;
+        text = this.renderAgentEnd(role, e.stopReason);
         break;
       case 'message_start':
-        if (e.message && typeof e.message === 'object' && 'role' in e.message) {
-          const msg = e.message as { role: string; content?: unknown };
-          if (msg.role === 'user') {
-            const content = this.extractText(msg);
-            text = `[${role}] User: ${content.substring(0, 200)}`;
-          } else if (msg.role === 'assistant') {
-            const content = this.extractText(msg);
-            text = `[${role}] Assistant: ${content.substring(0, 200)}`;
-          }
-        }
+        text = this.renderMessageStart(role, e.message);
         break;
       case 'tool_execution_start':
-        if (typeof e.toolName === 'string') {
-          text = `[${role}] Tool: ${e.toolName}`;
-        }
+        text = this.renderToolExecution(role, e.toolName, true);
         break;
       case 'tool_execution_end':
-        if (typeof e.toolName === 'string') {
-          text = `[${role}] Tool ${e.toolName} done`;
-        }
+        text = this.renderToolExecution(role, e.toolName, false);
         break;
       case 'message_update':
         // ignore streaming updates
@@ -642,6 +628,31 @@ export class AgentTeam implements AgentTeamRuntime {
         isError: e.type === 'agent_end' && e.stopReason === 'error'
       });
     }
+  }
+
+  private renderAgentStart(role: string): string {
+    return `[${role}] Agent started`;
+  }
+
+  private renderAgentEnd(role: string, stopReason?: unknown): string {
+    return `[${role}] Agent finished: ${String(stopReason)}`;
+  }
+
+  private renderMessageStart(role: string, message?: unknown): string | null {
+    if (!message || typeof message !== 'object') return null;
+    const msg = message as { role?: string; content?: unknown };
+    if (msg.role !== 'user' && msg.role !== 'assistant') return null;
+    const content = this.extractText(msg);
+    if (!content) return null;
+    const prefix = msg.role === 'user' ? 'User' : 'Assistant';
+    return `[${role}] ${prefix}: ${content.substring(0, 200)}`;
+  }
+
+  private renderToolExecution(role: string, toolName?: unknown, isStart: boolean): string | null {
+    if (typeof toolName !== 'string') return null;
+    return isStart
+      ? `[${role}] Tool: ${toolName}`
+      : `[${role}] Tool ${toolName} done`;
   }
 
   /**
