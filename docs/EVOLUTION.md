@@ -439,3 +439,18 @@ Optional future work:
 
 **Status:** All quality gates maintained; branch coverage 83.97%; production-ready.  
 **Note:** Coverage approach to 85% is diminishing returns; will reassess priority in next planning.
+
+## Cycle 61 Update - 2026-07-07
+
+**Security Hardening:**  
+- Added heuristic command-injection detection in `CommandValidator.validateSecurity`.  
+- Set default rate limit to 1000/min (`DEFAULT_MASTER_TOOL_OPTIONS.rateLimitPerMinute`).  
+- Added 4 tests for injection detection.  
+
+**Coverage:** 84.1% branches. Slowly approaching 85% target.  
+
+**Next candidates:**  
+- Continue targeted coverage push on `team-manager` and `ast_query` if needed.  
+- Add observability endpoint for command stats.  
+- Create COMPLIANCE.md if scope expands.
+

@@ -1989,3 +1989,34 @@ All tests pass; lint and build clean.
 
 **Next:** Consider expanding COMPLIANCE.md if compliance scope expands (GDPR, PCI, etc.). Not needed currently.
 
+
+## Cycle 61 - Security Hardening - 2026-07-07 (Autonomous)
+
+**Task:** Add command-injection detection and enable rate limiting by default.
+
+**Type:** S (Security) + T (Tests)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** +4 tests (total 1084 passing)
+
+**Coverage Delta:**
+- Statements: **93.0%** (↑0.04%)
+- Branches: **84.1%** (↑0.13%) - 1836/2183
+- Functions: **91.81%** (↑0.05%)
+- Lines: **94.19%** (unchanged)
+
+**Implementation:**
+- `CommandValidator.validateSecurity` now includes `hasCommandInjection` heuristic scanning for shell metacharacters (`;`, `&&`, `||`, `|`, backticks, `$()`, newlines) recursively in args.
+- `DEFAULT_MASTER_TOOL_OPTIONS.rateLimitPerMinute` changed from `0` (unlimited) to `1000` (safe default).
+- Added unit tests covering injection detection (clean args, injection in strings, nested objects/arrays, non-string types).
+- All tests pass; lint clean; build successful.
+
+**Risk:** Medium – New validation may cause false positives (unlikely given limited use of shell metacharacters in typical command args); rate limiting now active by default but at a high enough threshold to not impact normal usage. Users can override via options.
+
+**Next:** Monitor false positive rate; refine patterns if needed; consider making injection detection configurable per command via permissions.
+
