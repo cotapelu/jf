@@ -6,7 +6,6 @@
  */
 
 import { Type } from "typebox";
-import { promises as fs } from "fs";
 import * as fsSync from "fs";
 import { join } from "path";
 // import { fileURLToPath } from "url"; // unused

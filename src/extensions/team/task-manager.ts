@@ -105,13 +105,13 @@ export class TaskManager {
   // Claim a pending task for an agent (role)
   // Returns task index or null if none available
   claimTask(role: string): number | null {
-    const idx = this.findClaimableTask(role);
+    const idx = this.findClaimableTask();
     if (idx === null) return null;
     this.markTaskClaimed(role, idx);
     return idx;
   }
 
-  private findClaimableTask(role: string): number | null {
+  private findClaimableTask(): number | null {
     for (let i = 0; i < this.pendingIndices.length; i++) {
       const idx = this.pendingIndices[i];
       const task = this.taskStatuses.get(idx);

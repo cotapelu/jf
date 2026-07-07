@@ -403,7 +403,7 @@ function makeErrorResponse(text: string, details?: any): any {
   return { content: [{ type: "text" as const, text }], isError: true, details };
 }
 
-function handleParseError(err: any, params: { files: string[] }, cwd: string): any {
+function handleParseError(err: any, params: { files: string[] }, _cwd: string): any {
   const message = err instanceof Error ? err.message : String(err);
   const fileMatch = message.match(/processing file (\S+)/);
   const file = fileMatch ? fileMatch[1] : params.files[0] || '';

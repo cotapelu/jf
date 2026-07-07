@@ -6,7 +6,7 @@
  * command-specific count and average duration, recent errors, cache stats.
  */
 
-import type { CommandModule, CommandMetadata, CommandResult } from '../../types/command-module.js';
+import type { CommandMetadata, CommandResult } from '../../types/command-module.js';
 import { getRegistry } from '../../master-tool.js';
 
 export const metadata: CommandMetadata = {
@@ -35,7 +35,7 @@ export async function execute(args: any, _cwd: string, _signal: any, _ctx: any):
         stdout: '',
         stderr: 'Command registry not initialized',
         data: { error: 'registry_unavailable' }
-      } as CommandResult;
+      };
     }
     const stats = registry.getStats();
     if (args.format === 'json') {
@@ -68,7 +68,7 @@ export async function execute(args: any, _cwd: string, _signal: any, _ctx: any):
       stdout: '',
       stderr: `Error retrieving stats: ${err.message}`,
       data: { error: 'stats_failed' }
-    } as CommandResult;
+    };
   }
 }
 
