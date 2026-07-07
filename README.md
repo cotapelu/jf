@@ -59,6 +59,28 @@ npm run build
 npm test
 ```
 
+## API Compatibility
+
+**APIs Used:**
+- Pi SDK family: `@earendil-works/pi-coding-agent`, `@earendil-works/pi-ai`, `@earendil-works/pi-tui`
+- Build: TypeScript, Vite, Vitest, ESLint, Prettier
+- Runtime: Node.js 18+
+
+**Deprecation Status:**
+- No deprecated APIs in use. Dependencies are pinned in `package-lock.json` and updates are performed via `npm update` within semver ranges.
+
+**Fallback Strategy:**
+- Not applicable (no deprecated APIs). If future deprecations arise, we will use feature detection and polyfills where appropriate.
+
+**Migration Plan:**
+- Monthly check for outdated dependencies (`npm outdated`).
+- Test new major versions in a feature branch before upgrading.
+- Track migration tasks in GitHub Issues.
+
+**Version Pinning:**
+- Exact versions committed in `package-lock.json`.
+- Update schedule: monthly or as needed for security patches.
+
 ## License
 
 Apache License 2.0 - xem file [LICENSE](LICENSE).
