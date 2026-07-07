@@ -1934,3 +1934,36 @@ All tests pass; lint and build clean.
 - Validation: all tests pass, build clean, `npm audit` shows 0 vulnerabilities
 
 **Next targets:** Continue toward 85% branch coverage; explore security audit or performance profiling if coverage stagnates.
+
+## Cycle 59 - Command Execution Metrics - 2026-07-07 (Autonomous)
+
+**Task:** Add per-command execution duration tracking to `CommandExecutor` for better observability.
+
+**Type:** O (Observability)
+
+**Priority:** MEDIUM
+
+**Duration:** ~45 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +2 tests (total 1080 passing)
+
+**Coverage Delta:**
+- Statements: **92.96%** (↑0.02% from 92.94%)
+- Branches: **83.97%** (↑0.02% from 83.95%) - now 1823/2171
+- Functions: **91.76%** (↑0.02%)
+- Lines: **94.17%** (unchanged)
+
+**Implementation:**
+- Added `commandStats` map to `CommandExecutor` tracking `{ count, totalDuration }` per command.
+- Instrumented `execute()` to record duration on both success and error paths.
+- Extended `getStats()` return type with `commandStats` array containing `{ command, count, avgDuration }`.
+- Added unit tests for stats accumulation (2 new tests in `command-executor.test.ts`).
+
+**Impact:**
+- Provides runtime visibility into command performance, useful for SLO monitoring and bottleneck identification.
+- No behavior change; purely additive telemetry.
+- All tests pass; lint clean; build successful.
+
+**Next targets:** Continue toward 85% branch coverage; consider adding metrics endpoint or integration with monitoring system.
