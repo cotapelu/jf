@@ -889,6 +889,30 @@ Optional future work:
 
 **Next:** Address remaining long functions (e.g., `AgentTeam.setupChildRuntimes`, `AgentTeam.dispose`) to achieve full compliance.
 
+## Cycle 81 - Refactor: Simplify TaskManager.claimTask - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `claimTask` to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0
+
+**Refactor Details:**
+- Extracted `findClaimableTask` (search pendingIndices).
+- Extracted `markTaskClaimed` (state update + notification).
+- Simplified `claimTask` to ~4 lines.
+- All 1088 tests pass; build clean.
+
+**Impact:** Clearer separation of concerns; easier to unit test claim logic.
+
+**Next:** Verify all public functions now ≤20 lines; consider minor cleanups.
+
 ## Cycle 80 - Refactor: Decompose AgentTeam.dispose - 2026-07-07 (Autonomous)
 
 **Task:** Reduce dispose logic to ≤20 lines.

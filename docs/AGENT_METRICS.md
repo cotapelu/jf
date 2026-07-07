@@ -2439,6 +2439,30 @@ All tests pass; lint and build clean.
 
 **Next:** Ensure no remaining functions exceed 20 lines; verify across codebase.
 
+## Cycle 81 - Refactor: Simplify TaskManager.claimTask - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `claimTask` to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1088 tests still passing)
+
+**Refactor Details:**
+- Extracted `findClaimableTask` (searches pendingIndices for claimable task).
+- Extracted `markTaskClaimed` (updates task status, removes from pending, sends update).
+- Simplified `claimTask` to ~4 lines.
+- No functional changes; build clean.
+
+**Impact:** Much clearer separation of search vs. mutate; easier to test claim logic in isolation.
+
+**Next:** Check other TaskManager methods for length; overall function length compliance near 100%.
+
 ## Cycle 80 - Refactor: Decompose AgentTeam.dispose - 2026-07-07 (Autonomous)
 
 **Task:** Reduce `dispose` logic to ≤20 lines.

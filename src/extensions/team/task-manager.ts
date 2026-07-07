@@ -105,31 +105,37 @@ export class TaskManager {
   // Claim a pending task for an agent (role)
   // Returns task index or null if none available
   claimTask(role: string): number | null {
+    const idx = this.findClaimableTask(role);
+    if (idx === null) return null;
+    this.markTaskClaimed(role, idx);
+    return idx;
+  }
+
+  private findClaimableTask(role: string): number | null {
     for (let i = 0; i < this.pendingIndices.length; i++) {
       const idx = this.pendingIndices[i];
       const task = this.taskStatuses.get(idx);
       if (!task || task.status !== 'pending') continue;
-      // Check backoff
-      if (task.retryAvailableAt && task.retryAvailableAt > Date.now()) {
-        continue; // not yet claimable
-      }
-      // Claim this task
-      task.retryAvailableAt = undefined;
-      task.assignee = role;
-      task.status = 'in_progress';
-      // Efficient removal
-      if (i === 0) {
-        this.pendingIndices.shift();
-      } else {
-        this.pendingIndices.splice(i, 1);
-      }
-      this.notifyUpdate(
-        `🔨 Agent ${role} claimed task ${idx}`,
-        { agent: role, taskIndex: idx, taskPreview: this.tasks[idx].substring(0, 200), retryCount: task.retryCount }
-      );
+      if (task.retryAvailableAt && task.retryAvailableAt > Date.now()) continue;
       return idx;
     }
     return null;
+  }
+
+  private markTaskClaimed(role: string, taskIndex: number): void {
+    const task = this.taskStatuses.get(taskIndex)!;
+    task.retryAvailableAt = undefined;
+    task.assignee = role;
+    task.status = 'in_progress';
+    const i = this.pendingIndices.indexOf(taskIndex);
+    if (i !== -1) {
+      if (i === 0) this.pendingIndices.shift();
+      else this.pendingIndices.splice(i, 1);
+    }
+    this.notifyUpdate(
+      `🔨 Agent ${role} claimed task ${taskIndex}`,
+      { agent: role, taskIndex: taskIndex, taskPreview: this.tasks[taskIndex].substring(0, 200), retryCount: task.retryCount }
+    );
   }
 
   // Release a task (agent gives up without completing)
