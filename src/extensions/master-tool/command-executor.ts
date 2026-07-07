@@ -366,17 +366,37 @@ export class CommandExecutor {
   }
 
   private async runCommandPhases(module: CommandModule, args: any, execCtx: ExecutionContext, state: any, startTime: number): Promise<CommandResult> {
-    const ctx = state ? { ...execCtx.ctx, commandState: state } : execCtx.ctx;
+    const ctx = this.prepareContext(state, execCtx);
+    await this.runBefore(module, args, ctx);
+    const result = await this.invokeExecute(module, args, execCtx, ctx);
+    await this.runAfter(module, result, ctx);
+    this.postExecuteActions(module, args, state, execCtx, result, startTime);
+    return result;
+  }
+
+  private prepareContext(state: any, execCtx: ExecutionContext): any {
+    return state ? { ...execCtx.ctx, commandState: state } : execCtx.ctx;
+  }
+
+  private async runBefore(module: CommandModule, args: any, ctx: any): Promise<void> {
     if (module.beforeExecute) await module.beforeExecute(args, ctx);
-    let result: CommandResult;
+  }
+
+  private async invokeExecute(module: CommandModule, args: any, execCtx: ExecutionContext, ctx: any): Promise<CommandResult> {
     try {
-      result = await module.execute(args, execCtx.ctx.cwd ?? process.cwd(), execCtx.signal, ctx);
+      return await module.execute(args, execCtx.ctx.cwd ?? process.cwd(), execCtx.signal, ctx);
     } catch (err) {
-      result = { code: 1, stdout: "", stderr: err instanceof Error ? err.message : String(err), data: undefined };
+      return { code: 1, stdout: "", stderr: err instanceof Error ? err.message : String(err), data: undefined };
     }
+  }
+
+  private async runAfter(module: CommandModule, result: CommandResult, ctx: any): Promise<void> {
     if (module.afterExecute) {
       try { await module.afterExecute(result, ctx); } catch (e) { console.error(`afterExecute hook failed for ${module.metadata.name}:`, e); }
     }
+  }
+
+  private postExecuteActions(module: CommandModule, args: any, state: any, execCtx: ExecutionContext, result: CommandResult, startTime: number): void {
     if (state && state.isDirty && module.StateClass) {
       this.stateManager.saveStateIfDirty(module.metadata.name, execCtx.ctx).catch(console.error);
     }
@@ -393,7 +413,6 @@ export class CommandExecutor {
         outputSize: (result.stdout?.length ?? 0) + (result.stderr?.length ?? 0)
       });
     }
-    return result;
   }
 
   private enforceOutputLimits(result: CommandResult, maxSize: number): void {

@@ -2296,3 +2296,30 @@ All tests pass; lint and build clean.
 
 **Next:** Consider further improvements: parallelize scanning with Promise.all for large command sets; add cache for file metadata reads.
 
+## Cycle 73 - Refactor: Decompose CommandExecutor.runCommandPhases - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `runCommandPhases` to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1087 tests still passing)
+
+**Refactor Details:**
+- Extracted `prepareContext` (builds ctx with optional state).
+- Extracted `runBefore` (invokes beforeExecute hook).
+- Extracted `invokeExecute` (core command execution with error catch).
+- Extracted `runAfter` (afterExecute hook with error guard).
+- Extracted `postExecuteActions` (state save, output limits, audit logging).
+- Simplified `runCommandPhases` to ~10 lines.
+- No functional changes; build clean.
+
+**Impact:** Improved separation of concerns; each phase now independently testable.
+
+**Next:** Ensure all public functions satisfy ≤20 lines; check remaining large methods like `CommandExecutor.handleExecutionError` (already ~12) or `AgentTeam.initialize` (already short).
+
