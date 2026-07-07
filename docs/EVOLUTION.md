@@ -865,3 +865,27 @@ Optional future work:
 
 **Next:** Verify all public functions meet length gate; consider extracting additional helpers from `execute` if any part still >20 lines.
 
+## Cycle 79 - Refactor: Split TaskManager.handleAgentFailure - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `handleAgentFailure` to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0
+
+**Refactor Details:**
+- Extracted `handleRetryExceeded` (max retries branch).
+- Extracted `scheduleRetry` (retry with backoff branch).
+- Simplified `handleAgentFailure` to ~10 lines.
+- All 1088 tests pass; build clean.
+
+**Impact:** Clearer separation of retry vs. fail logic; easier to unit test each path.
+
+**Next:** Address remaining long functions (e.g., `AgentTeam.setupChildRuntimes`, `AgentTeam.dispose`) to achieve full compliance.
+

@@ -184,29 +184,35 @@ export class TaskManager {
     task.retryCount++;
 
     if (task.retryCount >= this.maxRetries) {
-      // Max retries exceeded - mark as failed
-      task.status = 'failed';
-      task.result = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
-      task.retryAvailableAt = undefined;
-      this.removePendingIndex(taskIndex);
-      this.notifyUpdate(
-        `❌ Task ${taskIndex} failed after ${task.retryCount} retries (agent: ${role})`,
-        { agent: role, taskIndex, retryCount: task.retryCount, error: task.result },
-        true
-      );
+      this.handleRetryExceeded(task, role, taskIndex, error);
     } else {
-      // Retry with backoff
-      const delay = calculateRetryDelay(task.retryCount, this.baseRetryDelayMs, this.maxRetryDelayMs);
-      task.status = 'pending';
-      task.retryAvailableAt = Date.now() + delay;
-      this.insertPendingIndexSorted(taskIndex);
-      this.notifyUpdate(
-        `⚠️ Agent ${role} failed task ${taskIndex} (retry ${task.retryCount}/${this.maxRetries}), retry in ${delay}ms`,
-        { agent: role, taskIndex, retryCount: task.retryCount, delay }
-      );
+      this.scheduleRetry(task, role, taskIndex);
     }
 
     return true;
+  }
+
+  private handleRetryExceeded(task: TaskStatus, role: string, taskIndex: number, error?: unknown): void {
+    task.status = 'failed';
+    task.result = error instanceof Error ? error.message : (error ? String(error) : 'Unknown error');
+    task.retryAvailableAt = undefined;
+    this.removePendingIndex(taskIndex);
+    this.notifyUpdate(
+      `❌ Task ${taskIndex} failed after ${task.retryCount} retries (agent: ${role})`,
+      { agent: role, taskIndex, retryCount: task.retryCount, error: task.result },
+      true
+    );
+  }
+
+  private scheduleRetry(task: TaskStatus, role: string, taskIndex: number): void {
+    const delay = calculateRetryDelay(task.retryCount, this.baseRetryDelayMs, this.maxRetryDelayMs);
+    task.status = 'pending';
+    task.retryAvailableAt = Date.now() + delay;
+    this.insertPendingIndexSorted(taskIndex);
+    this.notifyUpdate(
+      `⚠️ Agent ${role} failed task ${taskIndex} (retry ${task.retryCount}/${this.maxRetries}), retry in ${delay}ms`,
+      { agent: role, taskIndex, retryCount: task.retryCount, delay }
+    );
   }
 
   // Get overall team status (tasks completion stats)

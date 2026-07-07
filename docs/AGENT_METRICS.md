@@ -2439,3 +2439,27 @@ All tests pass; lint and build clean.
 
 **Next:** Ensure no remaining functions exceed 20 lines; verify across codebase.
 
+## Cycle 79 - Refactor: Split TaskManager.handleAgentFailure - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `handleAgentFailure` to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1088 tests still passing)
+
+**Refactor Details:**
+- Extracted `handleRetryExceeded` (max retries branch).
+- Extracted `scheduleRetry` (retry with backoff branch).
+- Simplified `handleAgentFailure` to ~10 lines.
+- No functional changes; build clean.
+
+**Impact:** Improved readability of retry logic; easier to test failure handling separately.
+
+**Next:** Continue checking other modules for any remaining long functions; consider adding tests for uncovered branches.
+
