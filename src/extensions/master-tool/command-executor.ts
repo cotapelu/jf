@@ -143,163 +143,37 @@ export class CommandExecutor {
     if (!entry) {
       return this.makeErrorResult(`Command not found: ${commandName}`, "command_not_found");
     }
-
     const startTime = Date.now();
-    let module: CommandModule | undefined;
-    let state: any = null;
-    let releaseMutex: (() => void) | null = null;
-
     try {
-      // 1. Load module (from cache or dynamic import)
-      module = await this.loadModule(commandName, entry);
-
-      // 2. Rate limit check
-      const rateLimit = this.validator.checkRateLimit(commandName);
-      if (!rateLimit.allowed) {
-        return this.makeErrorResult(
-          `Rate limit exceeded. Reset in ${rateLimit.resetIn}s`,
-          "rate_limit_exceeded"
-        );
-      }
-
-      // 3. Schema validation
-      const schemaValidation = this.validator.validateWithSchema(args, module.schema, commandName);
-      if (!schemaValidation.valid) {
-        const errors = schemaValidation.errors?.map(e => `${e.path?.join('.') || ''}: ${e.message}`).join('; ') || 'Invalid arguments';
-        return this.makeErrorResult(`Validation failed: ${errors}`, "validation_failed", { validationErrors: schemaValidation.errors });
-      }
-
-      // 4. Security validation
-      const securityValidation = this.validator.validateSecurity(args, module.metadata);
-      if (!securityValidation.valid) {
-        return this.makeErrorResult(`Security: ${securityValidation.errors.join(', ')}`, "security_error");
-      }
-
-      // 5. State management (NEW)
-      if (module.StateClass) {
-        // Get or create state instance
-        state = this.stateManager.getOrCreateState(
-          commandName,
-          execCtx.ctx,
-          module.StateClass,
-          module.getPersistencePath
-        );
-
-        // Restore if fresh
-        if (!this.stateManager.hasState(commandName, execCtx.ctx)) {
-          await this.stateManager.restoreState(commandName, execCtx.ctx, module.StateClass, module.getPersistencePath);
-        }
-
-        // Lock mutex if state has one
-        if (state.mutex) {
-          releaseMutex = await state.mutex.lock();
-        }
-      }
-
-      // 6. Before hook (with injected state if available)
-      const ctxWithState = state ? { ...execCtx.ctx, commandState: state } : execCtx.ctx;
-      if (module.beforeExecute) {
-        await module.beforeExecute(args, ctxWithState);
-      }
-
-      // 7. Execute command (with state injected)
-      let result: CommandResult;
+      // Load module (with error handling)
+      let module: CommandModule;
       try {
-        result = await module.execute(args, execCtx.ctx.cwd ?? process.cwd(), execCtx.signal, ctxWithState);
-      } catch (error: any) {
-        result = {
-          code: 1,
-          stdout: "",
-          stderr: error instanceof Error ? error.message : String(error),
-          data: undefined
-        };
+        module = await this.loadModule(commandName, entry);
+      } catch (e) {
+        return this.handleLoadError(e, entry, commandName);
       }
 
-      // 8. After hook
-      if (module.afterExecute) {
-        try {
-          await module.afterExecute(result, ctxWithState);
-        } catch (e: any) {
-          console.error(`afterExecute hook failed for ${commandName}:`, e);
-        }
+      // Validate arguments and security
+      const validationErr = this.validateAll(commandName, args, module);
+      if (validationErr) return validationErr;
+
+      // Prepare state and mutex
+      const { state, releaseMutex } = await this.ensureStatePrepared(module, execCtx);
+      try {
+        // Execute command (hooks, before/after, state save, output limits, audit)
+        const result = await this.runCommandPhases(module, args, execCtx, state, startTime);
+        // Update metadata on success
+        entry.loadCount++;
+        entry.lastLoaded = Date.now();
+        return result;
+      } finally {
+        if (releaseMutex) releaseMutex();
       }
-
-      // 9. Auto-save if state dirty (NEW)
-      if (state && state.isDirty && module.StateClass) {
-        // Fire-and-forget
-        this.stateManager.saveStateIfDirty(commandName, execCtx.ctx).catch(console.error);
-      }
-
-      // 10. Validate output size
-      const outputValidation = this.validator.validateResult(result, execCtx.maxOutputSize);
-      if (!outputValidation.valid) {
-        result.stderr = (result.stderr ? result.stderr + "\n" : "") + `Warning: ${outputValidation.errors.join(', ')}`;
-        if (result.stdout.length > execCtx.maxOutputSize) {
-          result.stdout = result.stdout.substring(0, execCtx.maxOutputSize) + "\n... (truncated)";
-        }
-        if (result.stderr.length > execCtx.maxOutputSize) {
-          result.stderr = result.stderr.substring(0, execCtx.maxOutputSize) + "\n... (truncated)";
-        }
-      }
-
-      // 11. Audit log
-      if (this.enableAudit) {
-        this.logAudit({
-          timestamp: Date.now(),
-          toolCallId: execCtx.toolCallId,
-          command: commandName,
-          success: result.code === 0,
-          durationMs: Date.now() - startTime,
-          error: result.code !== 0 ? result.stderr : undefined,
-          argsSize: JSON.stringify(args).length,
-          outputSize: (result.stdout?.length ?? 0) + (result.stderr?.length ?? 0)
-        });
-      }
-
-      // 12. Update cache entry success
-      entry.loadCount++;
-      entry.lastLoaded = Date.now();
-
-      // 13. Record command stats for observability
-      const duration = Date.now() - startTime;
-      this.updateCommandStats(commandName, duration);
-
-      return result;
-
-    } catch (error: any) {
-      const msg = error instanceof Error ? error.message : String(error);
-
-      // Audit failure
-      if (this.enableAudit) {
-        this.logAudit({
-          timestamp: Date.now(),
-          toolCallId: execCtx.toolCallId,
-          command: commandName,
-          success: false,
-          durationMs: Date.now() - startTime,
-          error: msg,
-          argsSize: JSON.stringify(args).length,
-          outputSize: 0
-        });
-      }
-
-      // Mark cache entry error (if module load failed)
-      if (module === undefined && entry) {
-        entry.errorCount++;
-        entry.lastError = msg;
-        this.cache.markError(commandName, msg);
-      }
-
-      // Record command stats for observability (even on error)
-      const duration = Date.now() - startTime;
-      this.updateCommandStats(commandName, duration);
-
-      return this.makeErrorResult(msg, "execution_error", { stack: error instanceof Error ? error.stack : undefined });
+    } catch (err) {
+      // Unexpected errors
+      return this.handleExecutionError(err, entry, commandName, execCtx, startTime);
     } finally {
-      // Release mutex if acquired
-      if (releaseMutex) {
-        releaseMutex();
-      }
+      this.updateCommandStats(commandName, Date.now() - startTime);
     }
   }
 
@@ -444,5 +318,100 @@ export class CommandExecutor {
    */
   invalidateCategory(category: string): void {
     this.cache.invalidateCategory(category);
+  }
+
+  // --- Refactored helpers for execute ---
+  private validateAll(commandName: string, args: any, module: CommandModule): CommandResult | null {
+    const rate = this.validator.checkRateLimit(commandName);
+    if (!rate.allowed) return this.makeErrorResult(`Rate limit exceeded. Reset in ${rate.resetIn}s`, "rate_limit_exceeded");
+    const schema = this.validator.validateWithSchema(args, module.schema, commandName);
+    if (!schema.valid) {
+      const errors = schema.errors?.map(e => `${e.path?.join('.') || ''}: ${e.message}`).join('; ') || 'Invalid arguments';
+      return this.makeErrorResult(`Validation failed: ${errors}`, "validation_failed", { validationErrors: schema.errors });
+    }
+    const sec = this.validator.validateSecurity(args, module.metadata);
+    if (!sec.valid) return this.makeErrorResult(`Security: ${sec.errors.join(', ')}`, "security_error");
+    return null;
+  }
+
+  private async ensureStatePrepared(module: CommandModule, execCtx: ExecutionContext): Promise<{state: any, releaseMutex: (()=>void) | null}> {
+    let state: any = null;
+    let releaseMutex: (()=>void) | null = null;
+    if (module.StateClass) {
+      const cmdName = module.metadata.name;
+      state = this.stateManager.getOrCreateState(cmdName, execCtx.ctx, module.StateClass, module.getPersistencePath);
+      if (!this.stateManager.hasState(cmdName, execCtx.ctx)) {
+        await this.stateManager.restoreState(cmdName, execCtx.ctx, module.StateClass, module.getPersistencePath);
+      }
+      if (state.mutex) {
+        releaseMutex = await state.mutex.lock();
+      }
+    }
+    return { state, releaseMutex };
+  }
+
+  private async runCommandPhases(module: CommandModule, args: any, execCtx: ExecutionContext, state: any, startTime: number): Promise<CommandResult> {
+    const ctx = state ? { ...execCtx.ctx, commandState: state } : execCtx.ctx;
+    if (module.beforeExecute) await module.beforeExecute(args, ctx);
+    let result: CommandResult;
+    try {
+      result = await module.execute(args, execCtx.ctx.cwd ?? process.cwd(), execCtx.signal, ctx);
+    } catch (err) {
+      result = { code: 1, stdout: "", stderr: err instanceof Error ? err.message : String(err), data: undefined };
+    }
+    if (module.afterExecute) {
+      try { await module.afterExecute(result, ctx); } catch (e) { console.error(`afterExecute hook failed for ${module.metadata.name}:`, e); }
+    }
+    if (state && state.isDirty && module.StateClass) {
+      this.stateManager.saveStateIfDirty(module.metadata.name, execCtx.ctx).catch(console.error);
+    }
+    this.enforceOutputLimits(result, execCtx.maxOutputSize);
+    if (this.enableAudit) {
+      this.logAudit({
+        timestamp: Date.now(),
+        toolCallId: execCtx.toolCallId,
+        command: module.metadata.name,
+        success: result.code === 0,
+        durationMs: Date.now() - startTime,
+        error: result.code !== 0 ? result.stderr : undefined,
+        argsSize: JSON.stringify(args).length,
+        outputSize: (result.stdout?.length ?? 0) + (result.stderr?.length ?? 0)
+      });
+    }
+    return result;
+  }
+
+  private enforceOutputLimits(result: CommandResult, maxSize: number): void {
+    const validation = this.validator.validateResult(result, maxSize);
+    if (!validation.valid) {
+      result.stderr = (result.stderr ? result.stderr + "\n" : "") + `Warning: ${validation.errors.join(', ')}`;
+      if (result.stdout.length > maxSize) result.stdout = result.stdout.substring(0, maxSize) + "\n... (truncated)";
+      if (result.stderr.length > maxSize) result.stderr = result.stderr.substring(0, maxSize) + "\n... (truncated)";
+    }
+  }
+
+  private handleLoadError(error: any, entry: CommandRegistryEntry, commandName: string): CommandResult {
+    const msg = error instanceof Error ? error.message : String(error);
+    entry.errorCount++;
+    entry.lastError = msg;
+    this.cache.markError(commandName, msg);
+    return this.makeErrorResult(msg, "execution_error", { stack: error instanceof Error ? error.stack : undefined });
+  }
+
+  private handleExecutionError(error: any, entry: CommandRegistryEntry, commandName: string, execCtx: ExecutionContext, startTime: number): Promise<CommandResult> {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (this.enableAudit) {
+      this.logAudit({
+        timestamp: Date.now(),
+        toolCallId: execCtx.toolCallId,
+        command: commandName,
+        success: false,
+        durationMs: Date.now() - startTime,
+        error: msg,
+        argsSize: 0,
+        outputSize: 0
+      });
+    }
+    return Promise.resolve(this.makeErrorResult(msg, "execution_error", { stack: error instanceof Error ? error.stack : undefined }));
   }
 }
