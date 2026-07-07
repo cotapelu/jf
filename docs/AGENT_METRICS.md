@@ -2323,3 +2323,26 @@ All tests pass; lint and build clean.
 
 **Next:** Ensure all public functions satisfy ≤20 lines; check remaining large methods like `CommandExecutor.handleExecutionError` (already ~12) or `AgentTeam.initialize` (already short).
 
+## Cycle 74 - Performance: Parallelize Command Scanning - 2026-07-07 (Autonomous)
+
+**Task:** Speed up CommandRegistry initialization by scanning directories concurrently.
+
+**Type:** P (Performance)
+
+**Priority:** MEDIUM
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0
+
+**Change:**
+- Modified `scanCommands` to collect promises for each entry and `await Promise.all` with per-entry error catch.
+- Categories are now processed in parallel; direct command files also parallel.
+- No functional changes; all 1087 tests pass; build clean.
+
+**Impact:** Reduces cold-start latency of master tool when many command categories exist (e.g., >10). Gains depend on filesystem and number of categories.
+
+**Next:** Monitor startup time in production; if still high, consider parallelizing file reads within categories with controlled concurrency (e.g., p-limit).
+

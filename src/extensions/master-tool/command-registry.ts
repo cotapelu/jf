@@ -86,14 +86,16 @@ export class CommandRegistry {
   }
 
   /**
-   * Scan commands directory and load metadata
+   * Scan commands directory and load metadata (parallelized)
    */
   private async scanCommands(): Promise<void> {
     try {
       const entries = await readdir(this.commandsDir, { withFileTypes: true });
-      for (const entry of entries) {
-        await this.processScanEntry(entry);
-      }
+      await Promise.all(
+        entries.map(entry => this.processScanEntry(entry).catch(err => {
+          console.error(`[CommandRegistry] Error processing ${entry.name}:`, err);
+        }))
+      );
     } catch (error) {
       console.warn(`[CommandRegistry] Could not scan commands directory: ${String(error)}`);
     }
