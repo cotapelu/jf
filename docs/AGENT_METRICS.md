@@ -1904,3 +1904,33 @@ All tests pass; lint and build clean.
 
 **Next targets:** Continue coverage push to ≥85% by addressing remaining high-uncovered modules: `team-manager.ts` (runAgentLoop max-turns, abort handling), `ast_query.ts` (remaining branches), `analyze.ts` (edge cases), or `dependency_tree.ts`.
 
+
+## Cycle 57 - Edge Tests & Dependency Upgrade - 2026-07-07 (Autonomous)
+
+**Task:** Incremental coverage improvement (edge case tests) and dependency upgrades.
+
+**Type:** Test Enhancement + Upgrade
+
+**Priority:** MEDIUM
+
+**Duration:** ~1h
+
+**Status:** ✅ Success
+
+**Test Delta:** +3 tests (total 1077 passing) – note earlier test count was 1076; after assembly resolution, total 1077.
+
+**Coverage Delta:**
+- Branches: **83.95%** (unchanged)
+- Statements: **92.94%** (unchanged)
+- Functions: **91.74%** (unchanged)
+- Lines: **94.15%** (unchanged)
+
+**Details:**
+- Added `team-manager-getmycurrenttask-coverage.test.ts` covering:
+  - `getMyCurrentTask('unknown-agent')` → null
+  - `getMyCurrentTask` with no claimed task → null
+  - `getTeamStatus` with empty tasks → zero counts, isComplete false
+- Dependency upgrade: `npm update` brought 78 packages to latest within semver ranges (no breaking changes)
+- Validation: all tests pass, build clean, `npm audit` shows 0 vulnerabilities
+
+**Next targets:** Continue toward 85% branch coverage; explore security audit or performance profiling if coverage stagnates.
