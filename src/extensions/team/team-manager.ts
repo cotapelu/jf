@@ -648,7 +648,7 @@ export class AgentTeam implements AgentTeamRuntime {
     return `[${role}] ${prefix}: ${content.substring(0, 200)}`;
   }
 
-  private renderToolExecution(role: string, toolName?: unknown, isStart: boolean): string | null {
+  private renderToolExecution(role: string, toolName: unknown, isStart: boolean): string | null {
     if (typeof toolName !== 'string') return null;
     return isStart
       ? `[${role}] Tool: ${toolName}`
@@ -687,37 +687,20 @@ export class AgentTeam implements AgentTeamRuntime {
   }
 
 
+  private buildBootstrapPrompt(role: string, bootstrapTasksList: string): string {
+    return `You are ${role}, an AI agent in a collaborative team.\n\nTeam tasks:\n${bootstrapTasksList}\n\nYour role: ${role}\n\nINSTRUCTIONS:\n1. Use team_ops(action="claim_task") to get a task\n2. Work on the task using regular tools (bash, read, write, edit, git, etc.)\n3. When done, call team_ops(action="complete_task", taskIndex=X, result="summary")\n4. If you need to share data, use team_ops(action="workspace_write", key="...", value="...")\n5. Communicate via team_ops(action="send_message", channel="team.chat", content="...")\n6. Continue claiming tasks until all are done\n\nStart by claiming your first task.`;
+  }
+
   private getBootstrapPrompt(role: string): string {
     const bootstrapTasksList = this.taskManager.getTasks().map((t, i) => `[${i}] ${t}`).join("\n");
-    return `You are ${role}, an AI agent in a collaborative team.
-
-Team tasks:
-${bootstrapTasksList}
-
-Your role: ${role}
-
-INSTRUCTIONS:
-1. Use team_ops(action="claim_task") to get a task
-2. Work on the task using regular tools (bash, read, write, edit, git, etc.)
-3. When done, call team_ops(action="complete_task", taskIndex=X, result="summary")
-4. If you need to share data, use team_ops(action="workspace_write", key="...", value="...")
-5. Communicate via team_ops(action="send_message", channel="team.chat", content="...")
-6. Continue claiming tasks until all are done
-
-Start by claiming your first task.`;
+    return this.buildBootstrapPrompt(role, bootstrapTasksList);
   }
 
   private async getContinuationPrompt(turnCount: number): Promise<string> {
     const status = await this.getTeamStatus();
     const messages = await this.getMessages("team.chat", 5);
     const recentMessages = messages.map(m => `[${m.from}]: ${m.content}`).join("\n");
-
-    return `Turn ${turnCount + 1}. Continue.
-
-Progress: ${status.completedTasks}/${status.totalTasks} tasks completed.
-${recentMessages ? `\nRecent messages:\n${recentMessages}\n` : ""}
-
-Use team_ops to continue. If all tasks done, finish up.`;
+    return `Turn ${turnCount + 1}. Continue.\n\nProgress: ${status.completedTasks}/${status.totalTasks} tasks completed.\n${recentMessages ? `\nRecent messages:\n${recentMessages}\n` : ""}\n\nUse team_ops to continue. If all tasks done, finish up.`;
   }
 
   // Extend dispose to wait for child loops and dispose child runtimes
@@ -908,6 +891,37 @@ async function sendCompletionUpdate(team: AgentTeam, onUpdate?: (update: AgentTo
   ));
 }
 
+async function executeTeamWait(
+  team: AgentTeam,
+  onUpdate?: (update: AgentToolResult<unknown>) => void
+): Promise<void> {
+  try {
+    await Promise.all(team.childPromises);
+  } finally {
+    if (team.monitorInterval) {
+      clearInterval(team.monitorInterval);
+      team.monitorInterval = null;
+    }
+  }
+  try {
+    await sendCompletionUpdate(team, onUpdate);
+  } catch (e) {
+    console.error('Failed to send completion update:', e);
+  }
+}
+
+async function executeTeamNoWait(
+  team: AgentTeam,
+  tasks: string[],
+  onUpdate?: (update: AgentToolResult<unknown>) => void
+): Promise<void> {
+  try {
+    sendImmediateStartUpdate(team, onUpdate, tasks);
+  } catch (e) {
+    console.error('Failed to send immediate start update:', e);
+  }
+}
+
 export async function executeTeamTasks(
   team: AgentTeam,
   tasks: string[],
@@ -920,25 +934,9 @@ export async function executeTeamTasks(
   startCompletionMonitor(team);
 
   if (_options?.wait) {
-    try {
-      await Promise.all(team.childPromises);
-    } finally {
-      if (team.monitorInterval) {
-        clearInterval(team.monitorInterval);
-        team.monitorInterval = null;
-      }
-    }
-    try {
-      await sendCompletionUpdate(team, onUpdate);
-    } catch (e) {
-      console.error('Failed to send completion update:', e);
-    }
+    await executeTeamWait(team, onUpdate);
   } else {
-    try {
-      sendImmediateStartUpdate(team, onUpdate, tasks);
-    } catch (e) {
-      console.error('Failed to send immediate start update:', e);
-    }
+    await executeTeamNoWait(team, tasks, onUpdate);
   }
   return team;
 }
