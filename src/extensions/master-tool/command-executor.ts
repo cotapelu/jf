@@ -180,28 +180,31 @@ export class CommandExecutor {
   /**
    * Load module from cache or dynamic import
    */
-  private async loadModule(commandName: string, entry: CommandRegistryEntry): Promise<CommandModule> {
-    // Check cache first
+  private tryLoadFromCache(commandName: string): CommandModule | null {
     const cached = this.cache.get(commandName);
-    if (cached) {
-      return cached;
-    }
+    return cached ?? null;
+  }
 
-    // Dynamic import
+  private async loadAndCache(commandName: string, entry: CommandRegistryEntry): Promise<CommandModule> {
+    const mod = await entry.loader();
+    this.cache.set(commandName, mod, mod.metadata);
+    return mod;
+  }
+
+  private updateRegistryEntry(entry: CommandRegistryEntry, mod: CommandModule): void {
+    entry.module = mod;
+    entry.StateClass = mod.StateClass;
+    entry.getPersistencePath = mod.getPersistencePath;
+    entry.lastLoaded = Date.now();
+    entry.metadata = mod.metadata;
+  }
+
+  private async loadModule(commandName: string, entry: CommandRegistryEntry): Promise<CommandModule> {
+    const cached = this.tryLoadFromCache(commandName);
+    if (cached) return cached;
     try {
-      const mod = await entry.loader();
-
-      // Cache it
-      this.cache.set(commandName, mod, mod.metadata);
-
-      // Update registry entry with loaded module (for reuse without cache)
-      entry.module = mod;
-      entry.StateClass = mod.StateClass;
-      entry.getPersistencePath = mod.getPersistencePath;
-      entry.lastLoaded = Date.now();
-      // Sync metadata from loaded module (in case placeholder was set)
-      entry.metadata = mod.metadata;
-
+      const mod = await this.loadAndCache(commandName, entry);
+      this.updateRegistryEntry(entry, mod);
       return mod;
     } catch (error: any) {
       const msg = error instanceof Error ? error.message : String(error);
