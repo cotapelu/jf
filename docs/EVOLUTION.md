@@ -677,3 +677,29 @@ Optional future work:
 
 **Next:** Consider further optimizations (e.g., validation caching) if profiling shows need.
 
+## Cycle 71 - Refactor: Decompose CommandExecutor.getStats - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `getStats` method to ≤20 lines.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** 0
+
+**Refactor Details:**
+- Extracted `computeSuccessRate` (success rate calculation).
+- Extracted `groupErrorsByCommand` (builds error frequency map).
+- Extracted `formatCommandStats` (transforms commandStats entries).
+- Extracted `formatRecentErrors` (sorts & slices top 10).
+- Simplified `getStats` to ~10 lines orchestration.
+- All 1087 tests pass; build clean.
+
+**Impact:** Improved testability of stats components; easier to modify output formats.
+
+**Next:** Refactor `CommandRegistry.scanCommands` and `scanCategory` to complete that class cleanup.
+

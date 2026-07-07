@@ -265,10 +265,27 @@ export class CommandExecutor {
     commandStats: Array<{ command: string; count: number; avgDuration: number }>;
   } {
     const totalExecutions = this.auditLogs.length;
-    const successful = this.auditLogs.filter(l => l.success).length;
-    const successRate = totalExecutions > 0 ? (successful / totalExecutions) * 100 : 0;
+    const successRate = this.computeSuccessRate(totalExecutions);
+    const errorMap = this.groupErrorsByCommand();
+    const commandStatsArray = this.formatCommandStats();
 
-    // Group errors by command
+    return {
+      registeredCommands: this.registry.size,
+      cacheStats: this.cache.getStats(),
+      recentErrors: this.formatRecentErrors(errorMap),
+      totalExecutions,
+      successRate,
+      commandStats: commandStatsArray
+    };
+  }
+
+  private computeSuccessRate(totalExecutions: number): number {
+    if (totalExecutions === 0) return 0;
+    const successful = this.auditLogs.filter(l => l.success).length;
+    return Math.round(((successful / totalExecutions) * 100) * 10) / 10;
+  }
+
+  private groupErrorsByCommand(): Map<string, { count: number; lastError: string }> {
     const errorMap = new Map<string, { count: number; lastError: string }>();
     for (const log of this.auditLogs) {
       if (!log.success && log.error) {
@@ -279,24 +296,22 @@ export class CommandExecutor {
         });
       }
     }
+    return errorMap;
+  }
 
-    const commandStatsArray = Array.from(this.commandStats.entries()).map(([command, stats]) => ({
+  private formatCommandStats(): Array<{ command: string; count: number; avgDuration: number }> {
+    return Array.from(this.commandStats.entries()).map(([command, stats]) => ({
       command,
       count: stats.count,
       avgDuration: stats.totalDuration / stats.count
     }));
+  }
 
-    return {
-      registeredCommands: this.registry.size,
-      cacheStats: this.cache.getStats(),
-      recentErrors: Array.from(errorMap.entries())
-        .map(([command, data]) => ({ command, error: data.lastError, count: data.count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10),
-      totalExecutions,
-      successRate: Math.round(successRate * 10) / 10,
-      commandStats: commandStatsArray
-    };
+  private formatRecentErrors(errorMap: Map<string, { count: number; lastError: string }>): Array<{ command: string; error: string; count: number }> {
+    return Array.from(errorMap.entries())
+      .map(([command, data]) => ({ command, error: data.lastError, count: data.count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
   }
 
   /**
