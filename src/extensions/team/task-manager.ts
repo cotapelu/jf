@@ -156,29 +156,32 @@ export class TaskManager {
     return true;
   }
 
-  // Complete a task successfully
+  // Complete a task successfully (with role check)
   completeTask(role: string, taskIndex: number, result: string): boolean {
     const task = this.taskStatuses.get(taskIndex);
     if (!task || task.assignee !== role) return false;
-    task.status = 'completed';
-    task.result = result;
-    task.assignee = null;
-    this.removePendingIndex(taskIndex);
-    this.notifyUpdate(
-      `✅ Agent ${role} completed task ${taskIndex}`,
-      { agent: role, taskIndex, resultPreview: result.substring(0, 150) }
-    );
+    this.finalizeTaskCompletion(taskIndex, result, true, role);
     return true;
   }
 
   // Report result without role check (for external completion)
   reportResult(taskIndex: number, result: string): void {
+    this.finalizeTaskCompletion(taskIndex, result, false, undefined);
+  }
+
+  private finalizeTaskCompletion(taskIndex: number, result: string, notify: boolean, role?: string): void {
     const task = this.taskStatuses.get(taskIndex);
     if (!task) return;
     task.status = 'completed';
     task.result = result;
     task.assignee = null;
     this.removePendingIndex(taskIndex);
+    if (notify && role) {
+      this.notifyUpdate(
+        `✅ Agent ${role} completed task ${taskIndex}`,
+        { agent: role, taskIndex, resultPreview: result.substring(0, 150) }
+      );
+    }
   }
 
   // Handle agent failure on a task (increment retry or mark failed)
