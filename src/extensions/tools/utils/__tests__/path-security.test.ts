@@ -56,4 +56,13 @@ describe('PathSecurity', () => {
     const paths = ['a.ts', '../escape.ts'];
     expect(() => resolveSecurePaths(cwd, paths)).toThrow('Access denied');
   });
+
+  it('throws when path is empty string', () => {
+    expect(() => resolveSecurePath(cwd, '')).toThrow('Invalid path');
+  });
+
+  it('throws when userPath is undefined', () => {
+    // @ts-ignore - testing runtime type check
+    expect(() => resolveSecurePath(cwd, undefined)).toThrow('Invalid path');
+  });
 });

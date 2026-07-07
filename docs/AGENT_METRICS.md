@@ -2596,3 +2596,68 @@ All tests pass; lint and build clean.
 - Performance: No O(n²), no blocking I/O issues ✅
 
 **Next Steps:** Address coverage gaps in low-branch modules (logger.ts, team-tool.ts, path-security.ts) to push branch coverage toward 85% target.
+
+## Cycle 85 - Coverage Improvement Push - 2026-07-07 (Autonomous)
+
+**Task:** Increase branch coverage toward 85% target (currently 84.09%).
+
+**Type:** T (Tests)
+
+**Priority:** HIGH (coverage gap)
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Partial Success (84.5% achieved, target 85%)
+
+**Test Delta:** +11 tests (from 1088 → 1099 passing)
+
+**Coverage Delta:**
+- Statements: 93.32% (+0.35%)
+- Branches: 84.5% (+0.41%)
+- Functions: 92.46% (+0.24%)
+- Lines: 94.63% (+0.41%)
+
+**Tests Added:**
+- `team-manager.coverage.test.ts`: Added tests for `shouldTerminate` (3 cases), `executeAgentPrompt` error handling, and additional `handleAgentEvent` cases (agent_end, message_start, message_update ignore).
+- `ast_query.test.ts`: Added tests for invalid regex fallback and valid regex matching.
+- `path-security.test.ts`: Added tests for empty string and undefined input validation.
+
+**Remaining Gap:** Branch coverage 84.5%, still 0.5% short of 85% target (need ~11 more covered branches). Low-branch modules remain:
+- `team-manager.ts` (84.13% branches)
+- `path-security.ts` (88.23% stmts, 75% branches)
+- `team-tool.ts` (75% branches)
+- `dependency_tree.ts` (~85% branches)
+
+**Next:** Continue targeted tests for these modules in next cycle to reach ≥85%.
+
+## Cycle 86 - Coverage Gap Analysis & Target Update - 2026-07-07 (Autonomous)
+
+**Task:** Evaluate coverage after improvements; update trajectory.
+
+**Type:** chore (analysis)
+
+**Priority:** MEDIUM
+
+**Duration:** ~15 min
+
+**Status:** ✅ Done
+
+**Test Delta:** 0 (1099 tests remain)
+
+**Coverage Current (after Cycle 85):**
+- Statements: 93.32%
+- Branches: 84.5%
+- Functions: 92.46%
+- Lines: 94.63%
+
+**Gap Analysis:**
+Global branch coverage is 0.5% below the 85% target. To reach target, need ~11 more branches covered out of 2194 total.
+
+**Identified high-impact modules for additional tests:**
+- `team-manager.ts`: Additional edge cases in `shouldTerminate` when `totalTasks === 0`, lock contention scenarios.
+- `team-tool.ts`: Branch when `parentRuntime` unavailable, `onUpdate` handling with malformed updates.
+- `dependency_tree.ts`: Edge cases in cycle detection, handling of nodes without specifiers.
+- `path-security.ts`: Additional invalid path types (null, number, objects).
+
+**Next Cycle Plan:** Add 2-3 targeted tests covering missing branches in these modules; re-evaluate coverage.
+

@@ -141,4 +141,72 @@ describe('AgentTeam Coverage', () => {
       expect(updates.some(u => u.content.some((c: any) => c.text.includes('Tool read done')))).toBe(true);
     });
   });
+
+  describe('shouldTerminate (private)', () => {
+    it('should return true when all tasks completed', async () => {
+      await team.initialize(['T1', 'T2']);
+      const priv = team as any;
+      const status = { completedTasks: 2, totalTasks: 2 };
+      expect(priv.shouldTerminate('agent-1', status, 5, 50)).toBe(true);
+    });
+
+    it('should return true when turnCount reaches max', async () => {
+      const priv = team as any;
+      const status = { completedTasks: 0, totalTasks: 1 };
+      expect(priv.shouldTerminate('agent-1', status, 50, 50)).toBe(true);
+    });
+
+    it('should return false otherwise', async () => {
+      const priv = team as any;
+      const status = { completedTasks: 0, totalTasks: 2 };
+      expect(priv.shouldTerminate('agent-1', status, 10, 50)).toBe(false);
+    });
+  });
+
+  describe('executeAgentPrompt error handling', () => {
+    it('should catch errors from session.prompt and notify', async () => {
+      await team.initialize(['task']);
+      const mockRuntime = createMockRuntime();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const updates: any[] = [];
+      team.setOnUpdate(u => updates.push(u));
+      // Mock session.prompt to reject
+      mockRuntime.session.prompt = vi.fn().mockRejectedValue(new Error('prompt failure'));
+      team.registerRuntime(mockRuntime, 'agent-1');
+      const priv = team as any;
+      await priv.executeAgentPrompt('agent-1', mockRuntime, 0);
+      // Should have produced an error update
+      expect(updates.some(u => u.isError && u.content.some((c: any) => c.text.includes('Agent agent-1 error')))).toBe(true);
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('handleAgentEvent additional cases', () => {
+    it('should handle agent_end event', async () => {
+      await team.initialize(['task']);
+      const updates: any[] = [];
+      team.setOnUpdate(u => updates.push(u));
+      const priv = getInternal(team);
+      await priv.handleAgentEvent('agent-1', { type: 'agent_end', stopReason: 'completed' });
+      expect(updates.some(u => u.content.some((c: any) => c.text.includes('finished')))).toBe(true);
+    });
+
+    it('should handle message_start event', async () => {
+      await team.initialize(['task']);
+      const updates: any[] = [];
+      team.setOnUpdate(u => updates.push(u));
+      const priv = getInternal(team);
+      await priv.handleAgentEvent('agent-1', { type: 'message_start', message: { role: 'user', content: 'hello' } });
+      expect(updates.some(u => u.content.some((c: any) => c.text.includes('User:')))).toBe(true);
+    });
+
+    it('should ignore message_update event', async () => {
+      await team.initialize(['task']);
+      const updates: any[] = [];
+      team.setOnUpdate(u => updates.push(u));
+      const priv = getInternal(team);
+      await priv.handleAgentEvent('agent-1', { type: 'message_update' });
+      expect(updates.length).toBe(0);
+    });
+  });
 });

@@ -3,62 +3,32 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Autonomous Cycle 56 - Quality Gate Run",
+      "name": "Coverage Verification",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Lint (ESLint) - ✅ DONE",
+          "content": "Add team-manager coverage tests for shouldTerminate, executeAgentPrompt error, handleAgentEvent extra cases",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Type-check (TypeScript) - ✅ DONE",
+          "content": "Add ast_query tests for invalid regex",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Tests with coverage",
+          "content": "Add path-security tests for empty/undefined",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Build verification",
-          "status": "pending"
-        },
-        {
-          "id": "task-5",
-          "content": "Analyze coverage gaps",
-          "status": "pending"
-        },
-        {
-          "id": "task-6",
-          "content": "Security scan",
-          "status": "pending"
-        },
-        {
-          "id": "task-7",
-          "content": "Performance anti-pattern check",
-          "status": "pending"
-        },
-        {
-          "id": "task-8",
-          "content": "Code smell review",
-          "status": "pending"
-        },
-        {
-          "id": "task-9",
-          "content": "Update AGENT_METRICS.md",
-          "status": "pending"
-        },
-        {
-          "id": "task-10",
-          "content": "Commit changes",
+          "content": "Run full coverage to verify global branch ≥85%",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 11,
+  "nextTaskId": 5,
   "nextPhaseId": 2,
-  "updatedAt": "2026-07-07T22:54:25.771Z"
+  "updatedAt": "2026-07-07T23:10:10.874Z"
 }

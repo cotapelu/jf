@@ -320,4 +320,40 @@ function standalone() {}
     expect(result.details.matches.length).toBe(0);
     await unlink(file);
   });
+
+  it('should handle invalid regex pattern gracefully', async () => {
+    const code = `
+function fooBar() {}
+function baz() {}
+    `;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    // Invalid regex: unclosed character class
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "function", name: "f[invalid[" } 
+    }, ctx as { cwd: string });
+    // Should treat pattern as literal string, not throw
+    expect(result.isError).toBe(false);
+    // Since pattern is literal "f[invalid[", no matches expected
+    expect(result.details.matches.length).toBe(0);
+    await unlink(file);
+  });
+
+  it('should match when regex pattern is valid', async () => {
+    const code = `
+function alpha() {}
+function beta() {}
+    `;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "function", name: "^alpha$" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(1);
+    expect(result.details.matches[0].name).toBe("alpha");
+    await unlink(file);
+  });
 });
