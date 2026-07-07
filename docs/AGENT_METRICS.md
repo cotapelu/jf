@@ -2370,3 +2370,26 @@ All tests pass; lint and build clean.
 
 **Next:** Verify no other functions violate length gate; consider additional tests to push branch coverage toward 85%.
 
+## Cycle 76 - Tests: beforeExecute error handling - 2026-07-07 (Autonomous)
+
+**Task:** Add missing test for `CommandExecutor` when beforeExecute hook throws.
+
+**Type:** T (Tests)
+
+**Priority:** HIGH
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +1 test (total 1088 passing)
+
+**Changes:**
+- Added test `should handle beforeExecute error gracefully` verifying error path.
+- Used a fresh executor with `enableAudit: true` and checked audit log.
+- No code changes; all existing tests still pass; build clean.
+
+**Impact:** Increased confidence in error handling; improves branch coverage slightly.
+
+**Next:** Continue targeted test additions to push overall branch coverage toward 85%.
+

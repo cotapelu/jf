@@ -202,6 +202,21 @@ describe('CommandExecutor', () => {
       expect(after).toHaveBeenCalledWith({ code: 0, stdout: 'OK', stderr: '' }, expect.any(Object));
     });
 
+    it('should handle beforeExecute error gracefully', async () => {
+      const before = vi.fn().mockRejectedValue(new Error('before failed'));
+      const mod = createMockCommandModule({ beforeExecute: before });
+      const entry = createEntry(mod);
+      const exec = new CommandExecutor({ enableAudit: true });
+      exec['register'](entry);
+      const result = await exec.execute('test.cmd', {}, defaultExecCtx);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain('before failed');
+      const logs = exec.getAuditLogs();
+      expect(logs.length).toBe(1);
+      expect(logs[0].success).toBe(false);
+      expect(logs[0].error).toContain('before failed');
+    });
+
     it('should handle afterExecute failure gracefully', async () => {
       const after = vi.fn().mockRejectedValue(new Error('hook fail'));
       const mod = createMockCommandModule({ afterExecute: after });
