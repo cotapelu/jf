@@ -8,6 +8,7 @@
  */
 
 import { readdir, stat } from "fs/promises";
+import type { Dirent } from "fs";
 import { join, extname, basename, dirname } from "path";
 import { fileURLToPath } from "url";
 import type {
@@ -90,25 +91,30 @@ export class CommandRegistry {
   private async scanCommands(): Promise<void> {
     try {
       const entries = await readdir(this.commandsDir, { withFileTypes: true });
-      
       for (const entry of entries) {
-        if (entry.isDirectory()) {
-          // Category folder (git, dev, system, etc.)
-          const category = entry.name;
-          const categoryDir = join(this.commandsDir, category);
-          await this.scanCategory(category, categoryDir);
-        } else if (entry.isFile()) {
-          // Direct command file (no category)
-          const ext = extname(entry.name).toLowerCase();
-          if (ext === '.ts' || ext === '.js' || ext === '.mjs') {
-            const commandName = basename(entry.name, ext);
-            const fullPath = join(this.commandsDir, entry.name);
-            await this.loadCommandMetadata(commandName, "uncategorized", fullPath);
-          }
-        }
+        await this.processScanEntry(entry);
       }
     } catch (error) {
       console.warn(`[CommandRegistry] Could not scan commands directory: ${String(error)}`);
+    }
+  }
+
+  private async processScanEntry(entry: Dirent): Promise<void> {
+    if (entry.isDirectory()) {
+      const category = entry.name;
+      const categoryDir = join(this.commandsDir, category);
+      await this.scanCategory(category, categoryDir);
+    } else if (entry.isFile()) {
+      await this.processDirectCommandFile(entry);
+    }
+  }
+
+  private async processDirectCommandFile(entry: Dirent): Promise<void> {
+    const ext = extname(entry.name).toLowerCase();
+    if (['.ts', '.js', '.mjs'].includes(ext)) {
+      const commandName = basename(entry.name, ext);
+      const fullPath = join(this.commandsDir, entry.name);
+      await this.loadCommandMetadata(commandName, "uncategorized", fullPath);
     }
   }
 
@@ -119,18 +125,21 @@ export class CommandRegistry {
     try {
       const files = await readdir(categoryDir);
       for (const file of files) {
-        const fullPath = join(categoryDir, file);
-        const fileStat = await stat(fullPath);
-        if (!fileStat.isFile()) continue;
-
-        const ext = extname(file).toLowerCase();
-        if (ext === '.ts' || ext === '.js' || ext === '.mjs') {
-          const commandName = `${category}.${basename(file, ext)}`;
-          await this.loadCommandMetadata(commandName, category, fullPath);
-        }
+        await this.processCategoryFile(category, categoryDir, file);
       }
     } catch (error) {
       console.warn(`[CommandRegistry] Could not scan category ${category}: ${String(error)}`);
+    }
+  }
+
+  private async processCategoryFile(category: string, categoryDir: string, file: string): Promise<void> {
+    const fullPath = join(categoryDir, file);
+    const fileStat = await stat(fullPath);
+    if (!fileStat.isFile()) return;
+    const ext = extname(file).toLowerCase();
+    if (['.ts', '.js', '.mjs'].includes(ext)) {
+      const commandName = `${category}.${basename(file, ext)}`;
+      await this.loadCommandMetadata(commandName, category, fullPath);
     }
   }
 

@@ -2270,3 +2270,29 @@ All tests pass; lint and build clean.
 
 **Next:** Continue with `CommandRegistry.scanCommands` and `scanCategory` to complete refactor of that class.
 
+## Cycle 72 - Refactor: Simplify CommandRegistry.scanCommands & scanCategory - 2026-07-07 (Autonomous)
+
+**Task:** Reduce `scanCommands` and `scanCategory` to ≤20 lines each.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1087 tests still passing)
+
+**Refactor Details:**
+- Introduced `processScanEntry` to handle directory vs file entries.
+- Introduced `processDirectCommandFile` for root-level command files.
+- Introduced `processCategoryFile` for category-level command files.
+- Simplified `scanCommands` to ~12 lines, `scanCategory` to ~8 lines.
+- Added `Dirent` type import for proper typing.
+- No functional changes; build clean.
+
+**Impact:** Much clearer separation of concerns in command discovery pipeline.
+
+**Next:** Consider further improvements: parallelize scanning with Promise.all for large command sets; add cache for file metadata reads.
+
