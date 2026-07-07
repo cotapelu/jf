@@ -454,3 +454,34 @@ Optional future work:
 - Add observability endpoint for command stats.  
 - Create COMPLIANCE.md if scope expands.
 
+## Cycle 62 - Observability: Command Stats - 2026-07-07 (Autonomous)
+
+**Task:** Add built-in command to expose command executor metrics.
+
+**Type:** O (Observability) + T (Tests)
+
+**Priority:** MEDIUM
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** +3 tests (total 1087 passing)
+
+**Coverage Delta:**
+- Statements: **93.0%** (unchanged)
+- Branches: **84.13%** (↑0.02%)
+- Functions: **91.84%** (↑0.03%)
+- Lines: **94.19%** (unchanged)
+
+**Implementation:**
+- Created `src/extensions/master-tool/commands/master_tool/stats.ts` implementing `master_tool.stats` command.
+- Command queries `CommandRegistry` for `getStats()` and formats human‑readable output showing registered commands, total executions, success rate, per‑command count/avg duration, cache hits/misses/size, and recent errors.
+- Added `getStats()` passthrough to `CommandRegistry` (existing `CommandExecutor.getStats()`).
+- Added unit tests for stats command covering normal, empty, and unavailable registry scenarios (3 tests).
+- All tests pass; lint clean; build successful.
+
+**Impact:** Provides operators immediate visibility into command usage and performance without external instrumentation; supports SLO and capacity planning.
+
+**Next:** Consider exposing metrics in JSON format for automated consumption; integrate with Prometheus endpoint if required.
+
