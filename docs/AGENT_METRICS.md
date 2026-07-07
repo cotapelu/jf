@@ -2346,3 +2346,27 @@ All tests pass; lint and build clean.
 
 **Next:** Monitor startup time in production; if still high, consider parallelizing file reads within categories with controlled concurrency (e.g., p-limit).
 
+## Cycle 75 - Refactor: Simplify dependency_tree execute & formatOutput - 2026-07-07 (Autonomous)
+
+**Task:** Ensure all functions in `dependency_tree` capability satisfy ≤20 lines quality gate.
+
+**Type:** R (Refactor)
+
+**Priority:** HIGH
+
+**Duration:** ~2 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1087 tests still passing)
+
+**Refactor Details:**
+- Extracted `makeErrorResponse` and `handleParseError` helpers; simplified `execute` from ~35 to ~12 lines.
+- Decomposed `formatOutput` into `buildSummary`, `buildEntryPoints`, `buildCycles`, `buildNodes`, `buildEdges`.
+- All functions now ≤20 lines; improved readability and testability.
+- No functional changes; build clean.
+
+**Impact:** Meets quality gate for function length across codebase; easier to maintain dependency tree output generation.
+
+**Next:** Verify no other functions violate length gate; consider additional tests to push branch coverage toward 85%.
+

@@ -399,64 +399,68 @@ function convertToRelative(cwd: string, absResult: GraphResult): GraphResult {
   };
 }
 
-export async function execute(params: { files: string[]; entryPoints?: string[] }, ctx: any): Promise<any> {
-  const cwd = ctx.cwd || process.cwd();
-
-  if (!params.files || params.files.length === 0) {
-    return { content: [{ type: "text" as const, text: "No files provided" }], isError: true, details: { error: "files required" } };
-  }
-
-  let parseResult: { fileInfos: FileModuleInfo[]; allFiles: Set<string> };
-  try {
-    parseResult = await readAndParseFiles(cwd, params.files);
-  } catch (err: any) {
-    const message = err instanceof Error ? err.message : String(err);
-    // Extract file from error message if possible, else use first file
-    const fileMatch = message.match(/processing file (\S+)/);
-    const file = fileMatch ? fileMatch[1] : params.files[0] || '';
-    return { content: [{ type: "text" as const, text: message }], isError: true, details: { file, error: message } };
-  }
-
-  const { fileInfos, allFiles } = parseResult;
-  const absEntryPoints = params.entryPoints?.map(p => join(cwd, p));
-  const absResult = buildGraph(fileInfos, allFiles, absEntryPoints);
-  const relResult = convertToRelative(cwd, absResult);
-  const output = formatOutput(relResult, params.entryPoints || []);
-  return { content: [{ type: "text" as const, text: output }], isError: false, details: relResult };
+function makeErrorResponse(text: string, details?: any): any {
+  return { content: [{ type: "text" as const, text }], isError: true, details };
 }
 
-function formatOutput(g: GraphResult, entryPoints: string[]): string {
-  let txt = `📦 Dependency Tree Analysis\n\n`;
-  txt += `📊 Summary:\n`;
-  txt += `   Files: ${g.summary.totalFiles}\n`;
-  txt += `   Import edges: ${g.summary.totalEdges}\n`;
-  txt += `   Cycles detected: ${g.summary.cycleCount}\n\n`;
+function handleParseError(err: any, params: { files: string[] }, cwd: string): any {
+  const message = err instanceof Error ? err.message : String(err);
+  const fileMatch = message.match(/processing file (\S+)/);
+  const file = fileMatch ? fileMatch[1] : params.files[0] || '';
+  return makeErrorResponse(message, { file, error: message });
+}
 
-  if (entryPoints.length > 0) {
-    txt += `🚪 Entry Points: ${entryPoints.length}\n`;
-    entryPoints.forEach(ep => txt += `   - ${ep}\n`);
-    txt += '\n';
+export async function execute(params: { files: string[]; entryPoints?: string[] }, ctx: any): Promise<any> {
+  const cwd = ctx.cwd ?? process.cwd();
+  if (!params.files?.length) return makeErrorResponse("No files provided", { error: "files required" });
+  try {
+    const { fileInfos, allFiles } = await readAndParseFiles(cwd, params.files);
+    const absEntryPoints = params.entryPoints?.map(p => join(cwd, p));
+    const absResult = buildGraph(fileInfos, allFiles, absEntryPoints);
+    const relResult = convertToRelative(cwd, absResult);
+    const output = formatOutput(relResult, params.entryPoints ?? []);
+    return { content: [{ type: "text" as const, text: output }], isError: false, details: relResult };
+  } catch (err) {
+    return handleParseError(err, params, cwd);
   }
+}
 
-  if (g.cycles.length > 0) {
-    txt += `⚠️  Cycles:\n`;
-    g.cycles.forEach((cycle, i) => {
-      txt += `   Cycle ${i + 1}: ${cycle.join(' → ')}\n`;
-    });
-    txt += '\n';
-  }
+function buildSummary(g: GraphResult): string {
+  return `📊 Summary:\n   Files: ${g.summary.totalFiles}\n   Import edges: ${g.summary.totalEdges}\n   Cycles detected: ${g.summary.cycleCount}\n\n`;
+}
 
-  txt += `📋 Nodes (${g.nodes.length}):\n`;
-  g.nodes.forEach(n => {
+function buildEntryPoints(entryPoints: string[]): string {
+  let txt = `🚪 Entry Points: ${entryPoints.length}\n`;
+  entryPoints.forEach(ep => txt += `   - ${ep}\n`);
+  return txt + '\n';
+}
+
+function buildCycles(cycles: string[][]): string {
+  let txt = `⚠️  Cycles:\n`;
+  cycles.forEach((cycle, i) => { txt += `   Cycle ${i + 1}: ${cycle.join(' → ')}\n`; });
+  return txt + '\n';
+}
+
+function buildNodes(nodes: GraphResult["nodes"]): string {
+  let txt = `📋 Nodes (${nodes.length}):\n`;
+  nodes.forEach(n => {
     txt += `   ${n.file}\n`;
     txt += `     Exports: ${n.exports.join(', ') || '(none)'}\n`;
     txt += `     Imports from: ${n.imports.join(', ') || '(none)'}\n`;
   });
+  return txt;
+}
 
-  txt += `\n🔗 Edges (${g.edges.length}):\n`;
-  g.edges.forEach(e => {
-    txt += `   ${e.from} → ${e.to} [${e.symbols.join(', ')}]\n`;
-  });
+function buildEdges(edges: GraphResult["edges"]): string {
+  return edges.map(e => `   ${e.from} → ${e.to} [${e.symbols.join(', ')}]`).join('\n');
+}
 
+function formatOutput(g: GraphResult, entryPoints: string[]): string {
+  let txt = `📦 Dependency Tree Analysis\n\n`;
+  txt += buildSummary(g);
+  if (entryPoints.length > 0) txt += buildEntryPoints(entryPoints);
+  if (g.cycles.length > 0) txt += buildCycles(g.cycles);
+  txt += buildNodes(g.nodes);
+  txt += `\n🔗 Edges (${g.edges.length}):\n` + buildEdges(g.edges);
   return txt;
 }
