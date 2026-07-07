@@ -44,44 +44,43 @@ export class CommandRegistry {
   /**
    * Initialize registry - scan commands directory
    */
+  private async initializeOnce(): Promise<void> {
+    try {
+      await this.scanCommands();
+      if (this.customCommands) {
+        for (const [name, loader] of this.customCommands.entries()) {
+          const metadata: CommandMetadata = {
+            name,
+            category: "custom",
+            description: "Custom command (no metadata provided)"
+          };
+          this.executor.register({
+            loader,
+            metadata,
+            schema: {},
+            StateClass: undefined,
+            getPersistencePath: undefined,
+            lastLoaded: Date.now(),
+            loadCount: 0,
+            errorCount: 0
+          });
+        }
+      }
+      this.isInitialized = true;
+      console.log(`[CommandRegistry] Loaded ${this.executor.listCommands().length} commands`);
+    } catch (error) {
+      console.error("[CommandRegistry] Failed to initialize:", error);
+      throw error;
+    }
+  }
+
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
     if (this.initPromise) return this.initPromise;
-
-    this.initPromise = (async () => {
-      try {
-        await this.scanCommands();
-        
-        // Register custom commands if provided
-        if (this.customCommands) {
-          for (const [name, loader] of this.customCommands.entries()) {
-            // Create minimal metadata for custom commands
-            const metadata: CommandMetadata = {
-              name,
-              category: "custom",
-              description: "Custom command (no metadata provided)"
-            };
-            this.executor.register({
-              loader,
-              metadata,
-              schema: {},
-              StateClass: undefined,
-              getPersistencePath: undefined,
-              lastLoaded: Date.now(),
-              loadCount: 0,
-              errorCount: 0
-            });
-          }
-        }
-
-        this.isInitialized = true;
-        console.log(`[CommandRegistry] Loaded ${this.executor.listCommands().length} commands`);
-      } catch (error) {
-        console.error("[CommandRegistry] Failed to initialize:", error);
-        throw error;
-      }
-    })();
-
+    this.initPromise = this.initializeOnce().catch(err => {
+      console.error("[CommandRegistry] Failed to initialize:", err);
+      throw err;
+    });
     return this.initPromise;
   }
 
