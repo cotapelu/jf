@@ -3121,3 +3121,30 @@ Global branch coverage is 0.5% below the 85% target. To reach target, need ~11 m
 - All quality gates green: lint 0, TS clean, tests 1162/1162, coverage stable.
 
 **Impact:** Improved function coverage; ensured registration logic is verified.
+
+## Phase 103 - Indexer Fallback Test - 2026-07-08 (Autonomous)
+
+**Task:** Add test for `codebase-index` fallback to `process.cwd()` when ctx.cwd undefined.
+
+**Type:** Test Enhancement
+
+**Priority:** LOW
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +1 test (total 1165 passing)
+
+**Coverage Delta:**
+- Statements: **89.91%** (unchanged)
+- Branches: **80.61%** (↑0.08% from 80.53%)
+- Functions: **90.6%** (unchanged)
+- Lines: **91.02%** (unchanged)
+
+**Notes:**
+- Added test `should fallback to process.cwd when ctx.cwd is undefined`.
+- This covers the optional-chaining + nullish coalesce branch in `index.ts`, bringing that file to 100% branch coverage.
+- All quality gates green.
+
+**Impact:** Small incremental coverage gain; improved test completeness for codebase indexer.
