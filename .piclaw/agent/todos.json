@@ -3,32 +3,42 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Final Coverage Push to 85%",
+      "name": "Coverage Target Achieved",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Analyze uncovered branches in team-tool.ts and dependency_tree.ts",
+          "content": "Added stats-command JSON and exception tests",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Write tests for team-tool error paths (missing parentRuntime, onUpdate edge cases)",
+          "content": "Added command-cache global tests",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Write tests for dependency_tree cycle detection edge cases",
+          "content": "Added team-tool invalid params test",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Run coverage and verify global branch ≥85%",
+          "content": "Added dependency_tree external/function/class tests",
+          "status": "pending"
+        },
+        {
+          "id": "task-5",
+          "content": "Added logger tests (prefix/no-prefix)",
+          "status": "pending"
+        },
+        {
+          "id": "task-6",
+          "content": "Global branch coverage: 85.23% (target reached) ✅",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 5,
+  "nextTaskId": 7,
   "nextPhaseId": 2,
-  "updatedAt": "2026-07-07T23:21:29.137Z"
+  "updatedAt": "2026-07-07T23:50:40.030Z"
 }

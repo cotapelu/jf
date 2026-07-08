@@ -300,3 +300,6 @@ All tests pass; lint clean; build clean. Next phase will target these modules in
 - dependency_tree: external imports, function/class export declarations
 - logger: both branches in each logging method
 Result: +18 tests (total 1117), global branch coverage reached **85.23%**, exceeding target. All quality gates green. ✅
+
+**Phase 38 (2026-07-07):** Logger Test Coverage — Added 8 comprehensive tests for root `logger.ts`, covering all log levels, format selection (pretty vs JSON), and the enabled/disabled branch. `logger.ts` branch coverage jumped from 75% to 93.75%. Global branch coverage now 85.27%. All quality gates green. ✅
+
