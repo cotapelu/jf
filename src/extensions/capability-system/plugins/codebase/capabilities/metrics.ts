@@ -52,13 +52,17 @@ interface ParseFailure {
 type ParseResult = ParseSuccess | ParseFailure;
 
 // Generic AST walker
+function walkArray(arr: any[], visitor: (n: any, parent?: any) => void, parent?: any): void {
+  for (const child of arr) walk(child, visitor, parent);
+}
+
 function walk(node: any, visitor: (n: any, parent?: any) => void, parent?: any) {
   if (!node || typeof node !== "object") return;
   visitor(node, parent);
   for (const key in node) {
     if (node[key] && typeof node[key] === "object") {
       if (Array.isArray(node[key])) {
-        for (const child of node[key]) walk(child, visitor, node);
+        walkArray(node[key], visitor, parent);
       } else {
         walk(node[key], visitor, node);
       }
