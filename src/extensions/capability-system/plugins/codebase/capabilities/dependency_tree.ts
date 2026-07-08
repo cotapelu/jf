@@ -299,13 +299,11 @@ function bfs(startNodes: Set<string>, nodes: Map<string, NodeInfo>): Set<string>
   while (queue.length > 0) {
     const cur = queue.shift()!;
     const curNode = nodes.get(cur);
-    if (curNode) {
-      for (const [next] of curNode.imports) {
-        if (!reachable.has(next)) {
-          reachable.add(next);
-          queue.push(next);
-        }
-      }
+    if (!curNode) continue;
+    for (const [next] of curNode.imports) {
+      if (reachable.has(next)) continue;
+      reachable.add(next);
+      queue.push(next);
     }
   }
   return reachable;

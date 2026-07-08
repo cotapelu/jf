@@ -198,11 +198,9 @@ function resolveCallee(
     ];
     for (const cand of candidates) {
       const funcs = absToFuncs.get(cand);
-      if (funcs) {
-        for (const node of funcs.values()) {
-          if (node.name === imp.original) return node;
-        }
-      }
+      if (!funcs) continue;
+      const found = [...funcs.values()].find(node => node.name === imp.original) || null;
+      if (found) return found;
     }
     return null;
   } else {
@@ -243,9 +241,8 @@ async function collectAllFiles(cwd: string, roots: string[], depth: number, incl
             if (cand.startsWith(cwd)) {
               rel = cand.slice(cwd.length + 1);
             }
-            if (!visited.has(cand)) {
-              await visitFile(rel, nextDepth);
-            }
+            if (visited.has(cand)) continue;
+            await visitFile(rel, nextDepth);
             break;
           } catch {
             // continue

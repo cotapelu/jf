@@ -116,14 +116,12 @@ export function registerMemoryTool(api: ExtensionAPI): void {
       memories = [];
       nextId = 1;
       for (const entry of ctx.sessionManager.getBranch()) {
-        if (entry.type === "message" && entry.message.role === "toolResult" && entry.message.toolName === "memory") {
-          // @ts-ignore
-          const details = entry.message.details;
-          if (details && Array.isArray(details.memories)) {
-            memories = details.memories;
-            nextId = details.nextId;
-          }
-        }
+        if (entry.type !== "message" || entry.message.role !== "toolResult" || entry.message.toolName !== "memory") continue;
+        // @ts-ignore
+        const details = entry.message.details;
+        if (!details || !Array.isArray(details.memories)) continue;
+        memories = details.memories;
+        nextId = details.nextId;
       }
     } finally {
       release();
