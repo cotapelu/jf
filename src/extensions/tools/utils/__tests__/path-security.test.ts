@@ -65,4 +65,15 @@ describe('PathSecurity', () => {
     // @ts-ignore - testing runtime type check
     expect(() => resolveSecurePath(cwd, 123 as any)).toThrow('Invalid path');
   });
+
+  it('handles cwd with trailing slash', () => {
+    const cwdWithSlash = cwd + '/';
+    const result = resolveSecurePath(cwdWithSlash, 'file.ts');
+    expect(result).toBe(join(cwd, 'file.ts'));
+  });
+
+  it('handles userPath with trailing slash', () => {
+    const result = resolveSecurePath(cwd, 'subdir/');
+    expect(result.startsWith(cwd)).toBe(true);
+  });
 });
