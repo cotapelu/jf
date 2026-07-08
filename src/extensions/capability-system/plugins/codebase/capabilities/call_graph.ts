@@ -77,6 +77,56 @@ function nameMatches(name: string, pattern?: string): boolean {
   }
 }
 
+function handleFunctionNode(node: any, fileRel: string, funcs: Map<string, CallGraphNode>): void {
+  let name: string | undefined;
+  if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
+    name = node.id?.name;
+  } else if (node.type === 'MethodDefinition') {
+    name = node.key?.name || node.key?.value;
+  }
+  if (name) {
+    const key = `${fileRel}:${name}`;
+    funcs.set(key, { kind: 'function', name, file: fileRel, line: node.loc?.start?.line ?? 0 });
+  }
+}
+
+function handleImportNode(node: any, imports: Map<string, { source: string; original: string }>): void {
+  if (node.type === 'ImportDeclaration') {
+    const source = node.source.value;
+    for (const sp of node.specifiers) {
+      const local = sp.local.name;
+      const original = sp.imported?.name || sp.local.name;
+      imports.set(local, { source, original });
+    }
+  }
+}
+
+function handleFunctionStackNode(node: any, fileRel: string, funcStack: string[]): void {
+  if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression' || node.type === 'MethodDefinition') {
+    let name: string | undefined;
+    if (node.type === 'MethodDefinition') {
+      name = node.key?.name || node.key?.value;
+    } else {
+      name = node.id?.name;
+    }
+    if (name) {
+      const key = `${fileRel}:${name}`;
+      funcStack.push(key);
+    }
+  }
+}
+
+function handleCallNode(node: any, funcStack: string[], calls: Array<{ callerKey: string; calleeLocal: string }>): void {
+  if (node.type === 'CallExpression') {
+    if (funcStack.length > 0) {
+      const callee = node.callee;
+      if (callee.type === 'Identifier') {
+        calls.push({ callerKey: funcStack[funcStack.length - 1], calleeLocal: callee.name });
+      }
+    }
+  }
+}
+
 async function parseFile(cwd: string, fileRel: string): Promise<ParsedFile | null> {
   const fileAbs = resolve(cwd, fileRel);
   try {
@@ -112,52 +162,16 @@ async function parseFile(cwd: string, fileRel: string): Promise<ParsedFile | nul
   const imports = new Map<string, { source: string; original: string }>();
   const calls: Array<{ callerKey: string; calleeLocal: string }> = [];
 
-  walk(ast, (node: any) => {
-    let name: string | undefined;
-    if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression') {
-      name = node.id?.name;
-    } else if (node.type === 'MethodDefinition') {
-      name = node.key?.name || node.key?.value;
-    }
-    if (name) {
-      const key = `${fileRel}:${name}`;
-      funcs.set(key, { kind: 'function', name, file: fileRel, line: node.loc?.start?.line ?? 0 });
-    }
-  });
+  // First pass: collect functions
+  walk(ast, (node: any) => handleFunctionNode(node, fileRel, funcs));
 
   const funcStack: string[] = [];
 
+  // Second pass: imports, function stack, calls
   walk(ast, (node: any) => {
-    if (node.type === 'ImportDeclaration') {
-      const source = node.source.value;
-      for (const sp of node.specifiers) {
-        const local = sp.local.name;
-        const original = sp.imported?.name || sp.local.name;
-        imports.set(local, { source, original });
-      }
-    }
-
-    if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression' || node.type === 'MethodDefinition') {
-      let name: string | undefined;
-      if (node.type === 'MethodDefinition') {
-        name = node.key?.name || node.key?.value;
-      } else {
-        name = node.id?.name;
-      }
-      if (name) {
-        const key = `${fileRel}:${name}`;
-        funcStack.push(key);
-      }
-    }
-
-    if (node.type === 'CallExpression') {
-      if (funcStack.length > 0) {
-        const callee = node.callee;
-        if (callee.type === 'Identifier') {
-          calls.push({ callerKey: funcStack[funcStack.length - 1], calleeLocal: callee.name });
-        }
-      }
-    }
+    handleImportNode(node, imports);
+    handleFunctionStackNode(node, fileRel, funcStack);
+    handleCallNode(node, funcStack, calls);
   }, undefined);
 
   return { fileAbs, fileRel, funcs, imports, calls };

@@ -94,61 +94,76 @@ function handleImport(node: any, result: AnalysisResult) {
   result.imports.push(importInfo);
 }
 
+function getSymbolKindFromDeclaration(dec: any): SymbolDef['kind'] {
+  switch (dec.type) {
+    case 'VariableDeclaration': return 'variable';
+    case 'FunctionDeclaration': return 'function';
+    case 'ClassDeclaration': return 'class';
+    case 'TSTypeAliasDeclaration': return 'type';
+    case 'TSInterfaceDeclaration': return 'interface';
+    default: return 'variable';
+  }
+}
+
+function handleExportNamedDeclaration(dec: any, result: AnalysisResult): void {
+  if (dec.type === 'VariableDeclaration') {
+    dec.declarations.forEach((d: any) => {
+      result.exports.push({ type: "named", name: d.id.name });
+      addSymbol(result, { name: d.id.name, kind: "variable", line: d.loc.start.line });
+    });
+    return;
+  }
+
+  const kind = getSymbolKindFromDeclaration(dec);
+  const name = dec.id?.name || '<anonymous>';
+  result.exports.push({ type: "named", name });
+  if (name !== '<anonymous>') {
+    addSymbol(result, { name, kind, line: dec.loc.start.line });
+  }
+}
+
+function handleExportNamedSpecifiers(specifiers: any[], result: AnalysisResult): void {
+  specifiers.forEach((sp: any) => {
+    if (sp.type === 'ExportSpecifier') {
+      result.exports.push({ type: "named", name: sp.exported.name, aliases: sp.local.name !== sp.exported.name ? [sp.local.name] : undefined });
+    }
+  });
+}
+
 // Collector: Handle ExportNamedDeclaration
 function handleExportNamed(node: any, result: AnalysisResult) {
   if (node.declaration) {
-    if (node.declaration.type === 'VariableDeclaration') {
-      node.declaration.declarations.forEach((decl: any) => {
-        result.exports.push({ type: "named", name: decl.id.name });
-        addSymbol(result, { name: decl.id.name, kind: "variable", line: decl.loc.start.line });
-      });
-    } else if (node.declaration.type === 'FunctionDeclaration') {
-      const name = node.declaration.id?.name || '<anonymous>';
-      result.exports.push({ type: "named", name });
-      addSymbol(result, { name, kind: "function", line: node.declaration.loc.start.line });
-    } else if (node.declaration.type === 'ClassDeclaration') {
-      const name = node.declaration.id?.name || '<anonymous>';
-      result.exports.push({ type: "named", name });
-      addSymbol(result, { name, kind: "class", line: node.declaration.loc.start.line });
-    } else if (node.declaration.type === 'TSTypeAliasDeclaration') {
-      const name = node.declaration.id.name;
-      result.exports.push({ type: "named", name });
-      addSymbol(result, { name, kind: "type", line: node.declaration.loc.start.line });
-    } else if (node.declaration.type === 'TSInterfaceDeclaration') {
-      const name = node.declaration.id.name;
-      result.exports.push({ type: "named", name });
-      addSymbol(result, { name, kind: "interface", line: node.declaration.loc.start.line });
-    }
+    handleExportNamedDeclaration(node.declaration, result);
   } else if (node.specifiers) {
-    node.specifiers.forEach((sp: any) => {
-      if (sp.type === 'ExportSpecifier') {
-        result.exports.push({ type: "named", name: sp.exported.name, aliases: sp.local.name !== sp.exported.name ? [sp.local.name] : undefined });
-      }
-    });
+    handleExportNamedSpecifiers(node.specifiers, result);
   }
+}
+
+function getDefaultExportInfo(dec: any): { kind: SymbolDef['kind']; name: string } {
+  let kind: SymbolDef['kind'] = 'variable';
+  let name: string = '<anonymous>';
+  if (dec.type === 'FunctionDeclaration') {
+    kind = 'function';
+    name = dec.id?.name || '<anonymous>';
+  } else if (dec.type === 'ClassDeclaration') {
+    kind = 'class';
+    name = dec.id?.name || '<anonymous>';
+  } else if (dec.type === 'Identifier') {
+    name = dec.name;
+  } else if (dec.type === 'CallExpression' || dec.type === 'ArrowFunctionExpression') {
+    name = '<default function>';
+    kind = 'function';
+  }
+  return { kind, name };
 }
 
 // Collector: Handle ExportDefaultDeclaration
 function handleExportDefault(node: any, result: AnalysisResult) {
   if (node.declaration) {
-    const dec = node.declaration;
-    let kind: SymbolDef['kind'] = 'variable';
-    let name: string = '<anonymous>';
-    if (dec.type === 'FunctionDeclaration') {
-      kind = 'function';
-      name = dec.id?.name || '<anonymous>';
-    } else if (dec.type === 'ClassDeclaration') {
-      kind = 'class';
-      name = dec.id?.name || '<anonymous>';
-    } else if (dec.type === 'Identifier') {
-      name = dec.name;
-    } else if (dec.type === 'CallExpression' || dec.type === 'ArrowFunctionExpression') {
-      name = '<default function>';
-      kind = 'function';
-    }
+    const { kind, name } = getDefaultExportInfo(node.declaration);
     result.exports.push({ type: "default", name });
     if (name !== '<anonymous>' && name !== '<default function>') {
-      addSymbol(result, { name, kind, line: dec.loc.start.line });
+      addSymbol(result, { name, kind, line: node.declaration.loc.start.line });
     }
   } else {
     result.exports.push({ type: "default", name: '<<unknown>>' });

@@ -14,6 +14,9 @@ export default tseslint.config(
       },
     },
     rules: {
+      // Complexity rule temporarily disabled - ongoing refactor
+      // "complexity": ["error", 10],
+      "max-depth": ["error", 3],
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
       '@typescript-eslint/no-explicit-any': 'off',
       "@typescript-eslint/consistent-type-imports": 'off',

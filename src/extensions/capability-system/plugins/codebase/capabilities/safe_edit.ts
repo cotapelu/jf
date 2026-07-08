@@ -152,6 +152,26 @@ async function rollbackAll(backups: Map<string, string>, cwd: string): Promise<v
   }
 }
 
+async function runTypeCheck(securePath: string, exec: any): Promise<void> {
+  const tsc: any = await exec('npx', ['tsc', '--noEmit', securePath]);
+  if (tsc.code !== 0 && tsc.code !== 2) {
+    throw new Error(`TypeScript check failed: exit code ${tsc.code}, stderr: ${tsc.stderr || 'none'}`);
+  }
+}
+
+async function runEslintFix(securePath: string, exec: any): Promise<void> {
+  try {
+    await exec('npx', ['eslint', '--fix', securePath]);
+  } catch { /* ignore lint errors */ }
+}
+
+async function runPrettierFormat(securePath: string, exec: any): Promise<void> {
+  const fmt: any = await exec('npx', ['prettier', '--write', securePath]);
+  if (fmt.code !== 0) {
+    throw new Error(`Prettier formatting failed: exit ${fmt.code}, stderr: ${fmt.stderr || 'none'}`);
+  }
+}
+
 async function validateAllAndDiff(
   finalContents: Map<string, string>,
   backups: Map<string, string>,
@@ -163,25 +183,14 @@ async function validateAllAndDiff(
   const results: EditResult[] = [];
   const exec = createExecWithCircuitBreaker(ctx, cwd);
   for (const [file] of finalContents) {
+    const securePath = resolveSecurePath(cwd, file);
+    const original = backups.get(file)!;
     try {
-      const securePath = resolveSecurePath(cwd, file);
-      // Type check using circuit breaker
-      const tsc: any = await exec('npx', ['tsc', '--noEmit', securePath]);
-      if (tsc.code !== 0 && tsc.code !== 2) {
-        throw new Error(`TypeScript check failed: exit code ${tsc.code}, stderr: ${tsc.stderr || 'none'}`);
-      }
-      // Fix imports
-      if (fixImports) {
-        try { await exec('npx', ['eslint', '--fix', securePath]); } catch {}
-      }
-      // Format
-      if (format) {
-        const fmt: any = await exec('npx', ['prettier', '--write', securePath]);
-        if (fmt.code !== 0) throw new Error(`Prettier formatting failed: exit ${fmt.code}, stderr: ${fmt.stderr || 'none'}`);
-      }
-      // Get final content for diff
+      await runTypeCheck(securePath, exec);
+      if (fixImports) await runEslintFix(securePath, exec);
+      if (format) await runPrettierFormat(securePath, exec);
       const final = await fs.readFile(securePath, 'utf-8');
-      results.push({ file, success: true, diff: computeDiff(backups.get(file)!, final, file) });
+      results.push({ file, success: true, diff: computeDiff(original, final, file) });
     } catch (err) {
       await rollbackAll(backups, cwd);
       for (const r of results) { r.success = false; r.backupRestored = true; }

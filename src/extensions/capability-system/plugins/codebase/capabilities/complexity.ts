@@ -117,31 +117,23 @@ function handleLiteral(node: any, counts: HalsteadCounts) {
   addOperand(counts, val);
 }
 
+const halsteadTypeHandlers: Record<string, (node: any, counts: HalsteadCounts) => void> = {
+  CallExpression: handleCallExpression,
+  VariableDeclarator: handleVariableDeclarator,
+  MemberExpression: handleMemberExpression,
+  Literal: handleLiteral,
+  TemplateLiteral: handleLiteral,
+};
+
 function visitHalstead(node: any, counts: HalsteadCounts) {
-  // Operators
+  // Operators on current node
   if (node.operator) addOperator(counts, node.operator);
-  if (node.left && node.left.type === 'Identifier') addOperand(counts, node.left.name);
-  if (node.right && node.right.type === 'Identifier') addOperand(counts, node.right.name);
-
-  // Function calls
-  if (node.type === 'CallExpression') {
-    handleCallExpression(node, counts);
-  }
-
-  // Variable declarations
-  if (node.type === 'VariableDeclarator') {
-    handleVariableDeclarator(node, counts);
-  }
-
-  // Member expressions
-  if (node.type === 'MemberExpression') {
-    handleMemberExpression(node, counts);
-  }
-
-  // Literals
-  if (node.type === 'Literal' || node.type === 'TemplateLiteral') {
-    handleLiteral(node, counts);
-  }
+  // Operands in binary-like structures
+  if (node.left?.type === 'Identifier') addOperand(counts, node.left.name);
+  if (node.right?.type === 'Identifier') addOperand(counts, node.right.name);
+  // Type-specific handling via map
+  const handler = halsteadTypeHandlers[node.type];
+  if (handler) handler(node, counts);
 }
 
 function collectHalstead(node: any, counts: HalsteadCounts) {
