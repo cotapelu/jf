@@ -14,7 +14,9 @@ export const metadata: CommandMetadata = {
   category: 'master',
   description: 'Show CommandExecutor statistics (executions, success rate, command latency)',
   examples: [
-    'master_tool({ command: "master_tool.stats", args: {} })'
+    'master_tool({ command: "master_tool.stats", args: {} })',
+    'master_tool({ command: "master_tool.stats", args: { format: "json" } })',
+    'master_tool({ command: "master_tool.stats", args: { format: "prometheus" } })'
   ],
   tags: ['observability', 'metrics']
 };
@@ -22,9 +24,51 @@ export const metadata: CommandMetadata = {
 export const schema = {
   type: 'object',
   properties: {
-    format: { type: 'string', enum: ['text', 'json'], default: 'text' }
+    format: { type: 'string', enum: ['text', 'json', 'prometheus'], default: 'text' }
   }
 };
+
+function formatPrometheus(stats: any): string[] {
+  const lines: string[] = [];
+  // HELP and TYPE for each metric
+  lines.push('# HELP jf_command_executions_total Total number of command executions');
+  lines.push('# TYPE jf_command_executions_total counter');
+  lines.push(`jf_command_executions_total ${stats.totalExecutions}`);
+  lines.push('');
+
+  lines.push('# HELP jf_command_errors_total Total number of command errors');
+  lines.push('# TYPE jf_command_errors_total counter');
+  for (const e of stats.recentErrors) {
+    const error = String(e.error).replace(/['"]/g, '').replace(/\\/g, '/');
+    lines.push(`jf_command_errors_total{command="${e.command}",error="${error}"} ${e.count}`);
+  }
+  lines.push('');
+
+  lines.push('# HELP jf_command_duration_seconds_total Total duration of command executions in seconds');
+  lines.push('# TYPE jf_command_duration_seconds_total counter');
+  for (const cs of stats.commandStats) {
+    const seconds = (cs.count * cs.avgDuration) / 1000;
+    lines.push(`jf_command_duration_seconds_total{command="${cs.command}"} ${seconds.toFixed(6)}`);
+  }
+  lines.push('');
+
+  lines.push('# HELP jf_command_cache_hits_total Number of cache hits');
+  lines.push('# TYPE jf_command_cache_hits_total counter');
+  lines.push(`jf_command_cache_hits_total ${stats.cacheStats.hits}`);
+  lines.push('');
+
+  lines.push('# HELP jf_command_cache_misses_total Number of cache misses');
+  lines.push('# TYPE jf_command_cache_misses_total counter');
+  lines.push(`jf_command_cache_misses_total ${stats.cacheStats.misses}`);
+  lines.push('');
+
+  lines.push('# HELP jf_command_registered_total Number of registered commands');
+  lines.push('# TYPE jf_command_registered_total gauge');
+  lines.push(`jf_command_registered_total ${stats.registeredCommands}`);
+  lines.push('');
+
+  return lines;
+}
 
 export async function execute(args: any, _cwd: string, _signal: any, _ctx: any): Promise<CommandResult> {
   try {
@@ -40,6 +84,10 @@ export async function execute(args: any, _cwd: string, _signal: any, _ctx: any):
     const stats = registry.getStats();
     if (args.format === 'json') {
       return { code: 0, stdout: JSON.stringify(stats, null, 2), stderr: '' };
+    }
+    if (args.format === 'prometheus') {
+      const lines = formatPrometheus(stats);
+      return { code: 0, stdout: lines.join('\n'), stderr: '' };
     }
     const lines = [
       '📊 CommandExecutor Statistics',

@@ -1033,3 +1033,6 @@ Optional future work:
 **Phase 92 (2026-07-08):** Team-Tool Coverage Improvement — Added 17 comprehensive tests for `team-tool.ts`, achieving 100% branch coverage for that module. Global branch coverage now 85.32%, maintaining ≥80% quality gate.
 
 **Trajectory:** Quality gates stable; coverage target (≥80%) consistently met. Autonomous cycles continue to incrementally improve test coverage and documentation. No major gaps identified. System remains production-ready with strong observability and error handling.
+
+**Phase 93 (2026-07-08):** Dependency Upgrade Cycle — Upgraded TypeScript to 6.0.3, pi-ai/pi-tui to 0.80.3, and @types/node to 26.1.1. Fixed TS6 deprecation with `ignoreDeprecations: "6.0"`. All quality gates pass; no breaking changes. Maintains ecosystem health and security.
+

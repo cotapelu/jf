@@ -2863,3 +2863,33 @@ Global branch coverage is 0.5% below the 85% target. To reach target, need ~11 m
 - All quality gates maintained (lint clean, TypeScript clean, build successful).
 
 **Next targets:** Maintain ≥85% branch coverage; consider additional observability enhancements for team operations.
+
+## Cycle 93 - Dependency Upgrade to TypeScript 6.0 - 2026-07-08 (Autonomous)
+
+**Task:** Upgrade dependencies: pi-ai/pi-tui to 0.80.3, TypeScript to 6.0.3, @types/node to 26.1.1.
+
+**Type:** Upgrade (Dependency)
+
+**Priority:** MEDIUM (maintain ecosystem health)
+
+**Duration:** ~45 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +0 tests (1134 passing unchanged)
+
+**Coverage Delta:**
+- Statements: **93.89%** (unchanged)
+- Branches: **85.32%** (unchanged)
+- Functions: **93.45%** (unchanged)
+- Lines: **95.22%** (unchanged)
+
+**Notes:**
+- Upgraded `@earendil-works/pi-ai` and `@earendil-works/pi-tui` from 0.79.10 → 0.80.3 (minor, no breaking changes).
+- Upgraded `typescript` from 5.9.3 → 6.0.3 (major). Fixed deprecation warning by adding `"ignoreDeprecations": "6.0"` to `tsconfig.json` for `baseUrl` option.
+- Upgraded `@types/node` from 25.9.4 → 26.1.1 (major, backward compatible).
+- Verified: TypeScript compilation clean, lint 0 errors, all 1134 tests passing, build successful.
+- No code changes required; all dependencies remain compatible.
+- Risk assessment: LOW (minor bumps) to MEDIUM (TS major) - mitigated by immediate testing.
+
+**Next:** Continue monitoring for future SDK updates; consider upgrading to 6.x if 0.80.4+ releases.
