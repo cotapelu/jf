@@ -202,35 +202,43 @@ function formatType(type: any): string {
 }
 
 function getExampleValue(prop: any, parentDescription: string = ""): any {
-  // Direct example in prop?
   if (prop.example !== undefined) return prop.example;
-  // Default value?
   if (prop.default !== undefined) return prop.default;
   const description = prop.description || parentDescription;
   const type = prop.type;
-  if (type === "string") return getStringExample(prop, description);
-  if (type === "number") return 0;
-  if (type === "boolean") return getBooleanExample(description);
-  if (type === "array") return getArrayExample(prop, description);
-  if (type === "object" && prop.properties) return getObjectExample(prop, description);
+  const handlers: Record<string, () => any> = {
+    string: () => getStringExample(prop, description),
+    number: () => 0,
+    boolean: () => getBooleanExample(description),
+    array: () => getArrayExample(prop, description),
+    object: () => (prop.properties ? getObjectExample(prop, description) : undefined)
+  };
+  const handler = handlers[type];
+  if (handler) return handler();
   return undefined;
 }
 
 function getStringExample(prop: any, description: string): any {
   // Try enum first
   if (prop.enum && prop.enum.length > 0) return prop.enum[0];
-  // Context-aware examples from description
+
   const lowerDesc = description.toLowerCase();
-  if (lowerDesc.includes("file") || lowerDesc.includes("path") || lowerDesc.includes(".ts") || lowerDesc.includes(".js")) {
-    return "src/example.test.ts";
+  const patterns: Array<{ keywords: string[]; example: any }> = [
+    { keywords: ['file', 'path', '.ts', '.js'], example: 'src/example.test.ts' },
+    { keywords: ['name'], example: 'example' },
+    { keywords: ['url', 'link', 'http'], example: 'https://example.com' },
+    { keywords: ['email'], example: 'user@example.com' },
+    { keywords: ['directory', 'folder'], example: './src' },
+    { keywords: ['branch'], example: 'main' },
+    { keywords: ['commit'], example: 'HEAD' }
+  ];
+
+  for (const { keywords, example } of patterns) {
+    if (keywords.some(k => lowerDesc.includes(k))) {
+      return example;
+    }
   }
-  if (lowerDesc.includes("name")) return "example";
-  if (lowerDesc.includes("url") || lowerDesc.includes("link") || lowerDesc.includes("http")) return "https://example.com";
-  if (lowerDesc.includes("email")) return "user@example.com";
-  if (lowerDesc.includes("directory") || lowerDesc.includes("folder")) return "./src";
-  if (lowerDesc.includes("branch")) return "main";
-  if (lowerDesc.includes("commit")) return "HEAD";
-  return "example";
+  return 'example';
 }
 
 function getBooleanExample(description: string): boolean {
