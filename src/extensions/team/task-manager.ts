@@ -72,11 +72,19 @@ export class TaskManager {
     this.maxRetryDelayMs = options.maxRetryDelayMs ?? MAX_RETRY_DELAY_MS;
   }
 
+  /**
+   * Sets an optional callback for updates.
+   * @param fn - Update callback receiving AgentToolResult.
+   */
   setOnUpdate(fn: ((update: AgentToolResult<unknown>) => void) | undefined): void {
     this.onUpdate = fn;
   }
 
   // Initialize with a list of tasks
+  /**
+   * Initializes the manager with the given task list.
+   * @param tasks - Array of task strings.
+   */
   initialize(tasks: string[]): void {
     this.tasks = tasks;
     this.taskStatuses.clear();
@@ -93,6 +101,11 @@ export class TaskManager {
   }
 
   // Get status for a specific task
+  /**
+   * Gets the status of a specific task.
+   * @param index - Task index.
+   * @returns TaskStatus or undefined if not found.
+   */
   getTaskStatus(index: number): TaskStatus | undefined {
     return this.taskStatuses.get(index);
   }
@@ -104,6 +117,11 @@ export class TaskManager {
 
   // Claim a pending task for an agent (role)
   // Returns task index or null if none available
+  /**
+   * Claims a pending task for the given role.
+   * @param role - Agent role identifier.
+   * @returns Task index if claimed, else null.
+   */
   claimTask(role: string): number | null {
     const idx = this.findClaimableTask();
     if (idx === null) return null;
@@ -140,6 +158,12 @@ export class TaskManager {
 
   // Release a task (agent gives up without completing)
   // Returns true if successfully released
+  /**
+   * Releases a claimed task back to pending pool.
+   * @param role - Agent role.
+   * @param taskIndex - Task index to release.
+   * @returns True if task was released.
+   */
   releaseTask(role: string, taskIndex: number): boolean {
     const task = this.taskStatuses.get(taskIndex);
     if (!task || task.assignee !== role || task.status === 'completed' || task.status === 'failed') {
@@ -157,6 +181,13 @@ export class TaskManager {
   }
 
   // Complete a task successfully (with role check)
+  /**
+   * Marks a task as completed by the role.
+   * @param role - Agent role.
+   * @param taskIndex - Task index.
+   * @param result - Result string.
+   * @returns True if task was completed.
+   */
   completeTask(role: string, taskIndex: number, result: string): boolean {
     const task = this.taskStatuses.get(taskIndex);
     if (!task || task.assignee !== role) return false;
@@ -165,6 +196,11 @@ export class TaskManager {
   }
 
   // Report result without role check (for external completion)
+  /**
+   * Reports a task result (by the assignee).
+   * @param taskIndex - Task index.
+   * @param result - Result string.
+   */
   reportResult(taskIndex: number, result: string): void {
     this.finalizeTaskCompletion(taskIndex, result, false, undefined);
   }
@@ -185,6 +221,13 @@ export class TaskManager {
   }
 
   // Handle agent failure on a task (increment retry or mark failed)
+  /**
+   * Handles task failure by an agent; increments retry count or marks failed.
+   * @param role - Agent role.
+   * @param taskIndex - Task index.
+   * @param error - Optional error object.
+   * @returns True if task state changed (retried or failed).
+   */
   handleAgentFailure(role: string, taskIndex: number, error?: unknown): boolean {
     const task = this.taskStatuses.get(taskIndex);
     if (!task || task.assignee !== role) return false;
@@ -225,6 +268,10 @@ export class TaskManager {
   }
 
   // Get overall team status (tasks completion stats)
+  /**
+   * Gets overall team task status summary.
+   * @returns Omit<TeamStatus, 'agents'> (agents computed separately).
+   */
   getTeamStatus(): Omit<TeamStatus, 'agents'> {
     const tasksArray = Array.from(this.taskStatuses.entries()).map(([idx, status]) => ({ index: idx, ...status }));
     const completed = Array.from(this.taskStatuses.values()).filter(t => t.status === 'completed').length;
@@ -242,6 +289,10 @@ export class TaskManager {
   }
 
   // Get results for all tasks (by index)
+  /**
+   * Returns results for all tasks (empty string for incomplete).
+   * @returns Array of result strings aligned with task order.
+   */
   getResults(): string[] {
     const results: string[] = new Array(this.tasks.length).fill('');
     this.taskStatuses.forEach((task, idx) => {

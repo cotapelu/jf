@@ -2727,3 +2727,39 @@ Global branch coverage is 0.5% below the 85% target. To reach target, need ~11 m
 - All production files now have >90% branch coverage except a few trivial/utility modules.
 - Target of 85% global branch coverage exceeded; current 85.27%.
 
+
+## Cycle 89 - Documentation Sprint: JSDoc for Core Classes - 2026-07-07 (Autonomous)
+
+**Task:** Improve code maintainability by adding JSDoc to core classes.
+
+**Type:** D (Documentation)
+
+**Priority:** MEDIUM
+
+**Duration:** ~2 hours
+
+**Status:** ✅ Success
+
+**Documentation Added:**
+
+**AgentTeam** (`src/extensions/team/team-manager.ts`):
+- Class-level description with purpose, features, and usage example.
+- JSDoc for: notifyUpdate, createUpdate, initialize, claimTask, completeTask, reportResult, getResults, waitForCompletion, registerRuntime, getTeamStatus, getMyCurrentTask, workspaceRead/Write/Delete/ToObject, publishMessage, getMessages, setOnUpdate, getWorkspace.
+
+**TaskManager** (`src/extensions/team/task-manager.ts`):
+- JSDoc for: setOnUpdate, initialize, getTaskStatus, claimTask, releaseTask, completeTask, reportResult, handleAgentFailure, getTeamStatus, getResults.
+
+**MultiSessionManager** (`src/tools/session/manager.ts`):
+- Class-level description (thread-safety, hierarchy, responsibilities).
+- JSDoc for: createChild, switchTo, dispose, getActive, list, getTree.
+
+**Codebase Capabilities**:
+- `ast_query.execute`: added JSDoc explaining parameters and return.
+- `dependency_tree.execute`: added JSDoc explaining graph building.
+
+**Impact:** 
+- Improved IDE autocomplete and developer onboarding.
+- Better API discoverability.
+- All quality gates maintained: lint 0 errors, TypeScript clean, 1118 tests passing, build clean.
+- No functional changes; coverage unchanged.
+

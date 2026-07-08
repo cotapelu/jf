@@ -303,3 +303,10 @@ Result: +18 tests (total 1117), global branch coverage reached **85.23%**, excee
 
 **Phase 38 (2026-07-07):** Logger Test Coverage — Added 8 comprehensive tests for root `logger.ts`, covering all log levels, format selection (pretty vs JSON), and the enabled/disabled branch. `logger.ts` branch coverage jumped from 75% to 93.75%. Global branch coverage now 85.27%. All quality gates green. ✅
 
+
+**Phase 39 (2026-07-07):** Documentation Sprint - JSDoc Core Classes — Added comprehensive JSDoc for:
+- AgentTeam (class + 16 public methods)
+- TaskManager (10 methods)
+- MultiSessionManager (class + 6 key methods)
+- codebase capabilities (ast_query.execute, dependency_tree.execute)
+Improved developer experience and API discoverability. All quality gates green. ✅

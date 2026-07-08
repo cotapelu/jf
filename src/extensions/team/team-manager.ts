@@ -46,6 +46,12 @@ export interface AgentTeamRuntime {
   dispose: () => Promise<void>;
 }
 
+/**
+ * AgentTeam manages a team of autonomous agent session runtimes that collaborate to complete tasks.
+ *
+ * Provides task distribution, shared workspace, message bus, and lifecycle management.
+ * Agents are assigned tasks with retry/backoff; team aggregates results and updates.
+ */
 export class AgentTeam implements AgentTeamRuntime {
   id: string = '';
   runtimes: AgentSessionRuntime[] = [];
@@ -65,6 +71,11 @@ export class AgentTeam implements AgentTeamRuntime {
   monitorInterval: NodeJS.Timeout | null = null;
   private onUpdate?: (update: AgentToolResult<unknown>) => void;
 
+  /**
+   * Sends an update notification to the registered onUpdate callback.
+   * Errors in the callback are caught and logged but do not interrupt execution.
+   * @param update - The update payload.
+   */
   public notifyUpdate(update: AgentToolResult<unknown>): void {
     if (this.onUpdate) {
       try {
@@ -76,7 +87,13 @@ export class AgentTeam implements AgentTeamRuntime {
     }
   }
 
-  // Helper to create consistent update format
+  /**
+   * Creates a standardized update object for notifications.
+   * @param content - Main text content.
+   * @param details - Optional additional structured data.
+   * @param isError - Set true for error updates.
+   * @returns AgentToolResult object.
+   */
   public createUpdate(content: string, details?: unknown, isError?: boolean): AgentToolResult<unknown> {
     return {
       content: [{ type: "text", text: content }],
@@ -158,6 +175,10 @@ export class AgentTeam implements AgentTeamRuntime {
     this.id = id;
   }
 
+  /**
+   * Registers a callback to receive team updates.
+   * @param fn - Callback function receiving AgentToolResult updates.
+   */
   setOnUpdate(fn: ((update: AgentToolResult<unknown>) => void) | undefined): void {
     this.onUpdate = fn;
     // Also forward to TaskManager
@@ -184,6 +205,10 @@ export class AgentTeam implements AgentTeamRuntime {
     this.taskManager.pendingIndices = v;
   }
 
+  /**
+   * Returns the shared workspace instance.
+   * @returns The SharedWorkspace.
+   */
   getWorkspace(): SharedWorkspace {
     return this.workspace;
   }
@@ -236,6 +261,12 @@ export class AgentTeam implements AgentTeamRuntime {
     this.workspace.clear();
   }
 
+  /**
+   * Writes a key-value pair to the shared workspace.
+   * @param key - Workspace key.
+   * @param value - Value to store.
+   * @param owner - Agent ID that owns this write.
+   */
   async workspaceWrite(key: string, value: unknown, owner: string): Promise<void> {
     return this.withLock(() => {
       this.workspace.set(key, value, owner);
@@ -247,6 +278,11 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  /**
+   * Reads a value from the shared workspace.
+   * @param key - Workspace key.
+   * @returns The stored value, or undefined if not present.
+   */
   async workspaceRead(key: string): Promise<unknown> {
     return this.withLock(() => this.workspace.get(key));
   }
@@ -263,10 +299,19 @@ export class AgentTeam implements AgentTeamRuntime {
     return this.withLock(() => this.workspace.listByPrefix(prefix));
   }
 
+  /**
+   * Deletes a key from the shared workspace.
+   * @param key - Workspace key.
+   * @returns True if key existed and was deleted.
+   */
   async workspaceDelete(key: string): Promise<boolean> {
     return this.withLock(() => this.workspace.delete(key));
   }
 
+  /**
+   * Returns the entire workspace as a plain object.
+   * @returns Object mapping keys to values.
+   */
   async workspaceToObject(): Promise<Record<string, unknown>> {
     return this.withLock(() => this.workspace.toObject());
   }
@@ -292,6 +337,12 @@ export class AgentTeam implements AgentTeamRuntime {
     await this.publishMessage(channel, 'parent', content);
   }
 
+  /**
+   * Retrieves messages from a channel, optionally limited to last N.
+   * @param channel - Channel name.
+   * @param limit - Maximum number of messages to return.
+   * @returns Array of message objects.
+   */
   async getMessages(channel: string, limit?: number): Promise<Array<{ from: string; content: string; timestamp: number }>> {
     return this.withLock(() => {
       const msgs = this.messageBus.get(channel) || [];
@@ -299,6 +350,12 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  /**
+   * Publishes a message to a channel.
+   * @param channel - Channel name.
+   * @param from - Sender identifier.
+   * @param content - Message text.
+   */
   async publishMessage(channel: string, from: string, content: string): Promise<void> {
     return this.withLock(() => {
       if (!this.messageBus.has(channel)) {
@@ -313,6 +370,10 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  /**
+   * Gets the current team status including agents and tasks.
+   * @returns Team status with agents, tasks, and completion counts.
+   */
   async getTeamStatus(): Promise<{
     agents: Array<{ id: string; currentTaskIndex: number | null; status: string }>;
     tasks: Array<{ index: number; assignee: string | null; status: 'pending' | 'in_progress' | 'completed' | 'failed'; result: string; retryCount: number; retryAvailableAt?: number }>;
@@ -337,6 +398,11 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  /**
+   * Gets the current task index assigned to the specified agent.
+   * @param agentId - Agent identifier.
+   * @returns Task index or null if none assigned.
+   */
   async getMyCurrentTask(agentId: string): Promise<number | null> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     return this.withLock(() => {
@@ -353,6 +419,11 @@ export class AgentTeam implements AgentTeamRuntime {
   public updateHeartbeat(role: string): void {
     this.agentMonitor.updateHeartbeat(role);
   }
+  /**
+   * Claims a pending task for the specified agent.
+   * @param agentId - Agent identifier (usually session ID).
+   * @returns Task index if claimed, or null if no pending tasks.
+   */
   async claimTask(agentId: string): Promise<number | null> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     return this.withLock(() => {
@@ -405,6 +476,12 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  /**
+   * Marks a task as completed by the specified agent.
+   * @param agentId - Agent identifier.
+   * @param taskIndex - Index of the completed task.
+   * @param result - Summary result of the task.
+   */
   async completeTask(agentId: string, taskIndex: number, result: string): Promise<void> {
     const role = this.roleByAgentId.get(agentId) ?? agentId;
     await this.withLock(() => {
@@ -413,10 +490,18 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  /**
+   * Retrieves the results of all completed tasks.
+   * @returns Array of result strings.
+   */
   async getResults(): Promise<string[]> {
     return this.withLock(() => this.taskManager.getResults());
   }
 
+  /**
+   * Waits in a loop until all tasks are completed.
+   * Polls team status every 100ms.
+   */
   async waitForCompletion(): Promise<void> {
     while (true) {
       const summary = await this.getTeamStatus();
@@ -428,6 +513,12 @@ export class AgentTeam implements AgentTeamRuntime {
     }
   }
 
+  /**
+   * Registers an agent session runtime with a role.
+   * Called during team setup to add agents.
+   * @param runtime - AgentSessionRuntime instance.
+   * @param role - Role name for the agent.
+   */
   registerRuntime(runtime: AgentSessionRuntime, role: string): void {
     this.runtimes.push(runtime);
     this.roles.push(role);
@@ -697,6 +788,11 @@ export class AgentTeam implements AgentTeamRuntime {
     ));
   }
 
+  /**
+   * Initializes the team with the given tasks and resets all state.
+   * Must be called before starting agent loops.
+   * @param tasks - Array of task strings to be completed.
+   */
   async initialize(tasks: string[]): Promise<void> {
     await this.withLock(async () => {
       this.taskManager.initialize(tasks);

@@ -270,6 +270,12 @@ function parseFileAST(content: string): any {
   catch (err: any) { throw err; }
 }
 
+/**
+ * Executes an AST query against a TypeScript/JavaScript file.
+ * @param params - Object with file path (relative to cwd) and query.
+ * @param ctx - Context with optional cwd.
+ * @returns Promise with query results and summary.
+ */
 export async function execute(params: { file: string; query: any }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const filePath = join(cwd, params.file);

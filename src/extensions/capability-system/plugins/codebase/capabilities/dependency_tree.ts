@@ -410,6 +410,12 @@ function handleParseError(err: any, params: { files: string[] }, _cwd: string): 
   return makeErrorResponse(message, { file, error: message });
 }
 
+/**
+ * Builds a module dependency graph from the provided files.
+ * @param params - Files array and optional entryPoints.
+ * @param ctx - Context with cwd.
+ * @returns Promise with graph output and details.
+ */
 export async function execute(params: { files: string[]; entryPoints?: string[] }, ctx: any): Promise<any> {
   const cwd = ctx.cwd ?? process.cwd();
   if (!params.files?.length) return makeErrorResponse("No files provided", { error: "files required" });
