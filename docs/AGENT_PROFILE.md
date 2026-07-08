@@ -315,3 +315,34 @@ Improved developer experience and API discoverability. All quality gates green. 
 
 **Phase 41 (2026-07-07):** Coverage 90% Feasibility Analysis — Conducted thorough gap analysis to reach 90% branch coverage. Decision: maintain current threshold (85.27%) due to diminishing returns. Estimated 10-20 cycles needed for +4.73%. Focus shifted to other quality priorities.
 
+
+## 7. Complexity Reduction Work in Progress (MEDIUM)
+**Severity:** MEDIUM (quality gate improvement)
+**Status:** 🟡 IN PROGRESS
+
+**Functions with complexity >10 identified:**
+- `extension.execute` (14)
+- `extension.renderResult` (15)
+- `guideline-generator.getStringExample` (16)
+- `plugin-loader.validateManifest` (13)
+- `ast_query.handleFunction` (11) [ast_query reverted for stability]
+- `ast_query.handleSymbol` (14)
+- `ast_query.handleExport` (19) [but split into lower-complexity handlers]
+- `analyze_ast` arrow function in visitor (11)
+- `git/add.execute` (11)
+
+**Actions taken:**
+- Split `analyze` export handlers -> complexity reduced
+- Split `analyze_ast` default export info -> complexity reduced
+- Split `call_graph` AST handlers -> complexity reduced
+- Refactored `complexity.visitHalstead` using handler map -> complexity reduced
+- Refactored `safe_edit` to extract validation/format helpers -> nesting reduced
+- Enabled ESLint `complexity` and `max-depth` rules (max-lines disabled)
+
+**Plan:** Continue reducing complexity in remaining functions in upcoming cycles, prioritizing highest complexity first. Maintain test coverage throughout.
+
+---
+
+## 8. Code Size Considerations
+Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is acceptable for orchestrator modules with many responsibilities. Future work may consider further modularization if complexity reduction suggests benefit.
+
