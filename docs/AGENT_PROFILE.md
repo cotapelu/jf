@@ -346,3 +346,24 @@ Improved developer experience and API discoverability. All quality gates green. 
 ## 8. Code Size Considerations
 Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is acceptable for orchestrator modules with many responsibilities. Future work may consider further modularization if complexity reduction suggests benefit.
 
+
+## 8. Refactoring Progress (as of 2026-07-08)
+
+**✅ Completed:**
+- `analyze.ts`: Added default export handlers for interface/type
+- `analyze_ast.ts`: Extracted `getDefaultExportInfo` (complexity 13→5)
+- `call_graph.ts`: Decomposed AST walk into handlers (complexity 13+18→~4 each)
+- `complexity.ts`: Handler map for Halstead (complexity 11→5)
+- `safe_edit.ts`: Extracted validation/format helpers (nesting 4→2)
+- `git/add.ts`: Extracted `buildGitAddArgs` (complexity 11→4)
+- `guideline-generator.ts`: Data-driven `getStringExample` (16→3), handler map `getExampleValue` (11→4)
+
+**🟡 In Progress:**
+- `extension.execute` (14) and `renderResult` (15) - next targets
+- `plugin-loader.validateManifest` (13)
+- `ast_query`: `handleFunction` (11), `handleSymbol` (14), `handleExport` (19) - need re-apply refactor (was reverted)
+- `call_graph` remaining nested blocks (max-depth violations)
+- `dependency_tree`, `metrics`, `memory-tool`, `skill-reader`, `todos-tool`, `piclaw-header`, `subtool-loader`, `manage` - max-depth >3
+
+**Plan:** Continue systematic complexity and depth reduction in upcoming cycles while maintaining all quality gates.
+
