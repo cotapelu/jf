@@ -61,8 +61,8 @@ describe('PathSecurity', () => {
     expect(() => resolveSecurePath(cwd, '')).toThrow('Invalid path');
   });
 
-  it('throws when userPath is undefined', () => {
+  it('throws when userPath is a number', () => {
     // @ts-ignore - testing runtime type check
-    expect(() => resolveSecurePath(cwd, undefined)).toThrow('Invalid path');
+    expect(() => resolveSecurePath(cwd, 123 as any)).toThrow('Invalid path');
   });
 });
