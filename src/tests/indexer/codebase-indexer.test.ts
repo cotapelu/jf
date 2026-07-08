@@ -140,4 +140,14 @@ describe('Codebase Indexer Tool', () => {
     expect(result.details?.status).toBe('success');
     expect(result.content[0].text).toContain('nestedFunc');
   });
+
+  it('should fallback to process.cwd when ctx.cwd is undefined', async () => {
+    // Mock ast-scanner to avoid actual scanning
+    vi.doMock('../../tools/indexer/ast-scanner.js', () => ({ scanCodebase: vi.fn().mockResolvedValue({ matches: [] }) }));
+    vi.resetModules();
+    const { codebaseIndexTool } = await import('../../tools/indexer/index.js');
+    const result: any = await codebaseIndexTool.execute('call', { query: 'anything' }, undefined, undefined, undefined);
+    expect(result.details?.status).toBe('success');
+    vi.unmock('../../tools/indexer/ast-scanner.js');
+  });
 });
