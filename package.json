@@ -20,10 +20,13 @@
     "@earendil-works/pi-ai": "^0.80.3",
     "@earendil-works/pi-coding-agent": "^0.80.2",
     "@earendil-works/pi-tui": "^0.80.3",
-    "typescript": "^6.0.3",
+    "lru-cache": "^10.0.0",
+    "limiter": "^2.0.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@types/lru-cache": "^7.0.0",
+    "typescript": "^6.0.3",
     "@types/node": "^26.1.1",
     "@types/pino": "^7.0.4",
     "@types/prettier": "^2.7.3",
