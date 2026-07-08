@@ -257,11 +257,11 @@ export class BashActionExecutor {
       for (const field of required) {
         if (args[field] === undefined) errors.push({ path: field, message: 'Required' });
       }
-      const props = schema.properties || {};
-      for (const [key, typeDefRaw] of Object.entries(props) as [string, any][]) {
+      const props: Record<string, any> = schema.properties || {};
+      for (const [key, typeDefRaw] of Object.entries(props)) {
         if (args[key] === undefined) continue;
         const value = args[key];
-        const typeDef = typeDefRaw as any;
+        const typeDef = typeDefRaw;
         const type = typeDef.type;
         if (type === 'string' && typeof value !== 'string') errors.push({ path: key, message: 'Must be string' });
         else if (type === 'number' && typeof value !== 'number') errors.push({ path: key, message: 'Must be number' });
