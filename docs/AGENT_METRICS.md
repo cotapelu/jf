@@ -3327,3 +3327,29 @@ Next: Continue monitoring for regressions; proactive analysis may proceed if no 
 
 System remains production-ready with all critical gates met. Incremental improvement continues.
 
+
+## Cycle 111 - Plugin-Loader Complexity Reduction - 2026-07-08
+
+**Task:** Reduce `validateManifest` complexity (13) in plugin-loader.
+
+**Type:** Refactor (Complexity)
+
+**Priority:** HIGH
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1198 tests still passing)
+
+**Coverage Delta:** Stable.
+
+**Notes:**
+- Extracted `validateCapability` helper to move per-capability checks out of the main loop.
+- `validateManifest` complexity reduced from ~13 to ~8.
+- All validation logic and error messages preserved.
+- TypeScript clean, lint clean for modified file.
+
+**Commit:** `refactor(plugin-loader): reduce complexity in validateManifest`
+
+---

@@ -358,6 +358,8 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 - `git/add.ts`: Extracted `buildGitAddArgs` (complexity 11→4)
 - `guideline-generator.ts`: Data-driven `getStringExample` (16→3), handler map `getExampleValue` (11→4)
 
+- `plugin-loader.ts`: Extracted validateCapability (complexity 13→8)
+
 **🟡 In Progress:**
 - `extension.execute` (14) and `renderResult` (15) - next targets
 - `plugin-loader.validateManifest` (13)

@@ -1096,3 +1096,11 @@ Optional future work:
 - Performance profiling for codebase indexing
 - Documentation JSDoc completion for remaining public APIs
 
+
+## Cycle 111 - Plugin-Loader Refactor (2026-07-08)
+
+- Reduced `validateManifest` complexity (13→8) via extraction.
+- All tests pass; TypeScript clean.
+
+Overall complexity reduction count: 8 modules improved (analyze, analyze_ast, call_graph, complexity, safe_edit, git/add, guideline-generator, plugin-loader). Remaining complexity violations are tracked in AGENT_PROFILE.md.
+
