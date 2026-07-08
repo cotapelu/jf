@@ -113,25 +113,9 @@ function handleDefaultClassExport(line: string, lineNum: number, exports: Export
   return false;
 }
 
-function handleDefaultInterfaceExport(line: string, lineNum: number, exports: ExportInfo[], symbols: SymbolDef[]): boolean {
-  const m = line.match(/^\s*export\s+default\s+interface\s+(\w+)/);
-  if (m) {
-    symbols.push({ name: m[1], kind: "interface", line: lineNum });
-    exports.push({ type: "default", name: m[1] });
-    return true;
-  }
-  return false;
-}
 
-function handleDefaultTypeExport(line: string, lineNum: number, exports: ExportInfo[], symbols: SymbolDef[]): boolean {
-  const m = line.match(/^\s*export\s+default\s+type\s+(\w+)\s*=/);
-  if (m) {
-    symbols.push({ name: m[1], kind: "type", line: lineNum });
-    exports.push({ type: "default", name: m[1] });
-    return true;
-  }
-  return false;
-}
+
+
 
 function handleDefaultFunctionExport(line: string, lineNum: number, exports: ExportInfo[], symbols: SymbolDef[]): boolean {
   const m = line.match(/^\s*export\s+default\s+function\s+(\w+)\s*\(/);
@@ -148,6 +132,26 @@ function handleDefaultVarExport(line: string, lineNum: number, exports: ExportIn
   if (m) {
     symbols.push({ name: m[2], kind: "variable", line: lineNum });
     exports.push({ type: "default", name: m[2] });
+    return true;
+  }
+  return false;
+}
+
+function handleDefaultTypeExport(line: string, lineNum: number, exports: ExportInfo[], symbols: SymbolDef[]): boolean {
+  const m = line.match(/^\s*export\s+default\s+type\s+(\w+)/);
+  if (m) {
+    symbols.push({ name: m[1], kind: "type", line: lineNum });
+    exports.push({ type: "default", name: m[1] });
+    return true;
+  }
+  return false;
+}
+
+function handleDefaultInterfaceExport(line: string, lineNum: number, exports: ExportInfo[], symbols: SymbolDef[]): boolean {
+  const m = line.match(/^\s*export\s+default\s+interface\s+(\w+)/);
+  if (m) {
+    symbols.push({ name: m[1], kind: "interface", line: lineNum });
+    exports.push({ type: "default", name: m[1] });
     return true;
   }
   return false;
@@ -200,10 +204,10 @@ function handleOtherExports(line: string, lineNum: number, exports: ExportInfo[]
 
 function tryParseExport(line: string, lineNum: number, exports: ExportInfo[], symbols: SymbolDef[]): boolean {
   if (handleDefaultClassExport(line, lineNum, exports, symbols)) return true;
-  if (handleDefaultInterfaceExport(line, lineNum, exports, symbols)) return true;
-  if (handleDefaultTypeExport(line, lineNum, exports, symbols)) return true;
   if (handleDefaultFunctionExport(line, lineNum, exports, symbols)) return true;
   if (handleDefaultVarExport(line, lineNum, exports, symbols)) return true;
+  if (handleDefaultTypeExport(line, lineNum, exports, symbols)) return true;
+  if (handleDefaultInterfaceExport(line, lineNum, exports, symbols)) return true;
   if (handleNamedTypeExport(line, lineNum, exports, symbols)) return true;
   if (handleNamedInterfaceExport(line, lineNum, exports, symbols)) return true;
   if (handleOtherExports(line, lineNum, exports, symbols)) return true;
