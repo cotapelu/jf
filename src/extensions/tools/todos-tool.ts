@@ -294,13 +294,14 @@ export function normalizeParams(params: unknown): any {
   if (normalized.add_phase && typeof normalized.add_phase === "object") {
     const addPhase = normalized.add_phase as Record<string, unknown>;
     if (addPhase.name && typeof addPhase.name === "string" && addPhase.name.startsWith("{")) {
+      let parsed: any;
       try {
-        const parsed = JSON.parse(addPhase.name);
-        if (typeof parsed === "object" && parsed !== null) {
-          normalized.add_phase = parsed;
-        }
+        parsed = JSON.parse(addPhase.name);
       } catch {
-        // Keep original if parse fails
+        parsed = undefined;
+      }
+      if (typeof parsed === "object" && parsed !== null) {
+        normalized.add_phase = parsed;
       }
     }
   }

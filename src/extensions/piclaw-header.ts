@@ -23,14 +23,13 @@ const possiblePaths = [
 ];
 
 for (const path of possiblePaths) {
+    if (!existsSync(path)) continue;
     try {
-        if (existsSync(path)) {
-            const content = readFileSync(path, "utf-8");
-            const pkg = JSON.parse(content);
-            if (pkg.name) PICLAW_APP_NAME = pkg.name;
-            if (pkg.version) PICLAW_VERSION = pkg.version;
-            break;
-        }
+        const content = readFileSync(path, "utf-8");
+        const pkg = JSON.parse(content);
+        if (pkg.name) PICLAW_APP_NAME = pkg.name;
+        if (pkg.version) PICLAW_VERSION = pkg.version;
+        break;
     } catch {
         // ignore
     }
