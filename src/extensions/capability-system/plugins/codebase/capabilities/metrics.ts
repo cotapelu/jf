@@ -160,6 +160,12 @@ function formatResultsAsText(results: MetricResult[], stats: Result['stats']): s
   return lines.join("\n");
 }
 
+/**
+ * Computes code metrics (lines, statements, functions, branches) for multiple files.
+ * @param params - files array.
+ * @param ctx - Context with cwd.
+ * @returns Promise with per-file metrics and aggregated statistics.
+ */
 export async function execute(params: { files: string[] }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const { results, stats } = await computeMetrics(cwd, params.files);

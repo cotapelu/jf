@@ -242,6 +242,12 @@ function analyzeComplexity(file: string, language: "ts" | "tsx" | "js" | "jsx" |
   };
 }
 
+/**
+ * Computes code complexity metrics for a file.
+ * @param params - Object with file path (relative to cwd).
+ * @param ctx - Context with cwd.
+ * @returns Promise with complexity metrics (Cyclomatic, Halstead, etc.).
+ */
 export async function execute(params: { file: string }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const filePath = join(cwd, params.file);

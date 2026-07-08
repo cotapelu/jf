@@ -96,6 +96,12 @@ function formatSearchOutput(matches: SearchMatch[], query: string): string {
     : matches.map(m => `${m.file}:${m.line}:${m.column}: ${m.text}`).join('\n');
 }
 
+/**
+ * Searches files for a text query.
+ * @param params - Query, optional filePattern, maxResults, caseSensitive.
+ * @param ctx - Context with cwd.
+ * @returns Promise with search results and summary.
+ */
 export async function execute(params: { query: string; filePattern?: string; maxResults?: number; caseSensitive?: boolean }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const query = params.query;

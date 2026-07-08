@@ -310,3 +310,5 @@ Result: +18 tests (total 1117), global branch coverage reached **85.23%**, excee
 - MultiSessionManager (class + 6 key methods)
 - codebase capabilities (ast_query.execute, dependency_tree.execute)
 Improved developer experience and API discoverability. All quality gates green. ✅
+
+**Phase 40 (2026-07-07):** Documentation Sprint - Codebase Capabilities — Added JSDoc to all major codebase capability execute functions: analyze, search, call_graph, complexity, metrics, safe_edit. Completes the core API documentation push. All quality gates green. ✅

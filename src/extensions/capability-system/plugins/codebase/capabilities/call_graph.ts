@@ -331,6 +331,12 @@ function buildResult(nodeSet: Map<string, CallGraphNode>, edges: CallGraphEdge[]
   };
 }
 
+/**
+ * Builds a call graph from entry file(s), optionally following imports.
+ * @param params - file, optional entryPoints, and query (depth, includeCrossFile, limit, name).
+ * @param ctx - Context with cwd.
+ * @returns Promise with call graph summary and details.
+ */
 export async function execute(params: { file: string; entryPoints?: string[]; query: any }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const { query = {} } = params;

@@ -207,6 +207,12 @@ function validateOperations(operations: EditOperation[], cwd: string): { valid: 
   return { valid: true };
 }
 
+/**
+ * Safely applies a sequence of edit operations to files with backup, validation, and rollback.
+ * @param params - operations array, optional format (default true), fixImports (default true).
+ * @param ctx - Context with cwd.
+ * @returns Promise with results per file and overall success flag.
+ */
 export async function execute(params: { operations: EditOperation[]; format?: boolean; fixImports?: boolean }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const format = params.format !== false;

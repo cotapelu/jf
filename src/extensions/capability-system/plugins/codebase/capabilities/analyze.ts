@@ -327,6 +327,12 @@ async function analyzeFile(filePath: string, file: string): Promise<{ result: An
   return { result, summary };
 }
 
+/**
+ * Analyzes a file and returns structured import/export/symbol information.
+ * @param params - Object with file path (relative to cwd).
+ * @param ctx - Context with optional cwd.
+ * @returns AnalysisResult with imports, exports, symbols, and file metadata.
+ */
 export async function execute(params: { file: string }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const filePath = join(cwd, params.file);
