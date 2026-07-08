@@ -360,6 +360,10 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 
 - `plugin-loader.ts`: Extracted validateCapability (complexity 13→8)
 
+- `call_graph.ts`: Flatten candidate search loops, extract processCandidate (depth ↓)
+- `dependency_tree.ts`: Flatten bfs (guard clauses)
+- `memory-tool.ts`: Flatten reconstructState (guard clauses)
+
 **🟡 In Progress:**
 - `extension.execute` (14) and `renderResult` (15) - next targets
 - `plugin-loader.validateManifest` (13)

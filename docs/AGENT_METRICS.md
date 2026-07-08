@@ -3353,3 +3353,35 @@ System remains production-ready with all critical gates met. Incremental improve
 **Commit:** `refactor(plugin-loader): reduce complexity in validateManifest`
 
 ---
+
+## Cycle 112 - Depth Reduction in Multiple Modules - 2026-07-08
+
+**Task:** Reduce max-depth violations in call_graph, dependency_tree, memory-tool.
+
+**Type:** Refactor (Nesting Reduction)
+
+**Priority:** HIGH (quality gate)
+
+**Duration:** ~45 minutes
+
+**Status:** ✅ Partial Success (some violations remain)
+
+**Test Delta:** 0 (1198 tests still passing)
+
+**Coverage:** Stable.
+
+**Notes:**
+
+- `call_graph.ts`:
+  - Flattened `resolveCallee` by extracting search into loop with continue; reduced nesting depth in candidate search (4→3).
+  - Extracted `processCandidate` helper in `collectAllFiles` to reduce nesting (still some depth issues remaining at other lines).
+- `dependency_tree.ts`:
+  - Flattened `bfs` function: replaced nested if with guard clauses; depth reduced from 4 to 3.
+- `memory-tool.ts`:
+  - Flattened `reconstructState` loop conditionals using guard clauses; depth reduced from 4 to 3.
+
+**Remaining depth violations:** call_graph.ts (several lines), skill-reader.ts, todos-tool.ts, piclaw-header.ts, manage.ts, subtool-loader.ts. Will target in next cycles.
+
+**Commit:** `refactor(call-graph, dependency-tree, memory-tool): reduce nesting depth`
+
+---
