@@ -3385,3 +3385,37 @@ System remains production-ready with all critical gates met. Incremental improve
 **Commit:** `refactor(call-graph, dependency-tree, memory-tool): reduce nesting depth`
 
 ---
+
+## Cycle 113 - Additional Depth Reduction - 2026-07-08
+
+**Task:** Reduce max-depth violations in memory-tool, piclaw-header, todos-tool, dependency_tree.
+
+**Type:** Refactor (Depth)
+
+**Priority:** HIGH
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success (some violations remain in other modules)
+
+**Test Delta:** 0 (1198 tests passing)
+
+**Coverage:** Stable.
+
+**Details:**
+- `memory-tool.ts`: Converted nested ifs to guard clauses.
+- `piclaw-header.ts`: Used early continue to avoid deep try nesting.
+- `todos-tool.ts`: Flattened try-catch + if pattern for JSON parse.
+- `dependency_tree.ts`: Already fixed earlier; ensure all depth errors cleared.
+
+**Remaining depth violations:**
+- call_graph.ts (5)
+- manage.ts (1)
+- skill-reader.ts (3)
+- subtool-loader.ts (1)
+- todos-tool.ts (3 remaining after this fix)
+- piclaw-header.ts: ✅ now clean
+
+**Commit:** `refactor(memory, piclaw, todos, dependency-tree): reduce nesting depth`
+
+---
