@@ -2893,3 +2893,39 @@ Global branch coverage is 0.5% below the 85% target. To reach target, need ~11 m
 - Risk assessment: LOW (minor bumps) to MEDIUM (TS major) - mitigated by immediate testing.
 
 **Next:** Continue monitoring for future SDK updates; consider upgrading to 6.x if 0.80.4+ releases.
+
+## Cycle 94 - Prometheus Metrics Format Enhancement - 2026-07-08 (Autonomous)
+
+**Task:** Add `prometheus` format output to `master_tool.stats` command for Prometheus scraping.
+
+**Type:** Observability Enhancement (O)
+
+**Priority:** MEDIUM
+
+**Duration:** ~90 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +10 tests (total 1144 passing)
+
+**Coverage Delta:**
+- Statements: **91.18%** (slight decrease due to new branches)
+- Branches: **82.62%** (still ≥80% threshold)
+- Functions: **91.32%**
+- Lines: **92.14%**
+
+**Notes:**
+- Extended `master_tool.stats` command with `format: 'prometheus'` option in schema.
+- Implemented Prometheus exposition format with proper HELP/TYPE metadata:
+  - `jf_command_executions_total` (counter) – total executions
+  - `jf_command_errors_total` (counter, labels: command, error) – error frequency
+  - `jf_command_duration_seconds_total` (counter) – aggregated duration
+  - `jf_command_cache_hits_total`, `jf_command_cache_misses_total` (counters)
+  - `jf_command_registered_total` (gauge)
+- Added 10 comprehensive unit tests covering text, json, and prometheus formats, error handling, and escaping edge cases (quotes/backslashes in error messages).
+- Backward compatible: default format remains 'text'; existing JSON format unchanged.
+- All quality gates maintained: lint 0 errors, TypeScript clean, tests 1144/1144, build successful.
+
+**Impact:** Operators can now directly expose command executor metrics to Prometheus without custom parsing. JSON format remains for programmatic access.
+
+**Next:** Consider integrating with /metrics endpoint if jf runs as a long-lived service; document metric names and labels in README.
