@@ -3,42 +3,37 @@
   "phases": [
     {
       "id": "phase-1",
-      "name": "Coverage Target Achieved",
+      "name": "Coverage 90% Target Analysis",
       "tasks": [
         {
           "id": "task-1",
-          "content": "Added stats-command JSON and exception tests",
+          "content": "Analyze current coverage - find modules with lowest branch %",
           "status": "in_progress"
         },
         {
           "id": "task-2",
-          "content": "Added command-cache global tests",
+          "content": "Review uncovered branches in call_graph, analyze_ast, dependency_tree",
           "status": "pending"
         },
         {
           "id": "task-3",
-          "content": "Added team-tool invalid params test",
+          "content": "Plan test additions needed to gain ~5% branch coverage",
           "status": "pending"
         },
         {
           "id": "task-4",
-          "content": "Added dependency_tree external/function/class tests",
+          "content": "Implement targeted tests",
           "status": "pending"
         },
         {
           "id": "task-5",
-          "content": "Added logger tests (prefix/no-prefix)",
-          "status": "pending"
-        },
-        {
-          "id": "task-6",
-          "content": "Global branch coverage: 85.23% (target reached) ✅",
+          "content": "Verify global branch >=90%",
           "status": "pending"
         }
       ]
     }
   ],
-  "nextTaskId": 7,
+  "nextTaskId": 6,
   "nextPhaseId": 2,
-  "updatedAt": "2026-07-07T23:50:40.030Z"
+  "updatedAt": "2026-07-08T00:37:24.595Z"
 }
