@@ -383,6 +383,11 @@ export class PluginLoader {
     this.watchHandles.set(pluginFolder, { close: () => watcher.close() });
   }
 
+  private validateCapability(cap: any): void {
+    if (!cap.id || !cap.execute) throw new Error("Capability missing id/execute");
+    if (!/^[a-z][a-z0-9_-]*$/.test(cap.id)) throw new Error(`Invalid capability ID: ${cap.id}`);
+  }
+
   private validateManifest(manifest: PluginManifest, _pluginFolder: string): void {
     if (!manifest.id) throw new Error("Missing 'id'");
     if (!manifest.name) throw new Error("Missing 'name'");
@@ -392,8 +397,7 @@ export class PluginLoader {
     if (!/^[a-z][a-z0-9_-]*$/.test(manifest.id)) throw new Error(`Invalid plugin ID: ${manifest.id}`);
     if (!Array.isArray(manifest.capabilities) || manifest.capabilities.length === 0) throw new Error("At least one capability required");
     for (const cap of manifest.capabilities) {
-      if (!cap.id || !cap.execute) throw new Error("Capability missing id/execute");
-      if (!/^[a-z][a-z0-9_-]*$/.test(cap.id)) throw new Error(`Invalid capability ID: ${cap.id}`);
+      this.validateCapability(cap);
     }
   }
 
