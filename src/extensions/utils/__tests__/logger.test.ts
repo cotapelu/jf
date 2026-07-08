@@ -34,6 +34,12 @@ describe('createLogger', () => {
     expect(console.log).toHaveBeenCalledWith('[MyTag]', 'msg');
     l.error('err');
     expect(console.error).toHaveBeenCalledWith('[MyTag]', 'err');
+    l.warn('warn');
+    expect(console.warn).toHaveBeenCalledWith('[MyTag]', 'warn');
+    l.info('info');
+    expect(console.info).toHaveBeenCalledWith('[MyTag]', 'info');
+    l.debug('debug');
+    expect(console.debug).toHaveBeenCalledWith('[MyTag]', 'debug');
   });
 
   it('default logger should work', () => {
