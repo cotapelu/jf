@@ -1056,3 +1056,11 @@ Optional future work:
 **Phase 103 (2026-07-08):** Indexer Fallback Test — Added test for codebase-index fallback to process.cwd when ctx.cwd is undefined. Increased global branch coverage to 80.61%. All quality gates maintained.
 
 **Trajectory:** Coverage continues to inch toward stretch goal of 85%. Core modules stable. No technical debt introduced. Focus remains on maintaining ≥80% threshold and overall system health.
+
+**Phase 104 (2026-07-08):** Session Status Test Coverage — Added 4 comprehensive tests for `operationStatus`, raising its branch coverage from 54.24% to 86.96%. Global branch coverage remains around 80.6%. All quality gates maintained.
+
+**Trajectory:** Incremental coverage improvement on previously low module. System remains production-ready with strong test suite.
+
+**Phase 105 (2026-07-08):** Master Tool Test Coverage — Added comprehensive unit tests for `master-tool.ts`, bringing its branch coverage from 0% to 84.72%. Global branch coverage increased from 80.57% → 83.06%. All quality gates green.
+
+**Trajectory:** Core dispatcher now well-tested; next focus on remaining low-coverage modules (analyze, path-security, session index). Aim to reach 85% stretch goal with targeted tests.

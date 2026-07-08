@@ -99,6 +99,40 @@ describe('master_tool.stats command', () => {
     expect(parsed.commandStats[0].command).toBe('test.cmd');
   });
 
+  it('should output Prometheus format when format=prometheus', async () => {
+    const fakeRegistry = {
+      getStats: () => ({
+        registeredCommands: 2,
+        totalExecutions: 100,
+        successRate: 99.0,
+        commandStats: [
+          { command: 'git.status', count: 50, avgDuration: 30.5 },
+          { command: 'dev.test', count: 50, avgDuration: 120.5 }
+        ],
+        cacheStats: { size: 5, hits: 80, misses: 20 },
+        recentErrors: [
+          { command: 'bad.cmd', error: 'boom', count: 3 }
+        ]
+      })
+    };
+    (getRegistry as any).mockReturnValue(fakeRegistry);
+
+    const result = await execute({ format: 'prometheus' }, '/tmp', undefined, {} as any);
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe('');
+    const out = result.stdout;
+    expect(out).toContain('# HELP jf_command_executions_total');
+    expect(out).toContain('jf_command_executions_total 100');
+    expect(out).toContain('# HELP jf_command_errors_total');
+    expect(out).toContain('jf_command_errors_total{command="bad.cmd",error="boom"} 3');
+    expect(out).toContain('# TYPE jf_command_duration_seconds_total counter');
+    expect(out).toMatch(/jf_command_duration_seconds_total\{command="git\.status"\} [0-9.]+/);
+    expect(out).toContain('# HELP jf_command_cache_hits_total');
+    expect(out).toContain('jf_command_cache_hits_total 80');
+    expect(out).toContain('jf_command_registered_total 2');
+  });
+
   it('handles exception from getStats', async () => {
     (getRegistry as any).mockReturnValue({
       getStats: () => { throw new Error('DB failure'); }

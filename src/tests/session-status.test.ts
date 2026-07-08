@@ -70,4 +70,40 @@ describe('Session Status', () => {
     // Ensure no quotes appear when name is missing
     expect(text).not.toMatch(/act-2\s*"/);
   });
+
+  it('handles active session with empty name (falsy)', () => {
+    const active = { id: 'act-3', name: '', filePath: '/path' };
+    const mgr = createStubManager({
+      getActive: () => active,
+      getDiagnostics: () => ({ totalSessions: 1, disposedCount: 0, historySize: 0 }),
+    });
+    const result = operationStatus(mgr);
+    const text = result.content[0].text;
+    expect(text).toContain('Active Session: act-3');
+    // Empty name should not produce quotes
+    expect(text).not.toMatch(/act-3\s*"/);
+  });
+
+  it('handles active session with missing id', () => {
+    const active = { id: undefined, name: 'NoID', filePath: '/path' } as any;
+    const mgr = createStubManager({
+      getActive: () => active,
+      getDiagnostics: () => ({ totalSessions: 1, disposedCount: 0, historySize: 0 }),
+    });
+    const result = operationStatus(mgr);
+    const text = result.content[0].text;
+    // Should fallback to 'none' for id
+    expect(text).toContain('Active Session: none');
+  });
+
+  it('handles root session with missing id', () => {
+    const root = { id: undefined, name: 'RootNoID', filePath: '/root' } as any;
+    const mgr = createStubManager({
+      getRoot: () => root,
+      getDiagnostics: () => ({ totalSessions: 1, disposedCount: 0, historySize: 0 }),
+    });
+    const result = operationStatus(mgr);
+    const text = result.content[0].text;
+    expect(text).toContain('Root Session: none');
+  });
 });

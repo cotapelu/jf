@@ -263,7 +263,7 @@ All tests pass; lint clean; build clean. Next phase will target these modules in
 
 ## 3. Coverage Gap (ACTIVE)
 **Severity:** MEDIUM  
-**Issue:** Global branch coverage at 83.95%, below Phase 31 target of 85%.  
+**Issue:** Global branch coverage at 83.06%, below Phase 31 target of 85%.  
 **Impact:** Some error paths and edge cases remain untested, particularly in:
 - `team-manager.ts` (runAgentLoop concurrency, abort handling)
 - `ast_query.ts` (AST parent resolution, regex fallback)

@@ -3148,3 +3148,65 @@ Global branch coverage is 0.5% below the 85% target. To reach target, need ~11 m
 - All quality gates green.
 
 **Impact:** Small incremental coverage gain; improved test completeness for codebase indexer.
+
+## Phase 104 - Session Status Test Coverage - 2026-07-08 (Autonomous)
+
+**Task:** Add missing tests for `operationStatus` to improve branch coverage.
+
+**Type:** Test Enhancement
+
+**Priority:** MEDIUM
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +4 tests (total 1169 passing)
+
+**Coverage Delta:**
+- Statements: **89.91%** (unchanged)
+- Branches: **80.57%** (stable, ~80.6%)
+- Functions: **90.6%** (unchanged)
+- Lines: **91.02%** (unchanged)
+
+**Notes:**
+- Created `src/tests/session-status.test.ts` with 4 tests covering:
+  - Empty manager state (all 'none' values)
+  - Active session with name
+  - Root + children populated
+  - Active session without name (unnamed)
+- `status.ts` branch coverage improved from **54.24% → 86.96%**.
+- Global branch coverage remained stable (minor fluctuation within normal variance).
+- All quality gates green: lint 0, TypeScript clean, tests 1169/1169.
+
+**Impact:** Significant improvement for a core session operation; enhances test completeness and confidence.
+
+## Phase 105 - Master Tool Coverage - 2026-07-08 (Autonomous)
+
+**Task:** Add missing branch coverage for `operationStatus` and add comprehensive unit tests for `master-tool.ts`.
+
+**Type:** Test Enhancement
+
+**Priority:** HIGH (core dispatcher had 0% coverage)
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** +22 tests in new file `master-tool.unit.test.ts` (total 1193 passing)
+
+**Coverage Delta:**
+- Statements: **92.38%** (↑~2.5%)
+- Branches: **83.06%** (↑~2.5%)
+- Functions: **92.57%** (↑~2%)
+- Lines: **93.78%** (↑~2%)
+
+**Notes:**
+- Completed remaining branch coverage for `operationStatus` (added tests for empty name, missing ID edge cases).
+- Created comprehensive unit tests for `master-tool.ts` covering registry initialization, meta-commands (list, list.grep, help, stats, reload), regular command execution, and rendering.
+- Used real CommandRegistry instance with spies to isolate behavior.
+- All tests pass; no regressions.
+- `master-tool.ts` branch coverage: **84.72%** (from 0%).
+- Global branch coverage increased from **80.57% → 83.06%**.
+
+**Impact:** Significant improvement for a critical system component. Eliminates a high-risk uncovered module.
