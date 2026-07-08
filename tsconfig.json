@@ -12,6 +12,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@extensions/*": ["src/plugin/extensions/*"],
       "*.js": ["*.ts"]

@@ -17,14 +17,14 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@earendil-works/pi-ai": "^0.79.2",
+    "@earendil-works/pi-ai": "^0.80.3",
     "@earendil-works/pi-coding-agent": "^0.80.2",
-    "@earendil-works/pi-tui": "^0.79.6",
-    "typescript": "^5.7.0",
+    "@earendil-works/pi-tui": "^0.80.3",
+    "typescript": "^6.0.3",
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.1.1",
     "@types/pino": "^7.0.4",
     "@types/prettier": "^2.7.3",
     "@types/yaml": "^1.9.6",
