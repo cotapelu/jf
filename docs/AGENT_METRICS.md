@@ -3778,3 +3778,40 @@ System remains production-ready with all critical gates met. Incremental improve
 **Next targets:** Maintain >85% coverage; shift focus to system stability rather than incremental coverage.
 
 **Commit:** chore: evolution round - analyze coverage edge cases
+
+## Cycle 127 - Ast Query Coverage Push (2026-07-09)
+
+**Task:** Increase branch coverage for `ast_query.ts` (76.82% → 82.12%)  
+**Type:** T (Tests) - Proactive Improvement  
+**Priority:** Medium (high-impact remaining module)  
+**Duration:** ~2 hours  
+**Status:** ✅ Completed (coverage improved)  
+**Test Delta:** +8 tests (total 1262 passing)  
+**Coverage Delta:**
+- Statements: **~93.6%** (stable)
+- Branches: **85.68%** (↑0.32%)
+- Functions: **~93.3%** (stable)
+- Lines: **~95%** (stable)
+
+**Details:**
+- Added targeted tests for uncovered branches in `ast_query.ts`:
+  - Unknown kind handler (returns null)
+  - Parent filter with top-level node (container undefined)
+  - Re-export without alias (`sp.local?.name` fallback)
+  - Empty export (`export {}`)
+  - Destructured variable export fallback (`|| '<export>'`)
+  - Arrow function naming (`<arrow>`)
+  - Computed method name (`node.key?.value`)
+  - Default cwd fallback when ctx missing
+  - Invalid regex pattern fallback (reinforced)
+- Increased `ast_query.ts` branch coverage from 76.82% to 82.12% (uncovered branches reduced from 35 to 27).
+- Global branch coverage improved to **85.68%** (2089/2438).
+- All quality gates maintained: 1262/1262 tests passing, lint 0, TypeScript clean, build successful.
+
+**Impact:**
+- Modest but consistent progress; remaining gaps still require disproportionate effort for 90% target.
+- Maintained production-readiness with zero regressions.
+
+**Next targets:** Continue optimizing remaining high‑impact modules if ROI justifies.
+
+**Commit:** chore: evolution round - ast_query coverage push

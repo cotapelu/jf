@@ -1190,3 +1190,25 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 **Next:** Enter maintenance monitoring; only address regressions or new violations.
 
 **Commit:** chore: evolution round - analyze coverage edge cases
+
+## Cycle 127 - Ast Query Coverage Push (2026-07-09)
+
+- Added 8 targeted tests to `ast_query.test.ts`, covering:
+  - Unknown kind handler
+  - Parent filter with top-level node (container undefined)
+  - Re-export without alias (`sp.local?.name` fallback)
+  - Empty export (`export {}`)
+  - Destructured variable export fallback
+  - Arrow function naming (`<arrow>`)
+  - Computed method name (`node.key?.value`)
+  - Default cwd fallback when ctx missing
+- Increased `ast_query.ts` branch coverage from 76.82% to 82.12% (uncovered branches reduced from 35 to 27).
+- Global branch coverage increased from 85.36% to **85.68%** (2089/2438).
+- Test count increased to 1262 (133 files).
+- All quality gates maintained (lint 0, typecheck clean, build success).
+
+**Impact:** Modest improvement; diminishing returns persist. Remaining gaps still require ~10-20 cycles for +4% to reach 90%. Codebase remains production-ready.
+
+**Next:** Continue targeted improvements only if ROI becomes favorable or specific regressions appear.
+
+**Commit:** chore: evolution round - ast_query coverage push

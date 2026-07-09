@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile, unlink, rm } from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
@@ -355,5 +355,121 @@ function beta() {}
     expect(result.details.matches.length).toBe(1);
     expect(result.details.matches[0].name).toBe("alpha");
     await unlink(file);
+  });
+
+  // ----- Additional coverage tests (Cycle 127) -----
+  it('should handle unknown kind gracefully', async () => {
+    const code = `function foo() {}`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({ 
+      file: path.basename(file), 
+      query: { kind: "unknown" as any } 
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(0);
+    await unlink(file);
+  });
+
+  it('should handle parent filter with top-level node (container undefined)', async () => {
+    const code = `function topLevel() {}`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "function", parent: "Nonexistent" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(0);
+    await unlink(file);
+  });
+
+  it('should handle empty export named declaration', async () => {
+    const code = `export {};`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "export" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(1);
+    expect(result.details.matches[0].name).toBe("<export>");
+    await unlink(file);
+  });
+
+  it('should find export named without alias (re-export)', async () => {
+    const code = `export { foo };`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "export" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    expect(result.details.matches.length).toBe(1);
+    expect(result.details.matches[0].name).toBe("foo");
+    await unlink(file);
+  });
+
+  it('should handle export of destructured variable', async () => {
+    const code = `export const [a] = arr;`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "export" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    // Should produce an export with name '<export>' because destructuring yields no simple names
+    const exportMatch = result.details.matches.find(m => m.kind === 'export');
+    expect(exportMatch).toBeDefined();
+    expect(exportMatch?.name).toBe('<export>');
+    await unlink(file);
+  });
+
+  it('should find arrow functions', async () => {
+    const code = `const arrow = () => {};`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "function" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    const fn = result.details.matches.find(m => m.name === '<arrow>');
+    expect(fn).toBeDefined();
+    await unlink(file);
+  });
+
+  it('should handle computed method names', async () => {
+    const code = `class C { ['computed']() {} }`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await astQueryModule.execute({
+      file: path.basename(file),
+      query: { kind: "function" }
+    }, ctx as { cwd: string });
+    expect(result.isError).toBe(false);
+    const method = result.details.matches.find(m => m.name === 'computed');
+    expect(method).toBeDefined();
+    await unlink(file);
+  });
+
+  it('should default cwd to process.cwd when ctx is missing', async () => {
+    const code = `function foo() {}`;
+    // Write file in process.cwd() under a temp subdir
+    const testDir = path.join(process.cwd(), 'tmp-ast-cov');
+    await mkdir(testDir, { recursive: true });
+    const file = path.join(testDir, 'cwd-test.ts');
+    await writeFile(file, code, 'utf-8');
+    const result = await astQueryModule.execute({ 
+      file: 'tmp-ast-cov/cwd-test.ts',
+      query: { kind: "function" }
+    }, {} as any);
+    expect(result.isError).toBe(false);
+    // Cleanup
+    await unlink(file);
+    await rm(testDir, { recursive: true, force: true });
   });
 });
