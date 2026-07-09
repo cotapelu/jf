@@ -43,4 +43,18 @@ describe('get_time tool', () => {
 
     spy.mockRestore();
   });
+
+  it('should handle non-Error thrown in toLocaleString (ternary else branch)', async () => {
+    // Throw a non-Error value (string)
+    const spy = vi.spyOn(Date.prototype, 'toLocaleString').mockImplementation(function(this: Date) {
+      throw 'custom error' as any;
+    });
+
+    const result = await getTimeTool.execute('call-5', { timezone: 'UTC' });
+    expect(result.isError).toBe(true);
+    // The message should contain 'custom error' (converted via String())
+    expect(result.content[0].text).toContain('custom error');
+
+    spy.mockRestore();
+  });
 });
