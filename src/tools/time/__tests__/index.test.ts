@@ -57,4 +57,22 @@ describe('get_time tool', () => {
 
     spy.mockRestore();
   });
+
+  it('should handle empty string timezone as falsy (default UTC)', async () => {
+    const result = await getTimeTool.execute('call-6', { timezone: '' });
+    expect(result.isError).not.toBe(true);
+    expect(result.content[0].text).toContain('UTC');
+  });
+
+  it('should handle invalid timezone causing RangeError', async () => {
+    const spy = vi.spyOn(Date.prototype, 'toLocaleString').mockImplementation(function(this: Date) {
+      throw new RangeError('Invalid timezone');
+    });
+
+    const result = await getTimeTool.execute('call-7', { timezone: 'Invalid/Zone' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('Invalid timezone');
+
+    spy.mockRestore();
+  });
 });
