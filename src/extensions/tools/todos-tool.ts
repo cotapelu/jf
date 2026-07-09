@@ -352,6 +352,20 @@ function makeEmptyFile(): TodoFile {
   return { phases: [], nextTaskId: 1, nextPhaseId: 1 };
 }
 
+// Helper to apply update operations to a single task, reducing nesting depth.
+function applyTaskUpdates(task: TodoItem, op: any, errors: string[]): void {
+  if (op.status !== undefined) {
+    if (typeof op.status === "string" && ["pending", "in_progress", "completed", "abandoned"].includes(op.status)) {
+      task.status = op.status as TodoStatus;
+    } else {
+      errors.push(`Invalid status: ${op.status}. Must be pending, in_progress, completed, or abandoned.`);
+    }
+  }
+  if (op.content !== undefined) task.content = op.content;
+  if (op.notes !== undefined) task.notes = op.notes;
+  if (op.details !== undefined) task.details = op.details;
+}
+
 function applySingleOp(file: TodoFile, params: any): { file: TodoFile; errors: string[] } {
   const errors: string[] = [];
 
@@ -439,16 +453,7 @@ function applySingleOp(file: TodoFile, params: any): { file: TodoFile; errors: s
         continue;
       }
       hasValidUpdates = true;
-      if (op.status !== undefined) {
-        if (typeof op.status === "string" && ["pending", "in_progress", "completed", "abandoned"].includes(op.status)) {
-          task.status = op.status as TodoStatus;
-        } else {
-          errors.push(`Invalid status: ${op.status}. Must be pending, in_progress, completed, or abandoned.`);
-        }
-      }
-      if (op.content !== undefined) task.content = op.content;
-      if (op.notes !== undefined) task.notes = op.notes;
-      if (op.details !== undefined) task.details = op.details;
+      applyTaskUpdates(task, op, errors);
     }
 
     if (!hasValidUpdates && taskIds.length > 0) {
@@ -526,14 +531,12 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
     lines.push("Remaining items: none.");
   } else {
     lines.push(`Remaining items (${remainingTasks.length}):`);
-    for (const task of remainingTasks) {
+    remainingTasks.forEach(task => {
       lines.push(`  - ${task.id} ${task.content} [${task.status}] (${task.phase})`);
       if (task.status === "in_progress" && task.details) {
-        for (const line of task.details.split("\n")) {
-          lines.push(`      ${line}`);
-        }
+        task.details.split("\n").forEach(line => lines.push(`      ${line}`));
       }
-    }
+    });
   }
   lines.push(
     `Phase ${currentIdx + 1}/${phases.length} "${current?.name ?? "unknown"}" — ${done}/${current?.tasks.length ?? 0} tasks complete`,
@@ -746,24 +749,22 @@ function renderTodosResult(result: { details?: TodoToolDetails }, options: { exp
   if (allTasks.length === 0) return new Text(theme.fg("dim", "No todos"), 0, 0);
 
   const lines: string[] = [theme.fg("toolTitle", `Todos: ${allTasks.length} tasks`)];
-  for (const phase of phases) {
+  phases.forEach(phase => {
     if (phases.length > 1) lines.push(theme.fg("accent", `▼ ${phase.name}`));
     const displayTasks = options.expanded ? phase.tasks : phase.tasks.slice(0, 5);
-    for (const task of displayTasks) {
+    displayTasks.forEach(task => {
       const color = task.status === "completed" || task.status === "abandoned" ? "dim" : task.status === "in_progress" ? "accent" : "text";
       const prefix = task.status === "in_progress" ? "→" : task.status === "completed" ? "✓" : task.status === "abandoned" ? "✗" : " ";
       lines.push(`${theme.fg(color, `  ${prefix} ${task.id} ${task.content}`)}`);
       if (task.status === "in_progress" && task.details) {
-        for (const line of task.details.split("\n")) {
-          lines.push(theme.fg("dim", `    ${line}`));
-        }
+        task.details.split("\n").forEach(line => lines.push(theme.fg("dim", `    ${line}`)));
       }
-    }
+    });
 
     if (!options.expanded && phase.tasks.length > 5) {
       lines.push(theme.fg("dim", `  ... ${phase.tasks.length - 5} more`));
     }
-  }
+  });
 
   return new Text(lines.join("\n"), 0, 0);
 }

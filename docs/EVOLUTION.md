@@ -1113,3 +1113,24 @@ Overall complexity reduction count: 8 modules improved (analyze, analyze_ast, ca
 - All critical quality gates remain met (tests 1198/1198, coverage ~92% stmt, ~83% branch, zero lint errors after severity change).
 
 System status: 🟢 PRODUCTION-READY
+
+## Cycle 116 - Manage Depth Reduction (2026-07-08)
+
+- Replaced for loop with forEach in `manage.ts` (todo list handling).
+- Eliminated max-depth warning at line 276.
+- All tests pass; TypeScript clean.
+- Remaining depth warnings: 11 (call_graph 5, skill-reader 3, todos-tool 3).
+
+System status: 🟢 PRODUCTION-READY
+
+
+## Cycle 117 - Multi-Module Depth Reduction (2026-07-08)
+
+- `todos-tool.ts`: Extracted `applyTaskUpdates` helper; converted for loops to `forEach` in `formatSummary` and `renderTodosResult`.
+- `skill-reader.ts`: Extracted `buildDiscoveryOutput` helper; removed deep nesting in discovery mode.
+- `call_graph.ts`: Flattened `buildEdges` with guard clauses; extracted `processCandidates` helper to flatten candidate processing loops.
+- All max-depth warnings eliminated (0 remaining).
+- All tests pass (1198/1198); TypeScript clean; coverage stable (Stmt ~92.42%, Branch ~83%).
+
+System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as warn); all quality gates maintained.
+

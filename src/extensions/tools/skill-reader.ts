@@ -38,6 +38,29 @@ const commandMeta: Record<string, {
 
 const cm = commandMeta;
 
+// Helper for discovery mode to reduce nesting depth in execute()
+function buildDiscoveryOutput(command: string, meta: any): { content: [{ type: string, text: string }]; details: { mode: string, command: string }; isError: false } {
+  const lines: string[] = [`=== ${command} ===`, `Description: ${meta.description}`, '', 'Arguments:'];
+  const schema = meta.schema;
+  if (schema?.properties) {
+    const props = schema.properties as Record<string, any>;
+    Object.entries(props).forEach(([key, prop]) => {
+      const required = schema.required?.includes(key);
+      const type = prop?.type || 'any';
+      const desc = prop.description || '';
+      lines.push(`  ${key}${required ? '*' : ''} (${type}): ${desc}`);
+    });
+  }
+  if (meta.examples?.length > 0) {
+    lines.push('', 'Examples:', `  ${meta.examples[0]}`);
+  }
+  return {
+    content: [{ type: "text", text: lines.join('\n') }],
+    details: { mode: "discovery", command },
+    isError: false
+  } as const;
+}
+
 // Additional test-only commands for branch coverage
 if (process.env.COVERAGE_TEST === 'true') {
   (commands as any)['test_no_meta'] = async () => ({} as any);
@@ -165,26 +188,7 @@ export function createSkillLoaderTool(): ToolDefinition {
         if (Object.keys(args).length === 0) {
           const meta = cm[command];
           if (meta) {
-            const lines: string[] = [`=== ${command} ===`, `Description: ${meta.description}`, '', 'Arguments:'];
-            // @ts-ignore
-            const schema = meta.schema;
-            if (schema?.properties) {
-              const props = schema.properties as Record<string, any>;
-              for (const [key, prop] of Object.entries(props)) {
-                const required = schema.required?.includes(key);
-                const type = prop?.type || 'any';
-                const desc = prop.description || '';
-                lines.push(`  ${key}${required ? '*' : ''} (${type}): ${desc}`);
-              }
-            }
-            if (meta.examples.length > 0) {
-              lines.push('', 'Examples:', `  ${meta.examples[0]}`);
-            }
-            return {
-              content: [{ type: "text", text: lines.join('\n') }],
-              details: { mode: "discovery", command },
-              isError: false
-            } as const;
+            return buildDiscoveryOutput(command, meta);
           }
         }
 

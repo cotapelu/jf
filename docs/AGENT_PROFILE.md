@@ -366,6 +366,8 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 
 - `subtool-loader.ts`: Flattened for loop with forEach (depth ↓)
 
+- `manage.ts`: Flattened for loop with forEach (depth ↓)
+
 **🟡 In Progress:**
 - `extension.execute` (14) and `renderResult` (15) - next targets
 - `plugin-loader.validateManifest` (13)
@@ -380,11 +382,11 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 **Severity:** MEDIUM (anti-pattern: Arrow Code)
 **Status:** 🟡 IN PROGRESS
 
-**Remaining depth warnings (12):**
+**Remaining depth warnings (11):**
 - `call_graph.ts`: 5
 - `skill-reader.ts`: 3
 - `todos-tool.ts`: 3
-- `manage.ts`: 1
+
 - Completed: `subtool-loader`, `piclaw-header`, `memory-tool`, `dependency_tree`, `metrics`.
 
 **Actions taken:**

@@ -209,6 +209,34 @@ function resolveCallee(
   }
 }
 
+async function processCandidates(
+  candidates: string[],
+  cwd: string,
+  visited: Set<string>,
+  visitFile: (rel: string, depth: number) => Promise<void>,
+  nextDepth: number
+): Promise<void> {
+  for (const cand of candidates) {
+    // Skip visited early
+    if (visited.has(cand)) continue;
+
+    try {
+      await fs.access(cand);
+    } catch {
+      continue; // try next candidate
+    }
+
+    // Compute relative path
+    let rel = cand;
+    if (cand.startsWith(cwd)) {
+      rel = cand.slice(cwd.length + 1);
+    }
+
+    await visitFile(rel, nextDepth);
+    break;
+  }
+}
+
 async function collectAllFiles(cwd: string, roots: string[], depth: number, includeCrossFile: boolean): Promise<ParsedFile[]> {
   const visited = new Set<string>();
   const allFiles: ParsedFile[] = [];
@@ -234,20 +262,7 @@ async function collectAllFiles(cwd: string, roots: string[], depth: number, incl
           resolve(base, 'index.ts'),
           resolve(base, 'index.js')
         ];
-        for (const cand of candidates) {
-          try {
-            await fs.access(cand);
-            let rel = cand;
-            if (cand.startsWith(cwd)) {
-              rel = cand.slice(cwd.length + 1);
-            }
-            if (visited.has(cand)) continue;
-            await visitFile(rel, nextDepth);
-            break;
-          } catch {
-            // continue
-          }
-        }
+        await processCandidates(candidates, cwd, visited, visitFile, nextDepth);
       }
     }
   }
@@ -277,13 +292,11 @@ function buildEdges(
   for (const pf of allFiles) {
     for (const call of pf.calls) {
       const toNode = resolveCallee(call, pf, pf.imports, absToFuncs);
-      if (toNode) {
-        const fromNode = pf.funcs.get(call.callerKey);
-        if (fromNode) {
-          if (nameFilter && !nameMatches(toNode.name, nameFilter)) continue;
-          edges.push({ from: fromNode, to: toNode });
-        }
-      }
+      if (!toNode) continue;
+      const fromNode = pf.funcs.get(call.callerKey);
+      if (!fromNode) continue;
+      if (nameFilter && !nameMatches(toNode.name, nameFilter)) continue;
+      edges.push({ from: fromNode, to: toNode });
     }
   }
   if (limit && edges.length > limit) {
