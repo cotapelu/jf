@@ -364,6 +364,8 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 - `dependency_tree.ts`: Flatten bfs (guard clauses)
 - `memory-tool.ts`: Flatten reconstructState (guard clauses)
 
+- `subtool-loader.ts`: Flattened for loop with forEach (depth ↓)
+
 **🟡 In Progress:**
 - `extension.execute` (14) and `renderResult` (15) - next targets
 - `plugin-loader.validateManifest` (13)

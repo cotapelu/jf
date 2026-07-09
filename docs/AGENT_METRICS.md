@@ -3419,3 +3419,28 @@ System remains production-ready with all critical gates met. Incremental improve
 **Commit:** `refactor(memory, piclaw, todos, dependency-tree): reduce nesting depth`
 
 ---
+
+## Cycle 114 - Subtool-Loader Depth Reduction - 2026-07-08
+
+**Task:** Reduce max-depth violation in subtool-loader.ts (http tool)
+
+**Type:** Refactor (Depth)
+
+**Priority:** HIGH
+
+**Duration:** ~15 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1198 tests still passing)
+
+**Coverage:** Stable.
+
+**Notes:**
+- Replaced nested for loop with `Object.entries(headers).forEach(...)` to flatten block depth.
+- Eliminates depth violation at line 137.
+- All tests pass; TypeScript clean.
+
+**Commit:** `refactor(subtool-loader): reduce nesting depth in http tool`
+
+---
