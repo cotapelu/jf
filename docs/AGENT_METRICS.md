@@ -3663,3 +3663,44 @@ System remains production-ready with all critical gates met. Incremental improve
 
 **Commit:** chore: evolution round - skill-tool & time-tool coverage
 
+
+## Cycle 124 - Team-Manager Coverage & Edge Cases (2026-07-09)
+
+**Task:** Increase branch coverage for `team-manager.ts` by adding targeted unit tests for uncovered branches.
+
+**Type:** T (Tests) - Proactive Improvement
+
+**Priority:** HIGH
+
+**Duration:** ~2 hours (multiple sub-cycles)
+
+**Status:** ✅ Success
+
+**Test Delta:** +9 tests (total 1227 passing)
+
+**Coverage Delta:**
+- Statements: **92.34%** (stable)
+- Branches: **83.51%** (↑0.87% from 82.64%)
+- Functions: **92.71%** (stable)
+- Lines: **93.82%** (stable)
+
+**Details:**
+- Created `team-manager.gaps.test.ts` with 14 tests covering:
+  - `handleAgentFailure` early-return (non-existent task, wrong assignee)
+  - `TeamRegistry` edge cases (unregister non-existent, reset timer, autoDispose error handling)
+  - `reportResult` when agent status missing
+  - `waitForCompletion` polling behavior
+  - `startAgentLoops` skip missing runtime
+  - `shouldTerminate` completion/max-turns/otherwise
+  - `executeAgentPrompt` ternary (bootstrap vs continuation)
+- Added tests for `TaskManager.handleRetryExceeded` error formatting (null, undefined, string, Error)
+- Covered branches in `TaskManager` previously uncovered
+
+**Impact:**
+- `team-manager.ts` branch coverage increased from ~71% to 92.31% locally.
+- Global branch coverage reached 83.51%, maintaining above 80% quality gate.
+- All tests pass; lint clean; TypeScript clean.
+
+**Next targets:** Remaining uncovered branches in high-gap modules: `bash-actions.ts` (72.53%, 25 uncovered), `analyze.ts` (88.24%, 6 uncovered), `complexity.ts` (88.64%, 5 uncovered). Stretch target 85% requires ~39 more branches.
+
+**Commit:** chore: evolution round - team-manager coverage & edge cases

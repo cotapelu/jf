@@ -1152,3 +1152,14 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - Branch coverage temporarily at 82.93% (re-measure fluctuation); per-file team-tool branch coverage improved to 92.3%.
 - Next: Target skill-tool and team-manager to reach ≥85% global branch.
 
+
+## Cycle 124 - Team-Manager Coverage & Edge Cases (2026-07-09)
+
+- Created `team-manager.gaps.test.ts` with 14 comprehensive tests covering various edge cases and error handling paths.
+- Covered previously uncovered branches in `TeamRegistry`, `AgentTeam`, and `TaskManager`.
+- Improved `team-manager.ts` branch coverage from ~71% to 92.31% (local).
+- Global branch coverage increased to 83.51% (from 82.64%).
+- All quality gates maintained: 1227/1227 tests passing, lint 0 errors, TypeScript clean.
+- Next focus: address remaining uncovered branches in `bash-actions.ts` (25), `analyze.ts` (6), `complexity.ts` (5) to approach 85% stretch target.
+
+**Commit:** chore: evolution round - team-manager coverage & edge cases
