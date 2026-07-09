@@ -116,4 +116,26 @@ describe('codebase.analyze coverage', () => {
     const result = await execute({ file: 'test.xyz' }, { cwd: tmpdir });
     expect(result.details.language).toBe('unknown');
   });
+
+  it('parses export interface (non-default)', async () => {
+    const code = `export interface IFoo {}`;
+    const file = join(tmpdir, 'test.ts');
+    await fs.writeFile(file, code, 'utf8');
+    const result = await execute({ file: 'test.ts' }, { cwd: tmpdir });
+    expect(result.isError).toBe(false);
+    expect(result.details.exports.some(e => e.type === 'named' && e.name === 'IFoo')).toBe(true);
+    expect(result.details.symbols.some(s => s.kind === 'interface' && s.name === 'IFoo')).toBe(true);
+  });
+
+  it('parses named export without alias', async () => {
+    const code = `const foo = 1;\nexport { foo };`;
+    const file = join(tmpdir, 'test.ts');
+    await fs.writeFile(file, code, 'utf8');
+    const result = await execute({ file: 'test.ts' }, { cwd: tmpdir });
+    expect(result.isError).toBe(false);
+    // Ensure we get a named export with name 'foo' and no aliases (or aliases undefined)
+    const exp = result.details.exports.find(e => e.type === 'named' && e.name === 'foo');
+    expect(exp).toBeDefined();
+    expect(exp.aliases).toBeUndefined();
+  });
 });

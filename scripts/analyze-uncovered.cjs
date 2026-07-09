@@ -1,5 +1,5 @@
 const cov = require('../coverage/coverage-final.json');
-const target = '/home/quangtynu/Qcoder/jf/src/extensions/tools/bash-actions.ts';
+const target = '/home/quangtynu/Qcoder/jf/src/extensions/capability-system/plugins/codebase/capabilities/analyze.ts';
 const data = cov[target];
 if (!data) {
   console.log('No data for', target);
@@ -17,7 +17,7 @@ for (const key in branchMap) {
   }
 }
 uncovered.sort((a,b) => a.line - b.line);
-console.log(`Uncovered branches in bash-actions.ts (${uncovered.length} remaining):`);
+console.log(`Uncovered branches in analyze.ts (${uncovered.length} remaining):`);
 for (const u of uncovered) {
   console.log(`  Line ${u.line}: ${u.type}`);
 }

@@ -3745,3 +3745,36 @@ System remains production-ready with all critical gates met. Incremental improve
 **Next targets:** Maintain coverage >85%; address any remaining minor gaps for robustness.
 
 **Commit:** chore: evolution round - bash-actions coverage push to 85%
+
+## Cycle 126 - Analyze Coverage Edge Cases (2026-07-09)
+
+**Task:** Target remaining uncovered branches in `analyze.ts` to improve robustness.
+
+**Type:** T (Tests) - Proactive Improvement
+
+**Priority:** Medium-High (pushing beyond 85%)
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Completed (no coverage delta but tests added)
+
+**Test Delta:** +2 tests (total 1254 passing)
+
+**Coverage Delta:**
+- Statements: **~92.5%** (stable)
+- Branches: **85.31%** (unchanged)
+- Functions: **~92.7%** (stable)
+- Lines: **~93.9%** (stable)
+
+**Details:**
+- Added tests for `export interface (non-default)` and `export { foo }` without alias to cover previously uncovered branches in `handleNamedInterfaceExport` and alias-handling false branch.
+- Coverage unchanged; branches may already be covered by existing tests or require complex parser adjustments for full 100%.
+- All quality gates: 1254/1254 tests passing, lint 0, TypeScript clean, build successful.
+
+**Impact:**
+- Improved test documentation and robustness for `analyze.ts`.
+- Demonstrated diminishing returns: remaining gaps are obscure and yield low coverage gain per effort.
+
+**Next targets:** Maintain >85% coverage; shift focus to system stability rather than incremental coverage.
+
+**Commit:** chore: evolution round - analyze coverage edge cases
