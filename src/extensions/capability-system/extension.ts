@@ -11,8 +11,24 @@ import { PluginLoader, getGlobalLoader, setGlobalLoader, createPluginLoader } fr
 import { getCapabilityRegistry } from "./registry.js";
 import type { Capability } from "./types.js";
 import type { CapabilityContext } from "./types.js";
-import type { AgentToolResult } from "@earendil-works/pi-coding-agent";
+
 import { createCapabilityDiscoveryCapability } from "./prompt-integration.js";
+
+// Helper for reducing execute complexity (Cycle 117)
+function populateResultDetails(result: any, cap: any): void {
+  if (result && typeof result === 'object') {
+    result.details = result.details || {};
+    result.details.capabilityId = cap.id;
+  }
+}
+
+// Helper for reducing execute complexity (Cycle 117)
+function populateResultDetails(result: any, cap: any): void {
+  if (result && typeof result === 'object') {
+    result.details = result.details || {};
+    result.details.capabilityId = cap.id;
+  }
+}
 
 // Simple truncateToVisualLines implementation (matches pi-tui internal)
 function truncateToVisualLines(text: string, maxLines: number, width: number): { visualLines: string[]; skippedCount: number } {
@@ -43,6 +59,64 @@ function keyHint(action: string, fallback: string): string {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Helper functions for complexity reduction (Cycle 117)
+
+function createExecFunction(api: any, ctx: any, signal: any): CapabilityContext['exec'] {
+  return async (command: string, args: string[], options: { cwd?: string; env?: Record<string, string> } = {}): Promise<{ code: number; stdout: string; stderr: string }> => {
+    const cwd = options.cwd || ctx.cwd || process.cwd();
+    const execResult = await api.exec(command, args, { ...options, cwd, signal });
+    return { code: execResult.code, stdout: execResult.stdout, stderr: execResult.stderr };
+  };
+}
+
+function createCallCapabilityFunction(registry: any, api: any, toolCallId: string, ctx: any, signal: any, onUpdate: any): CapabilityContext['callCapability'] {
+  return async (id: string, params: Record<string, any>): Promise<any> => {
+    const innerCap = registry.get(id);
+    if (!innerCap) {
+      throw new Error(`Capability not found: ${id}`);
+    }
+    const innerCtx: CapabilityContext = {
+      ...ctx,
+      cwd: ctx.cwd || process.cwd(),
+      exec: createExecFunction(api, ctx, signal),
+      getCurrentCapability: () => innerCap,
+      getCapability: (id2: string) => registry.get(id2),
+      listCapabilitiesByTag: (tag: string) => registry.listAll().filter(c => c.tags.includes(tag)),
+      callCapability: () => Promise.reject(new Error("Nested callCapability not supported"))
+    };
+    return innerCap.execute(toolCallId, params, signal, onUpdate, innerCtx);
+  };
+}
+
+function buildEnhancedContext(ctx: any, api: any, registry: any, cap: any, signal: any, toolCallId: string, onUpdate: any): CapabilityContext {
+  return {
+    ...ctx,
+    cwd: ctx.cwd || process.cwd(),
+    exec: createExecFunction(api, ctx, signal),
+    getCurrentCapability: () => cap,
+    getCapability: (id: string) => registry.get(id),
+    listCapabilitiesByTag: (tag: string) => registry.listAll().filter(c => c.tags.includes(tag)),
+    callCapability: createCallCapabilityFunction(registry, api, toolCallId, ctx, signal, onUpdate)
+  };
+}
+
+// Rendering helpers
+function maybeStartInterval(state: any, options: any, context: any): void {
+  if (state.startedAt !== undefined && options.isPartial && !state.interval) {
+    state.interval = setInterval(() => context.invalidate(), 1000);
+  }
+}
+function maybeStopInterval(state: any, options: any, context: any): void {
+  if (!options.isPartial || context.isError) {
+    state.endedAt ??= Date.now();
+    if (state.interval) {
+      clearInterval(state.interval);
+      state.interval = undefined;
+    }
+  }
+}
+
 
 /**
  * Extension factory.
@@ -299,43 +373,10 @@ function createCapabilityRouterTool(api: any) {
         // Log: capability is starting
         console.log(`[CapabilityRouter] Starting: ${cap.name} (${cap.id})`);
 
-        enhancedCtx = {
-          ...ctx,
-          cwd: ctx.cwd || process.cwd(),
-          exec: async (command: string, args: string[], options: { cwd?: string; env?: Record<string, string> } = {}): Promise<{ code: number; stdout: string; stderr: string }> => {
-            const cwd = options.cwd || ctx.cwd || process.cwd();
-            const execResult = await api.exec(command, args, { ...options, cwd, signal });
-            return { code: execResult.code, stdout: execResult.stdout, stderr: execResult.stderr };
-          },
-          getCurrentCapability: () => cap,
-          getCapability: (id: string) => registry.get(id),
-          listCapabilitiesByTag: (tag: string) => registry.listAll().filter(c => c.tags.includes(tag)),
-          callCapability: async (id: string, params: Record<string, any>): Promise<AgentToolResult<any>> => {
-            const innerCap = registry.get(id);
-            if (!innerCap) {
-              throw new Error(`Capability not found: ${id}`);
-            }
-            const innerCtx: CapabilityContext = {
-              ...ctx,
-              cwd: ctx.cwd || process.cwd(),
-              exec: (cmd, args, opts = {}) => {
-                const cwd = opts.cwd || ctx.cwd || process.cwd();
-                return api.exec(cmd, args, { ...opts, cwd, signal }) as Promise<{ code: number; stdout: string; stderr: string }>;
-              },
-              getCurrentCapability: () => innerCap,
-              getCapability: (id2) => registry.get(id2),
-              listCapabilitiesByTag: (tag) => registry.listAll().filter(c => c.tags.includes(tag)),
-              callCapability: () => Promise.reject(new Error("Nested callCapability not supported"))
-            };
-            return innerCap.execute(toolCallId, params, signal, onUpdate, innerCtx);
-          }
-        };
+        enhancedCtx = buildEnhancedContext(ctx, api, registry, cap, signal, toolCallId, onUpdate);
         result = await cap.execute(toolCallId, capParams, signal, onUpdate, enhancedCtx);
         // Ensure result has capabilityId in details for renderer
-        if (result && typeof result === 'object') {
-          result.details = result.details || {};
-          result.details.capabilityId = cap.id;
-        }
+        populateResultDetails(result, cap);
         // @ts-ignore
         return result;
       } catch (error: unknown) {
@@ -406,19 +447,10 @@ function createCapabilityRouterTool(api: any) {
 
       const state = (context.state ?? {}) as RouterRendererState;
 
-      // If running and no interval yet, start it for elapsed updates
-      if (state.startedAt !== undefined && options.isPartial && !state.interval) {
-        state.interval = setInterval(() => context.invalidate(), 1000);
-      }
+      // Manage interval for partial updates
+      maybeStartInterval(state, options, context);
+      maybeStopInterval(state, options, context);
 
-      // If finished or error, stop interval and record end time
-      if (!options.isPartial || context.isError) {
-        state.endedAt ??= Date.now();
-        if (state.interval) {
-          clearInterval(state.interval);
-          state.interval = undefined;
-        }
-      }
 
       const component = (context.lastComponent as CapabilityResultRenderComponent | undefined) ?? new CapabilityResultRenderComponent();
       rebuildCapabilityRenderComponent(component, result, options, theme, state.startedAt, state.endedAt);

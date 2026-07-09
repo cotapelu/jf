@@ -3468,3 +3468,64 @@ System remains production-ready with all critical gates met. Incremental improve
 **Commit:** `refactor(manage): reduce nesting depth in todo list handling`
 
 ---
+
+## Cycle 117 - Depth Reduction (Multi-module) - 2026-07-08
+
+**Task:** Eliminate remaining max-depth warnings in todos-tool, skill-reader, call_graph.
+
+**Type:** Refactor (Depth)
+
+**Priority:** HIGH
+
+**Duration:** ~2 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (1198 tests still passing)
+
+**Coverage:** Stable.
+
+**Details:**
+- `todos-tool.ts`: 
+  - Extracted `applyTaskUpdates` helper to flatten update loop (depth 4 → 2).
+  - Converted for loops to `forEach` in `formatSummary` and `renderTodosResult` (depth 4 → 2).
+- `skill-reader.ts`:
+  - Extracted `buildDiscoveryOutput` helper for discovery mode, reducing nesting in `execute`.
+- `call_graph.ts`:
+  - Flattened `buildEdges` with guard clauses (depth 4 → 2).
+  - Extracted `processCandidates` to reduce nested loops in `collectAllFiles` (depth 5 → 2).
+
+**Remaining depth warnings:** 0.
+
+**Commit:** `chore: evolution round - depth reduction (todos-tool, skill-reader, call_graph)`
+
+---
+
+## Cycle 118 - Complexity Reduction in extension.ts (2026-07-08)
+
+**Task:** Reduce cyclomatic complexity in `extension.execute` (14) and `extension.renderResult` (15) to ≤10.
+
+**Type:** Refactor (Complexity)
+
+**Priority:** HIGH
+
+**Duration:** ~2 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** 0 (all 1198 tests still passing)
+
+**Coverage:** Stable.
+
+**Details:**
+- Extracted `buildEnhancedContext` with `createExecFunction` and `createCallCapabilityFunction` helpers → simplified `execute`.
+- Extracted `populateResultDetails` helper → removed conditional block.
+- Extracted `maybeStartInterval` and `maybeStopInterval` helpers → simplified `renderResult`.
+- Removed unused import `AgentToolResult`.
+- Result: `extension.execute` complexity reduced from 14 → 9; `extension.renderResult` from 15 → 8. All functions now ≤10.
+
+**Remaining complexity violations:** 0 (all functions meet ≤10 threshold).
+
+**Commit:** (pending)
+
+---

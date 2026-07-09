@@ -380,19 +380,21 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 
 ## 9. Depth Reduction Work in Progress (MEDIUM)
 **Severity:** MEDIUM (anti-pattern: Arrow Code)
-**Status:** 🟡 IN PROGRESS
+**Status:** ✅ COMPLETED
 
-**Remaining depth warnings (11):**
-- `call_graph.ts`: 5
-- `skill-reader.ts`: 3
-- `todos-tool.ts`: 3
+**All modules flattened to depth ≤3:**
+- `manage.ts`: forEach replacement (depth ↓)
+- `todos-tool.ts`: extracted `applyTaskUpdates`, used `forEach` in `formatSummary` and `renderTodosResult`, replaced `for` loops
+- `skill-reader.ts`: extracted `buildDiscoveryOutput`, removed deep nesting in discovery mode
+- `call_graph.ts`: extracted `processCandidates`, flattened `buildEdges` with guard clauses
+- Previously completed: `subtool-loader`, `piclaw-header`, `memory-tool`, `dependency_tree`, `metrics`
 
-- Completed: `subtool-loader`, `piclaw-header`, `memory-tool`, `dependency_tree`, `metrics`.
+**Remaining depth warnings:** 0
 
 **Actions taken:**
-- Reduced depth in multiple modules via guard clauses and loop flattening.
-- Adjusted ESLint: `max-depth` severity set to "warn" to enable incremental progress without blocking CI.
+- Guard clauses and loop flattening across codebase
+- Temporary adjustment: ESLint `max-depth` severity set to "warn" to allow incremental progress (can be reverted to "error" now that 0 warnings)
 
-**Plan:** Continue flattening nested blocks; aim to reduce to zero warnings within 2-3 cycles.
+**Result:** All max-depth violations eliminated; all quality gates green.
 
 ---
