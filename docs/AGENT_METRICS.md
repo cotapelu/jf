@@ -3847,3 +3847,37 @@ System remains production-ready with all critical gates met. Incremental improve
 **Next targets:** Continue with next highest‑impact module (`dependency_tree.ts` or `bash-actions.ts`) if ROI justifies.
 
 **Commit:** chore: evolution round - analyze_ast coverage push
+
+## Cycle 129 - Bash-Actions Coverage Push (2026-07-09)
+
+**Task:** Increase branch coverage for `bash-actions.ts` (79.21% → 91.01%)  
+**Type:** T (Tests) - Proactive Improvement  
+**Priority:** High (largest remaining gap)  
+**Duration:** ~2.5 hours  
+**Status:** ✅ Completed (coverage improved)  
+**Test Delta:** +20 tests (total 1289 passing)  
+**Coverage Delta:**
+- Statements: **~94.1%** (↑0.4)
+- Branches: **86.95%** (↑0.9%)
+- Functions: **~93.3%** (stable)
+- Lines: **95.3%** (↑0.3%)
+
+**Details:**
+- Added `bash-actions.gaps.test.ts` with 20 tests covering:
+  - LRUCache.set existing key eviction branch
+  - LRUCache.get after expiry
+  - Execute fallback to `process.cwd()` when `ctx.cwd` undefined
+  - Execute sets and clears timeout when signal provided
+  - getHelp for various option combinations and edge cases (missing options, required asterisk, type fallback, missing properties)
+  - removeAction return value for existing and nonexistent actions
+  - renderResult with missing details, empty content, error with missing fields
+  - stats command with non-empty args
+- `bash-actions.ts` branch coverage now **91.01%** (uncovered branches reduced from 37 to 16)
+- Global branch coverage: **86.95%** (2120/2438)
+- All quality gates maintained (1289/1289 tests pass, lint 0, TypeScript clean, build success).
+
+**Impact:** Major improvement in a core module; remaining gaps now smaller across codebase.
+
+**Next targets:** Continue with remaining high‑gap modules (`dependency_tree.ts`, `call_graph.ts`) or maintain.
+
+**Commit:** chore: evolution round - bash-actions coverage push

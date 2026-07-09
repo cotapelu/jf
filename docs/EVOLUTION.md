@@ -1232,3 +1232,23 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 **Next:** Evaluate continuation to other high‑gap modules based on ROI and user priorities.
 
 **Commit:** chore: evolution round - analyze_ast coverage push
+
+## Cycle 129 - Bash-Actions Coverage Push (2026-07-09)
+
+- Created `bash-actions.gaps.test.ts` with 20 targeted tests covering numerous branches:
+  - LRUCache: `set` existing key branch, `get` expiry
+  - Execute: `ctx.cwd` fallback, signal timeout handling (setTimeout/clearTimeout)
+  - getHelp: all option rendering combos, required asterisk, type fallback, missing schema
+  - removeAction: return values
+  - renderResult: missing details, empty content, error field fallbacks
+  - stats with non-empty args
+- `bash-actions.ts` branch coverage increased from 79.21% to 91.01% (uncovered 37 → 16).
+- Global branch coverage increased from 86.05% to **86.95%** (2120/2438).
+- Test count increased to 1289 (133 files).
+- All quality gates maintained (lint 0, typecheck clean, build success).
+
+**Impact:** Significant coverage gain in a critical tool module. Remaining gaps further narrowed.
+
+**Next:** Evaluate further cycles for remaining high‑gap modules based on ROI.
+
+**Commit:** chore: evolution round - bash-actions coverage push
