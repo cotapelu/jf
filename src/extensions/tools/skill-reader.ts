@@ -39,7 +39,7 @@ const commandMeta: Record<string, {
 const cm = commandMeta;
 
 // Helper for discovery mode to reduce nesting depth in execute()
-function buildDiscoveryOutput(command: string, meta: any): { content: [{ type: string, text: string }]; details: { mode: string, command: string }; isError: false } {
+function buildDiscoveryOutput(command: string, meta: any) {
   const lines: string[] = [`=== ${command} ===`, `Description: ${meta.description}`, '', 'Arguments:'];
   const schema = meta.schema;
   if (schema?.properties) {
@@ -55,10 +55,10 @@ function buildDiscoveryOutput(command: string, meta: any): { content: [{ type: s
     lines.push('', 'Examples:', `  ${meta.examples[0]}`);
   }
   return {
-    content: [{ type: "text", text: lines.join('\n') }],
+    content: [{ type: "text" as const, text: lines.join('\n') }],
     details: { mode: "discovery", command },
     isError: false
-  } as const;
+  };
 }
 
 // Additional test-only commands for branch coverage
@@ -167,8 +167,7 @@ export function createSkillLoaderTool(): ToolDefinition {
       },
       required: ["command", "args"]
     },
-    // @ts-expect-error - custom field for discovery
-    commandMeta: commandMeta,
+
 
     async execute(_toolCallId: string, params: any, signal?: AbortSignal, _onUpdate?: any, ctx?: any) {
       const { command, args } = params;
@@ -180,7 +179,7 @@ export function createSkillLoaderTool(): ToolDefinition {
           content: [{ type: "text", text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }],
           details: null,
           isError: true
-        } as const;
+        };
       }
 
       try {
@@ -207,14 +206,14 @@ export function createSkillLoaderTool(): ToolDefinition {
           content: [{ type: "text", text: result.stdout }],
           details: result,
           isError: result.code !== 0
-        } as const;
+        };
 
       } catch (error: any) {
         return {
           content: [{ type: "text", text: `skill_reader ${command} error: ${error.message}` }],
           details: { error: error.message, command },
           isError: true
-        } as const;
+        };
       }
     }
   };

@@ -22,14 +22,6 @@ function populateResultDetails(result: any, cap: any): void {
   }
 }
 
-// Helper for reducing execute complexity (Cycle 117)
-function populateResultDetails(result: any, cap: any): void {
-  if (result && typeof result === 'object') {
-    result.details = result.details || {};
-    result.details.capabilityId = cap.id;
-  }
-}
-
 // Simple truncateToVisualLines implementation (matches pi-tui internal)
 function truncateToVisualLines(text: string, maxLines: number, width: number): { visualLines: string[]; skippedCount: number } {
   const lines: string[] = [];
@@ -82,7 +74,7 @@ function createCallCapabilityFunction(registry: any, api: any, toolCallId: strin
       exec: createExecFunction(api, ctx, signal),
       getCurrentCapability: () => innerCap,
       getCapability: (id2: string) => registry.get(id2),
-      listCapabilitiesByTag: (tag: string) => registry.listAll().filter(c => c.tags.includes(tag)),
+      listCapabilitiesByTag: (tag: string) => registry.listAll().filter((c: Capability) => c.tags.includes(tag)),
       callCapability: () => Promise.reject(new Error("Nested callCapability not supported"))
     };
     return innerCap.execute(toolCallId, params, signal, onUpdate, innerCtx);
@@ -96,7 +88,7 @@ function buildEnhancedContext(ctx: any, api: any, registry: any, cap: any, signa
     exec: createExecFunction(api, ctx, signal),
     getCurrentCapability: () => cap,
     getCapability: (id: string) => registry.get(id),
-    listCapabilitiesByTag: (tag: string) => registry.listAll().filter(c => c.tags.includes(tag)),
+    listCapabilitiesByTag: (tag: string) => registry.listAll().filter((c: Capability) => c.tags.includes(tag)),
     callCapability: createCallCapabilityFunction(registry, api, toolCallId, ctx, signal, onUpdate)
   };
 }
