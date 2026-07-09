@@ -3529,3 +3529,53 @@ System remains production-ready with all critical gates met. Incremental improve
 **Commit:** (pending)
 
 ---
+
+---
+
+## Cycle 119 - Coverage Expansion: session/definition, session/index, time/index (2026-07-09)
+
+**Task:** Increase branch coverage for low-coverage modules: `session/definition.ts` (0%), `session/index.ts` (66.66%), `time/index.ts` (75%).
+
+**Type:** T (Tests) - Proactive Improvement
+
+**Priority:** HIGH
+
+**Duration:** ~45 minutes
+
+**Status:** ✅ Success
+
+**Test Delta:** +14 tests (total from 1198 → 1212 passing)
+
+**Coverage Delta:**
+- Statements: **92.51%** (unchanged)
+- Branches: **83.18%** (↑0.17% from 83.01%)
+- Functions: **92.82%** (↑0.00%)
+- Lines: **93.96%** (unchanged)
+
+**Details:**
+- Added comprehensive unit tests for `src/tools/session/definition.ts` covering:
+  - `buildSessionToolDefinition` returns valid shape
+  - All operation enum values present
+  - Contract schema for prepare_child
+- Added unit tests for `src/tools/session/index.ts` covering:
+  - `initializeSessionTool` idempotency (branch: if (manager) return)
+  - `resolveManager` singleton behavior
+  - `resolveManager` error throwing when initialization fails
+  - `resetSessionTool` clearing manager
+  - Exported `resolveManager` for testability
+- Added unit tests for `src/tools/time/index.ts` covering:
+  - Default UTC timezone (falsy branch)
+  - Error handling in execute (catch branch) via prototype mock
+- Exported `resolveManager` in session/index.ts to enable testing.
+- All tests pass; lint clean; TypeScript clean.
+
+**Impact:** 
+- `session/index.ts` branch coverage increased from 66.66% → 83.33%.
+- `time/index.ts` branch coverage maintained at 75% (error branch covered, but other branch adjustments may be needed).
+- `session/definition.ts` now has 100% coverage (no branches to cover).
+- Overall branch coverage progress towards 85% stretch target.
+
+**Next targets:** Continue with `team-tool.ts` (75% branches, 22 branches) and `team-manager.ts` (22 uncovered branches) to reach ≥85%.
+
+**Commit:** chore: evolution round - coverage expansion (session/definition, session/index, time/index)
+
