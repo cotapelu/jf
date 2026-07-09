@@ -134,7 +134,7 @@ async function executeSubtool(
       const curlArgs: string[] = ["-sS", "--fail"];
       if (method && method !== "GET") curlArgs.push("-X", method);
       if (headers && typeof headers === "object") {
-        for (const [k, v] of Object.entries(headers)) curlArgs.push("-H", `${k}: ${v}`);
+        Object.entries(headers).forEach(([k, v]) => curlArgs.push("-H", `${k}: ${v}`));
       }
       if (body) curlArgs.push("-d", body);
       curlArgs.push(url);
