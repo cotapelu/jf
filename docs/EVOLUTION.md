@@ -1163,3 +1163,15 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - Next focus: address remaining uncovered branches in `bash-actions.ts` (25), `analyze.ts` (6), `complexity.ts` (5) to approach 85% stretch target.
 
 **Commit:** chore: evolution round - team-manager coverage & edge cases
+
+## Cycle 125 - Bash-Actions Coverage Push (2026-07-09)
+
+- Created `bash-actions.coverage.test.ts` with 25 targeted tests.
+- Covered remaining branches in `SimpleLRUCache` (eviction, TTL=0, expiry), `TokenBucket`, `validateArgs` (all type constraints, enum, min/max), tool wrapper `execute` error handling, and `renderResult`.
+- Increased global branch coverage from 83.51% to 85.31% (2080/2438), exceeding 85% stretch target.
+- Test count increased to 1252 (133 files).
+- All quality gates remain green.
+
+**Stretch Target Achieved:** ✅ Global branch coverage ≥85%
+
+**Commit:** chore: evolution round - bash-actions coverage push to 85%

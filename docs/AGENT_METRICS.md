@@ -3704,3 +3704,44 @@ System remains production-ready with all critical gates met. Incremental improve
 **Next targets:** Remaining uncovered branches in high-gap modules: `bash-actions.ts` (72.53%, 25 uncovered), `analyze.ts` (88.24%, 6 uncovered), `complexity.ts` (88.64%, 5 uncovered). Stretch target 85% requires ~39 more branches.
 
 **Commit:** chore: evolution round - team-manager coverage & edge cases
+
+## Cycle 125 - Bash-Actions Comprehensive Coverage (2026-07-09)
+
+**Task:** Increase branch coverage for `bash-actions.ts` (72.53% → >85%) to achieve stretch target.
+
+**Type:** T (Tests) - Proactive Improvement
+
+**Priority:** HIGH
+
+**Duration:** ~2 hours
+
+**Status:** ✅ Success
+
+**Test Delta:** +25 tests (total 1252 passing)
+
+**Coverage Delta:**
+- Statements: **~92.4%** (stable)
+- Branches: **85.31%** (↑1.80% from 83.51%)
+- Functions: **~92.7%** (stable)
+- Lines: **~93.9%** (stable)
+
+**Details:**
+- Created `bash-actions.coverage.test.ts` with 25 comprehensive tests covering:
+  - SimpleLRUCache: TTL=0 no-cache, LRU eviction, expired entry handling
+  - TokenBucket: token consumption and insufficient tokens
+  - Execution error paths: buildCommand returning null/non-string, result.isError true, non-zero exit codes not cached
+  - Rate limiting: token bucket exhaustion (tryRemoveTokens false)
+  - validateArgs: required access exception, type enforcement (string, number, boolean, integer), enum, minimum, maximum
+  - Metrics getters: unknown action returns null, cacheHitRate zero
+  - Tool wrapper: 'list' and 'stats' actions
+  - Tool error handling: non-zero exit sets isError true, unknown action caught
+  - renderResult: isPartial, error, cached badge, normal output
+
+**Impact:**
+- `bash-actions.ts` branch coverage increased from 72.53% to ~91% (local).
+- Global branch coverage reached **85.31%**, exceeding stretch target of 85%.
+- All quality gates maintained: 1252/1252 tests passing, lint 0 errors, TypeScript clean, build successful.
+
+**Next targets:** Maintain coverage >85%; address any remaining minor gaps for robustness.
+
+**Commit:** chore: evolution round - bash-actions coverage push to 85%
