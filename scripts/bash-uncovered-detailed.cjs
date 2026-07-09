@@ -1,7 +1,7 @@
 const cov = require('../coverage/coverage-final.json');
 const target = '/home/quangtynu/Qcoder/jf/src/extensions/tools/bash-actions.ts';
 const data = cov[target];
-if (!data) { console.log('No data'); process.exit(0); }
+if (!data) { console.log('No coverage data for', target); process.exit(0); }
 const branchMap = data.branchMap;
 const b = data.b;
 let totalLocs = 0, coveredLocs = 0;
@@ -19,8 +19,8 @@ for (const key in branchMap) {
   }
 }
 uncovered.sort((a,b) => a.line - b.line);
-console.log(`bash-actions.ts branch locations: total=${totalLocs}, covered=${coveredLocs}, uncovered=${totalLocs - coveredLocs} (${((coveredLocs/totalLocs)*100).toFixed(2)}% covered)`);
-console.log('Uncovered locations by line:');
+console.log(`bash-actions.ts locations: total=${totalLocs}, covered=${coveredLocs}, uncovered=${totalLocs - coveredLocs} (${((coveredLocs/totalLocs)*100).toFixed(2)}% coverage)`);
+console.log('Uncovered by line:');
 for (const u of uncovered) {
   console.log(`  Line ${u.line}: ${u.type}`);
 }

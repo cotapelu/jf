@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile, unlink, rm } from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 
@@ -380,5 +380,90 @@ export { x };
     }
 
     await unlink(file);
+  });
+
+  // ----- Additional coverage tests (Cycle 128) -----
+
+  it('should parse interface declaration (verify getSymbolKindFromDeclaration TSInterface case)', async () => {
+    const code = `interface I {}`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    const iface = result.details.symbols.find(s => s.kind === 'interface');
+    expect(iface).toBeDefined();
+    await unlink(file);
+  });
+
+  it('should handle enum declaration as export (symbol kind fallback to variable)', async () => {
+    const code = `enum E { A, B }\nexport { E };`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    // Enum not directly recognized by getSymbolKindFromDeclaration, but handled via direct push
+    const exp = result.details.exports.find(e => e.name === 'E');
+    expect(exp).toBeDefined();
+    await unlink(file);
+  });
+
+  it('should handle default export of object literal (returns <anonymous>)', async () => {
+    const code = `export default {};`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    const def = result.details.exports.find(e => e.type === 'default');
+    expect(def).toBeDefined();
+    expect(def?.name).toBe('<anonymous>');
+    await unlink(file);
+  });
+
+  it('should handle default export of arrow function', async () => {
+    const code = `export default () => {};`;
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    const def = result.details.exports.find(e => e.type === 'default');
+    expect(def).toBeDefined();
+    expect(def?.name).toBe('<default function>');
+    await unlink(file);
+  });
+
+  it('should recognize .tsx file extension', async () => {
+    const code = `const x = 1;`;
+    const file = await writeTempFile(code, 'tsx');
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    expect(result.details.language).toBe('tsx');
+    await unlink(file);
+  });
+
+  it('should recognize .jsx file extension', async () => {
+    const code = `const x = 1;`;
+    const file = await writeTempFile(code, 'jsx');
+    const ctx = { cwd: path.dirname(file) };
+    const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    expect(result.details.language).toBe('jsx');
+    await unlink(file);
+  });
+
+  it('should fallback to process.cwd when ctx.cwd is undefined', async () => {
+    const code = `const y = 2;`;
+    // Write file in a subdirectory of process.cwd()
+    const testDir = path.join(process.cwd(), 'tmp-ast-cwd-test');
+    await mkdir(testDir, { recursive: true });
+    const file = path.join(testDir, 'cwd-fallback.ts');
+    await writeFile(file, code, 'utf-8');
+    // ctx without cwd
+    const ctx = {} as any;
+    const result = await analyzeAstModule.execute({ file: 'tmp-ast-cwd-test/cwd-fallback.ts' }, ctx as TestContext);
+    expect(result.isError).toBe(false);
+    // Cleanup
+    await unlink(file);
+    await rm(testDir, { recursive: true, force: true });
   });
 });

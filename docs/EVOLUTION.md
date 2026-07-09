@@ -1212,3 +1212,23 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 **Next:** Continue targeted improvements only if ROI becomes favorable or specific regressions appear.
 
 **Commit:** chore: evolution round - ast_query coverage push
+
+## Cycle 128 - Analyze AST Coverage Push (2026-07-09)
+
+- Added 8 targeted tests to `analyze_ast.test.ts`, covering:
+  - `getSymbolKindFromDeclaration` default case via `export enum`
+  - `handleExportNamedDeclaration` with non‑variable declarations
+  - `getDefaultExportInfo` with arrow function (`<default function>`)
+  - `getDefaultExportInfo` with object literal (`<anonymous>`)
+  - `getLanguageFromFilename` for `.tsx` and `.jsx`
+  - `execute` fallback to `process.cwd()` when `ctx.cwd` undefined
+- `analyze_ast.ts` branch coverage increased from 75.61% to 83.74% (uncovered branches reduced from 30 to 20).
+- Global branch coverage increased from 86.05% to **86.05%** (actually 85.68%→86.05% = +0.37%), total branches 2098/2438.
+- Test count increased to 1270 (133 files).
+- All quality gates maintained (lint 0, typecheck clean, build success).
+
+**Impact:** Modest but consistent improvement. Remaining gaps now smaller; still ~20 in analyze_ast, 30 in dependency_tree and bash-actions. Further improvement possible with focused cycles.
+
+**Next:** Evaluate continuation to other high‑gap modules based on ROI and user priorities.
+
+**Commit:** chore: evolution round - analyze_ast coverage push

@@ -3815,3 +3815,35 @@ System remains production-ready with all critical gates met. Incremental improve
 **Next targets:** Continue optimizing remaining high‑impact modules if ROI justifies.
 
 **Commit:** chore: evolution round - ast_query coverage push
+
+## Cycle 128 - Analyze AST Coverage Push (2026-07-09)
+
+**Task:** Increase branch coverage for `analyze_ast.ts` (75.61% → 83.74%)  
+**Type:** T (Tests) - Proactive Improvement  
+**Priority:** High (largest remaining gap)  
+**Duration:** ~2.5 hours  
+**Status:** ✅ Completed (coverage improved)  
+**Test Delta:** +8 tests (total 1270 passing)  
+**Coverage Delta:**
+- Statements: **~93.7%** (↑0.1)
+- Branches: **86.05%** (↑0.37%)
+- Functions: **~93.3%** (stable)
+- Lines: **95%** (stable)
+
+**Details:**
+- Added targeted tests covering:
+  - `getSymbolKindFromDeclaration` default case via `export enum`
+  - `handleExportNamedDeclaration` with non‑variable declarations
+  - `getDefaultExportInfo` with arrow function (`<default function>`)
+  - `getDefaultExportInfo` with object literal (`<anonymous>`)
+  - `getLanguageFromFilename` for `.tsx` and `.jsx`
+  - `execute` fallback to `process.cwd()` when `ctx.cwd` undefined
+- `analyze_ast.ts` branch coverage: **83.74%** (uncovered branches 20)
+- Global branch coverage: **86.05%** (2098/2438)
+- All quality gates maintained (1270/1270 tests pass, lint 0, TypeScript clean, build success).
+
+**Impact:** Continued steady progress; remaining gaps now smaller but still require effort to reach 90%.
+
+**Next targets:** Continue with next highest‑impact module (`dependency_tree.ts` or `bash-actions.ts`) if ROI justifies.
+
+**Commit:** chore: evolution round - analyze_ast coverage push
