@@ -273,10 +273,10 @@ export async function execute(
         if (tasks.length === 0) {
           output += "No tasks. Add one with action='add'.\n";
         } else {
-          for (const task of tasks) {
+          tasks.forEach(task => {
             const icon = task.done ? "✅" : "⏳";
             output += `${icon} [${task.id}] ${task.content}\n`;
-          }
+          });
         }
 
         return {
