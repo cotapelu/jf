@@ -127,27 +127,10 @@ export function parseCommandArgs(input: string): string[] {
  */
 export function substitutePromptArgs(content: string, args: string[]): string {
   let result = content;
-
-  result = result.replace(/\$(\d+)/g, (_, n) => {
-    const index = parseInt(n, 10) - 1;
-    return index >= 0 && index < args.length ? args[index] : '';
-  });
-
+  result = result.replace(/\$([0-9]+)/g, (_, n) => { const index = parseInt(n, 10) - 1; return index >= 0 && index < args.length ? args[index] : ''; });
   result = result.replace(/\$(?:@|ARGUMENTS)/g, () => args.join(' '));
-
-  result = result.replace(/\$\{(\d+):-(.*?)\}/g, (_, n, def) => {
-    const index = parseInt(n, 10) - 1;
-    const arg = args[index];
-    return (arg !== undefined && arg !== '') ? arg : def;
-  });
-
-  result = result.replace(/\$\{@:(\d+)(?::(\d+))?\}/g, (_, startStr, lenStr) => {
-    const start = parseInt(startStr, 10) - 1;
-    if (start < 0) return '';
-    const length = lenStr ? parseInt(lenStr, 10) : undefined;
-    const slice = length !== undefined ? args.slice(start, start + length) : args.slice(start);
-    return slice.join(' ');
-  });
-
+  result = result.replace(/\$\{([0-9]+):-(.*?)\}/g, (_, n, def) => { const index = parseInt(n, 10) - 1; const arg = args[index]; return (arg !== undefined && arg !== '') ? arg : def; });
+  result = result.replace(/\$\{@:([0-9]+)(?::([0-9]+))?\}/g, (_, startStr, lenStr) => { const start = parseInt(startStr, 10) - 1; if (start < 0) return ''; const length = lenStr ? parseInt(lenStr, 10) : undefined; const slice = length !== undefined ? args.slice(start, start + length) : args.slice(start); return slice.join(' '); });
   return result;
 }
+

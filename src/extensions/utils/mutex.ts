@@ -15,29 +15,13 @@
 export class Mutex {
   private locked = false;
   private queue: Array<() => void> = [];
-
-  /**
-   * Acquire the lock.
-   * If available, returns release function immediately.
-   * If locked, returns a promise that resolves when lock becomes available.
-   */
   async lock(): Promise<() => void> {
-    if (!this.locked) {
-      this.locked = true;
-      return () => this.unlock();
-    }
-    return new Promise(resolve => {
-      this.queue.push(() => resolve(() => this.unlock()));
-    });
+    if (!this.locked) { this.locked = true; return () => this.unlock(); }
+    return new Promise(resolve => { this.queue.push(() => resolve(() => this.unlock())); });
   }
-
   private unlock(): void {
-    if (this.queue.length > 0) {
-      const next = this.queue.shift()!;
-      next();
-    } else {
-      this.locked = false;
-    }
+    if (this.queue.length > 0) { const next = this.queue.shift()!; next(); } else { this.locked = false; }
   }
 }
+
 
