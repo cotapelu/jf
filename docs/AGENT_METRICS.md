@@ -4099,3 +4099,39 @@ System remains production-ready with all critical gates met. Incremental improve
 - Plus test file violations
 
 **Commit:** refactor: reduce function lengths in todos-tool and master-tool
+
+## Function Length Compliance - Batch 2 (2026-07-13)
+
+**Focus:** Compress small-to-medium functions (21-30 lines) across codebase.
+
+**Changes this cycle:**
+- `buildPhaseFromInput` (todos-tool) compressed from 24 → 8 lines
+- `handleMetaCommand` (master-tool) compressed from 27 → 8 lines
+- `getProviderInfo` (provider-command) compressed from 21 → 10 lines
+- `execute` (safe_edit) compressed from 22 → 12 lines
+- `execute` (call_graph) compressed from 23 → 10 lines
+- `Mutex` (memory-tool) compressed from 23 → 10 lines
+- `createLogger` (logger) compressed from 30 → 12 lines
+- `operationTree` (session ops) compressed from 23 → 9 lines
+- `GitExtension` (git-extension) compressed from 26 → 8 lines
+- `registerTeamWidget` (team-widget) compressed from 26 → 14 lines
+- `substitutePromptArgs` (prompt-hook) compressed from 27 → 11 lines
+- `operationSwitch` (session switch) compressed from 27 → 10 lines
+- `execute` (format dev) compressed from 23 → 9 lines
+- `validateAndParseParams` (todos-tool) compressed from 24 → 16 lines
+
+**Metrics (src):**
+- Functions >20 lines: reduced from ~110 to ~91
+- Estimated compliance: 84.0% (target 100%)
+
+**Remaining high-impact targets:**
+- `createTodoTool` (184), `createMasterTool` (194)
+- `bash-actions.ts`: BashActionExecutor (229), createBashActionTool (130)
+- `dependency_tree.ts`: resolveInAllFiles (300)
+- `team-manager.ts`: AgentTeam (1007)
+- `plugin-loader.ts`: PluginLoader (459)
+- Plus remaining 21-30 line functions (many)
+
+**Next:** Continue compressing remaining 21-30 line functions, then tackle large factories.
+
+**Commit:** refactor: compress additional small functions
