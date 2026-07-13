@@ -4081,3 +4081,21 @@ System remains production-ready with all critical gates met. Incremental improve
 
 **Commit:** refactor: reduce function lengths in analyze_ast.ts, complexity.ts, call_graph.ts
 
+
+## Function Length Batch - 2026-07-13
+
+**Changes:**
+- `buildPhaseFromInput` (todos-tool) compressed to <=20 lines
+- `handleMetaCommand` (master-tool) compressed to <=20 lines
+
+**Metrics after changes (src):**
+- Functions >20 lines: 110 (from 139) – compliance 80.74%
+- All tests pass, typecheck clean
+
+**Remaining high-impact targets:**
+- `createTodoTool` (184), `createMasterTool` (194)
+- `bash-actions.ts`: BashActionExecutor (229), createBashActionTool (130)
+- `dependency_tree.ts`: resolveInAllFiles (300)
+- Plus test file violations
+
+**Commit:** refactor: reduce function lengths in todos-tool and master-tool
