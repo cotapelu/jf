@@ -42,6 +42,23 @@ export function formatListOutput(sessions: SessionMetadata[], mgr: MultiSessionM
   );
 }
 
+/**
+ * Render session tree nodes as ASCII tree lines.
+ *
+ * Recursively builds an array of strings representing the tree structure
+ * with proper indentation and branch connectors (├──, └──).
+ *
+ * @param nodes - Array of session tree nodes to render
+ * @param prefix - Prefix string for current indentation level (internal use for recursion)
+ * @returns Array of lines (strings) representing the tree
+ * @example
+ *   renderTree([rootNode])
+ *   // => [
+ *   //   '└── 🟢 session-1 "My Session"',
+ *   //   '    ├── 🟢 session-1-1 "Child 1"',
+ *   //   '    └── 🟢 session-1-2 "Child 2"'
+ *   // ]
+ */
 export function renderTree(nodes: SessionTreeNode[], prefix: string = ''): string[] {
   return nodes.flatMap((node, idx) => {
     const isLast = idx === nodes.length - 1;
