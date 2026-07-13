@@ -97,24 +97,12 @@ function handleCall(node: any): { name?: string; kind: string } | null {
 }
 
 function handleSymbol(node: any): { name?: string; kind: string } | null {
-  if (node.type === 'VariableDeclarator' && node.id?.type === 'Identifier') {
-    return { name: node.id.name, kind: 'variable' };
-  }
-  if (node.type === 'FunctionDeclaration' && node.id) {
-    return { name: node.id.name, kind: 'function' };
-  }
-  if (node.type === 'ClassDeclaration' && node.id) {
-    return { name: node.id.name, kind: 'class' };
-  }
-  if (node.type === 'TSTypeAliasDeclaration' && node.id) {
-    return { name: node.id.name, kind: 'type' };
-  }
-  if (node.type === 'TSInterfaceDeclaration' && node.id) {
-    return { name: node.id.name, kind: 'interface' };
-  }
-  if (node.type === 'TSEnumDeclaration' && node.id) {
-    return { name: node.id.name, kind: 'enum' };
-  }
+  if (node.type === 'VariableDeclarator' && node.id?.type === 'Identifier') return { name: node.id.name, kind: 'variable' };
+  if (node.type === 'FunctionDeclaration' && node.id) return { name: node.id.name, kind: 'function' };
+  if (node.type === 'ClassDeclaration' && node.id) return { name: node.id.name, kind: 'class' };
+  if (node.type === 'TSTypeAliasDeclaration' && node.id) return { name: node.id.name, kind: 'type' };
+  if (node.type === 'TSInterfaceDeclaration' && node.id) return { name: node.id.name, kind: 'interface' };
+  if (node.type === 'TSEnumDeclaration' && node.id) return { name: node.id.name, kind: 'enum' };
   return null;
 }
 
@@ -126,38 +114,33 @@ function handleImport(node: any): { name?: string; kind: string } | null {
 }
 
 function handleExport(node: any): { name?: string; kind: string } | null {
-  if (node.type === 'ExportNamedDeclaration') {
-    let name: string | undefined;
-    if (node.specifiers && node.specifiers.length > 0) {
-      name = node.specifiers.map((sp: any) => sp.exported?.name || sp.local?.name).join(', ');
-    } else if (node.declaration) {
-      const dec = node.declaration;
-      if (dec.type === 'VariableDeclaration') {
-        name = dec.declarations.map((d: any) => d.id?.name).filter(Boolean).join(', ') || '<export>';
-      } else if (dec.id) {
-        name = dec.id.name;
-      } else if (dec.type === 'TSTypeAliasDeclaration' && dec.id) {
-        name = dec.id.name;
-      } else if (dec.type === 'TSInterfaceDeclaration' && dec.id) {
-        name = dec.id.name;
-      } else if (dec.type === 'TSEnumDeclaration' && dec.id) {
-        name = dec.id.name;
-      } else {
-        name = '<export>';
-      }
-    } else {
-      name = '<export>';
-    }
-    return { name, kind: 'export' };
-  }
-  if (node.type === 'ExportDefaultDeclaration') {
-    const name = node.declaration?.id?.name || 'default';
-    return { name, kind: 'export' };
-  }
-  if (node.type === 'ExportAllDeclaration') {
-    return { name: '*', kind: 'export' };
-  }
+  if (node.type === 'ExportNamedDeclaration') return handleExportNamed(node);
+  if (node.type === 'ExportDefaultDeclaration') return { name: node.declaration?.id?.name || 'default', kind: 'export' };
+  if (node.type === 'ExportAllDeclaration') return { name: '*', kind: 'export' };
   return null;
+}
+
+function handleExportNamed(node: any): { name: string; kind: 'export' } {
+  let name: string;
+  if (node.specifiers && node.specifiers.length > 0) {
+    name = node.specifiers.map((sp: any) => sp.exported?.name || sp.local?.name).join(', ');
+  } else if (node.declaration) {
+    name = getExportNameFromDeclaration(node.declaration) || '<export>';
+  } else {
+    name = '<export>';
+  }
+  return { name, kind: 'export' };
+}
+
+function getExportNameFromDeclaration(dec: any): string | undefined {
+  if (dec.type === 'VariableDeclaration') {
+    return dec.declarations.map((d: any) => d.id?.name).filter(Boolean).join(', ');
+  }
+  if (dec.id) return dec.id.name;
+  if (dec.type === 'TSTypeAliasDeclaration' && dec.id) return dec.id.name;
+  if (dec.type === 'TSInterfaceDeclaration' && dec.id) return dec.id.name;
+  if (dec.type === 'TSEnumDeclaration' && dec.id) return dec.id.name;
+  return undefined;
 }
 
 const kindHandlers: Record<string, (node: any) => { name?: string; kind: string } | null> = {
@@ -198,39 +181,26 @@ function collectMatches(ast: any, query: any): Match[] {
   const { kind, name, parent: parentName, limit } = query;
   const maxResults = limit || 50;
   const matches: Match[] = [];
+  const visitor = createCollectVisitor(kind, maxResults, matches, name, parentName);
+  walk(ast, visitor);
+  return matches;
+}
+
+function createCollectVisitor(kind: string, maxResults: number, matches: Match[], name?: string, parentName?: string) {
   let abort = false;
-
-  function visitor(node: any, directParent?: any) {
+  return function visitor(node: any, directParent?: any) {
     if (abort) return;
-
     const matchInfo = getMatchInfo(node, kind);
     if (!matchInfo) return;
-
     const { name: nodeName, kind: nodeKind } = matchInfo;
     const line = node.loc?.start?.line ?? 0;
     const column = node.loc?.start?.column;
-
-    // Resolve container for parent relationship
     const container = getParentContainer(node, directParent);
-
-    // Apply parent filter
-    if (parentName && !parentMatches(container, parentName)) {
-      return;
-    }
-
-    // Apply name filter
-    if (nodeName && name && !nameMatches(nodeName, name)) {
-      return;
-    }
-
+    if (parentName && !parentMatches(container, parentName)) return;
+    if (nodeName && name && !nameMatches(nodeName, name)) return;
     matches.push({ kind: nodeKind, name: nodeName, line, column, parent: container?.id?.name });
-    if (matches.length >= maxResults) {
-      abort = true;
-    }
-  }
-
-  walk(ast, visitor);
-  return matches;
+    if (matches.length >= maxResults) abort = true;
+  };
 }
 
 // --- Execute capability ---
@@ -279,28 +249,13 @@ function parseFileAST(content: string): any {
 export async function execute(params: { file: string; query: any }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const filePath = join(cwd, params.file);
-
-  if (!checkFileExists(filePath)) {
-    return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } };
-  }
-
+  if (!checkFileExists(filePath)) return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } };
   const content = readFileContent(filePath);
-
   let ast;
-  try {
-    ast = await parseFileAST(content);
-  } catch (err: any) {
-    return { content: [{ type: "text" as const, text: `Parse error: ${err.message}` }], isError: true, details: { file: params.file, error: err.message } };
-  }
-
+  try { ast = await parseFileAST(content); } catch (err: any) { return { content: [{ type: "text" as const, text: `Parse error: ${err.message}` }], isError: true, details: { file: params.file, error: err.message } }; }
   const matches = collectMatches(ast, params.query);
   const summary = buildQuerySummary(params.query, params.file, matches);
-
-  return {
-    content: [{ type: "text" as const, text: summary }],
-    details: { file: params.file, query: params.query, matches },
-    isError: false
-  };
+  return { content: [{ type: "text" as const, text: summary }], details: { file: params.file, query: params.query, matches }, isError: false };
 }
 
 export default { execute, schema };
