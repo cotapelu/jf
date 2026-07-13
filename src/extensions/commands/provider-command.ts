@@ -14,7 +14,6 @@ function getProviderInfo(ctx: any): Array<{ name: string; displayName: string; m
   const modelRegistry = ctx.modelRegistry;
   const allModels = modelRegistry.getAll();
   const providers = new Map<string, { name: string; baseUrl?: string; models: string[] }>();
-
   for (const m of allModels) {
     const provider = m.provider;
     if (!providers.has(provider)) {
@@ -23,13 +22,7 @@ function getProviderInfo(ctx: any): Array<{ name: string; displayName: string; m
     }
     providers.get(provider)!.models.push(m.id);
   }
-
-  return Array.from(providers.values()).map(p => ({
-    name: p.name,
-    displayName: p.name,
-    modelCount: p.models.length,
-    baseUrl: p.baseUrl,
-  }));
+  return Array.from(providers.values()).map(p => ({ name: p.name, displayName: p.name, modelCount: p.models.length, baseUrl: p.baseUrl }));
 }
 
 export function registerProviderCommand(api: ExtensionAPI): void {

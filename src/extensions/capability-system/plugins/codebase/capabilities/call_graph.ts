@@ -317,7 +317,6 @@ export async function execute(params: { file: string; entryPoints?: string[]; qu
   const { query = {} } = params;
   const { depth = 1, includeCrossFile = false, limit = 50 } = query;
   const nameFilter = query.name;
-
   const roots = determineRoots(params.file, params.entryPoints);
   const allFiles = await collectAllFiles(cwd, roots, depth, includeCrossFile);
   const absToFuncs = buildAbsToFuncs(allFiles);
@@ -325,12 +324,7 @@ export async function execute(params: { file: string; entryPoints?: string[]; qu
   const nodeSet = collectUniqueNodes(allFiles, edges);
   const result = buildResult(nodeSet, edges);
   const summary = formatSummary(params, result, edges);
-
-  return {
-    content: [{ type: "text" as const, text: summary }],
-    details: { file: params.file, entryPoints: params.entryPoints, query, result },
-    isError: false
-  };
+  return { content: [{ type: "text" as const, text: summary }], details: { file: params.file, entryPoints: params.entryPoints, query, result }, isError: false };
 }
 
 export default { execute, schema };

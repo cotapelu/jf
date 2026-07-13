@@ -8,24 +8,12 @@ import { matchesKey, Text } from "@earendil-works/pi-tui";
 class Mutex {
   private locked = false;
   private queue: (() => void)[] = [];
-
   async lock(): Promise<() => void> {
-    if (!this.locked) {
-      this.locked = true;
-      return () => this.unlock();
-    }
-    return new Promise(resolve => {
-      this.queue.push(() => resolve(() => this.unlock()));
-    });
+    if (!this.locked) { this.locked = true; return () => this.unlock(); }
+    return new Promise(resolve => { this.queue.push(() => resolve(() => this.unlock())); });
   }
-
   private unlock() {
-    if (this.queue.length > 0) {
-      const next = this.queue.shift()!;
-      next();
-    } else {
-      this.locked = false;
-    }
+    if (this.queue.length > 0) { const next = this.queue.shift()!; next(); } else { this.locked = false; }
   }
 }
 

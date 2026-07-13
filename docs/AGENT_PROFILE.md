@@ -427,10 +427,10 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 - Lint: 0 errors
 - TypeScript: Clean
 - Security: 0 vulnerabilities
-- Function length: 75.66% compliant (src only, 139/571 functions >20 lines)
+- Function length: 80.74% compliant (src only, 110/571 functions >20 lines)
 
 **Remaining Gaps (Critical):**
-- Function length quality gate (target 100%): 139 functions >20 lines remain (src)
+- Function length quality gate (target 100%): 110 functions >20 lines remain (src)
   - High-impact individual functions/classes:
     - `team-manager.ts`: AgentTeam class (1007 lines)
     - `plugin-loader.ts`: PluginLoader class (459 lines)

@@ -223,14 +223,9 @@ function validateOperations(operations: EditOperation[], cwd: string): { valid: 
  * @returns Promise with results per file and overall success flag.
  */
 export async function execute(params: { operations: EditOperation[]; format?: boolean; fixImports?: boolean }, ctx: any): Promise<any> {
-  const cwd = ctx.cwd || process.cwd();
-  const format = params.format !== false;
-  const fixImports = params.fixImports !== false;
-  const { operations } = params;
+  const cwd = ctx.cwd || process.cwd(); const format = params.format !== false; const fixImports = params.fixImports !== false; const { operations } = params;
   const inputCheck = validateOperations(operations, cwd);
-  if (!inputCheck.valid) {
-    return { success: false, results: [{ file: inputCheck.file || '', success: false, error: inputCheck.error || 'Invalid input' }] };
-  }
+  if (!inputCheck.valid) return { success: false, results: [{ file: inputCheck.file || '', success: false, error: inputCheck.error || 'Invalid input' }] };
   const opsByFile = groupOperationsByFile(operations);
   let backups: Map<string, string>;
   try { backups = await backupFiles(operations, cwd); } catch (err) { return { success: false, results: [{ file: operations[0]?.file || '', success: false, error: String(err) }] }; }
