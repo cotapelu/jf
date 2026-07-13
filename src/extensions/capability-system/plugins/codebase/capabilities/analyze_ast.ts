@@ -76,16 +76,11 @@ function handleImport(node: any, result: AnalysisResult) {
   const specifier = node.source.value;
   const importInfo: ImportInfo = { moduleSpecifier: specifier };
   const named: string[] = [];
-  let defaultImport: string | null = null;
-  let namespace: string | null = null;
+  let defaultImport: string | null = null, namespace: string | null = null;
   node.specifiers.forEach((sp: any) => {
-    if (sp.type === 'ImportSpecifier') {
-      named.push(sp.local.name);
-    } else if (sp.type === 'ImportDefaultSpecifier') {
-      defaultImport = sp.local.name;
-    } else if (sp.type === 'ImportNamespaceSpecifier') {
-      namespace = sp.local.name;
-    }
+    if (sp.type === 'ImportSpecifier') named.push(sp.local.name);
+    else if (sp.type === 'ImportDefaultSpecifier') defaultImport = sp.local.name;
+    else if (sp.type === 'ImportNamespaceSpecifier') namespace = sp.local.name;
   });
   if (defaultImport) importInfo.importClause = defaultImport;
   if (namespace) importInfo.importClause = `* as ${String(namespace)}`;
@@ -292,25 +287,10 @@ async function executeInternal(filePath: string, file: string, language: "ts" | 
 
 export async function execute(params: { file: string }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
-  
-  // Path traversal protection
   let filePath: string;
-  try {
-    filePath = resolveSecurePath(cwd, params.file);
-  } catch (err) {
-    return { 
-      content: [{ type: "text" as const, text: `Access denied: ${String(err)}` }], 
-      isError: true, 
-      details: { file: params.file, error: 'path_traversal' } 
-    };
-  }
-
-  try { await fs.access(filePath); } catch {
-    return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } };
-  }
-
+  try { filePath = resolveSecurePath(cwd, params.file); } catch (err) { return { content: [{ type: "text" as const, text: `Access denied: ${String(err)}` }], isError: true, details: { file: params.file, error: 'path_traversal' } }; }
+  try { await fs.access(filePath); } catch { return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } }; }
   const language = detectLanguage(params.file);
-
   try {
     const { result, summary } = await executeInternal(filePath, params.file, language);
     return { content: [{ type: "text" as const, text: summary }], details: result, isError: false };
