@@ -1,0 +1,20 @@
+[
+  {
+    "path": "src/extensions/tools/todos-tool.ts",
+    "edits": [
+      {
+        "oldText": "function buildPhaseFromInput(input: { name: string; tasks?: Array<{ content: string; status?: string; notes?: string; details?: string }> }, phaseId: string, nextTaskId: number): { phase: TodoPhase; nextTaskId: number } {\n  const tasks: TodoItem[] = [];\n  let tid = nextTaskId;\n  for (const t of input.tasks ?? []) {\n    // Cast status to TodoStatus if valid, otherwise default to pending\n    let status: TodoStatus = \"pending\";\n    if (t.status && [\"pending\", \"in_progress\", \"completed\", \"abandoned\"].includes(t.status)) {\n      status = t.status as TodoStatus;\n    }\n    tasks.push({\n      id: `task-${tid++}`,\n      content: t.content,\n      status,\n      notes: t.notes,\n      details: t.details,\n    });\n  }\n  return { phase: { id: phaseId, name: input.name, tasks }, nextTaskId: tid };\n}",
+        "newText": "function buildPhaseFromInput(input: { name: string; tasks?: Array<{ content: string; status?: string; notes?: string; details?: string }> }, phaseId: string, nextTaskId: number): { phase: TodoPhase; nextTaskId: number } {\n  const tasks: TodoItem[] = []; let tid = nextTaskId;\n  for (const t of input.tasks ?? []) {\n    let status: TodoStatus = 'pending';\n    if (t.status && ['pending','in_progress','completed','abandoned'].includes(t.status)) status = t.status as TodoStatus;\n    tasks.push({ id: `task-${tid++}`, content: t.content, status, notes: t.notes, details: t.details });\n  }\n  return { phase: { id: phaseId, name: input.name, tasks }, nextTaskId: tid };\n}"
+      }
+    ]
+  },
+  {
+    "path": "src/extensions/master-tool/master-tool.ts",
+    "edits": [
+      {
+        "oldText": "function handleMetaCommand(\n  command: string,\n  args: any,\n  _ctx: ExtensionContext\n): AgentToolResult<any> {\n  const registry = getRegistry();\n\n  switch (command) {\n    case \"list\":\n      return handleListCommand(registry, args);\n    case \"list.grep\":\n      return handleGrepCommand(registry, args);\n    case \"help\":\n      return handleHelpCommand(registry, args);\n    case \"stats\":\n      return handleStatsCommand(registry);\n    case \"reload\":\n      return handleReloadCommand(registry);\n    default:\n      return {\n        content: [{ type: \"text\", text: `❌ Unknown meta-command: ${command}. Use 'list', 'help', 'stats', 'reload'` }],\n        details: { error: \"unknown_meta_command\" },\n        isError: true\n      };\n  }\n}",
+        "newText": "function handleMetaCommand(command: string, args: any, _ctx: ExtensionContext): AgentToolResult<any> {\n  const registry = getRegistry();\n  switch (command) {\n    case 'list': return handleListCommand(registry, args);\n    case 'list.grep': return handleGrepCommand(registry, args);\n    case 'help': return handleHelpCommand(registry, args);\n    case 'stats': return handleStatsCommand(registry);\n    case 'reload': return handleReloadCommand(registry);\n    default: return { content: [{ type: 'text', text: `❌ Unknown meta-command: ${command}. Use 'list', 'help', 'stats', 'reload'` }], details: { error: 'unknown_meta_command' }, isError: true };\n  }\n}"
+      }
+    ]
+  }
+]

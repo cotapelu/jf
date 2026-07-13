@@ -341,30 +341,15 @@ function handleReloadCommand(registry: CommandRegistry): AgentToolResult<any> {
   };
 }
 
-function handleMetaCommand(
-  command: string,
-  args: any,
-  _ctx: ExtensionContext
-): AgentToolResult<any> {
+function handleMetaCommand(command: string, args: any, _ctx: ExtensionContext): AgentToolResult<any> {
   const registry = getRegistry();
-
   switch (command) {
-    case "list":
-      return handleListCommand(registry, args);
-    case "list.grep":
-      return handleGrepCommand(registry, args);
-    case "help":
-      return handleHelpCommand(registry, args);
-    case "stats":
-      return handleStatsCommand(registry);
-    case "reload":
-      return handleReloadCommand(registry);
-    default:
-      return {
-        content: [{ type: "text", text: `❌ Unknown meta-command: ${command}. Use 'list', 'help', 'stats', 'reload'` }],
-        details: { error: "unknown_meta_command" },
-        isError: true
-      };
+    case 'list': return handleListCommand(registry, args);
+    case 'list.grep': return handleGrepCommand(registry, args);
+    case 'help': return handleHelpCommand(registry, args);
+    case 'stats': return handleStatsCommand(registry);
+    case 'reload': return handleReloadCommand(registry);
+    default: return { content: [{ type: 'text', text: `❌ Unknown meta-command: ${command}. Use 'list', 'help', 'stats', 'reload'` }], details: { error: 'unknown_meta_command' }, isError: true };
   }
 }
 

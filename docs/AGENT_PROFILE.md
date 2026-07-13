@@ -427,12 +427,20 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 - Lint: 0 errors
 - TypeScript: Clean
 - Security: 0 vulnerabilities
-- Function length: 74.43% compliant (src only, 146/571 functions >20 lines)
+- Function length: 75.66% compliant (src only, 139/571 functions >20 lines)
 
 **Remaining Gaps (Critical):**
-- Function length quality gate (target 100%): 146 functions >20 lines remain
-  - High-impact: `createTodoTool` (184), `createMasterTool` (194), `bash-actions.ts` (5), `call_graph.ts` (8), `analyze_ast.ts` (6), `complexity.ts` (5), `dependency_tree.ts` (4 incl. 319-line resolveInAllFiles), `team-manager.ts` (AgentTeam 1007), `plugin-loader.ts` (PluginLoader 459)
-  - Many test files also exceed limit (e.g., `ast_query.test.ts` >400 lines)
+- Function length quality gate (target 100%): 139 functions >20 lines remain (src)
+  - High-impact individual functions/classes:
+    - `team-manager.ts`: AgentTeam class (1007 lines)
+    - `plugin-loader.ts`: PluginLoader class (459 lines)
+    - `createTodoTool` (184), `createMasterTool` (194)
+    - `bash-actions.ts`: BashActionExecutor (229), createBashActionTool (130)
+    - `dependency_tree.ts`: resolveInAllFiles (300)
+  - Plus remaining smaller violations in various capability modules (few each)
+  - Many test files also exceed limit (e.g., `ast_query.test.ts`, `codebase.test.ts`)
+
+**Optional Gaps:**
 
 **Optional Gaps:**
 - Branch coverage stretch target (85%+) not yet reached (currently 87.07%)
