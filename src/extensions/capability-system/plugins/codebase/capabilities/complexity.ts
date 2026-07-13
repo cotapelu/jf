@@ -217,21 +217,7 @@ function analyzeComplexity(file: string, language: "ts" | "tsx" | "js" | "jsx" |
   collectHalstead(ast, halsteadCounts);
   const halstead = computeHalstead(halsteadCounts);
   const maintainability = computeMaintainabilityIndex(halstead.volume, cyclomatic, lines);
-  return {
-    file,
-    exists: true,
-    language,
-    lines,
-    functions,
-    cyclomatic,
-    halstead: {
-      volume: halstead.volume,
-      difficulty: halstead.difficulty,
-      effort: halstead.effort,
-      bugs: halstead.bugs
-    },
-    maintainability: Math.round(maintainability * 10) / 10
-  };
+  return { file, exists: true, language, lines, functions, cyclomatic, halstead: { volume: halstead.volume, difficulty: halstead.difficulty, effort: halstead.effort, bugs: halstead.bugs }, maintainability: Math.round(maintainability * 10) / 10 };
 }
 
 /**
@@ -243,22 +229,12 @@ function analyzeComplexity(file: string, language: "ts" | "tsx" | "js" | "jsx" |
 export async function execute(params: { file: string }, ctx: any): Promise<any> {
   const cwd = ctx.cwd || process.cwd();
   const filePath = join(cwd, params.file);
-
-  try { await fs.access(filePath); } catch {
-    return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } };
-  }
-
+  try { await fs.access(filePath); } catch { return { content: [{ type: "text" as const, text: `File not found: ${params.file}` }], isError: true, details: { file: params.file, exists: false } }; }
   const content = await fs.readFile(filePath, "utf-8");
   const lines = content.split('\n').length;
   const language = detectLanguage(params.file);
-
   let ast;
-  try {
-    ast = await parseAST(content);
-  } catch (err: any) {
-    return { content: [{ type: "text" as const, text: `Parse error: ${err.message}` }], isError: true, details: { file: params.file, error: err.message } };
-  }
-
+  try { ast = await parseAST(content); } catch (err: any) { return { content: [{ type: "text" as const, text: `Parse error: ${err.message}` }], isError: true, details: { file: params.file, error: err.message } }; }
   const result = analyzeComplexity(params.file, language, lines, ast);
   const output = formatOutput(result);
   return { content: [{ type: "text" as const, text: output }], isError: false, details: result };
