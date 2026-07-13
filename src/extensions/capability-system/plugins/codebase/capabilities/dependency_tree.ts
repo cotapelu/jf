@@ -122,31 +122,15 @@ function handleImportDeclaration(node: any, imports: Map<string, string[]>): voi
 }
 
 async function parseModule(filePath: string, source: string): Promise<FileModuleInfo> {
-  const parser = require('@typescript-eslint/parser');
-  const { parse } = parser;
-
-  let ast;
-  try {
-    ast = parse(source, { sourceType: "module", ecmaVersion: "latest", ts: true, jsx: true });
-  } catch (err: any) {
-    throw new Error(`Parse error in ${filePath}: ${err.message}`);
-  }
-
-  const exports: string[] = [];
-  const imports: Map<string, string[]> = new Map();
-
+  const { parse } = require('@typescript-eslint/parser');
+  let ast; try { ast = parse(source, { sourceType: "module", ecmaVersion: "latest", ts: true, jsx: true }); } catch (err: any) { throw new Error(`Parse error in ${filePath}: ${err.message}`); }
+  const exports: string[] = [], imports = new Map<string, string[]>();
   walk(ast, (node: any) => {
-    if (node.type === 'ExportNamedDeclaration') {
-      handleExportNamedDeclaration(node, exports, imports);
-    } else if (node.type === 'ExportDefaultDeclaration') {
-      handleExportDefaultDeclaration(node, exports);
-    } else if (node.type === 'ExportAllDeclaration') {
-      handleExportAllDeclaration(node, imports);
-    } else if (node.type === 'ImportDeclaration') {
-      handleImportDeclaration(node, imports);
-    }
+    if (node.type === 'ExportNamedDeclaration') handleExportNamedDeclaration(node, exports, imports);
+    else if (node.type === 'ExportDefaultDeclaration') handleExportDefaultDeclaration(node, exports);
+    else if (node.type === 'ExportAllDeclaration') handleExportAllDeclaration(node, imports);
+    else if (node.type === 'ImportDeclaration') handleImportDeclaration(node, imports);
   });
-
   return { file: filePath, exports, imports };
 }
 
@@ -257,25 +241,16 @@ function detectCycles(nodes: Map<string, NodeInfo>): string[][] {
 }
 
 function dfsDetectCycle(nodeId: string, nodes: Map<string, NodeInfo>, visited: Set<string>, stack: string[], onStack: Set<string>, cycles: string[][]): void {
-  visited.add(nodeId);
-  stack.push(nodeId);
-  onStack.add(nodeId);
-
+  visited.add(nodeId); stack.push(nodeId); onStack.add(nodeId);
   const node = nodes.get(nodeId)!;
   for (const [toId] of node.imports) {
-    if (!visited.has(toId)) {
-      dfsDetectCycle(toId, nodes, visited, stack, onStack, cycles);
-    } else if (onStack.has(toId)) {
+    if (!visited.has(toId)) dfsDetectCycle(toId, nodes, visited, stack, onStack, cycles);
+    else if (onStack.has(toId)) {
       const start = stack.indexOf(toId);
-      if (start !== -1) {
-        const cycle = stack.slice(start).concat(toId);
-        cycles.push(cycle);
-      }
+      if (start !== -1) { const cycle = stack.slice(start).concat(toId); cycles.push(cycle); }
     }
   }
-
-  stack.pop();
-  onStack.delete(nodeId);
+  stack.pop(); onStack.delete(nodeId);
 }
 
 function deduplicateCycles(cycles: string[][]): string[][] {
@@ -343,17 +318,7 @@ function buildGraph(fileInfos: FileModuleInfo[], allFiles: Set<string>, entryPoi
   const filteredNodes = filterNodes(nodes, reachable);
   const filteredEdges = filterEdges(edges, reachable);
   const filteredCycles = filterCycles(cycles, reachable);
-  return {
-    nodes: Array.from(filteredNodes.values()).map(n => ({
-      id: n.id,
-      file: n.file,
-      exports: Array.from(n.exports),
-      imports: Array.from(n.imports.keys())
-    })),
-    edges: filteredEdges,
-    cycles: filteredCycles,
-    summary: { totalFiles: filteredNodes.size, totalEdges: filteredEdges.length, cycleCount: filteredCycles.length }
-  };
+  return { nodes: Array.from(filteredNodes.values()).map(n => ({ id: n.id, file: n.file, exports: Array.from(n.exports), imports: Array.from(n.imports.keys()) })), edges: filteredEdges, cycles: filteredCycles, summary: { totalFiles: filteredNodes.size, totalEdges: filteredEdges.length, cycleCount: filteredCycles.length } };
 }
 
 export const schema = Type.Object({
