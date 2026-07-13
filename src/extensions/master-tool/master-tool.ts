@@ -258,116 +258,73 @@ export function createMasterTool(options: any = {}): ToolDefinition {
 // ============================================================================
 // 3. META-COMMAND HANDLERS
 // ============================================================================
-
 function handleListCommand(registry: CommandRegistry, _args: any): AgentToolResult<any> {
   const commands = registry.getCommandList();
   const categories = registry.getExecutor().listCommandsByCategory();
+  const output = `📋 Available Commands (${commands.length} total)
 
-  let output = `📋 Available Commands (${commands.length} total)\n\n`;
-
-  for (const [category, cmds] of categories.entries()) {
-    output += `${category} (${cmds.length}):\n`;
-    for (const cmd of cmds) {
-      const cmdInfo = commands.find(c => c.name === cmd);
-      const desc = cmdInfo?.description || "No description";
-      output += `  • ${cmd.padEnd(30)} ${desc}\n`;
-    }
-    output += "\n";
-  }
-
-  output += "Usage: master_tool({ command: 'category.action', args: {...} })\n";
-  output += "Help: master_tool({ command: 'help', args: { command: 'name' } })";
-
-  return {
-    content: [{ type: "text", text: output }],
-    details: { commands, categories: Object.fromEntries(categories) },
-    isError: false
-  };
+` +
+    Array.from(categories.entries()).map(([category, cmds]) =>
+      `${category} (${cmds.length}):
+` +
+      cmds.map(cmd => {
+        const cmdInfo = commands.find(c => c.name === cmd);
+        return `  • ${cmd.padEnd(30)} ${cmdInfo?.description || "No description"}`;
+      }).join("\n") + "\n"
+    ).join("\n") +
+    "Usage: master_tool({ command: 'category.action', args: {...} })\n" +
+    "Help: master_tool({ command: 'help', args: { command: 'name' } })";
+  return { content: [{ type: "text", text: output }], details: { commands, categories: Object.fromEntries(categories) }, isError: false };
 }
 
-function handleGrepCommand(registry: CommandRegistry, args: any): AgentToolResult<any> {
-  const { query, category } = args;
-  const commands = registry.getCommandList();
+function matchQuery(cmd: any, query: string): boolean {
+  const q = query.toLowerCase();
+  return cmd.name.toLowerCase().includes(q) || cmd.description.toLowerCase().includes(q);
+}
 
-  const filtered = commands.filter(cmd => {
-    const matchesQuery = query
-      ? cmd.name.toLowerCase().includes(query.toLowerCase()) ||
-        cmd.description.toLowerCase().includes(query.toLowerCase())
-      : true;
-    const matchesCategory = category ? cmd.category === category : true;
-    return matchesQuery && matchesCategory;
-  });
-
+function buildGrepOutput(filtered: any[], query?: string, category?: string): string {
   let output = `🔍 Found ${filtered.length} commands`;
   if (query) output += ` matching "${query}"`;
   if (category) output += ` in category "${category}"`;
   output += ":\n\n";
-
   for (const cmd of filtered) {
     output += `  • ${cmd.name}\n    ${cmd.description}\n\n`;
   }
+  return output;
+}
 
+function handleGrepCommand(registry: CommandRegistry, args: any): AgentToolResult<any> {
+const { query, category } = args;
+  const commands = registry.getCommandList();
+  const filtered = commands.filter(cmd => {
+    const matchesQuery = query ? matchQuery(cmd, query) : true;
+    const matchesCategory = category ? cmd.category === category : true;
+    return matchesQuery && matchesCategory;
+  });
+  const output = buildGrepOutput(filtered, query, category);
   return {
     content: [{ type: "text", text: output }],
     details: { query, category, count: filtered.length, commands: filtered },
     isError: false
   };
 }
-
 function handleHelpCommand(registry: CommandRegistry, args: any): AgentToolResult<any> {
   const { command } = args;
-
-  if (!command) {
-    return {
-      content: [{ type: "text", text: "❌ Missing command parameter. Usage: master_tool({ command: 'help', args: { command: 'name' } })" }],
-      details: { error: "missing_command" },
-      isError: true
-    };
-  }
-
+  if (!command) return { content: [{ type: "text", text: "❌ Missing command parameter. Usage: master_tool({ command: 'help', args: { command: 'name' } })" }], details: { error: "missing_command" }, isError: true };
   const helpText = registry.getCommandHelp(command);
-  if (!helpText) {
-    return {
-      content: [{ type: "text", text: `❌ Command not found: ${command}` }],
-      details: { error: "command_not_found" },
-      isError: true
-    };
-  }
-
-  return {
-    content: [{ type: "text", text: helpText }],
-    details: { command },
-    isError: false
-  };
+  if (!helpText) return { content: [{ type: "text", text: `❌ Command not found: ${command}` }], details: { error: "command_not_found" }, isError: true };
+  return { content: [{ type: "text", text: helpText }], details: { command }, isError: false };
 }
 
 function handleStatsCommand(registry: CommandRegistry): AgentToolResult<any> {
   const stats = registry.getStats();
-
-  let output = `📊 Master Tool Statistics\n\n`;
-  output += `Registered commands: ${stats.registeredCommands}\n`;
-  output += `Total executions: ${stats.totalExecutions}\n`;
-  output += `Success rate: ${stats.successRate}%\n\n`;
-
-  output += `Cache:\n`;
-  output += `  Size: ${stats.cacheStats.size} entries\n`;
-  output += `  Entries:\n`;
-  for (const entry of stats.cacheStats.entries.slice(0, 5)) {
-    output += `    - ${entry.name} (hits: ${entry.loadCount}, age: ${Math.round(entry.ageMs/1000)}s)\n`;
-  }
-
+  const lines = [`📊 Master Tool Statistics`, ``, `Registered commands: ${stats.registeredCommands}`, `Total executions: ${stats.totalExecutions}`, `Success rate: ${stats.successRate}%`, ``, `Cache:`, `  Size: ${stats.cacheStats.size} entries`, `  Entries:`];
+  for (const e of stats.cacheStats.entries.slice(0,5)) lines.push(`    - ${e.name} (hits: ${e.loadCount}, age: ${Math.round(e.ageMs/1000)}s)`);
   if (stats.recentErrors.length > 0) {
-    output += `\n⚠️  Recent Errors:\n`;
-    for (const err of stats.recentErrors.slice(0, 5)) {
-      output += `  • ${err.command}: ${err.error} (${err.count}x)\n`;
-    }
+    lines.push(`⚠️  Recent Errors:`);
+    for (const err of stats.recentErrors.slice(0,5)) lines.push(`  • ${err.command}: ${err.error} (${err.count}x)`);
   }
-
-  return {
-    content: [{ type: "text", text: output }],
-    details: stats,
-    isError: false
-  };
+  return { content: [{ type: "text", text: lines.join("\n") }], details: stats, isError: false };
 }
 
 function handleReloadCommand(registry: CommandRegistry): AgentToolResult<any> {
@@ -418,13 +375,7 @@ function handleMetaCommand(
 export function registerMasterTool(api: ExtensionAPI, customOptions?: any): void {
   const options = { ...DEFAULT_MASTER_TOOL_OPTIONS, ...customOptions };
   const tool = createMasterTool(options);
-
-  // Register as tool
   api.registerTool(tool);
-
-  // Also make available as capability (optional)
-  // If api has getCapabilityRegistry, we could register there too
-  // But for now, it's just a tool
 }
 
 // ============================================================================
