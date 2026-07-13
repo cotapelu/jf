@@ -23,28 +23,12 @@ interface Logger {
  */
 export function createLogger(tag?: string): Logger {
   const prefix = tag ? `[${tag}]` : '';
-
   return {
-    log: (...args: any[]) => {
-      if (prefix) console.log(prefix, ...args);
-      else console.log(...args);
-    },
-    error: (...args: any[]) => {
-      if (prefix) console.error(prefix, ...args);
-      else console.error(...args);
-    },
-    warn: (...args: any[]) => {
-      if (prefix) console.warn(prefix, ...args);
-      else console.warn(...args);
-    },
-    info: (...args: any[]) => {
-      if (prefix) console.info(prefix, ...args);
-      else console.info(...args);
-    },
-    debug: (...args: any[]) => {
-      if (prefix) console.debug(prefix, ...args);
-      else console.debug(...args);
-    },
+    log: (...args: any[]) => { if (prefix) console.log(prefix, ...args); else console.log(...args); },
+    error: (...args: any[]) => { if (prefix) console.error(prefix, ...args); else console.error(...args); },
+    warn: (...args: any[]) => { if (prefix) console.warn(prefix, ...args); else console.warn(...args); },
+    info: (...args: any[]) => { if (prefix) console.info(prefix, ...args); else console.info(...args); },
+    debug: (...args: any[]) => { if (prefix) console.debug(prefix, ...args); else console.debug(...args); }
   };
 }
 

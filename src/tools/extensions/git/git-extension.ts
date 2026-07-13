@@ -19,24 +19,9 @@ export class GitExtension {
   name = 'git';
   version = '1.0.0';
   description = 'Git version control operations';
-
   constructor(private options: GitExtensionOptions = {}) {}
-
-  getTools(_cwd: string): ToolDefinition[] {
-    return [
-      gitStatusTool,
-      gitDiffTool,
-      gitCommitTool,
-      gitPushTool,
-      gitPullTool,
-    ];
-  }
-
-  initialize(_registry: any): void {
-    // No special init needed
-  }
-
-  dispose(): void {
-    // No cleanup needed
-  }
+  getTools(_cwd: string): ToolDefinition[] { return [gitStatusTool, gitDiffTool, gitCommitTool, gitPushTool, gitPullTool]; }
+  initialize(_registry: any): void {}
+  dispose(): void {}
 }
+

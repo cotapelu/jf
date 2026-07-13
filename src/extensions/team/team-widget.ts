@@ -167,27 +167,15 @@ export function getTeamWidgetEnabled(ctx: ExtensionContext): boolean {
 }
 
 export function registerTeamWidget(api: ExtensionAPI): void {
-  // Set up widget on session start
-  api.on("session_start", async (_event, ctx: ExtensionContext) => {
-    // Create per-session state (default enabled)
+  api.on('session_start', async (_event, ctx: ExtensionContext) => {
     const state: TeamWidgetSessionState = { enabled: true, ctx: ctx, intervalId: null };
-    // @ts-ignore - symbol-keyed property not in type
+    // @ts-ignore
     ctx[TEAM_WIDGET_STATE] = state;
-
-    // If enabled by default, start the widget
-    if (state.enabled) {
-      startWidget(ctx);
-    }
-
-    // Clean up on session shutdown
-    api.on("session_shutdown", () => {
+    if (state.enabled) startWidget(ctx);
+    api.on('session_shutdown', () => {
       stopWidget(state);
-      // Remove reference from ctx
       // @ts-ignore
       delete ctx[TEAM_WIDGET_STATE];
     });
   });
-
-  // Also register the /team command through the command system? Actually team-command.ts registers separately.
-  // This function only registers the widget component and toggle logic.
 }
