@@ -58,73 +58,18 @@ class SimpleLRUCache {
   private cache = new Map<string, CacheEntry>();
   private maxSize: number;
   private defaultTTL: number;
-
-  constructor(maxSize: number = 1000, defaultTTL: number = 60000) {
-    this.maxSize = maxSize;
-    this.defaultTTL = defaultTTL;
-  }
-
-  get(key: string): BashResult | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-    if (Date.now() > entry.expires) {
-      this.cache.delete(key);
-      return null;
-    }
-    this.cache.delete(key);
-    this.cache.set(key, entry);
-    return entry.result;
-  }
-
-  set(key: string, result: BashResult, ttl?: number): void {
-    if (ttl === 0) return; // caching disabled
-    const expires = Date.now() + (ttl ?? this.defaultTTL);
-    const entry: CacheEntry = { result, expires };
-    if (this.cache.has(key)) this.cache.delete(key);
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) this.cache.delete(firstKey);
-    }
-    this.cache.set(key, entry);
-  }
-
+  constructor(maxSize: number = 1000, defaultTTL: number = 60000) { this.maxSize = maxSize; this.defaultTTL = defaultTTL; }
+  get(key: string): BashResult | null { const entry = this.cache.get(key); if (!entry) return null; if (Date.now() > entry.expires) { this.cache.delete(key); return null; } this.cache.delete(key); this.cache.set(key, entry); return entry.result; }
+  set(key: string, result: BashResult, ttl?: number): void { if (ttl === 0) return; const expires = Date.now() + (ttl ?? this.defaultTTL); const entry: CacheEntry = { result, expires }; if (this.cache.has(key)) this.cache.delete(key); if (this.cache.size >= this.maxSize) { const firstKey = this.cache.keys().next().value; if (firstKey) this.cache.delete(firstKey); } this.cache.set(key, entry); }
   size(): number { return this.cache.size; }
   clear(): void { this.cache.clear(); }
 }
 
 class TokenBucket {
-  private tokens: number;
-  private lastRefill: number;
-  private readonly capacity: number;
-  private readonly refillRate: number;
-  private readonly intervalMs: number;
-
-  constructor(capacity: number, tokensPerInterval: number, intervalMs: number) {
-    this.capacity = capacity;
-    this.tokens = capacity;
-    this.lastRefill = Date.now();
-    this.refillRate = tokensPerInterval / intervalMs;
-    this.intervalMs = intervalMs;
-  }
-
-  private refill(): void {
-    const now = Date.now();
-    const timePassed = now - this.lastRefill;
-    if (timePassed > 0) {
-      const tokensToAdd = timePassed * this.refillRate;
-      this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd);
-      this.lastRefill = now;
-    }
-  }
-
-  tryRemoveTokens(amount: number = 1): boolean {
-    this.refill();
-    if (this.tokens >= amount) {
-      this.tokens -= amount;
-      return true;
-    }
-    return false;
-  }
+  private tokens: number; private lastRefill: number; private readonly capacity: number; private readonly refillRate: number; private readonly intervalMs: number;
+  constructor(capacity: number, tokensPerInterval: number, intervalMs: number) { this.capacity = capacity; this.tokens = capacity; this.lastRefill = Date.now(); this.refillRate = tokensPerInterval / intervalMs; this.intervalMs = intervalMs; }
+  private refill(): void { const now = Date.now(); const timePassed = now - this.lastRefill; if (timePassed > 0) { const tokensToAdd = timePassed * this.refillRate; this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd); this.lastRefill = now; } }
+  tryRemoveTokens(amount: number = 1): boolean { this.refill(); if (this.tokens >= amount) { this.tokens -= amount; return true; } return false; }
 }
 
 // ============================================================================
@@ -506,27 +451,8 @@ bash_action({ action: 'glob', args: { pattern: '**/*.ts' } })
 import { schema as globSchema, buildCommand as globBuildCommand, render as globRender } from './bash-actions/glob-action.js';
 
 function registerBuiltinActions(executor: BashActionExecutor): void {
-  // SHELL - arbitrary bash
-  executor.registerAction({
-    name: 'shell',
-    description: '⚠️  DANGEROUS: Execute arbitrary bash command. Rate limited 5/min, timeout 30s.',
-    schema: Type.Object({
-      command: Type.String({ description: 'Any bash command' }),
-      timeout: Type.Optional(Type.Number({ description: 'Override timeout (ms)' }))
-    }),
-    buildCommand: (args) => args.command,
-    options: { cache: { ttl: 0 }, rateLimit: { max: 5, windowMs: 60000 }, timeout: 30000 }
-  });
-
-  // GLOB - find files
-  executor.registerAction({
-    name: 'glob',
-    description: 'Find files by glob pattern (supports **). Cached 10s, timeout 15s.',
-    schema: globSchema,
-    buildCommand: globBuildCommand,
-    render: globRender,
-    options: { cache: { ttl: 10000 }, timeout: 15000 }
-  });
+  executor.registerAction({ name:'shell', description:'⚠️ DANGEROUS: Execute arbitrary bash command. Rate limited 5/min, timeout 30s.', schema: Type.Object({ command: Type.String({ description: 'Any bash command' }), timeout: Type.Optional(Type.Number({ description: 'Override timeout (ms)' })) }), buildCommand: (args)=>args.command, options: { cache:{ttl:0}, rateLimit:{max:5,windowMs:60000}, timeout:30000 } });
+  executor.registerAction({ name:'glob', description:'Find files by glob pattern (supports **). Cached 10s, timeout 15s.', schema: globSchema, buildCommand: globBuildCommand, render: globRender, options: { cache:{ttl:10000}, timeout:15000 } });
 }
 
 // ============================================================================
