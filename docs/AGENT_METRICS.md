@@ -4049,3 +4049,35 @@ System remains production-ready with all critical gates met. Incremental improve
 
 **Commit:** refactor: reduce function lengths in todos-tool.ts, master-tool.ts, ast_query.ts
 
+## Cycle 135 - Function Length Compliance Campaign (Phase 2) - 2026-07-13 (Autonomous)
+
+**Task:** Continue reducing oversized functions to achieve 100% compliance. This batch addresses several capability modules.
+**Type:** Violation Fix (Function size)
+**Priority:** CRITICAL
+**Duration:** ~2 hours
+**Status:** ✅ Partial (batch completed)
+
+**Test Delta:** 0
+**Coverage Delta:** unchanged
+
+**Files Completed (this cycle):**
+- `ast_query.ts`: 5 → 0
+- `analyze_ast.ts`: 2 → 0
+- `complexity.ts`: 2 → 0
+- `call_graph.ts`: 3 → 0
+
+**Current Status (src only, excluding tests):**
+- Total functions: 571
+- Functions >20 lines: 145
+- Compliance: 74.61% (target: 100%)
+
+**Remaining High-Impact Targets (src):**
+- `createTodoTool` (184), `createMasterTool` (194)
+- `bash-actions.ts` (5 violations, largest BashActionExecutor 229, createBashActionTool 130)
+- `dependency_tree.ts` (4 violations, resolveInAllFiles 319)
+- plus test files with large functions (e.g., `ast_query.test.ts`, `plugin-loader.ts` PluginLoader 459, `team-manager.ts` AgentTeam 1007)
+
+**Next:** Continue with `bash-actions.ts` and `dependency_tree.ts`, then tackle remaining large create functions.
+
+**Commit:** refactor: reduce function lengths in analyze_ast.ts, complexity.ts, call_graph.ts
+
