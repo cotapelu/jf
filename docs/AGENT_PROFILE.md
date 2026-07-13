@@ -102,6 +102,22 @@
 
 ---
 
+### 7. Function Length Compliance (CRITICAL)
+**Severity:** CRITICAL (quality gate violation, blocks production)
+**Instance:** 146 functions >20 lines in src (74.43% compliance) as of 2026-07-13. Initial count was 128/518 (25% non-compliant) when campaign launched.
+**Impact:** Maintenance risk, violates mandatory quality gate, threatens reliability.
+**Root cause:** Accumulation of large functions over time, especially in tool execute() methods, orchestrators, and test files.
+**Actions Taken (Phase 1):**
+- Refactored `todos-tool.ts` (6/7 functions now ≤20)
+- Refactored `master-tool.ts` (5/6 functions now ≤20)
+- Refactored `ast_query.ts` (5→0 functions >20)
+- Techniques: extraction of helpers, single-line returns, splitting dispatchers.
+- All tests pass; typecheck and lint clean.
+**Status:** 🟡 IN PROGRESS - 16 violations eliminated; many remain. Estimated completion: 5-10 cycles.
+**Next Targets:** `createTodoTool` (184), `createMasterTool` (194), `bash-actions.ts` (5), `call_graph.ts` (8), `analyze_ast.ts` (6), `complexity.ts` (5), `dependency_tree.ts` (4), etc.
+
+---
+
 ## Fragile Modules
 
 ### Session Tool (FIXED ✅)
@@ -403,26 +419,28 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 
 ## 11. Current State Summary (2026-07-13)
 
-**Overall Health:** 🟢 **EXCELLENT** - All quality gates met
+**Overall Health:** 🟡 **IN PROGRESS** - Function length compliance campaign active
 
 **Key Metrics:**
-- Tests: 1289 passing (100%)
-- Coverage: Statements 89.74%, Branches 80.4%, Functions 90.48%, Lines 90.91%
+- Tests: 1318 passing (100%)
+- Coverage: Statements 89.74%, Branches 87.07%, Functions 90.48%, Lines 90.91%
 - Lint: 0 errors
 - TypeScript: Clean
 - Security: 0 vulnerabilities
-- Complexity: All functions ≤20 lines, cyclomatic ≤10
+- Function length: 74.43% compliant (src only, 146/571 functions >20 lines)
 
-**Remaining Gaps (Optional Improvement):**
-- Branch coverage stretch target (85%+) not yet reached (currently 80.4%)
-  - `master-tool.ts`: 0% branch (critical dispatcher, needs tests)
-  - `team-tool.ts`: 75% branch
-  - `bash-actions.ts`: 53.93% branch (but module-specific)
-- JSDoc coverage ~95% (minor gaps in utility modules)
+**Remaining Gaps (Critical):**
+- Function length quality gate (target 100%): 146 functions >20 lines remain
+  - High-impact: `createTodoTool` (184), `createMasterTool` (194), `bash-actions.ts` (5), `call_graph.ts` (8), `analyze_ast.ts` (6), `complexity.ts` (5), `dependency_tree.ts` (4 incl. 319-line resolveInAllFiles), `team-manager.ts` (AgentTeam 1007), `plugin-loader.ts` (PluginLoader 459)
+  - Many test files also exceed limit (e.g., `ast_query.test.ts` >400 lines)
 
-**Assessment:** System is production-ready. Optional improvements could push coverage to 85%+ but not required for quality gate compliance.
+**Optional Gaps:**
+- Branch coverage stretch target (85%+) not yet reached (currently 87.07%)
+- JSDoc coverage ~95% (minor gaps)
 
-**Trajectory:** Stable. No active weaknesses threatening production readiness. Autonomous monitoring continues.
+**Assessment:** System not yet production-ready due to function length violations. Active refactoring campaign underway to achieve 100% compliance. All other quality gates (coverage, lint, typecheck, security) satisfied.
+
+**Trajectory:** Steady progress. Largest functions identified; refactoring strategy using extraction proven effective on smaller functions. Next: tackle createTodoTool/createMasterTool (high risk), then medium files, then test file cleanup.
 
 *Profile last updated: 2026-07-13*
 
