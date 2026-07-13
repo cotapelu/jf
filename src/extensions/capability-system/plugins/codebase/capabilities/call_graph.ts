@@ -129,51 +129,18 @@ function handleCallNode(node: any, funcStack: string[], calls: Array<{ callerKey
 
 async function parseFile(cwd: string, fileRel: string): Promise<ParsedFile | null> {
   const fileAbs = resolve(cwd, fileRel);
-  try {
-    await fs.access(fileAbs);
-  } catch {
-    return null;
-  }
-
-  let content: string;
-  try {
-    content = await fs.readFile(fileAbs, 'utf-8');
-  } catch {
-    return null;
-  }
-
-  let ast;
-  try {
-    const parser = require('@typescript-eslint/parser');
-    const { parse } = parser;
-    ast = parse(content, {
-      sourceType: "module",
-      ecmaVersion: "latest",
-      ts: true,
-      jsx: true,
-      loc: true,
-      range: false
-    });
-  } catch {
-    return null;
-  }
-
+  try { await fs.access(fileAbs); } catch { return null; }
+  let content: string; try { content = await fs.readFile(fileAbs, 'utf-8'); } catch { return null; }
+  let ast; try {
+    const parser = require('@typescript-eslint/parser'); const { parse } = parser;
+    ast = parse(content, { sourceType:"module", ecmaVersion:"latest", ts:true, jsx:true, loc:true, range:false });
+  } catch { return null; }
   const funcs = new Map<string, CallGraphNode>();
   const imports = new Map<string, { source: string; original: string }>();
   const calls: Array<{ callerKey: string; calleeLocal: string }> = [];
-
-  // First pass: collect functions
-  walk(ast, (node: any) => handleFunctionNode(node, fileRel, funcs));
-
+  walk(ast, (node:any) => handleFunctionNode(node, fileRel, funcs));
   const funcStack: string[] = [];
-
-  // Second pass: imports, function stack, calls
-  walk(ast, (node: any) => {
-    handleImportNode(node, imports);
-    handleFunctionStackNode(node, fileRel, funcStack);
-    handleCallNode(node, funcStack, calls);
-  }, undefined);
-
+  walk(ast, (node:any) => { handleImportNode(node, imports); handleFunctionStackNode(node, fileRel, funcStack); handleCallNode(node, funcStack, calls); }, undefined);
   return { fileAbs, fileRel, funcs, imports, calls };
 }
 
@@ -238,39 +205,23 @@ async function processCandidates(
 }
 
 async function collectAllFiles(cwd: string, roots: string[], depth: number, includeCrossFile: boolean): Promise<ParsedFile[]> {
-  const visited = new Set<string>();
-  const allFiles: ParsedFile[] = [];
-
+  const visited = new Set<string>(), allFiles: ParsedFile[] = [];
   async function visitFile(fileRel: string, currentDepth: number): Promise<void> {
     const pf = await parseFile(cwd, fileRel);
     if (!pf) return;
     if (visited.has(pf.fileAbs)) return;
     visited.add(pf.fileAbs);
     allFiles.push(pf);
-
     if (includeCrossFile && currentDepth > 0) {
       const nextDepth = currentDepth - 1;
       for (const imp of pf.imports.values()) {
-        const callerDir = dirname(pf.fileAbs);
-        const base = resolve(callerDir, imp.source);
-        const candidates = [
-          base,
-          base + '.ts',
-          base + '.tsx',
-          base + '.js',
-          base + '.jsx',
-          resolve(base, 'index.ts'),
-          resolve(base, 'index.js')
-        ];
+        const callerDir = dirname(pf.fileAbs), base = resolve(callerDir, imp.source);
+        const candidates = [base, base+'.ts', base+'.tsx', base+'.js', base+'.jsx', resolve(base,'index.ts'), resolve(base,'index.js')];
         await processCandidates(candidates, cwd, visited, visitFile, nextDepth);
       }
     }
   }
-
-  for (const root of roots) {
-    await visitFile(root, depth);
-  }
-
+  for (const root of roots) await visitFile(root, depth);
   return allFiles;
 }
 
