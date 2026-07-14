@@ -4207,3 +4207,18 @@ Focus: todos-tool.ts createTodoTool compression
 **Next targets:** `createMasterTool` in master-tool.ts (~194 lines), `dependency_tree.ts resolveInAllFiles` (300), `team-manager.ts` (1007).
 
 **Commit:** refactor: compress createTodoTool in todos-tool.ts
+
+## Function Length Sprint - Batch 5 (2026-07-14)
+Focus: master-tool.ts executeMaster & renderMasterResult compression
+
+**Refactor completed:**
+- Extracted helpers: initializeRegistry, validateMasterParams, isMetaCommand, executeActualCommand.
+- Extracted render helpers: renderPartialResult, renderErrorResult, extractStdoutText, buildSuccessLines.
+- Rewrote executeMaster and renderMasterResult as thin orchestrators (≤20 lines each).
+
+**Impact:**
+- Largest functions in master-tool now ≤20 lines.
+- Estimated src >20 lines reduced by ~3-4 functions.
+- All tests pass, typecheck clean.
+
+**Next:** tackle `dependency_tree.ts` (resolveInAllFiles 300 lines) and then remaining high-impact.

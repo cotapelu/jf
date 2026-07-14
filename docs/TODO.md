@@ -730,4 +730,6 @@ This is **16-20 hours** of focused work. Suggestions:
 **Owner**: TBD (you?)
 **Status**: 📝 Planning
  - [x] Refactor createTodoTool in todos-tool.ts (next high-impact)
-- [ ] Refactor createMasterTool in master-tool.ts (next high-impact)
+- [x] Refactor createMasterTool in master-tool.ts (next high-impact)
+- [ ] Refactor resolveInAllFiles in dependency_tree.ts (next)
+- [ ] Refactor AgentTeam in team-manager.ts (1007 lines)
