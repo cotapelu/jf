@@ -513,3 +513,18 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 **Impact:** Once resolved, codebase will achieve full production readiness (90+ quality gate score).
 
+
+## Function Length Sprint - Batch 3 Update (2026-07-14)
+
+**Progress:**
+- `bash-actions.ts`: `BashActionExecutor.execute` extracted (now ≤20 lines via helpers)
+- `validateArgs` split into 4 small methods
+- `createBashActionTool` extracted constants and simplified
+- Remaining in bash-actions: `getHelp` (~40 lines) to be addressed next.
+
+**Estimated src violations now ~87 (from 91), compliance ~85%.**
+
+### Batch 3.1 Update (2026-07-14)
+- bash-actions.ts: `getHelp` fully extracted → now all methods ≤20 lines.
+- No further violations in this file.
+- Focus shifts to next high-impact: `createTodoTool` (184), `createMasterTool` (194), `team-manager` (1007).

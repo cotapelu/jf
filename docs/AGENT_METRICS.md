@@ -4158,3 +4158,34 @@ System remains production-ready with all critical gates met. Incremental improve
   - Build: ✅ Clean
 - **Security**: ✅ 0 vulnerabilities, audit log available, injection protected
 - **Notes**: Discovery completed. Main blocking issue identified: function length compliance at 84% (91 functions >20 lines in src). All other quality gates exceed targets. Next cycle (Cycle 2) will focus on systematic function extraction sprint targeting high-impact modules: todos-tool (createTodoTool 184 lines), master-tool (createMasterTool 194 lines), bash-actions (BashActionExecutor 229 lines), and dependency_tree (resolveInAllFiles 300 lines).
+
+## Function Length Sprint - Batch 3 (2026-07-14)
+
+**Focus:** bash-actions.ts large functions
+
+**Changes:**
+- Refactored `BashActionExecutor.execute` (229 lines) -> orchestrator with 7 helper methods (each ≤20 lines)
+- Refactored `validateArgs` (30 lines) -> split into 4 helper methods (`collectValidationErrors`, `checkRequiredFields`, `checkFieldTypes`) and thin wrapper
+- Refactored `createBashActionTool` (130 lines) -> extracted constants and helpers
+
+**Metrics after changes (src):**
+- Functions >20 lines: reduced from ~91 to ~87 (estimated)
+- Estimated compliance: ~85% (target 100%)
+- Remaining in bash-actions.ts: `getHelp` method (~40 lines)
+
+**Next:** Refactor `getHelp` in bash-actions.ts, then tackle `team-manager.ts` (AgentTeam 1007 lines).
+
+**Commit:** refactor: reduce function lengths in bash-actions.ts (execute, validateArgs, createBashActionTool)
+
+## Function Length Sprint - Batch 3.1 (2026-07-14)
+Focus: bash-actions.ts getHelp extraction
+
+- Extracted getHelp into:
+  - buildSingleActionHelp
+  - buildGeneralHelp
+  - Thin delegator getHelp
+- All functions now ≤20 lines
+- Tests passing, typecheck clean
+
+Estimated src >20 lines: reduced further (~87→~84)
+Next: createTodoTool (184), createMasterTool (194), team-manager (large)

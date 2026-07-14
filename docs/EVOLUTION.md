@@ -1380,3 +1380,5 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - Consider performance profiling for codebase indexing
 - Maintain ecosystem hygiene (dependency upgrades)
 
+
+- [x] Refactor getHelp in bash-actions.ts (2026-07-14)
