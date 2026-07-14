@@ -729,4 +729,5 @@ This is **16-20 hours** of focused work. Suggestions:
 **Last updated**: 2025-06-19
 **Owner**: TBD (you?)
 **Status**: 📝 Planning
-- [ ] Refactor createTodoTool in todos-tool.ts (next high-impact)
+ - [x] Refactor createTodoTool in todos-tool.ts (next high-impact)
+- [ ] Refactor createMasterTool in master-tool.ts (next high-impact)

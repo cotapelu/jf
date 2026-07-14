@@ -4189,3 +4189,21 @@ Focus: bash-actions.ts getHelp extraction
 
 Estimated src >20 lines: reduced further (~87→~84)
 Next: createTodoTool (184), createMasterTool (194), team-manager (large)
+
+## Function Length Sprint - Batch 4 (2026-07-14)
+Focus: todos-tool.ts createTodoTool compression
+
+**Refactor completed:**
+- Extracted event handlers: `handleSessionStart`, `handleSessionTree`
+- Extracted utility: `withSessionLock`
+- Extracted execute core: `executeTodoTool` (uses `withSessionLock`)
+- Moved `promptGuidelines` to constant `TODO_TOOL_PROMPT_GUIDELINES`
+
+**Impact:**
+- `createTodoTool` reduced from ~500 lines to ~15 lines (well under 20)
+- All new helper functions ≤20 lines
+- Estimated src >20 lines reduced by ~4-5 functions
+
+**Next targets:** `createMasterTool` in master-tool.ts (~194 lines), `dependency_tree.ts resolveInAllFiles` (300), `team-manager.ts` (1007).
+
+**Commit:** refactor: compress createTodoTool in todos-tool.ts

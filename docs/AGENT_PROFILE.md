@@ -528,3 +528,8 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - bash-actions.ts: `getHelp` fully extracted → now all methods ≤20 lines.
 - No further violations in this file.
 - Focus shifts to next high-impact: `createTodoTool` (184), `createMasterTool` (194), `team-manager` (1007).
+
+### Batch 4 Update (2026-07-14)
+- `todos-tool.ts`: `createTodoTool` fully extracted; now 15 lines.
+- All methods in `todos-tool.ts` now ≤20 lines.
+- Shift focus to `createMasterTool` (194) and `dependency_tree.ts` (300).
