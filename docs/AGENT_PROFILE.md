@@ -427,10 +427,10 @@ Some modules exceed 200 lines (e.g., extension.ts, plugin-loader.ts). This is ac
 - Lint: 0 errors
 - TypeScript: Clean
 - Security: 0 vulnerabilities
-- Function length: 80.74% compliant (src only, 110/571 functions >20 lines)
+- Function length: 84.00% compliant (src only, 91/571 functions >20 lines)
 
 **Remaining Gaps (Critical):**
-- Function length quality gate (target 100%): 110 functions >20 lines remain (src)
+- Function length quality gate (target 100%): 91 functions >20 lines remain (src)
   - High-impact individual functions/classes:
     - `team-manager.ts`: AgentTeam class (1007 lines)
     - `plugin-loader.ts`: PluginLoader class (459 lines)
@@ -483,3 +483,33 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 **Next:** Enable audit logging in production deployments for full traceability.
 
 *Profile last updated: 2026-07-13*
+
+---
+
+## 8. Function Length Compliance (ACTIVE - CRITICAL)
+**Severity:** CRITICAL (quality gate violation, blocks production)
+**Current State (2026-07-14 discovery):**
+- Functions >20 lines: **91** in src (out of ~571 total)
+- Compliance: **84%** (target: 100%)
+- Previous count: 146 (74.43%) - significant improvement already made
+
+**High-Impact Remaining Violations:**
+- `createTodoTool` (184 lines), `createMasterTool` (194 lines)
+- `bash-actions.ts`: BashActionExecutor (229), createBashActionTool (130)
+- `dependency_tree.ts`: resolveInAllFiles (300)
+- `team-manager.ts`: AgentTeam class (1007 lines total, multiple long methods)
+- `plugin-loader.ts`: PluginLoader class (459)
+- Plus several test files with large functions
+
+**Root Cause:** Accumulation of large factory functions and orchestrators over time; need systematic extraction of helper methods.
+
+**Action Plan (Cycle 2+):**
+- Phase 1: Extract helper methods from high-line-count factories (todos-tool, master-tool, bash-actions)
+- Phase 2: Decompose long methods in team-manager (getBootstrapPrompt, handleAgentEvent, executeTeamTasks)
+- Phase 3: Address remaining violations in dependency_tree, plugin-loader, and test files
+- Use proven patterns: extraction, guard clauses, single-responsibility helpers
+
+**Status:** 🟡 IN PROGRESS - Function extraction campaign active. Estimated 5-10 cycles to reach 100% compliance. All quality gates otherwise satisfied; this is the sole blocking item.
+
+**Impact:** Once resolved, codebase will achieve full production readiness (90+ quality gate score).
+

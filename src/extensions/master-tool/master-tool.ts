@@ -57,6 +57,186 @@ function resetRegistry(): void {
 export { getRegistry, resetRegistry };
 
 // ============================================================================
+// Constants (for function length compliance)
+// ============================================================================
+
+const MASTER_TOOL_PROMPT_GUIDELINES: string[] = [
+  "The master tool provides access to many specialized commands.",
+  "",
+  "**Structure**:",
+  "  master_tool({",
+  "    command: 'category.action',  // e.g., 'git.status', 'dev.test'",
+  "    args: { ... }               // command-specific arguments",
+  "  })",
+  "",
+  "**Discover commands**:",
+  "  • List all: master_tool({ command: 'list', args: {} })",
+  "  • By category: master_tool({ command: 'list.grep', args: { category: 'git' } })",
+  "  • Search: master_tool({ command: 'list.grep', args: { query: 'test' } })",
+  "  • Get help: master_tool({ command: 'help', args: { command: 'git.status' } })",
+  "",
+  "**Examples**:",
+  "  • Git status:",
+  "    master_tool({ command: 'git.status', args: {} })",
+  "",
+  "  • Run tests:",
+  "    master_tool({ command: 'dev.test', args: { files: ['src/'], coverage: true } })",
+  "",
+  "  • System info:",
+  "    master_tool({ command: 'system.info', args: { detailed: true } })",
+  "",
+  "**Categories**: git, dev, system, codebase, security, team, etc.",
+  "",
+  "**Features**:",
+  "  • Auto-validation of arguments (TypeBox schemas)",
+  "  • Rate limiting (configurable)",
+  "  • Output size limits (1MB default)",
+  "  • Security checks (prototype pollution, injection)",
+  "  • Audit logging",
+  "  • Command caching (LRU, 5min TTL)",
+  "  • Stateful command support (optional)",
+  "  • Custom renderer per command"
+];
+
+const MASTER_TOOL_PARAMETERS: any = {
+  type: "object",
+  properties: {
+    command: {
+      type: "string",
+      description: "Command name (e.g., 'git.status', 'dev.test'). Use 'list' to see all."
+    },
+    args: {
+      type: "object",
+      description: "Command-specific arguments. See command help for details."
+    }
+  },
+  required: ["command", "args"]
+};
+
+// ============================================================================
+// Extracted functions (for length compliance)
+// ============================================================================
+
+async function executeMaster(
+  toolCallId: string,
+  params: any,
+  signal: AbortSignal | undefined,
+  _onUpdate: AgentToolUpdateCallback<unknown> | undefined,
+  ctx: ExtensionContext,
+  registry: CommandRegistry,
+  options: any
+): Promise<AgentToolResult<any>> {
+  try {
+    await registry.ensureInitialized();
+  } catch (error) {
+    return {
+      content: [{ type: "text", text: `❌ Failed to initialize command registry: ${String(error)}` }],
+      details: { error: "registry_init_failed" },
+      isError: true
+    };
+  }
+
+  const { command, args } = params;
+
+  if (!command || typeof command !== "string") {
+    return {
+      content: [{ type: "text", text: "❌ Missing required parameter: command" }],
+      details: { error: "missing_command" },
+      isError: true
+    };
+  }
+
+  // Special meta-commands (list, help, stats, reload)
+  if (command === "list" || command === "list.grep" || command === "help" || command === "stats" || command === "reload") {
+    return handleMetaCommand(command, args, ctx);
+  }
+
+  // Execute actual command
+  const result = await registry.execute(command, args ?? {}, {
+    toolCallId,
+    signal,
+    onUpdate: _onUpdate,
+    ctx,
+    maxOutputSize: options.maxOutputSize ?? 1024 * 1024
+  });
+
+  // Transform to AgentToolResult
+  return {
+    content: result.content,
+    details: result.details,
+    isError: result.isError
+  };
+}
+
+function renderMasterResult(
+  result: AgentToolResult<any>,
+  options: { expanded: boolean; isPartial: boolean },
+  theme: Theme,
+  _context?: any
+): any {
+  const details = result.details || {};
+  const isError = result.isError;
+  const command = details.command || "unknown";
+
+  if (options.isPartial) {
+    return new Text(theme.fg("warning", `⏳ Executing ${command}...`));
+  }
+
+  if (isError) {
+    const lines = [
+      theme.fg("error", `❌ ${command} failed`),
+      details.error ? theme.fg("muted", details.error) : ""
+    ].filter(Boolean);
+    return new Text(lines.join("\n"));
+  }
+
+  const lines: string[] = [];
+
+  if (details.code !== undefined) {
+    const status = details.code === 0 ? "success" : "warning";
+    lines.push(theme.fg(status, `✓ ${command} completed (exit ${details.code})`));
+  }
+
+  if (details.duration !== undefined) {
+    lines.push(theme.fg("dim", `Duration: ${details.duration}ms`));
+  }
+
+  const stdoutText = result.content
+    .filter((c: any) => c.type === "text")
+    .map((c: any) => c.text)
+    .join("\n")
+    .trim();
+
+  if (stdoutText) {
+    const maxPreview = options.expanded ? 50 : 10;
+    const linesArr = stdoutText.split('\n');
+    if (linesArr.length > maxPreview) {
+      const preview = linesArr.slice(0, maxPreview).join('\n');
+      lines.push(theme.fg("text", preview));
+      lines.push(theme.fg("dim", `... and ${linesArr.length - maxPreview} more lines`));
+    } else {
+      lines.push(theme.fg("text", stdoutText));
+    }
+  }
+
+  return new Text(lines.join("\n"));
+}
+
+function renderMasterCall(args: any, theme: Theme): any {
+  const command = args.command || "master_tool";
+  const commandPart = theme.fg("accent", command);
+  const argsPreview = Object.keys(args.args ?? {}).length > 0
+    ? theme.fg("dim", `(${Object.keys(args.args).length} args)`)
+    : "";
+
+  return new Text(
+    `${theme.fg("toolTitle", theme.bold("master_tool"))} ${commandPart} ${argsPreview}`,
+    0,
+    0
+  );
+}
+
+// ============================================================================
 // 2. TOOL DEFINITION
 // ============================================================================
 
@@ -72,186 +252,16 @@ export function createMasterTool(options: any = {}): ToolDefinition {
       "Supports git operations, dev workflows, system info, and more. " +
       "Use 'list' command to see all available.",
     promptSnippet: "master_tool({ command: '<name>', args: {...} })",
-    promptGuidelines: [
-      "The master tool provides access to many specialized commands.",
-      "",
-      "**Structure**:",
-      "  master_tool({",
-      "    command: 'category.action',  // e.g., 'git.status', 'dev.test'",
-      "    args: { ... }               // command-specific arguments",
-      "  })",
-      "",
-      "**Discover commands**:",
-      "  • List all: master_tool({ command: 'list', args: {} })",
-      "  • By category: master_tool({ command: 'list.grep', args: { category: 'git' } })",
-      "  • Search: master_tool({ command: 'list.grep', args: { query: 'test' } })",
-      "  • Get help: master_tool({ command: 'help', args: { command: 'git.status' } })",
-      "",
-      "**Examples**:",
-      "  • Git status:",
-      "    master_tool({ command: 'git.status', args: {} })",
-      "",
-      "  • Run tests:",
-      "    master_tool({ command: 'dev.test', args: { files: ['src/'], coverage: true } })",
-      "",
-      "  • System info:",
-      "    master_tool({ command: 'system.info', args: { detailed: true } })",
-      "",
-      "**Categories**: git, dev, system, codebase, security, team, etc.",
-      "",
-      "**Features**:",
-      "  • Auto-validation of arguments (TypeBox schemas)",
-      "  • Rate limiting (configurable)",
-      "  • Output size limits (1MB default)",
-      "  • Security checks (prototype pollution, injection)",
-      "  • Audit logging",
-      "  • Command caching (LRU, 5min TTL)",
-      "  • Stateful command support (persistence, mutex)",
-      "  • Custom renderer per command"
-    ],
-    parameters: {
-      type: "object",
-      properties: {
-        command: {
-          type: "string",
-          description: "Command name (e.g., 'git.status', 'dev.test'). Use 'list' to see all."
-        },
-        args: {
-          type: "object",
-          description: "Command-specific arguments. See command help for details."
-        }
-      },
-      required: ["command", "args"]
-    },
+    promptGuidelines: MASTER_TOOL_PROMPT_GUIDELINES,
+    parameters: MASTER_TOOL_PARAMETERS,
 
-    async execute(
-      toolCallId: string,
-      params: any,
-      signal: AbortSignal | undefined,
-      onUpdate: AgentToolUpdateCallback<unknown> | undefined,
-      ctx: ExtensionContext
-    ): Promise<AgentToolResult<any>> {
-      try {
-        await registry.ensureInitialized();
-      } catch (error) {
-        return {
-          content: [{ type: "text", text: `❌ Failed to initialize command registry: ${String(error)}` }],
-          details: { error: "registry_init_failed" },
-          isError: true
-        };
-      }
+    execute: (toolCallId, params, signal, onUpdate, ctx) => executeMaster(toolCallId, params, signal, onUpdate, ctx, registry, options),
 
-      const { command, args } = params;
 
-      if (!command || typeof command !== "string") {
-        return {
-          content: [{ type: "text", text: "❌ Missing required parameter: command" }],
-          details: { error: "missing_command" },
-          isError: true
-        };
-      }
+    renderCall: renderMasterCall,
 
-      // Special meta-commands (list, help, stats, reload)
-      if (command === "list" || command === "list.grep" || command === "help" || command === "stats" || command === "reload") {
-        return handleMetaCommand(command, args, ctx);
-      }
 
-      // Execute actual command
-      const result = await registry.execute(command, args ?? {}, {
-        toolCallId,
-        signal,
-        onUpdate,
-        ctx,
-        maxOutputSize: options.maxOutputSize ?? 1024 * 1024
-      });
-
-      // Transform to AgentToolResult
-      return {
-        content: result.content,
-        details: result.details,
-        isError: result.isError
-      };
-    },
-
-    // ========================================================================
-    // RENDER CALL - Shows which command is executing
-    // ========================================================================
-    renderCall(args: any, theme: Theme): any {
-      const command = args.command || "master_tool";
-      const commandPart = theme.fg("accent", command);
-      const argsPreview = Object.keys(args.args ?? {}).length > 0
-        ? theme.fg("dim", `(${Object.keys(args.args).length} args)`)
-        : "";
-
-      return new Text(
-        `${theme.fg("toolTitle", theme.bold("master_tool"))} ${commandPart} ${argsPreview}`,
-        0,
-        0
-      );
-    },
-
-    // ========================================================================
-    // RENDER RESULT - Default renderer (can be overridden per command)
-    // ========================================================================
-    renderResult(
-      result: AgentToolResult<any>,
-      options: { expanded: boolean; isPartial: boolean },
-      theme: Theme,
-      _context?: any
-    ): any {
-      const details = result.details || {};
-      const isError = result.isError;
-      const command = details.command || "unknown";
-
-      // If partial (executing), show spinner
-      if (options.isPartial) {
-        return new Text(theme.fg("warning", `⏳ Executing ${command}...`));
-      }
-
-      // If error
-      if (isError) {
-        const lines = [
-          theme.fg("error", `❌ ${command} failed`),
-          details.error ? theme.fg("muted", details.error) : ""
-        ].filter(Boolean);
-        return new Text(lines.join("\n"));
-      }
-
-      // Success - check if command has custom renderer already applied
-      // The command's own renderResult would have been called by executor
-      // This is fallback if command doesn't have custom renderer
-      const lines: string[] = [];
-
-      if (details.code !== undefined) {
-        const status = details.code === 0 ? "success" : "warning";
-        lines.push(theme.fg(status, `✓ ${command} completed (exit ${details.code})`));
-      }
-
-      if (details.duration !== undefined) {
-        lines.push(theme.fg("dim", `Duration: ${details.duration}ms`));
-      }
-
-      // Show stdout truncated
-      const stdoutText = result.content
-        .filter(c => c.type === "text")
-        .map(c => c.text)
-        .join("\n")
-        .trim();
-
-      if (stdoutText) {
-        const maxPreview = options.expanded ? 50 : 10;
-        const linesArr = stdoutText.split('\n');
-        if (linesArr.length > maxPreview) {
-          const preview = linesArr.slice(0, maxPreview).join('\n');
-          lines.push(theme.fg("text", preview));
-          lines.push(theme.fg("dim", `... and ${linesArr.length - maxPreview} more lines`));
-        } else {
-          lines.push(theme.fg("text", stdoutText));
-        }
-      }
-
-      return new Text(lines.join("\n"));
-    }
+    renderResult: renderMasterResult
   };
 }
 

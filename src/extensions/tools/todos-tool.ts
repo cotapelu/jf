@@ -12,7 +12,7 @@
 
 import { existsSync, promises as fs } from "node:fs"; // mkdirSync unused
 import { dirname, join } from "node:path";
-import type { ToolDefinition, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ToolDefinition, ExtensionAPI, ExtensionContext, AgentToolResult } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Mutex } from "../utils/mutex.js";
 import { withFileMutationQueue } from "@earendil-works/pi-coding-agent";
@@ -594,6 +594,89 @@ function renderTodosResult(result: { details?: TodoToolDetails }, options: { exp
 
 
 // ============================================================================
+// Helper functions for execute (length compliance)
+// ============================================================================
+
+function parseAndValidateParams(params: any): { p: any; errors: string[] } {
+  try {
+    let p = params;
+    if (typeof params === "string") p = JSON.parse(params);
+    if (typeof p !== "object" || p === null) return { p: null, errors: ["Parameters must be an object"] };
+    p = normalizeParams(p);
+    return { p, errors: [] };
+  } catch (e: any) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { p: null, errors: [msg] };
+  }
+}
+
+function getOperationInfo(p: any): { op: string | null; errors: string[] } {
+  const errors: string[] = [];
+  const opCount = countOperations(p);
+  if (opCount === 0) errors.push("No operation specified. Use: add_phase, add_task, update, remove_task, delete, or list");
+  if (opCount > 1) errors.push("Multiple operations detected. Use only ONE operation per call.");
+  const opName = getOperationName(p);
+  const op = opName === "unknown" ? null : opName;
+  if (!op) errors.push("No operation. Use: add_phase, add_task, update, remove_task, list");
+  return { op, errors };
+}
+
+async function applyAndUpdateState(session: TodoSessionState, p: any): Promise<{ errors: string[] }> {
+  const { phases, nextTaskId, nextPhaseId, errors } = applyOp(
+    session.state.phases,
+    session.state.nextTaskId,
+    session.state.nextPhaseId,
+    p
+  );
+  session.state.phases = phases;
+  session.state.nextTaskId = nextTaskId;
+  session.state.nextPhaseId = nextPhaseId;
+  return { errors };
+}
+
+async function persistStateIfNeeded(
+  session: TodoSessionState,
+  ctx: ExtensionContext,
+  op: string,
+  errors: string[]
+): Promise<void> {
+  if (errors.length === 0 && op !== "list") {
+    try {
+      const filePath = getProjectTodoFilePath(ctx.cwd);
+      await withFileMutationQueue(filePath, async () => {
+        await session.state.saveToFile(ctx.cwd);
+      });
+      session.state.setStorageType("file");
+    } catch (e: any) {
+      errors.push(`Save failed: ${e.message}`);
+      session.state.setStorageType("memory");
+    }
+  }
+}
+
+function formatResultSummary(session: TodoSessionState, errors: string[]): string {
+  return formatSummary(session.state.getPhases(), errors);
+}
+
+async function maybeSendSystemMessage(api: ExtensionAPI, op: string, summaryText: string): Promise<void> {
+  try {
+    // @ts-ignore - api has sendMessage
+    await api.sendMessage(
+      { customType: "todo_update", content: `[System: Todo ${op}] ${summaryText.split("\n")[0]}`, display: false },
+      { triggerTurn: false }
+    );
+  } catch {}
+}
+
+function buildResult(session: TodoSessionState, errors: string[], summaryText: string): AgentToolResult<TodoToolDetails> {
+  return {
+    content: [{ type: "text", text: summaryText }],
+    details: { phases: session.state.getPhases(), storage: session.state.storageType, error: errors.length ? errors.join("; ") : undefined },
+    isError: errors.length > 0
+  };
+}
+
+// ============================================================================
 // Tool Factory (with mergeCallAndResult support)
 // ============================================================================
 
@@ -689,89 +772,22 @@ function createTodoTool(api: ExtensionAPI): ToolDefinition<any, TodoToolDetails>
       const session = getSessionState(ctx);
       const release = await session.mutex.lock();
       try {
-        let p: any;
-        try {
-          if (typeof params === "string") params = JSON.parse(params);
-          if (typeof params !== "object" || params === null) throw new Error("object required");
-          p = params;
-        } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : String(e);
-          return {
-            content: [{ type: "text", text: `❌ Error: ${msg}` }],
-            details: { phases: session.state.getPhases(), storage: session.state.storageType, error: msg },
-            isError: true
-          };
+        const { p, errors: parseErrors } = parseAndValidateParams(params);
+        if (parseErrors.length > 0) {
+          return buildResult(session, parseErrors, formatResultSummary(session, parseErrors));
         }
-
-        // Normalize - parse JSON strings
-        try {
-          p = normalizeParams(p) as TodosParams;
-        } catch (e: any) {
-          return {
-            content: [{ type: "text", text: `❌ Error: ${e.message}` }],
-            details: { phases: session.state.getPhases(), storage: session.state.storageType, error: e.message },
-            isError: true
-          };
+        const { op, errors: opErrors } = getOperationInfo(p);
+        if (opErrors.length > 0) {
+          return buildResult(session, opErrors, formatResultSummary(session, opErrors));
         }
-
-        const errors: string[] = [];
-
-        const opCount = countOperations(p);
-        if (opCount === 0) errors.push("No operation specified. Use: add_phase, add_task, update, remove_task, delete, or list");
-        if (opCount > 1) errors.push("Multiple operations detected. Use only ONE operation per call.");
-
-        const opName = getOperationName(p);
-        const op = opName === "unknown" ? null : opName;
-        if (!op) { errors.push("No operation. Use: add_phase, add_task, update, remove_task, list"); }
-
-        // Apply pure operation
-        const { phases: newPhases, nextTaskId: newTid, nextPhaseId: newPid, errors: opErrors } = applyOp(
-          session.state.phases,
-          session.state.nextTaskId,
-          session.state.nextPhaseId,
-          p
-        );
-        errors.push(...opErrors);
-
-        // Update state
-        session.state.phases = newPhases;
-        session.state.nextTaskId = newTid;
-        session.state.nextPhaseId = newPid;
-
-        if (errors.length === 0 && op !== "list") {
-          try {
-            const filePath = getProjectTodoFilePath(ctx.cwd);
-            await withFileMutationQueue(filePath, async () => {
-              await session.state.saveToFile(ctx.cwd);
-            });
-            session.state.setStorageType("file");
-          } catch (e: any) {
-            errors.push(`Save failed: ${e.message}`);
-            session.state.setStorageType("memory");
-          }
+        const { errors: applyErrors } = await applyAndUpdateState(session, p);
+        const allErrors = [...parseErrors, ...opErrors, ...applyErrors];
+        await persistStateIfNeeded(session, ctx, op!, allErrors);
+        const summaryText = formatResultSummary(session, allErrors);
+        if (op && op !== "list" && allErrors.length === 0) {
+          await maybeSendSystemMessage(api, op, summaryText);
         }
-
-        const resultPhases = session.state.getPhases();
-        const summaryText = formatSummary(resultPhases, errors);
-
-        // System message (optional)
-        if (op && op !== "list" && errors.length === 0) {
-          try {
-            // api is captured from outer closure
-            // @ts-ignore - api is injected via closure
-            await api.sendMessage({
-              customType: "todo_update",
-              content: `[System: Todo ${op}] ${summaryText.split("\n")[0]}`,
-              display: false
-            }, { triggerTurn: false });
-          } catch {}
-        }
-
-        return {
-          content: [{ type: "text", text: summaryText }],
-          details: { phases: resultPhases, storage: session.state.storageType, error: errors.length ? errors.join("; ") : undefined },
-          isError: errors.length > 0
-        };
+        return buildResult(session, allErrors, summaryText);
       } finally {
         release();
       }
