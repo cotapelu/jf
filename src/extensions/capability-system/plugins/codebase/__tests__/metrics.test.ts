@@ -12,21 +12,9 @@ describe('codebase.metrics', () => {
   });
 
   it('should compute metrics for a simple TypeScript file', async () => {
-    const fileRel = 'sample.ts';
-    const content = `
-import { foo } from './bar';
-export const x = 1;
-function myFunc(a: number, b: number): number {
-  return a + b;
-}
-class MyClass {
-  prop: string;
-  method() {}
-}
-`;
+    const fileRel = 'sample.ts', content = "import { foo } from './bar';\nexport const x = 1;\nfunction myFunc(a: number, b: number): number { return a + b; }\nclass MyClass { prop: string; method() {} }";
     const fileAbs = join(tmpdir, fileRel);
     await fs.writeFile(fileAbs, content, 'utf8');
-
     const result = await execute({ files: [fileRel] }, { cwd: tmpdir });
     expect(result.stats.totalFiles).toBe(1);
     expect(result.results).toHaveLength(1);
@@ -37,28 +25,14 @@ class MyClass {
     expect(metrics.exports).toBeGreaterThanOrEqual(1);
     expect(metrics.functions).toBeGreaterThanOrEqual(1);
     expect(metrics.classes).toBeGreaterThanOrEqual(1);
-    // stats aggregation
     expect(result.stats.totalImports).toBe(metrics.imports);
     expect(result.stats.totalFunctions).toBe(metrics.functions);
     expect(result.stats.totalClasses).toBe(metrics.classes);
   });
 
   it('should handle multiple files and aggregate stats', async () => {
-    const file1 = 'a.ts';
-    const file2 = 'b.ts';
-    const content1 = `
-import x from 'x';
-function f1() {}
-class C1 {}
-`;
-    const content2 = `
-import y from 'y';
-function f2() {}
-class C2 {}
-`;
-    await fs.writeFile(join(tmpdir, file1), content1, 'utf8');
-    await fs.writeFile(join(tmpdir, file2), content2, 'utf8');
-
+    const file1 = 'a.ts', file2 = 'b.ts', content1 = "import x from 'x';\nfunction f1() {}\nclass C1 {}", content2 = "import y from 'y';\nfunction f2() {}\nclass C2 {}";
+    await Promise.all([fs.writeFile(join(tmpdir, file1), content1, 'utf8'), fs.writeFile(join(tmpdir, file2), content2, 'utf8')]);
     const result = await execute({ files: [file1, file2] }, { cwd: tmpdir });
     expect(result.stats.totalFiles).toBe(2);
     expect(result.results).toHaveLength(2);
