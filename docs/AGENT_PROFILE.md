@@ -490,24 +490,22 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 ## 8. Function Length Compliance (ACTIVE - CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Current State (2026-07-15 after Batch 8):**
-- Functions >20 lines: **~78** in src (out of ~571 total)
-- Compliance: **~86.3%** (target: 100%)
+**Current State (2026-07-15 after Batch 9):**
+- Functions >20 lines: **~76** in src (out of ~571 total)
+- Compliance: **~86.7%** (target: 100%)
 - Previous count: 146 (74.43%) - significant improvement already made
 
 **High-Impact Remaining Violations:**
-- `bash-actions.ts`: `execute` method (~30+ lines)
 - `master-tool.ts`: `executeMaster` and `renderMasterResult` functions (~50+ lines each)
 - Test files with large functions (some coverage tests have long setups)
 
-**Note:** `dependency_tree.ts` fully compliant; `AgentTeam` fully compliant; `plugin-loader.ts` fully compliant; `todos-tool.ts` execute method now ≤20 lines.
+**Note:** `dependency_tree.ts` fully compliant; `AgentTeam` fully compliant; `plugin-loader.ts` fully compliant; `todos-tool.ts` execute method ≤20 lines; `bash-actions.ts` execute method now ≤20 lines.
 
 **Root Cause:** Accumulation of large factory functions and orchestrators over time; systematic extraction ongoing.
 
 **Action Plan (Cycle 2+):**
-- Phase 1: Refactor `bash-actions.ts` execute method (extract helpers)
-- Phase 2: Refactor `master-tool.ts` functions (extract helpers, possibly split into operation modules)
-- Phase 3: Address test file violations where they impede coverage or maintenance
+- Phase 1: Refactor `master-tool.ts` functions (extract helpers, split into operation modules if needed)
+- Phase 2: Address test file violations where they impede coverage or maintenance
 - Use proven patterns: extraction, guard clauses, single-responsibility helpers
 
 **Status:** 🟡 IN PROGRESS - Function extraction campaign active. Estimated 2-3 cycles to reach 100% compliance. All quality gates otherwise satisfied; this is the sole blocking item.

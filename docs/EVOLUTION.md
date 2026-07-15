@@ -1395,3 +1395,5 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Refactor plugin-loader Batch 7: compress methods and extract scheduleNewPluginLoad helpers (2026-07-15)
 
 - [x] Refactor todos-tool Batch 8: extract executeOrchestration helper; execute method ≤20 lines (2026-07-15)
+
+- [x] Refactor bash-actions Batch 9: extract executeOrchestration helper; execute method ≤20 lines (2026-07-15)

@@ -9,7 +9,8 @@
 - ✅ Batch 6: Extracted `createLoadedPlugin` from `finalizePlugin` and `computeCapabilityMetadata` from `createCapability` in plugin-loader.
 - ✅ Batch 7: Compressed remaining methods and extracted scheduleNewPluginLoad helpers; plugin-loader now 100% compliant.
 - ✅ Batch 8: Extracted `executeOrchestration` helper in todos-tool; execute method now ≤20 lines.
-- 🔄 Batch 9 (next): Target `bash-actions.ts` execute method (large); then `master-tool.ts` (executeMaster, renderMasterResult).
+- ✅ Batch 9: Extracted `executeOrchestration` helper in bash-actions; execute method now ≤20 lines.
+- 🔄 Batch 10 (next): Target `master-tool.ts` (executeMaster, renderMasterResult); then remaining test file violations.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**
