@@ -31,21 +31,11 @@ describe('AgentTeam uncovered branches', () => {
     it('should return false when agent is not the assignee', async () => {
       team = new AgentTeam();
       team.setTeamId('test');
-      const rt1 = createMockRuntime();
-      rt1.session.sessionId = 'agent-1';
-      team.registerRuntime(rt1, 'agent-1');
-      const rt2 = createMockRuntime();
-      rt2.session.sessionId = 'agent-2';
-      team.registerRuntime(rt2, 'agent-2');
+      const rt1 = createMockRuntime(); rt1.session.sessionId = 'agent-1'; team.registerRuntime(rt1, 'agent-1');
+      const rt2 = createMockRuntime(); rt2.session.sessionId = 'agent-2'; team.registerRuntime(rt2, 'agent-2');
       await team.initialize(['task0']);
-
-      // Claim task for agent-1
       await team.claimTask('agent-1');
-
-      // agent-2 tries to handle failure -> should be no state change
       await (team as any).handleAgentFailure('agent-2', 0, new Error('fail'));
-
-      // Task still assigned to agent-1, status still in_progress
       const teamAny = team as any;
       const task = teamAny.taskManager.getTaskStatus(0);
       expect(task.assignee).toBe('agent-1');
@@ -111,15 +101,10 @@ describe('AgentTeam uncovered branches', () => {
       rt.session.sessionId = 'agent-1';
       team.registerRuntime(rt, 'agent-1');
       await team.initialize(['task0']);
-      // Start wait in background
       const waitPromise = (team as any).waitForCompletion();
-      // Initially not complete
       await team.claimTask('agent-1');
-      // Fast-forward some time; still not complete
       vi.advanceTimersByTime(300);
-      // Now complete the task
       await team.completeTask('agent-1', 0, 'done');
-      // Fast-forward to allow wait loop to check
       vi.advanceTimersByTime(200);
       await waitPromise;
       vi.useRealTimers();
