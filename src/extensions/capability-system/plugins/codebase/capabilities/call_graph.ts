@@ -144,36 +144,15 @@ async function parseFile(cwd: string, fileRel: string): Promise<ParsedFile | nul
   return { fileAbs, fileRel, funcs, imports, calls };
 }
 
-function resolveCallee(
-  call: { callerKey: string; calleeLocal: string },
-  callerPF: ParsedFile,
-  imports: Map<string, { source: string; original: string }>,
-  absToFuncs: Map<string, Map<string, CallGraphNode>>
-): CallGraphNode | null {
-  const imp = imports.get(call.calleeLocal);
-  if (imp) {
-    const callerDir = dirname(callerPF.fileAbs);
-    const base = resolve(callerDir, imp.source);
-    const candidates = [
-      base,
-      base + '.ts',
-      base + '.tsx',
-      base + '.js',
-      base + '.jsx',
-      resolve(base, 'index.ts'),
-      resolve(base, 'index.js')
-    ];
-    for (const cand of candidates) {
-      const funcs = absToFuncs.get(cand);
-      if (!funcs) continue;
-      const found = [...funcs.values()].find(node => node.name === imp.original) || null;
-      if (found) return found;
-    }
+function resolveCallee(call:{callerKey:string;calleeLocal:string},callerPF:ParsedFile,imports:Map<string,{source:string;original:string}>,absToFuncs:Map<string,Map<string,CallGraphNode>>):CallGraphNode|null{
+  const imp=imports.get(call.calleeLocal);
+  if(imp){
+    const callerDir=dirname(callerPF.fileAbs),base=resolve(callerDir,imp.source),candidates=[base,base+'.ts',base+'.tsx',base+'.js',base+'.jsx',resolve(base,'index.ts'),resolve(base,'index.js')];
+    for(const cand of candidates){ const funcs=absToFuncs.get(cand); if(!funcs) continue; const found=[...funcs.values()].find(node=>node.name===imp.original)||null; if(found) return found; }
     return null;
-  } else {
-    const localKey = `${callerPF.fileRel}:${call.calleeLocal}`;
-    return callerPF.funcs.get(localKey) || null;
   }
+  const localKey=`${callerPF.fileRel}:${call.calleeLocal}`;
+  return callerPF.funcs.get(localKey)||null;
 }
 
 async function processCandidates(
@@ -193,24 +172,20 @@ async function processCandidates(
   }
 }
 
-async function collectAllFiles(cwd: string, roots: string[], depth: number, includeCrossFile: boolean): Promise<ParsedFile[]> {
-  const visited = new Set<string>(), allFiles: ParsedFile[] = [];
-  async function visitFile(fileRel: string, currentDepth: number): Promise<void> {
-    const pf = await parseFile(cwd, fileRel);
-    if (!pf) return;
-    if (visited.has(pf.fileAbs)) return;
-    visited.add(pf.fileAbs);
-    allFiles.push(pf);
-    if (includeCrossFile && currentDepth > 0) {
-      const nextDepth = currentDepth - 1;
-      for (const imp of pf.imports.values()) {
-        const callerDir = dirname(pf.fileAbs), base = resolve(callerDir, imp.source);
-        const candidates = [base, base+'.ts', base+'.tsx', base+'.js', base+'.jsx', resolve(base,'index.ts'), resolve(base,'index.js')];
-        await processCandidates(candidates, cwd, visited, visitFile, nextDepth);
+async function collectAllFiles(cwd:string,roots:string[],depth:number,includeCrossFile:boolean):Promise<ParsedFile[]>{
+  const visited=new Set<string>(), allFiles:ParsedFile[]=[];
+  async function visitFile(fileRel:string, currentDepth:number):Promise<void>{
+    const pf=await parseFile(cwd,fileRel);
+    if(!pf||visited.has(pf.fileAbs)) return; visited.add(pf.fileAbs); allFiles.push(pf);
+    if(includeCrossFile&&currentDepth>0){
+      const nextDepth=currentDepth-1;
+      for(const imp of pf.imports.values()){
+        const callerDir=dirname(pf.fileAbs), base=resolve(callerDir,imp.source), candidates=[base,base+'.ts',base+'.tsx',base+'.js',base+'.jsx',resolve(base,'index.ts'),resolve(base,'index.js')];
+        await processCandidates(candidates,cwd,visited,visitFile,nextDepth);
       }
     }
   }
-  for (const root of roots) await visitFile(root, depth);
+  for(const root of roots) await visitFile(root,depth);
   return allFiles;
 }
 
@@ -222,26 +197,19 @@ function buildAbsToFuncs(allFiles: ParsedFile[]): Map<string, Map<string, CallGr
   return map;
 }
 
-function buildEdges(
-  allFiles: ParsedFile[],
-  absToFuncs: Map<string, Map<string, CallGraphNode>>,
-  nameFilter?: string,
-  limit?: number
-): CallGraphEdge[] {
-  const edges: CallGraphEdge[] = [];
-  for (const pf of allFiles) {
-    for (const call of pf.calls) {
-      const toNode = resolveCallee(call, pf, pf.imports, absToFuncs);
-      if (!toNode) continue;
-      const fromNode = pf.funcs.get(call.callerKey);
-      if (!fromNode) continue;
-      if (nameFilter && !nameMatches(toNode.name, nameFilter)) continue;
-      edges.push({ from: fromNode, to: toNode });
+function buildEdges(allFiles:ParsedFile[],absToFuncs:Map<string,Map<string,CallGraphNode>>,nameFilter?:string,limit?:number):CallGraphEdge[]{
+  const edges:CallGraphEdge[]=[];
+  for(const pf of allFiles){
+    for(const call of pf.calls){
+      const toNode=resolveCallee(call,pf,pf.imports,absToFuncs);
+      if(!toNode) continue;
+      const fromNode=pf.funcs.get(call.callerKey);
+      if(!fromNode) continue;
+      if(nameFilter&&!nameMatches(toNode.name,nameFilter)) continue;
+      edges.push({from:fromNode,to:toNode});
     }
   }
-  if (limit && edges.length > limit) {
-    edges.length = limit;
-  }
+  if(limit&&edges.length>limit) edges.length=limit;
   return edges;
 }
 
