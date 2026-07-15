@@ -130,6 +130,12 @@
 **Resolution:** Extracted parsing (`parseTeamToolParams`), onUpdate wrapper (`wrapTeamOnUpdate`), team query handler (`handleTeamQuery`), and creation logic (`executeTeamCreation`); `executeTeamTool` now ≤20 lines
 **Status:** ✅ FIXED in Batch 12 (2026-07-15)
 
+### 10. Team Ops Tool Compliance (FIXED ✅)
+**Severity:** HIGH
+**Instance:** `executeTeamOpsTool` ~18 lines; all handlers & helpers ≤20 lines
+**Resolution:** Extracted parsing, context validation, per-action handlers; `teamOpsToolBase` constant; added `AgentTeam.updateStatus`
+**Status:** ✅ FIXED in Batch 13 (2026-07-15)
+
 ## Fragile Modules
 
 ### Session Tool (FIXED ✅)

@@ -4435,3 +4435,23 @@ Focus: Reduce createTeamTool size (62 lines) by extracting helpers
 - team-tool.ts 100% function-length compliant
 - Next target: `team-ops-tool.ts` (createTeamOpsTool 59 lines) and remaining test file violations
 
+
+## Team Ops Tool Refactor - Batch 13 (2026-07-15)
+Focus: Reduce createTeamOpsTool size (59 lines) by extracting helpers
+
+**Changes:**
+- Extracted parsing (`parseTeamOpsParams`), context validation (`ensureTeamContext`)
+- Split action handlers (claim, release, complete, status, workspace, messaging) into separate functions
+- Moved static tool definition to `teamOpsToolBase` constant to keep `createTeamOpsTool` ≤20 lines
+- Added `updateStatus` method to `AgentTeam` to support status updates
+- All functions in `team-ops-tool.ts` now ≤20 lines; `executeTeamOpsTool` dispatcher ≤20 lines
+
+**Results:**
+- All 1318 tests passing (team-ops-tool tests all green)
+- Lint clean, typecheck clean
+- No regressions
+
+**Impact:**
+- team-ops-tool.ts 100% function‑length compliant
+- Next targets: remaining violations in `call_graph.ts`, `analyze_ast.ts`, `complexity.ts`, `dependency_tree.ts`, and potential test file blocks
+
