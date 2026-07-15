@@ -117,6 +117,55 @@ const MASTER_TOOL_PARAMETERS: any = {
 // Extracted functions (for length compliance)
 // ============================================================================
 
+function isMetaCommand(command: string): boolean {
+  return command === "list" || command === "list.grep" || command === "help" || command === "stats" || command === "reload";
+}
+
+async function ensureRegistryInitialized(registry: CommandRegistry): Promise<AgentToolResult<any> | null> {
+  try {
+    await registry.ensureInitialized();
+    return null;
+  } catch (error) {
+    return {
+      content: [{ type: "text", text: `❌ Failed to initialize command registry: ${String(error)}` }],
+      details: { error: "registry_init_failed" },
+      isError: true
+    };
+  }
+}
+
+function validateMasterParams(params: any): { command: string; args: any } | null {
+  if (!params || typeof params !== 'object') return null;
+  const command = params.command;
+  const args = params.args;
+  if (!command || typeof command !== "string") return null;
+  return { command, args: args ?? {} };
+}
+
+async function executeRegularCommand(
+  toolCallId: string,
+  command: string,
+  args: any,
+  signal: AbortSignal | undefined,
+  _onUpdate: AgentToolUpdateCallback<unknown> | undefined,
+  ctx: ExtensionContext,
+  registry: CommandRegistry,
+  options: any
+): Promise<AgentToolResult<any>> {
+  const result = await registry.execute(command, args, {
+    toolCallId,
+    signal,
+    onUpdate: _onUpdate,
+    ctx,
+    maxOutputSize: options.maxOutputSize ?? 1024 * 1024
+  });
+  return {
+    content: result.content,
+    details: result.details,
+    isError: result.isError
+  };
+}
+
 async function executeMaster(
   toolCallId: string,
   params: any,
@@ -126,70 +175,41 @@ async function executeMaster(
   registry: CommandRegistry,
   options: any
 ): Promise<AgentToolResult<any>> {
-  try {
-    await registry.ensureInitialized();
-  } catch (error) {
-    return {
-      content: [{ type: "text", text: `❌ Failed to initialize command registry: ${String(error)}` }],
-      details: { error: "registry_init_failed" },
-      isError: true
-    };
-  }
-
-  const { command, args } = params;
-
-  if (!command || typeof command !== "string") {
-    return {
-      content: [{ type: "text", text: "❌ Missing required parameter: command" }],
-      details: { error: "missing_command" },
-      isError: true
-    };
-  }
-
-  // Special meta-commands (list, help, stats, reload)
-  if (command === "list" || command === "list.grep" || command === "help" || command === "stats" || command === "reload") {
-    return handleMetaCommand(command, args, ctx);
-  }
-
-  // Execute actual command
-  const result = await registry.execute(command, args ?? {}, {
-    toolCallId,
-    signal,
-    onUpdate: _onUpdate,
-    ctx,
-    maxOutputSize: options.maxOutputSize ?? 1024 * 1024
-  });
-
-  // Transform to AgentToolResult
-  return {
-    content: result.content,
-    details: result.details,
-    isError: result.isError
+  const initResult = await ensureRegistryInitialized(registry);
+  if (initResult) return initResult;
+  const validation = validateMasterParams(params);
+  if (!validation) return {
+    content: [{ type: "text", text: "❌ Missing required parameter: command" }],
+    details: { error: "missing_command" },
+    isError: true
   };
+  const { command, args } = validation;
+  if (isMetaCommand(command)) return handleMetaCommand(command, args, ctx);
+  return await executeRegularCommand(toolCallId, command, args, signal, _onUpdate, ctx, registry, options);
 }
 
-function renderMasterResult(
-  result: AgentToolResult<any>,
-  options: { expanded: boolean; isPartial: boolean },
-  theme: Theme,
-  _context?: any
-): any {
-  const details = result.details || {};
-  const isError = result.isError;
-  const command = details.command || "unknown";
+function renderMasterResultPartial(theme: Theme, command: string): any {
+  return new Text(theme.fg("warning", `⏳ Executing ${command}...`));
+}
 
-  if (options.isPartial) {
-    return new Text(theme.fg("warning", `⏳ Executing ${command}...`));
+function renderMasterResultError(theme: Theme, command: string, details: any): any {
+  const lines = [
+    theme.fg("error", `❌ ${command} failed`),
+    details.error ? theme.fg("muted", details.error) : ""
+  ].filter(Boolean);
+  return new Text(lines.join("\n"));
+}
+
+function formatStdoutPreview(stdoutText: string, maxPreview: number, theme: Theme): string {
+  const linesArr = stdoutText.split('\n');
+  if (linesArr.length > maxPreview) {
+    const preview = linesArr.slice(0, maxPreview).join('\n');
+    return `${preview}\n${theme.fg("dim", `... and ${linesArr.length - maxPreview} more lines`)}`;
   }
+  return theme.fg("text", stdoutText);
+}
 
-  if (isError) {
-    const lines = [
-      theme.fg("error", `❌ ${command} failed`),
-      details.error ? theme.fg("muted", details.error) : ""
-    ].filter(Boolean);
-    return new Text(lines.join("\n"));
-  }
-
+function renderMasterResultSuccess(theme: Theme, command: string, details: any, result: AgentToolResult<any>, expanded: boolean): any {
   const lines: string[] = [];
 
   if (details.code !== undefined) {
@@ -208,18 +228,32 @@ function renderMasterResult(
     .trim();
 
   if (stdoutText) {
-    const maxPreview = options.expanded ? 50 : 10;
-    const linesArr = stdoutText.split('\n');
-    if (linesArr.length > maxPreview) {
-      const preview = linesArr.slice(0, maxPreview).join('\n');
-      lines.push(theme.fg("text", preview));
-      lines.push(theme.fg("dim", `... and ${linesArr.length - maxPreview} more lines`));
-    } else {
-      lines.push(theme.fg("text", stdoutText));
-    }
+    const maxPreview = expanded ? 50 : 10;
+    lines.push(formatStdoutPreview(stdoutText, maxPreview, theme));
   }
 
   return new Text(lines.join("\n"));
+}
+
+function renderMasterResult(
+  result: AgentToolResult<any>,
+  options: { expanded: boolean; isPartial: boolean },
+  theme: Theme,
+  _context?: any
+): any {
+  const details = result.details || {};
+  const isError = result.isError;
+  const command = details.command || "unknown";
+
+  if (options.isPartial) {
+    return renderMasterResultPartial(theme, command);
+  }
+
+  if (isError) {
+    return renderMasterResultError(theme, command, details);
+  }
+
+  return renderMasterResultSuccess(theme, command, details, result, options.expanded);
 }
 
 function renderMasterCall(args: any, theme: Theme): any {
