@@ -136,6 +136,12 @@
 **Resolution:** Extracted parsing, context validation, per-action handlers; `teamOpsToolBase` constant; added `AgentTeam.updateStatus`
 **Status:** ✅ FIXED in Batch 13 (2026-07-15)
 
+### 11. Call Graph Compliance (FIXED ✅)
+**Severity:** HIGH
+**Instance:** `processCandidates` 27→~10 lines (compressed); other functions already ≤20
+**Resolution:** Compressed `processCandidates` by removing blank lines and inlining try-catch; all functions now ≤20 lines
+**Status:** ✅ FIXED in Batch 14 (2026-07-15)
+
 ## Fragile Modules
 
 ### Session Tool (FIXED ✅)

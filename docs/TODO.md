@@ -14,7 +14,8 @@
 - ✅ Batch 11: Refactored `tool-template.ts`; extracted `executeTool` and compressed `generateCommandHelp`; replaced `buildCommandMeta` with constant; all methods ≤20 lines.
 - ✅ Batch 12: Refactored `team-tool.ts`; extracted `executeTeamTool` and helpers; all methods ≤20 lines.
 - ✅ Batch 13: Refactored `team-ops-tool.ts`; extracted `executeTeamOpsTool` and helpers; all methods ≤20 lines; added `AgentTeam.updateStatus`.
-- 🔄 Batch 14 (next): Target remaining high‑impact violations (e.g., call_graph.ts, analyze_ast.ts, complexity.ts, dependency_tree.ts) and large test blocks.
+- ✅ Batch 14: Refactored `call_graph.ts`; compressed `processCandidates` to ≤20 lines.
+- 🔄 Batch 15 (next): Target remaining violations in `analyze_ast.ts`, `complexity.ts`, `dependency_tree.ts` and large test blocks.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

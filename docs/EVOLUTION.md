@@ -1400,3 +1400,4 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Refactor tool-template Batch 11: extract executeTool, compress generateCommandHelp; replace buildCommandMeta with constant; all methods ≤20 lines (2026-07-15)
 - [x] Refactor team-tool Batch 12: extract parseTeamToolParams, wrapTeamOnUpdate, handleTeamQuery, executeTeamCreation; executeTeamTool ≤20 lines (2026-07-15)
 - [x] Refactor team-ops-tool Batch 13: extract parseTeamOpsParams, ensureTeamContext, action handlers; executeTeamOpsTool ≤20 lines; added AgentTeam.updateStatus (2026-07-15)
+- [x] Refactor call_graph Batch 14: compress processCandidates to ≤20 lines (2026-07-15)
