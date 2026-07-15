@@ -1404,3 +1404,4 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Refactor call_graph Batch 15: compress resolveCallee, collectAllFiles, buildEdges to ≤20 lines (2026-07-15)
 - [x] Refactor dependency_tree Batch 16: compress resolveInAllFiles to ≤20 lines (2026-07-15)
 - [x] Refactor tests Batch 17: extract helpers, fix two >20 line tests in session-tool.test.ts (2026-07-15)
+- [x] Test refactor Batch 18: finished session-tool.test.ts; all tests ≤20 lines (2026-07-15)

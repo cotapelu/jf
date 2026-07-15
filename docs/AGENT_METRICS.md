@@ -4521,3 +4521,19 @@ Focus: Reduce >20 line test blocks in session-tool.test.ts
 - Improved test maintainability and readability.
 - Established pattern for extracting test helpers applicable to other large test files.
 
+
+## Test Refactoring - Batch 18 (2026-07-15)
+Focus: Clean up remaining >20 line tests in session-tool.test.ts
+
+**Completed:**
+- Refactored 6 additional tests: set parent, switch by ID, filter by state, detailed info, remove tags, display hierarchy.
+- All tests now ≤20 lines.
+- Reused existing helper library (11 functions, all ≤8 lines).
+
+**Result:**
+- session-tool.test.ts: all 37 tests passing, no function >20 lines.
+- session-tool.test.ts fully compliant.
+
+**Next:**
+- Apply same pattern to other large test files (codebase.test.ts, session-registry.test.ts, etc.).
+

@@ -149,43 +149,24 @@ describe('SessionTool', () => {
     });
 
     it('should set parent to current active session', async () => {
-      const result1 = await tool.execute('create4a', { operation: 'create', name: 'child-1' });
+      const c1 = await createSession('create4a', 'child-1');
+      const c2 = await createSession('create4b', 'child-2');
+      const info: any = await tool.execute('info_child2', { operation: 'info', sessionId: c2.details.sessionId });
       // @ts-ignore
-      const child1Id = result1.details.sessionId;
-
-      // Child-1 is now active. Create another without specifying parent.
-      const result2 = await tool.execute('create4b', { operation: 'create', name: 'child-2' });
-      // @ts-ignore
-      const child2Id = result2.details.sessionId;
-
-      // Verify via info: child-2 parent should be child-1
-      const infoResult: any = await tool.execute('info_child2', {
-        operation: 'info',
-        sessionId: child2Id,
-      });
-      // @ts-ignore
-      expect(infoResult.details.session.parentId).toBe(child1Id);
+      expect(info.details.session.parentId).toBe(c1.details.sessionId);
     });
   });
 
   describe('switch operation', () => {
     it('should switch to a specific session by ID', async () => {
-      const createResult: any = await tool.execute('switch_create', {
-        operation: 'create',
-        name: 'child',
-      });
-      // @ts-ignore
-      const childId = createResult.details.sessionId;
-
-      // Switch to parent first
-      await tool.execute('switch_parent1', { operation: 'switch', sessionId: 'parent' });
-      let status = await tool.execute('status_before', { operation: 'status' });
+      const child = await createSession('switch_create', 'child');
+      const childId = child.details.sessionId;
+      await switchSession('switch_parent1', 'parent');
+      let status = await getStatus('status_before');
       // @ts-ignore
       expect(status.content[0].text).toContain('parent');
-
-      // Switch to child
-      await tool.execute('switch_child1', { operation: 'switch', sessionId: childId });
-      status = await tool.execute('status_after', { operation: 'status' });
+      await switchSession('switch_child1', childId);
+      status = await getStatus('status_after');
       // @ts-ignore
       expect(status.content[0].text).toContain(childId);
     });
@@ -249,26 +230,16 @@ describe('SessionTool', () => {
     });
 
     it('should filter by state', async () => {
-      await tool.execute('list_f1', { operation: 'create', name: 'active-child' });
-      // Switch to parent; the child becomes inactive but not disposed
-      await tool.execute('list_f2', { operation: 'switch', sessionId: 'parent' });
-
-      const resultActive = await tool.execute('list_f3', {
-        operation: 'list',
-        filterState: 'active',
-      });
-      // Only parent is active now
+      await createSession('list_f1', 'active-child');
+      await switchSession('list_f2', 'parent');
+      const active = await listSessions('list_f3', 'active');
       // @ts-ignore
-      expect(resultActive.content[0].text).toContain('parent');
+      expect(active.content[0].text).toContain('parent');
       // @ts-ignore
-      expect(resultActive.content[0].text).not.toContain('active-child');
-
-      const resultInactive = await tool.execute('list_f4', {
-        operation: 'list',
-        filterState: 'inactive',
-      });
+      expect(active.content[0].text).not.toContain('active-child');
+      const inactive = await listSessions('list_f4', 'inactive');
       // @ts-ignore
-      expect(resultInactive.content[0].text).toContain('active-child');
+      expect(inactive.content[0].text).toContain('active-child');
     });
 
     it('should limit results', async () => {
@@ -301,24 +272,18 @@ describe('SessionTool', () => {
 
   describe('info operation', () => {
     it('should show detailed info for a session', async () => {
-      const createResult: any = await tool.execute('info1', {
-        operation: 'create',
-        name: 'info-child',
-        tags: ['tag1', 'tag2'],
-      });
+      const create: any = await tool.execute('info1', { operation: 'create', name: 'info-child', tags: ['tag1','tag2'] });
+      const childId = create.details.sessionId;
+      const info: any = await tool.execute('info2', { operation: 'info', sessionId: childId });
+      const text = info.content[0].text;
       // @ts-ignore
-      const childId = createResult.details.sessionId;
-
-      const result: any = await tool.execute('info2', { operation: 'info', sessionId: childId });
-
+      expect(text).toContain('ID: ' + childId);
       // @ts-ignore
-      expect(result.content[0].text).toContain('ID: ' + childId);
+      expect(text).toContain('info-child');
       // @ts-ignore
-      expect(result.content[0].text).toContain('info-child');
+      expect(text).toContain('tag1, tag2');
       // @ts-ignore
-      expect(result.content[0].text).toContain('tag1, tag2');
-      // @ts-ignore
-      expect(result.content[0].text).toContain('child');
+      expect(text).toContain('child');
     });
 
     it('should default to active session if no sessionId provided', async () => {
@@ -387,19 +352,9 @@ describe('SessionTool', () => {
     });
 
     it('should remove tags', async () => {
-      const createResult: any = await tool.execute('tag_rem1', {
-        operation: 'create',
-        tags: ['a', 'b'],
-      });
-      // @ts-ignore
-      const sessionId = createResult.details.sessionId;
-
-      const result: any = await tool.execute('tag_rem2', {
-        operation: 'tag',
-        sessionId,
-        tagAction: 'remove',
-        tags: ['a'],
-      });
+      const create: any = await tool.execute('tag_rem1', { operation: 'create', tags: ['a','b'] });
+      const sessionId = create.details.sessionId;
+      const result: any = await tool.execute('tag_rem2', { operation: 'tag', sessionId, tagAction: 'remove', tags: ['a'] });
       // @ts-ignore
       expect(result.content[0].text).toContain('Removed tags');
       // @ts-ignore
@@ -447,27 +402,18 @@ describe('SessionTool', () => {
 
   describe('tree operation', () => {
     it('should display session hierarchy', async () => {
-      const child1 = await tool.execute('tree1', { operation: 'create', name: 'child-1' });
-      const child2 = await tool.execute('tree2', {
-        operation: 'create',
-        name: 'child-2',
-        // parent will be child-1 (active)
-      });
-      // Switch to parent and create another child directly under parent
-      await tool.execute('tree_switch', { operation: 'switch', sessionId: 'parent' });
-      await tool.execute('tree3', { operation: 'create', name: 'child-of-parent' });
-
-      const result: any = await tool.execute('tree4', { operation: 'tree' });
+      await createSession('tree1', 'child-1');
+      await createSession('tree2', 'child-2');
+      await switchSession('tree_switch', 'parent');
+      await createSession('tree3', 'child-of-parent');
+      const result = await tool.execute('tree4', { operation: 'tree' });
       // @ts-ignore
-      expect(result.content[0].text).toContain('Session Tree');
-      // @ts-ignore
-      expect(result.content[0].text).toContain('parent');
-      // @ts-ignore
-      expect(result.content[0].text).toContain('child-1');
-      // @ts-ignore
-      expect(result.content[0].text).toContain('child-2');
-      // @ts-ignore
-      expect(result.content[0].text).toContain('child-of-parent');
+      const text = result.content[0].text;
+      expect(text).toContain('Session Tree');
+      expect(text).toContain('parent');
+      expect(text).toContain('child-1');
+      expect(text).toContain('child-2');
+      expect(text).toContain('child-of-parent');
     });
   });
 
