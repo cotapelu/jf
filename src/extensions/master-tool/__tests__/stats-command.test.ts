@@ -14,35 +14,14 @@ describe('master_tool.stats command', () => {
   });
 
   it('should return formatted stats', async () => {
-    const fakeRegistry = {
-      getStats: () => ({
-        registeredCommands: 2,
-        totalExecutions: 42,
-        successRate: 95.5,
-        commandStats: [
-          { command: 'git.status', count: 20, avgDuration: 45.123 },
-          { command: 'dev.test', count: 22, avgDuration: 120.567 }
-        ],
-        cacheStats: { size: 10, hits: 100, misses: 20 },
-        recentErrors: [
-          { command: 'bad.cmd', error: 'boom', count: 3 }
-        ]
-      })
-    };
+    const fakeRegistry = { getStats: () => ({ registeredCommands: 2, totalExecutions: 42, successRate: 95.5, commandStats: [{ command: 'git.status', count: 20, avgDuration: 45.123 }, { command: 'dev.test', count: 22, avgDuration: 120.567 }], cacheStats: { size: 10, hits: 100, misses: 20 }, recentErrors: [{ command: 'bad.cmd', error: 'boom', count: 3 }] }) };
     (getRegistry as any).mockReturnValue(fakeRegistry);
-
     const result = await execute({}, '/tmp', undefined, {} as any);
-
     expect(result.code).toBe(0);
     expect(result.stderr).toBe('');
     const out = result.stdout;
-    expect(out).toContain('Registered commands: 2');
-    expect(out).toContain('Total executions: 42');
-    expect(out).toContain('Success rate: 95.5%');
-    expect(out).toContain('git.status: 20 execs, avg 45.12ms');
-    expect(out).toContain('dev.test: 22 execs, avg 120.57ms');
-    expect(out).toContain('Cache: 10 entries, 100 hits, 20 misses');
-    expect(out).toContain('bad.cmd: 3 errors – boom');
+    const checks = ['Registered commands: 2','Total executions: 42','Success rate: 95.5%','git.status: 20 execs, avg 45.12ms','dev.test: 22 execs, avg 120.57ms','Cache: 10 entries, 100 hits, 20 misses','bad.cmd: 3 errors – boom'];
+    checks.forEach(s => expect(out).toContain(s));
   });
 
   it('handles empty stats gracefully', async () => {
@@ -75,20 +54,9 @@ describe('master_tool.stats command', () => {
   });
 
   it('should output JSON when format=json', async () => {
-    const fakeRegistry = {
-      getStats: () => ({
-        registeredCommands: 1,
-        totalExecutions: 10,
-        successRate: 100,
-        commandStats: [{ command: 'test.cmd', count: 10, avgDuration: 50 }],
-        cacheStats: { size: 1, hits: 10, misses: 0 },
-        recentErrors: []
-      })
-    };
+    const fakeRegistry = { getStats: () => ({ registeredCommands: 1, totalExecutions: 10, successRate: 100, commandStats: [{ command: 'test.cmd', count: 10, avgDuration: 50 }], cacheStats: { size: 1, hits: 10, misses: 0 }, recentErrors: [] }) };
     (getRegistry as any).mockReturnValue(fakeRegistry);
-
     const result = await execute({ format: 'json' }, '/tmp', undefined, {} as any);
-
     expect(result.code).toBe(0);
     expect(result.stderr).toBe('');
     const parsed = JSON.parse(result.stdout);
@@ -100,37 +68,16 @@ describe('master_tool.stats command', () => {
   });
 
   it('should output Prometheus format when format=prometheus', async () => {
-    const fakeRegistry = {
-      getStats: () => ({
-        registeredCommands: 2,
-        totalExecutions: 100,
-        successRate: 99.0,
-        commandStats: [
-          { command: 'git.status', count: 50, avgDuration: 30.5 },
-          { command: 'dev.test', count: 50, avgDuration: 120.5 }
-        ],
-        cacheStats: { size: 5, hits: 80, misses: 20 },
-        recentErrors: [
-          { command: 'bad.cmd', error: 'boom', count: 3 }
-        ]
-      })
-    };
+    const fakeRegistry = { getStats: () => ({ registeredCommands: 2, totalExecutions: 100, successRate: 99.0, commandStats: [{ command: 'git.status', count: 50, avgDuration: 30.5 }, { command: 'dev.test', count: 50, avgDuration: 120.5 }], cacheStats: { size: 5, hits: 80, misses: 20 }, recentErrors: [{ command: 'bad.cmd', error: 'boom', count: 3 }] }) };
     (getRegistry as any).mockReturnValue(fakeRegistry);
-
     const result = await execute({ format: 'prometheus' }, '/tmp', undefined, {} as any);
-
     expect(result.code).toBe(0);
     expect(result.stderr).toBe('');
     const out = result.stdout;
-    expect(out).toContain('# HELP jf_command_executions_total');
-    expect(out).toContain('jf_command_executions_total 100');
-    expect(out).toContain('# HELP jf_command_errors_total');
-    expect(out).toContain('jf_command_errors_total{command="bad.cmd",error="boom"} 3');
-    expect(out).toContain('# TYPE jf_command_duration_seconds_total counter');
+    const checks = ['# HELP jf_command_executions_total','jf_command_executions_total 100','# HELP jf_command_errors_total','jf_command_errors_total{command="bad.cmd",error="boom"} 3','# TYPE jf_command_duration_seconds_total counter','# HELP jf_command_cache_hits_total','jf_command_cache_hits_total 80','jf_command_registered_total 2','jf_command_duration_seconds_total{command="git.status"}'];
+    checks.forEach(s => expect(out).toContain(s));
+    // Also verify the duration metric value is numeric
     expect(out).toMatch(/jf_command_duration_seconds_total\{command="git\.status"\} [0-9.]+/);
-    expect(out).toContain('# HELP jf_command_cache_hits_total');
-    expect(out).toContain('jf_command_cache_hits_total 80');
-    expect(out).toContain('jf_command_registered_total 2');
   });
 
   it('handles exception from getStats', async () => {
