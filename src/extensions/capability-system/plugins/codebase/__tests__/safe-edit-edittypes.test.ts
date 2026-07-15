@@ -15,50 +15,21 @@ describe('safe_edit editType branches', () => {
   it('should handle insert operation successfully', async () => {
     const file = join(tempDir, 'sample.ts');
     await writeFile(file, 'line1\nline2', 'utf8');
-    const params = {
-      operations: [{
-        file: 'sample.ts',
-        editType: 'insert' as const,
-        range: { start: 1, end: 1 },
-        newCode: 'INSERTED'
-      }],
-      format: false,
-      fixImports: false
-    };
-    const ctx = {
-      cwd: tempDir,
-      exec: async (cmd: string, args: string[]) => ({ code: 0, stdout: '', stderr: '' })
-    };
+    const params = { operations: [{ file: 'sample.ts', editType: 'insert' as const, range: { start: 1, end: 1 }, newCode: 'INSERTED' }], format: false, fixImports: false };
+    const ctx = { cwd: tempDir, exec: async () => ({ code: 0, stdout: '', stderr: '' }) };
     const result = await safeEdit.execute(params, ctx);
-    if (!result.success) {
-      throw new Error(`Insert failed: ${result.results[0].error || 'unknown'}`);
-    }
+    if (!result.success) throw new Error(`Insert failed: ${result.results[0].error || 'unknown'}`);
     expect(result.results[0].diff).toContain('+ INSERTED');
   });
 
   it('should handle delete operation successfully', async () => {
     const file = join(tempDir, 'sample.ts');
     await writeFile(file, 'line1\ntodelete\nline2', 'utf8');
-    const params = {
-      operations: [{
-        file: 'sample.ts',
-        editType: 'delete' as const,
-        range: { start: 1, end: 2 },
-        newCode: undefined
-      }],
-      format: false,
-      fixImports: false
-    };
-    const ctx = {
-      cwd: tempDir,
-      exec: async (cmd: string, args: string[]) => ({ code: 0, stdout: '', stderr: '' })
-    };
+    const params = { operations: [{ file: 'sample.ts', editType: 'delete' as const, range: { start: 1, end: 2 }, newCode: undefined }], format: false, fixImports: false };
+    const ctx = { cwd: tempDir, exec: async () => ({ code: 0, stdout: '', stderr: '' }) };
     const result = await safeEdit.execute(params, ctx);
-    if (!result.success) {
-      throw new Error(`Delete failed: ${result.results[0].error || 'unknown'}`);
-    }
+    if (!result.success) throw new Error(`Delete failed: ${result.results[0].error || 'unknown'}`);
     expect(result.results[0].diff).toContain('- todelete');
-    // Ensure line2 remains
     expect(result.results[0].diff).toContain('+ line2');
   });
 
