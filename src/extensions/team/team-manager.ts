@@ -9,14 +9,13 @@ import {
   createAgentSessionRuntime,
   createAgentSessionServices,
   createAgentSessionFromServices,
-  // SessionManager unused - removed
   type AgentToolResult,
   type CreateAgentSessionRuntimeFactory,
   type CreateAgentSessionRuntimeResult,
   type SessionStartEvent,
-  // type ToolDefinition unused - removed
-  // type AgentSession unused - removed
 } from "@earendil-works/pi-coding-agent";
+import { AgentWorkspace } from "./agent-workspace.js";
+import { AgentMessageBus } from "./agent-message-bus.js";
 // import { getAgentDir } from "@earendil-works/pi-coding-agent"; // unused
 import { SharedWorkspace, type WorkspaceEntry } from "./workspace.js";
 import { createTeamOpsTool } from "./team-ops-tool.js";
@@ -64,8 +63,8 @@ export class AgentTeam implements AgentTeamRuntime {
   private childControllers: Map<string, AbortController> = new Map();
   private disposed = false;
 
-  private workspace: SharedWorkspace;
-  private messageBus: Map<string, Array<{ from: string; content: string; timestamp: number }>> = new Map();
+  private agentWorkspace: AgentWorkspace;
+  private agentMessageBus: AgentMessageBus;
   private lockQueue: (() => void)[] = [];
   private locked = false;
   monitorInterval: NodeJS.Timeout | null = null;
@@ -106,7 +105,8 @@ export class AgentTeam implements AgentTeamRuntime {
 
   constructor() {
     this.dispose = this.performDispose.bind(this);
-    this.workspace = new SharedWorkspace();
+    this.agentWorkspace = new AgentWorkspace(new SharedWorkspace());
+    this.agentMessageBus = new AgentMessageBus();
     this.taskManager = new TaskManager({
       maxRetries: DEFAULT_MAX_RETRIES,
       baseRetryDelayMs: BASE_RETRY_DELAY_MS,
@@ -210,7 +210,7 @@ export class AgentTeam implements AgentTeamRuntime {
    * @returns The SharedWorkspace.
    */
   getWorkspace(): SharedWorkspace {
-    return this.workspace;
+    return this.agentWorkspace.underlying;
   }
 
   // Backward compatibility for tests
@@ -258,7 +258,7 @@ export class AgentTeam implements AgentTeamRuntime {
 
   // Workspace operations with lock
   private async workspaceClear(): Promise<void> {
-    this.workspace.clear();
+    this.agentWorkspace.clear();
   }
 
   /**
@@ -269,8 +269,7 @@ export class AgentTeam implements AgentTeamRuntime {
    */
   async workspaceWrite(key: string, value: unknown, owner: string): Promise<void> {
     return this.withLock(() => {
-      this.workspace.set(key, value, owner);
-      // Notify workspace update
+      this.agentWorkspace.set(key, value, owner);
       this.notifyUpdate(this.createUpdate(
         `📝 ${owner} wrote to workspace: ${key}`,
         { key, owner, valuePreview: String(value).substring(0, 150) }
@@ -284,19 +283,19 @@ export class AgentTeam implements AgentTeamRuntime {
    * @returns The stored value, or undefined if not present.
    */
   async workspaceRead(key: string): Promise<unknown> {
-    return this.withLock(() => this.workspace.get(key));
+    return this.withLock(() => this.agentWorkspace.get(key));
   }
 
   async workspaceGetEntry(key: string): Promise<WorkspaceEntry | undefined> {
-    return this.withLock(() => this.workspace.getEntry(key));
+    return this.withLock(() => this.agentWorkspace.getEntry(key));
   }
 
   async workspaceList(): Promise<string[]> {
-    return this.withLock(() => this.workspace.list());
+    return this.withLock(() => this.agentWorkspace.list());
   }
 
   async workspaceListByPrefix(prefix: string): Promise<string[]> {
-    return this.withLock(() => this.workspace.listByPrefix(prefix));
+    return this.withLock(() => this.agentWorkspace.listByPrefix(prefix));
   }
 
   /**
@@ -305,7 +304,7 @@ export class AgentTeam implements AgentTeamRuntime {
    * @returns True if key existed and was deleted.
    */
   async workspaceDelete(key: string): Promise<boolean> {
-    return this.withLock(() => this.workspace.delete(key));
+    return this.withLock(() => this.agentWorkspace.delete(key));
   }
 
   /**
@@ -313,7 +312,7 @@ export class AgentTeam implements AgentTeamRuntime {
    * @returns Object mapping keys to values.
    */
   async workspaceToObject(): Promise<Record<string, unknown>> {
-    return this.withLock(() => this.workspace.toObject());
+    return this.withLock(() => this.agentWorkspace.toObject());
   }
 
   // Compatibility for team-tool
@@ -334,7 +333,7 @@ export class AgentTeam implements AgentTeamRuntime {
   async sendMessage(channel: string, content: string, _to?: string): Promise<void> {
     // In simplified version, we don't support direct messages; just broadcast to channel
     // Use 'parent' as generic sender for team tool messages
-    await this.publishMessage(channel, 'parent', content);
+    this.agentMessageBus.sendMessage(channel, content, _to);
   }
 
   /**
@@ -345,7 +344,7 @@ export class AgentTeam implements AgentTeamRuntime {
    */
   async getMessages(channel: string, limit?: number): Promise<Array<{ from: string; content: string; timestamp: number }>> {
     return this.withLock(() => {
-      const msgs = this.messageBus.get(channel) || [];
+      const msgs = this.agentMessageBus.getMessages(channel);
       return limit ? msgs.slice(-limit) : msgs;
     });
   }
@@ -358,11 +357,7 @@ export class AgentTeam implements AgentTeamRuntime {
    */
   async publishMessage(channel: string, from: string, content: string): Promise<void> {
     return this.withLock(() => {
-      if (!this.messageBus.has(channel)) {
-        this.messageBus.set(channel, []);
-      }
-      this.messageBus.get(channel)!.push({ from, content, timestamp: Date.now() });
-      // Notify message sent
+      this.agentMessageBus.publish(channel, from, content);
       this.notifyUpdate(this.createUpdate(
         `📢 [${channel}] ${from}: ${content.substring(0, 100)}`,
         { channel, from, contentPreview: content.substring(0, 200) }
@@ -796,7 +791,7 @@ export class AgentTeam implements AgentTeamRuntime {
   async initialize(tasks: string[]): Promise<void> {
     await this.withLock(async () => {
       this.taskManager.initialize(tasks);
-      this.messageBus.clear();
+      this.agentMessageBus.clear();
       await this.workspaceClear();
       this.agentMonitor.resetAll();
     });

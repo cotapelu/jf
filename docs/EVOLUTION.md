@@ -1029,6 +1029,7 @@ Optional future work:
 
 **Trajectory:** Coverage target (80%) exceeded; documentation improved. System is production-ready with strong quality gates. Autonomous monitoring continues.
 
+**Phase 42 (2026-07-15):** Team Manager Refactor - Batch 1 — Extracted `AgentWorkspace` and `AgentMessageBus` classes to improve separation of concerns. This foundational change prepares for extracting large methods (`createRuntimeForRole`, `runAgentLoop`). Tests: 1318 passing, typecheck clean. Function length compliance still ~84% (91 violations). Next batch targets those large methods.
 
 **Phase 92 (2026-07-08):** Team-Tool Coverage Improvement — Added 17 comprehensive tests for `team-tool.ts`, achieving 100% branch coverage for that module. Global branch coverage now 85.32%, maintaining ≥80% quality gate.
 

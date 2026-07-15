@@ -234,10 +234,15 @@ function getNextIds(phases: TodoPhase[]): { nextTaskId: number; nextPhaseId: num
   let maxTaskId = 0, maxPhaseId = 0;
   for (const phase of phases) {
     const pm = /^phase-(\d+)$/.exec(phase.id);
-    if (pm) { const v = parseInt(pm[1], 10); if (Number.isFinite(v) && v > maxPhaseId) maxPhaseId = v; }
+    if (pm) {
+      const v = parseInt(pm[1], 10);
+      if (Number.isFinite(v) && v > maxPhaseId) maxPhaseId = v;
+    }
     for (const task of phase.tasks) {
       const tm = /^task-(\d+)$/.exec(task.id);
-      if (tm) { const v = parseInt(tm[1], 10); if (Number.isFinite(v) && v > maxTaskId) maxTaskId = v; }
+      if (!tm) continue;
+      const v = parseInt(tm[1], 10);
+      if (Number.isFinite(v) && v > maxTaskId) maxTaskId = v;
     }
   }
   return { nextTaskId: maxTaskId + 1, nextPhaseId: maxPhaseId + 1 };

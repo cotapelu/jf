@@ -4222,3 +4222,21 @@ Focus: master-tool.ts executeMaster & renderMasterResult compression
 - All tests pass, typecheck clean.
 
 **Next:** tackle `dependency_tree.ts` (resolveInAllFiles 300 lines) and then remaining high-impact.
+
+## Team Manager Refactor - Batch 1 (2026-07-15)
+Focus: Extract workspace & message bus infrastructures (preparatory)
+
+**Changes:**
+- Created `AgentWorkspace` class encapsulating SharedWorkspace operations (clear, set, get, delete, list, etc.)
+- Created `AgentMessageBus` class encapsulating channel-based message bus (send, get, publish, clear)
+- Modified `AgentTeam` to use these components; updated constructor, method delegations, and initialization
+- All tests pass (1318 passing), typecheck clean
+
+**Impact:**
+- Improved separation of concerns (SRP)
+- Reduced direct field accesses in `AgentTeam`
+- Set foundation for extracting large methods (createRuntimeForRole, runAgentLoop, etc.)
+- No change to function length compliance yet (still ~84% estimated)
+- Test count increased from 825 to 1318
+
+**Next:** Batch 2 - Extract large runtime creation and agent loop methods to further reduce `AgentTeam` complexity.

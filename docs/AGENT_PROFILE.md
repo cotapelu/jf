@@ -331,6 +331,8 @@ Improved developer experience and API discoverability. All quality gates green. 
 
 **Phase 41 (2026-07-07):** Coverage 90% Feasibility Analysis — Conducted thorough gap analysis to reach 90% branch coverage. Decision: maintain current threshold (85.27%) due to diminishing returns. Estimated 10-20 cycles needed for +4.73%. Focus shifted to other quality priorities.
 
+**Phase 42 (2026-07-15):** Team Manager Refactor - Batch 1 — Extracted workspace & message bus infrastructure (AgentWorkspace, AgentMessageBus). This foundational work improves separation of concerns and prepares for extracting large methods (createRuntimeForRole, runAgentLoop). All tests pass (1318), typecheck clean. Function length compliance still ~84% (91 violations). Next batch targets those large methods.
+
 
 ## 7. Complexity Reduction Work in Progress (MEDIUM)
 **Severity:** MEDIUM (quality gate improvement)
@@ -538,3 +540,9 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - `master-tool.ts`: `executeMaster` and `renderMasterResult` compressed to ≤20 lines.
 - All functions in `master-tool.ts` now compliant.
 - Next: `dependency_tree.ts` (300) and `team-manager.ts` (1007).
+
+### Batch 6 Update (2026-07-15)
+- **Team Manager - Preparatory Extractions:** Created `AgentWorkspace` and `AgentMessageBus` classes to encapsulate workspace and message bus concerns. Modified `AgentTeam` to use these components.
+- This sets the foundation for extracting large methods (createRuntimeForRole, runAgentLoop) in upcoming batches.
+- Function length violation count remains ~91 (still 84% compliance) because this phase focused on infrastructure.
+- Next: Batch 7 will target `createRuntimeForRole` (~103 lines) and `runAgentLoop` (~84 lines) extraction.

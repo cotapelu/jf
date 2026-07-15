@@ -1,4 +1,22 @@
-# 📋 TODO - REFACTOR `src/main.ts`
+# 📋 CURRENT FOCUS (2026-07-15)
+
+**Priority 1: Function Length Compliance - Team Manager Refactor**
+- ✅ Batch 1: Extracted `AgentWorkspace` and `AgentMessageBus` classes (SRP foundation)
+- 🔄 Batch 2 (next): Extract large methods in `AgentTeam`:
+  - `createRuntimeForRole` (~103 lines) → split into ≤20 line helpers
+  - `runAgentLoop` (~84 lines)
+  - `handleAgentEvent` (~50 lines)
+  - `getTeamStatus` (~30 lines)
+- Target: reduce `AgentTeam` complexity, achieve 100% function length compliance
+
+**Quality Gates:**
+- Tests: 1318 passing, coverage maintained above thresholds (statements ~94%, branches ~87%)
+- Lint: 0 errors, TypeScript: clean
+- All changes backward compatible, non-breaking
+
+---
+
+# 📋 TODO - REFACTOR `src/main.ts` (LEGACY)
 
 **File**: `src/main.ts` (300 lines)
 **Ngày phân tích**: 2025-06-19
