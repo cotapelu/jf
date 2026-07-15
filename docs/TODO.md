@@ -19,7 +19,8 @@
 - ✅ Batch 16: Refactored `dependency_tree.ts`; compressed `resolveInAllFiles` to ≤20 lines.
 - ✅ Batch 17: Refactored session-tool.test.ts; extracted helpers and reduced two largest test blocks (>30 lines) to ≤20.
 - ✅ Batch 18: Completed session-tool.test.ts compliance; all 37 tests ≤20 lines.
-- 🔄 Batch 19 (next): Target other large test files: codebase.test.ts, session-registry.test.ts, ast_query.test.ts, analyze_ast.test.ts.
+- ✅ Batch 19: Refactored codebase.test.ts (analyze tests); added runAnalyze helper; fixed 2 long tests.
+- 🔄 Batch 20 (next): Finish codebase.test.ts by refactoring safe_edit tests (5 violations). Then move to other large test files.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

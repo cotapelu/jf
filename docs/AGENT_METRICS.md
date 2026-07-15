@@ -4537,3 +4537,20 @@ Focus: Clean up remaining >20 line tests in session-tool.test.ts
 **Next:**
 - Apply same pattern to other large test files (codebase.test.ts, session-registry.test.ts, etc.).
 
+
+## Codebase Analyze Tests Refactor - Batch 19 (2026-07-15)
+Focus: Reduce long it blocks in codebase.test.ts (analyze capability)
+
+**Actions:**
+- Added `runAnalyze` helper within `describe("codebase.analyze")` to encapsulate temp file creation, execution, and cleanup.
+- Refactored two longest tests:
+  - "should parse simple imports and exports": 30→~17 lines
+  - "should parse export interface": 26→~12 lines
+
+**Results:**
+- analyze tests now compliant (all it ≤20 lines)
+- Remaining violations: 5 tests in `codebase.safe_edit` block still >20 lines (max 41 lines). Next batch will target these.
+
+**Notes:**
+- Pattern: create focused helper, replace boilerplate, keep assertions concise.
+

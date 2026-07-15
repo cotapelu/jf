@@ -1405,3 +1405,4 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Refactor dependency_tree Batch 16: compress resolveInAllFiles to ≤20 lines (2026-07-15)
 - [x] Refactor tests Batch 17: extract helpers, fix two >20 line tests in session-tool.test.ts (2026-07-15)
 - [x] Test refactor Batch 18: finished session-tool.test.ts; all tests ≤20 lines (2026-07-15)
+- [x] Test refactor Batch 19: codebase.test.ts analyze tests fixed; runAnalyze helper added (2026-07-15)

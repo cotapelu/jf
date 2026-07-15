@@ -148,18 +148,12 @@
 **Resolution:** Compressed to single-line logic; all functions ≤20 lines
 **Status:** ✅ FIXED in Batch 16 (2026-07-15)
 
-### 13. Large Test Blocks (FIXED ✅ for session-tool.test.ts)
-**Severity:** MEDIUM
-**Instance:** session-tool.test.ts: 8 `it` blocks >20 lines (max 35)
-**Resolution:** Batch 17 extracted helpers; Batch 18 refactored remaining 6 tests. All 37 tests now ≤20 lines
-**Status:** ✅ FIXED for session-tool.test.ts (2026-07-15)
+### 13. Large Test Blocks (IN PROGRESS 🚧)
+- session-tool.test.ts: ✅ FIXED (all 37 tests ≤20 lines)
+- codebase.test.ts: analyze tests ✅ FIXED; safe_edit tests 5 violations (21-41 lines) remain
+- Other large files: session-registry.test.ts, ast_query.test.ts, analyze_ast.test.ts – not started
 
-### 14. Other Large Test Files (TODO)
-- codebase.test.ts (568 lines)
-- session-registry.test.ts (479 lines)
-- ast_query.test.ts (475 lines)
-- analyze_ast.test.ts (469 lines)
-Plan: extract similar helper libraries per module.
+**Status:** 🚧 IN PROGRESS – focusing on codebase.test.ts next
 
 ## Fragile Modules
 
