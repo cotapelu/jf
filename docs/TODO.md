@@ -26,7 +26,10 @@
 - ✅ Batch 23: command-registry-help-edge.test.ts (8 violations) fixed.
 - ✅ Batch 24: command-registry.test.ts (5 violations) fixed.
 - ✅ Batch 25: call_graph.test.ts (4 violations) fixed.
-- 🔄 Batch 26 (next): Target remaining high-violation test files: complexity.test.ts (3), dependency_tree.test.ts (3), stats-command.test.ts (3), and others.
+- ✅ Batch 26: complexity.test.ts (3 violations) fixed.
+- ✅ Batch 27: dependency_tree.test.ts (3 violations) fixed.
+- ✅ Batch 28: stats-command.test.ts (3 violations) fixed.
+- 🔄 Batch 29 (next): Continue with remaining files: metrics.test.ts (2), safe-edit-edge-cases (2), safe-edit-edittypes (2), command-cache (2), master_tool-stats (2), team-tool-coverage (3), team-manager-monitor (2), team-manager.gaps (2), and many singles.
 
 **Quality Gates:**
 - Tests: 1318 passing, coverage maintained above thresholds (statements ~94%, branches ~87%)

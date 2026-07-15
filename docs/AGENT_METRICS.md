@@ -4598,3 +4598,20 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 - call_graph.test.ts: 4 violations fixed. Compressed multi-file setups with Promise.all, single-line code strings, internal helper for entryPoints checks.
 - All tests ≤20 lines.
 
+
+## Additional Test Compression - Batches 26-28 (2026-07-15)
+- complexity.test.ts: 3 tests compressed (single-line code, combined declarations, array asserts).
+- dependency_tree.test.ts: 3 tests compressed (Promise.all, single-line code, internal helper).
+- stats-command.test.ts: 3 tests compressed (single-line objects, arrays for multiple toContain checks).
+- Total remaining violations: ~43 across various test files.
+
+
+## Additional Test Compression - Batch 26 (2026-07-15)
+- complexity.test.ts: 3 violations fixed (single-line code strings, combined declarations).
+
+## Additional Test Compression - Batch 27 (2026-07-15)
+- dependency_tree.test.ts: 3 violations fixed (Promise.all, single-line code, array asserts).
+
+## Additional Test Compression - Batch 28 (2026-07-15)
+- stats-command.test.ts: 3 violations fixed (single-line objects, arrays for toContain checks).
+

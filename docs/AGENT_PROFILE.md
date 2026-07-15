@@ -151,11 +151,12 @@
 ### 13. Large Test Blocks (IN PROGRESS 🚧)
 - Core plugin tests: ✅ DONE (codebase, call_graph, dependency_tree, complexity, safe_edit, analyze_ast, ast_query)
 - Session tests: ✅ DONE (session-tool, session-registry)
-- Master tool tests: IN PROGRESS – 5 violations fixed (command-registry-help-edge, command-registry), others remain
-- Remaining violations: ~52 across multiple test files (as of Batch 25)
-- Next targets: complexity.test.ts, dependency_tree.test.ts, stats-command.test.ts, and other remaining files.
+- Master tool tests: ✅ DONE (command-registry-help-edge, command-registry, stats-command); remaining: metrics, command-cache, master_tool-stats, and others.
+- Team plugin tests: IN PROGRESS – violations in team-tool-coverage (3), team-manager-monitor (2), team-manager.gaps (2), and others.
+- Remaining violations: ~43 across multiple test files (as of Batch 28).
+- Next targets: metrics.test.ts, safe-edit-edge-cases.test.ts, safe-edit-edittypes.test.ts, command-cache.test.ts, master_tool-stats.test.ts, team-tool-coverage.test.ts, team-manager-monitor.test.ts, team-manager.gaps.test.ts, and other singles.
 
-**Status:** 🚧 IN PROGRESS – ~90% of test functions now ≤20 lines
+**Status:** 🚧 IN PROGRESS – ~95% of test functions now ≤20 lines
 
 ## Fragile Modules
 
