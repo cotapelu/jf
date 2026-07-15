@@ -730,6 +730,30 @@ function createTodoTool(api: ExtensionAPI): ToolDefinition<any, TodoToolDetails>
     }
   });
 
+  async function executeOrchestration(
+    session: TodoSessionState,
+    params: TodosParams | string,
+    ctx: ExtensionContext,
+    api: ExtensionAPI
+  ): Promise<AgentToolResult<any>> {
+    const { p, errors: parseErrors } = parseAndValidateParams(params);
+    if (parseErrors.length > 0) {
+      return buildResult(session, parseErrors, formatResultSummary(session, parseErrors));
+    }
+    const { op, errors: opErrors } = getOperationInfo(p);
+    if (opErrors.length > 0) {
+      return buildResult(session, opErrors, formatResultSummary(session, opErrors));
+    }
+    const { errors: applyErrors } = await applyAndUpdateState(session, p);
+    const allErrors = [...parseErrors, ...opErrors, ...applyErrors];
+    await persistStateIfNeeded(session, ctx, op!, allErrors);
+    const summaryText = formatResultSummary(session, allErrors);
+    if (op && op !== "list" && allErrors.length === 0) {
+      await maybeSendSystemMessage(api, op, summaryText);
+    }
+    return buildResult(session, allErrors, summaryText);
+  }
+
   return {
     name: "todos",
     label: "Todo",
@@ -777,22 +801,7 @@ function createTodoTool(api: ExtensionAPI): ToolDefinition<any, TodoToolDetails>
       const session = getSessionState(ctx);
       const release = await session.mutex.lock();
       try {
-        const { p, errors: parseErrors } = parseAndValidateParams(params);
-        if (parseErrors.length > 0) {
-          return buildResult(session, parseErrors, formatResultSummary(session, parseErrors));
-        }
-        const { op, errors: opErrors } = getOperationInfo(p);
-        if (opErrors.length > 0) {
-          return buildResult(session, opErrors, formatResultSummary(session, opErrors));
-        }
-        const { errors: applyErrors } = await applyAndUpdateState(session, p);
-        const allErrors = [...parseErrors, ...opErrors, ...applyErrors];
-        await persistStateIfNeeded(session, ctx, op!, allErrors);
-        const summaryText = formatResultSummary(session, allErrors);
-        if (op && op !== "list" && allErrors.length === 0) {
-          await maybeSendSystemMessage(api, op, summaryText);
-        }
-        return buildResult(session, allErrors, summaryText);
+        return await executeOrchestration(session, params, ctx, api);
       } finally {
         release();
       }
