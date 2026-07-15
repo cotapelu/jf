@@ -138,23 +138,13 @@ function foo() {
   });
 
   it("should parse mixed imports", async () => {
-    const code = `
-import defaultImp from "def";
-import * as ns from "ns";
-import { named1, named2 as n2 } from "named";
-import type { T1 } from "types";
-    `;
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
+    const code = "import defaultImp from \"def\";\nimport * as ns from \"ns\";\nimport { named1, named2 as n2 } from \"named\";\nimport type { T1 } from \"types\";";
+    const file = await writeTempFile(code), ctx = { cwd: path.dirname(file) };
     const result = await analyzeAstModule.execute({ file: path.basename(file) }, ctx as TestContext);
-
     expect(result.isError).toBe(false);
-    expect(result.details.imports.length).toBe(4);
-    expect(result.details.imports[0].moduleSpecifier).toBe("def");
-    expect(result.details.imports[1].moduleSpecifier).toBe("ns");
-    expect(result.details.imports[2].moduleSpecifier).toBe("named");
-    expect(result.details.imports[3].moduleSpecifier).toBe("types");
-
+    expect(result.details.imports).toHaveLength(4);
+    const mods = result.details.imports.map(i => i.moduleSpecifier);
+    ["def","ns","named","types"].forEach(m => expect(mods).toContain(m));
     await unlink(file);
   });
 

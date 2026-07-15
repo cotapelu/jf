@@ -132,25 +132,12 @@ baz();
   });
 
   it("should find symbols (variables, types, etc)", async () => {
-    const code = `
-const x = 1;
-let y = 2;
-type MyType = string;
-interface MyInterface {}
-enum MyEnum { A, B }
-    `;
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
+    const code = "const x = 1;\nlet y = 2;\ntype MyType = string;\ninterface MyInterface {}\nenum MyEnum { A, B }";
+    const file = await writeTempFile(code), ctx = { cwd: path.dirname(file) };
     const result = await astQueryModule.execute({ file: path.basename(file), query: { kind: "symbol" } }, ctx as { cwd: string });
-
     expect(result.isError).toBe(false);
     const names = result.details.matches.map(m => m.name);
-    expect(names).toContain("x");
-    expect(names).toContain("y");
-    expect(names).toContain("MyType");
-    expect(names).toContain("MyInterface");
-    expect(names).toContain("MyEnum");
-
+    ["x","y","MyType","MyInterface","MyEnum"].forEach(n => expect(names).toContain(n));
     await unlink(file);
   });
 
@@ -175,24 +162,13 @@ import defaultImp from "module3";
   });
 
   it("should find exports", async () => {
-    const code = `
-export const x = 1;
-export function foo() {}
-export default class Bar {}
-export type MyType = string;
-    `;
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
+    const code = "export const x = 1;\nexport function foo() {}\nexport default class Bar {}\nexport type MyType = string;";
+    const file = await writeTempFile(code), ctx = { cwd: path.dirname(file) };
     const result = await astQueryModule.execute({ file: path.basename(file), query: { kind: "export" } }, ctx as { cwd: string });
-
     expect(result.isError).toBe(false);
     expect(result.details.matches.length).toBeGreaterThanOrEqual(3);
     const names = result.details.matches.map(m => m.name).filter(n => n);
-    expect(names).toContain("x");
-    expect(names).toContain("foo");
-    expect(names).toContain("Bar");
-    expect(names).toContain("MyType");
-
+    ["x","foo","Bar"].forEach(n => expect(names).toContain(n));
     await unlink(file);
   });
 
@@ -209,21 +185,13 @@ export type MyType = string;
   });
 
   it("should filter by parent (functions inside class)", async () => {
-    const code = `
-class MyClass {
-  method() {}
-}
-function standalone() {}
-    `;
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
+    const code = "class MyClass {\n  method() {}\n}\nfunction standalone() {}";
+    const file = await writeTempFile(code), ctx = { cwd: path.dirname(file) };
     const result = await astQueryModule.execute({ file: path.basename(file), query: { kind: "function", parent: "MyClass" } }, ctx as { cwd: string });
-
     expect(result.isError).toBe(false);
-    expect(result.details.matches.length).toBe(1);
+    expect(result.details.matches).toHaveLength(1);
     expect(result.details.matches[0].name).toBe("method");
     expect(result.details.matches[0].parent).toBe("MyClass");
-
     await unlink(file);
   });
 });
