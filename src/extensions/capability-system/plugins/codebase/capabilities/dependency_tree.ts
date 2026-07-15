@@ -135,22 +135,12 @@ async function parseModule(filePath: string, source: string): Promise<FileModule
 }
 
 // Resolve a module specifier to a file path within the provided set of files.
-function resolveInAllFiles(specifier: string, referrer: string, allFiles: Set<string>): string | null {
-  // Skip external packages (node_modules or non-relative)
-  if (!specifier.startsWith('.') && !specifier.startsWith('/')) {
-    return null;
-  }
-  const refDir = dirname(referrer);
-  const base = resolve(refDir, specifier);
-  const extensions = ['.ts', '.tsx', '.js', '.jsx', ''];
-  for (const ext of extensions) {
-    const candidate = base + ext;
-    if (allFiles.has(candidate)) return candidate;
-  }
-  // If the specifier itself is an absolute path present in allFiles
-  if (allFiles.has(specifier)) return specifier;
-  // Also try resolving the specifier as is relative to cwd (if it's absolute)
-  if (allFiles.has(resolve(specifier))) return resolve(specifier);
+function resolveInAllFiles(specifier:string,referrer:string,allFiles:Set<string>):string|null{
+  if(!specifier.startsWith('.')&&!specifier.startsWith('/'))return null;
+  const refDir=dirname(referrer), base=resolve(refDir,specifier), extensions=['.ts','.tsx','.js','.jsx',''];
+  for(const ext of extensions){ const cand=base+ext; if(allFiles.has(cand)) return cand; }
+  if(allFiles.has(specifier)) return specifier;
+  if(allFiles.has(resolve(specifier))) return resolve(specifier);
   return null;
 }
 
