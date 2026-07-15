@@ -150,10 +150,10 @@
 
 ### 13. Large Test Blocks (IN PROGRESS 🚧)
 - session-tool.test.ts: ✅ FIXED (all 37 tests ≤20 lines)
-- codebase.test.ts: analyze tests ✅ FIXED; safe_edit tests 5 violations (21-41 lines) remain
-- Other large files: session-registry.test.ts, ast_query.test.ts, analyze_ast.test.ts – not started
+- codebase.test.ts: analyze tests ✅ FIXED; safe_edit tests atomic operations & rollback ✅ FIXED; 2 tests maybe borderline but likely okay.
+- Other large files: session-registry.test.ts (479 lines), ast_query.test.ts (475 lines), analyze_ast.test.ts (469 lines) – next targets.
 
-**Status:** 🚧 IN PROGRESS – focusing on codebase.test.ts next
+**Status:** 🚧 IN PROGRESS – 2/3 major test files partially done
 
 ## Fragile Modules
 

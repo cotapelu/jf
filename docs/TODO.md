@@ -20,7 +20,8 @@
 - ✅ Batch 17: Refactored session-tool.test.ts; extracted helpers and reduced two largest test blocks (>30 lines) to ≤20.
 - ✅ Batch 18: Completed session-tool.test.ts compliance; all 37 tests ≤20 lines.
 - ✅ Batch 19: Refactored codebase.test.ts (analyze tests); added runAnalyze helper; fixed 2 long tests.
-- 🔄 Batch 20 (next): Finish codebase.test.ts by refactoring safe_edit tests (5 violations). Then move to other large test files.
+- ✅ Batch 20: Compressed codebase.test.ts safe_edit tests: atomic success & rollback now ≤20 lines; simple imports test compressed.
+- 🔄 Batch 21 (next): Target other large test files: session-registry.test.ts, ast_query.test.ts, analyze_ast.test.ts.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

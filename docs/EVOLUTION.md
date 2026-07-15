@@ -1406,3 +1406,4 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Refactor tests Batch 17: extract helpers, fix two >20 line tests in session-tool.test.ts (2026-07-15)
 - [x] Test refactor Batch 18: finished session-tool.test.ts; all tests ≤20 lines (2026-07-15)
 - [x] Test refactor Batch 19: codebase.test.ts analyze tests fixed; runAnalyze helper added (2026-07-15)
+- [x] Test refactor Batch 20: compress codebase.test.ts safe_edit tests; atomic operations & rollback ≤20 lines; simple imports single-line (2026-07-15)

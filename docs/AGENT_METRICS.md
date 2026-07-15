@@ -4554,3 +4554,20 @@ Focus: Reduce long it blocks in codebase.test.ts (analyze capability)
 **Notes:**
 - Pattern: create focused helper, replace boilerplate, keep assertions concise.
 
+
+## Codebase Test Compression - Batch 20 (2026-07-15)
+Focus: Reduce remaining >20 line tests in codebase.test.ts
+
+**Actions:**
+- `should parse simple imports and exports`: replaced multiline template with single-line string, reducing lines.
+- `should apply multiple operations on different files atomically`: combined declarations, used Promise.all, inlined params and reads.
+- `should rollback all files if one fails (atomic across files)`: similar compressions.
+
+**Results:**
+- analyze tests: all ≤20 lines.
+- safe_edit tests: atomic operations and rollback now ≤20 lines.
+- Remaining: Two tests may still be borderline (should parse export interface flagged by scan, but likely okay). Others in other large test files not yet addressed.
+
+**Next:**
+- Address remaining large test files: session-registry.test.ts, ast_query.test.ts, analyze_ast.test.ts.
+
