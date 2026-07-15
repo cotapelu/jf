@@ -173,7 +173,7 @@ export class BashActionExecutor {
     }
   }
 
-  async execute(
+  private async executeOrchestration(
     actionName: string,
     args: any,
     signal?: AbortSignal,
@@ -201,6 +201,15 @@ export class BashActionExecutor {
       this.updateMetrics(actionName, Date.now() - startTime, true, error.message);
       throw error;
     }
+  }
+
+  async execute(
+    actionName: string,
+    args: any,
+    signal?: AbortSignal,
+    onUpdate?: AgentToolUpdateCallback<any>
+  ): Promise<BashResult> {
+    return await this.executeOrchestration(actionName, args, signal, onUpdate);
   }
 
   private makeCacheKey(actionName: string, args: any): string {
