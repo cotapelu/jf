@@ -4414,3 +4414,24 @@ Focus: Reduce createYourTool function size (80 lines) by extracting helpers
 
 **Next targets:** team-tool.ts (createTeamTool 62 lines), team-ops-tool.ts (createTeamOpsTool 59 lines), plus test file large describe blocks.
 
+
+## Team Tool Refactor - Batch 12 (2026-07-15)
+Focus: Reduce createTeamTool size (62 lines) by extracting helpers
+
+**Changes:**
+- Extracted `parseTeamToolParams` for input parsing and validation
+- Extracted `wrapTeamOnUpdate` for message-history accumulation
+- Extracted `handleTeamQuery` for team status queries
+- Extracted `executeTeamCreation` for team boot and task execution
+- Simplified `executeTeamTool` to thin dispatcher (<20 lines)
+- All functions in `team-tool.ts` now ≤20 lines
+
+**Results:**
+- All 1318 tests passing
+- Lint clean, typecheck clean
+- No regressions
+
+**Impact:**
+- team-tool.ts 100% function-length compliant
+- Next target: `team-ops-tool.ts` (createTeamOpsTool 59 lines) and remaining test file violations
+

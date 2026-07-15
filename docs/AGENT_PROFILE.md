@@ -124,6 +124,12 @@
 **Resolution:** Extracted `executeTool`, compressed `generateCommandHelp`, replaced `buildCommandMeta` with direct `commandMeta` constant
 **Status:** ✅ FIXED in Batch 11 (2026-07-15)
 
+### 9. Team Tool Compliance (FIXED ✅)
+**Severity:** HIGH
+**Instance:** `executeTeamTool` 142→~18 lines; `executeTeamCreation` ~30→~17 lines; all helpers ≤20 lines
+**Resolution:** Extracted parsing (`parseTeamToolParams`), onUpdate wrapper (`wrapTeamOnUpdate`), team query handler (`handleTeamQuery`), and creation logic (`executeTeamCreation`); `executeTeamTool` now ≤20 lines
+**Status:** ✅ FIXED in Batch 12 (2026-07-15)
+
 ## Fragile Modules
 
 ### Session Tool (FIXED ✅)

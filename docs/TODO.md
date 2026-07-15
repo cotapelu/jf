@@ -12,7 +12,8 @@
 - ✅ Batch 9: Extracted `executeOrchestration` helper in bash-actions; execute method now ≤20 lines.
 - ✅ Batch 10: Refactored `master-tool.ts`; extracted helpers for `executeMaster` and `renderMasterResult`; all methods ≤20 lines.
 - ✅ Batch 11: Refactored `tool-template.ts`; extracted `executeTool` and compressed `generateCommandHelp`; replaced `buildCommandMeta` with constant; all methods ≤20 lines.
-- 🔄 Batch 12 (next): Target `team-tool.ts` (createTeamTool 62 lines) and `team-ops-tool.ts` (createTeamOpsTool 59 lines).
+- ✅ Batch 12: Refactored `team-tool.ts`; extracted `executeTeamTool` and helpers; all methods ≤20 lines.
+- 🔄 Batch 13 (next): Target `team-ops-tool.ts` (createTeamOpsTool 59 lines).
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**
