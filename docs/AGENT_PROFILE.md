@@ -496,9 +496,10 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - Previous count: 146 (74.43%) - significant improvement already made
 
 **High-Impact Remaining Violations:**
-- `dependency_tree.ts`: resolveInAllFiles (300)
 - `plugin-loader.ts`: PluginLoader class (459)
 - Plus several test files with large functions
+
+**Note:** `dependency_tree.ts` is now fully compliant (all functions ≤20 lines).
 
 **Note:** `AgentTeam` is now fully compliant (all methods ≤20 lines).
 
