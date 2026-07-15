@@ -236,68 +236,39 @@ describe('SessionRegistry', () => {
 
   describe('getTree()', () => {
     it('should build correct tree structure', () => {
-      const root = createMockSession('root');
-      const rootMeta = registry.register(root);
-
-      const child1 = createMockSession('child1');
-      const child1Meta = registry.register(child1, { parentId: rootMeta.id });
-
-      const child2 = createMockSession('child2');
-      const child2Meta = registry.register(child2, { parentId: rootMeta.id });
-
-      const grandchild = createMockSession('grandchild');
-      const grandchildMeta = registry.register(grandchild, { parentId: child1Meta.id });
-
+      const root = createMockSession('root'), rootMeta = registry.register(root);
+      const child1 = createMockSession('child1'), child1Meta = registry.register(child1, { parentId: rootMeta.id });
+      const child2 = createMockSession('child2'), child2Meta = registry.register(child2, { parentId: rootMeta.id });
+      const grandchild = createMockSession('grandchild'), grandchildMeta = registry.register(grandchild, { parentId: child1Meta.id });
       const tree = registry.getTree();
-
       expect(tree.roots).toHaveLength(1);
       expect(tree.roots[0].session.id).toBe(rootMeta.id);
       expect(tree.roots[0].children).toHaveLength(2);
-
-      const child1Node = tree.roots[0].children.find((c) => c.session.id === child1Meta.id);
+      const child1Node = tree.roots[0].children.find(c => c.session.id === child1Meta.id);
       expect(child1Node).toBeDefined();
       expect(child1Node!.children).toHaveLength(1);
       expect(child1Node!.children[0].session.id).toBe(grandchildMeta.id);
-
-      const child2Node = tree.roots[0].children.find((c) => c.session.id === child2Meta.id);
+      const child2Node = tree.roots[0].children.find(c => c.session.id === child2Meta.id);
       expect(child2Node).toBeDefined();
       expect(child2Node!.children).toHaveLength(0);
     });
 
     it('should handle large trees efficiently (>100 nodes)', () => {
-      // Create a deep tree with 150+ nodes
-      const root = createMockSession('large_root');
-      const rootMeta = registry.register(root);
-
-      // Create 150 children in a chain (depth 150)
+      const root = createMockSession('large_root'), rootMeta = registry.register(root);
       const nodes: SessionMetadata[] = [rootMeta];
       for (let i = 0; i < 150; i++) {
-        const child = createMockSession(`large_child_${i}`);
-        const parent = nodes[i];
-        const childMeta = registry.register(child, { parentId: parent.id });
+        const parent = nodes[i], child = createMockSession(`large_child_${i}`), childMeta = registry.register(child, { parentId: parent.id });
         nodes.push(childMeta);
       }
-
-      // Should have 151 total sessions
       expect(registry.count).toBe(151);
-
-      // Tree should have single root with deep chain
       const tree = registry.getTree();
       expect(tree.roots).toHaveLength(1);
       expect(tree.roots[0].session.id).toBe(rootMeta.id);
       expect(tree.roots[0].children).toHaveLength(1);
-
-      // Verify depth
       let node = tree.roots[0];
-      for (let i = 0; i < 150; i++) {
-        expect(node.children).toHaveLength(1);
-        node = node.children[0];
-      }
+      for (let i = 0; i < 150; i++) { expect(node.children).toHaveLength(1); node = node.children[0]; }
       expect(node.session.id).toBe(nodes[150].id);
-
-      // List should return all sessions sorted by creation date desc
-      const list = registry.list();
-      expect(list).toHaveLength(151);
+      expect(registry.list()).toHaveLength(151);
     });
   });
 
