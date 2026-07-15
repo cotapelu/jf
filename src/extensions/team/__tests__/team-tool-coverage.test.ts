@@ -90,14 +90,7 @@ describe('team_run tool - comprehensive coverage', () => {
     });
 
     it('should return status if team found', async () => {
-      const mockTeam = {
-        id: 'team-123',
-        getTeamStatus: vi.fn().mockResolvedValue({
-          completedTasks: 2,
-          totalTasks: 5,
-          agents: [{ id: 'a1' }, { id: 'a2' }],
-        }),
-      };
+      const mockTeam = { id: 'team-123', getTeamStatus: vi.fn().mockResolvedValue({ completedTasks: 2, totalTasks: 5, agents: [{ id: 'a1' }, { id: 'a2' }] }) };
       const registry = TeamRegistry.getInstance();
       vi.spyOn(registry, 'get').mockReturnValue(mockTeam);
       const resetSpy = vi.spyOn(registry, 'resetAutoDisposeTimer');
@@ -118,27 +111,18 @@ describe('team_run tool - comprehensive coverage', () => {
     });
 
     it('should succeed and return teamId when execution succeeds', async () => {
-      const mockTeam = {
-        id: 'new-team-456',
-        roles: ['planner', 'coder'],
-      };
+      const mockTeam = { id: 'new-team-456', roles: ['planner','coder'] };
       const { bootPiclawTeam, executeTeamTasks } = await import('../team-manager.js');
       vi.mocked(bootPiclawTeam).mockResolvedValue(mockTeam);
       vi.mocked(executeTeamTasks).mockResolvedValue(undefined);
-
-      // Mock onUpdate to capture updates
       const updates: AgentToolResult<any>[] = [];
       const onUpdate = (update: AgentToolResult<any>) => updates.push(update);
-
-      const result: AgentToolResult<any> = await tool.execute(toolCallId, { tasks: ['task1', 'task2'], teamSize: 2 }, undefined, onUpdate, mockCtx);
-
+      const result: AgentToolResult<any> = await tool.execute(toolCallId, { tasks: ['task1','task2'], teamSize: 2 }, undefined, onUpdate, mockCtx);
       expect(result.isError).toBe(false);
       expect(result.details?.teamId).toBe('new-team-456');
       expect(result.content[0].text).toContain('Team started');
       expect(bootPiclawTeam).toHaveBeenCalled();
-      expect(executeTeamTasks).toHaveBeenCalledWith(mockTeam, ['task1', 'task2'], expect.any(Function), {});
-      // Should have multiple updates: starting, booted, plus at least one from execution?
-      // Since executeTeamTasks doesn't produce updates in mock, only the two initial ones appear.
+      expect(executeTeamTasks).toHaveBeenCalledWith(mockTeam, ['task1','task2'], expect.any(Function), {});
       expect(updates.length).toBe(2);
     });
 
@@ -164,26 +148,18 @@ describe('team_run tool - comprehensive coverage', () => {
       const mockTeam = { id: 'acc-team', roles: ['a'] };
       const { bootPiclawTeam, executeTeamTasks } = await import('../team-manager.js');
       vi.mocked(bootPiclawTeam).mockResolvedValue(mockTeam);
-      vi.mocked(executeTeamTasks).mockImplementation(async (team, tasks, onUpdate, opts) => {
+      vi.mocked(executeTeamTasks).mockImplementation(async (team, tasks, onUpdate) => {
         onUpdate({ content: [{ type: 'text', text: 'Step 1' }], isError: false });
         onUpdate({ content: [{ type: 'text', text: 'Step 2' }], isError: false });
         onUpdate({ content: [{ type: 'text', text: 'Step 3' }], isError: false });
       });
-
       const accumulated: AgentToolResult<any>[] = [];
       const onUpdate = (update: AgentToolResult<any>) => accumulated.push(update);
-
       await tool.execute(toolCallId, { tasks: ['t1'] }, undefined, onUpdate, mockCtx);
-
-      // Tool sends initial updates before execution: 
-      // [0] = "🚀 Starting...", [1] = "✅ Team booted...", 
-      // then execution updates: [2] = Step1, [3] = Step2, [4] = Step3
       expect(accumulated.length).toBe(5);
-      // Check that the final update contains all 5 messages and ends with 'Step 3'
       expect(accumulated[4].content).toHaveLength(5);
       expect(accumulated[4].content[4].text).toBe('Step 3');
-      // Also verify intermediate accumulation
-      expect(accumulated[2].content).toHaveLength(3); // start, booted, step1
+      expect(accumulated[2].content).toHaveLength(3);
       expect(accumulated[2].content[2].text).toBe('Step 1');
       expect(accumulated[3].content).toHaveLength(4);
       expect(accumulated[3].content[3].text).toBe('Step 2');
