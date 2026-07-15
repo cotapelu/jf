@@ -40,25 +40,13 @@ describe('safe_edit edge cases', () => {
   it('should handle prettier failure (non-zero exit)', async () => {
     const file = join(tempDir, 'bad.ts');
     await writeFile(file, 'code', 'utf-8');
-
     let ctx = createMockCtx();
-    // Mock prettier to fail
-    ctx.exec = async (cmd: string, args: string[]) => {
-      if (cmd === 'npx' && args[0] === 'prettier') {
-        return { code: 1, stdout: '', stderr: 'prettier error' };
-      }
-      if (cmd === 'npx' && args[0] === 'tsc') {
-        return { code: 0, stdout: '', stderr: '' };
-      }
+    ctx.exec = async (cmd, args) => {
+      if (cmd === 'npx' && args[0] === 'prettier') return { code: 1, stdout: '', stderr: 'prettier error' };
+      if (cmd === 'npx' && args[0] === 'tsc') return { code: 0, stdout: '', stderr: '' };
       return { code: 0, stdout: '', stderr: '' };
     };
-
-    const params = {
-      operations: [{ file: 'bad.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
-      format: true,
-      fixImports: false,
-    };
-
+    const params = { operations: [{ file: 'bad.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }], format: true, fixImports: false };
     const result = await safeEditModule.execute(params, ctx as any);
     expect(result.success).toBe(false);
     expect(result.results[0].success).toBe(false);
@@ -68,26 +56,14 @@ describe('safe_edit edge cases', () => {
   it('should not call eslint when fixImports=false', async () => {
     const file = join(tempDir, 'no-fix.ts');
     await writeFile(file, 'code', 'utf-8');
-
     const ctx = createMockCtx();
     let eslintCalled = false;
-    ctx.exec = async (cmd: string, args: string[]) => {
-      if (cmd === 'npx' && args[0] === 'eslint') {
-        eslintCalled = true;
-        return { code: 0, stdout: '', stderr: '' };
-      }
-      if (cmd === 'npx' && args[0] === 'tsc') {
-        return { code: 0, stdout: '', stderr: '' };
-      }
-      return { code: 0, stdout: '', stderr: '' };
+    ctx.exec = async (cmd, args) => {
+      if (cmd === 'npx' && args[0] === 'eslint') { eslintCalled = true; return { code: 0, stdout: '', stderr: '' }; }
+      if (cmd === 'npx' && args[0] === 'tsc') return { code: 0, stdout: '', stderr: '' };
+      return { code: 0, stdout: '' };
     };
-
-    const params = {
-      operations: [{ file: 'no-fix.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }],
-      format: false,
-      fixImports: false,
-    };
-
+    const params = { operations: [{ file: 'no-fix.ts', editType: 'replace' as const, range: { start: 0, end: 1 }, newCode: 'new' }], format: false, fixImports: false };
     const result = await safeEditModule.execute(params, ctx as any);
     expect(result.success).toBe(true);
     expect(eslintCalled).toBe(false);
