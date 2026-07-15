@@ -169,15 +169,7 @@ export class PluginLoader {
     manifest: PluginManifest,
     capabilities: Capability[]
   ): LoadedPlugin {
-    const loaded: LoadedPlugin = {
-      manifest,
-      capabilities,
-      reload: async () => {
-        this.unloadPlugin(manifest.id);
-        return this.loadPlugin(pluginFolder);
-      },
-      unload: () => this.unloadPlugin(manifest.id)
-    };
+    const loaded = this.createLoadedPlugin(pluginFolder, manifest, capabilities);
     this.loadedPlugins.set(manifest.id, loaded);
     for (const cap of capabilities) {
       this.registry.register(cap);
@@ -187,6 +179,22 @@ export class PluginLoader {
       this.watchSinglePlugin(pluginPath, pluginFolder);
     }
     return loaded;
+  }
+
+  private createLoadedPlugin(
+    pluginFolder: string,
+    manifest: PluginManifest,
+    capabilities: Capability[]
+  ): LoadedPlugin {
+    return {
+      manifest,
+      capabilities,
+      reload: async () => {
+        this.unloadPlugin(manifest.id);
+        return this.loadPlugin(pluginFolder);
+      },
+      unload: () => this.unloadPlugin(manifest.id)
+    };
   }
 
   private async createCapability(
@@ -201,6 +209,24 @@ export class PluginLoader {
     const { executeFn } = await this.loadExecuteModule(executePath);
     const renderResultFn = rendererPath ? await this.loadRendererModule(rendererPath) : undefined;
 
+    const { capabilityId, finalGuidelines, promptSnippet } = this.computeCapabilityMetadata(pluginMan, capMan);
+
+    return this.buildCapability(
+      pluginId,
+      capMan,
+      pluginMan,
+      executeFn,
+      renderResultFn,
+      capabilityId,
+      finalGuidelines,
+      promptSnippet
+    );
+  }
+
+  private computeCapabilityMetadata(
+    pluginMan: PluginManifest,
+    capMan: CapabilityManifest
+  ): { capabilityId: string; finalGuidelines: string[]; promptSnippet: string } {
     const capabilityId = `${pluginMan.id}.${capMan.id}`;
     const finalGuidelines = generateCapabilityGuidelines(
       capabilityId,
@@ -213,17 +239,7 @@ export class PluginLoader {
       capability: capabilityId,
       params: minimalParams
     }, null, 2);
-
-    return this.buildCapability(
-      pluginId,
-      capMan,
-      pluginMan,
-      executeFn,
-      renderResultFn,
-      capabilityId,
-      finalGuidelines,
-      promptSnippet
-    );
+    return { capabilityId, finalGuidelines, promptSnippet };
   }
 
   private async loadExecuteModule(executePath: string): Promise<{executeFn: (params: Record<string, unknown>, ctx: ExtensionContext) => Promise<AgentToolResult<unknown>>}> {

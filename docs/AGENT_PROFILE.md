@@ -490,16 +490,16 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 ## 8. Function Length Compliance (ACTIVE - CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Current State (2026-07-15 after Batch 8):**
-- Functions >20 lines: **~87** in src (out of ~571 total)
+**Current State (2026-07-15 after Batch 5):**
+- Functions >20 lines: **~86** in src (out of ~571 total)
 - Compliance: **~85.2%** (target: 100%)
 - Previous count: 146 (74.43%) - significant improvement already made
 
 **High-Impact Remaining Violations:**
-- `plugin-loader.ts`: PluginLoader class (459)
+- `plugin-loader.ts`: remaining methods (`scheduleNewPluginLoad` ~28 lines, others)
 - Plus several test files with large functions
 
-**Note:** `dependency_tree.ts` is now fully compliant (all functions ≤20 lines).
+**Note:** `dependency_tree.ts` is fully compliant; `AgentTeam` is fully compliant; `loadAll` in plugin-loader has been reduced.
 
 **Note:** `AgentTeam` is now fully compliant (all methods ≤20 lines).
 

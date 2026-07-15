@@ -4277,3 +4277,34 @@ Focus: Extract `handleAgentEvent` to achieve full AgentTeam compliance
 - Code more maintainable: separation of event text generation from dispatch
 
 **Next:** Move to other modules: `dependency_tree.ts` (resolveInAllFiles ~300 lines) and `plugin-loader.ts` (~459 lines).
+
+## Team Manager Refactor - Batch 4 (2026-07-15)
+Focus: Complete runAgentLoop extraction (follow-up to Batch 2)
+
+**Changes:**
+- Replaced remaining inline loop in `runAgentLoop` with calls to `initializeAgentLoopHelper` and `executeLoopIterationHelper`
+- `runAgentLoop` now ≤15 lines
+- Confirmed `AgentTeam` 100% function length compliance
+
+**Impact:**
+- All public and private methods in `AgentTeam` now ≤20 lines
+- Maintained all tests: 273 passing for team module
+- No behavioral changes; refactoring only
+
+**Next:** Begin work on `dependency_tree.ts` and `plugin-loader.ts` to raise overall compliance from ~85% toward 90%.
+
+## Plugin Loader Refactor - Batch 5 (2026-07-15)
+Focus: Reduce `loadAll` method size by extracting initialization helper
+
+**Changes:**
+- Extracted `initializeLoadPromise` helper containing the IIFE logic
+- Simplified `loadAll` to just check state and assign promise
+- `loadAll` reduced from 21 lines to 9 lines; helper is 12 lines (≤20)
+- No functional changes; same retry logic preserved
+
+**Impact:**
+- PluginLoader class overall compliance improved; one less violation
+- All 192 capability-system tests passing
+- Lint and typecheck clean
+
+**Next:** Address remaining violation(s) in `scheduleNewPluginLoad` (~28 lines) and verify other methods.
