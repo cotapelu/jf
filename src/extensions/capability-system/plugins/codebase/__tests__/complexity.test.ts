@@ -46,42 +46,18 @@ export function add(a: number, b: number): number {
   });
 
   it('should count cyclomatic complexity for if/else', async () => {
-    const fileRel = 'conditionals.ts';
-    const content = `
-function process(x: number): number {
-  if (x > 0) {
-    return x;
-  } else if (x < 0) {
-    return -x;
-  } else {
-    return 0;
-  }
-}
-`;
+    const fileRel = 'conditionals.ts', content = "function process(x: number): number { if (x > 0) { return x; } else if (x < 0) { return -x; } else { return 0; } }";
     const fileAbs = join(tmpdir, fileRel);
     await fs.writeFile(fileAbs, content, 'utf8');
-
     const result = await execute({ file: fileRel }, { cwd: tmpdir });
     const details = result.details as ComplexityDetails;
     expect(details.cyclomatic).toBe(3);
   });
 
   it('should count loops as decision points', async () => {
-    const fileRel = 'loops.ts';
-    const content = `
-function sum(arr: number[]): number {
-  let total = 0;
-  for (let i = 0; i < arr.length; i++) {
-    total += arr[i];
-  }
-  while (i < 10) { i++; }
-  do { i--; } while (i > 0);
-  return total;
-}
-`;
+    const fileRel = 'loops.ts', content = "function sum(arr: number[]): number { let total = 0; for (let i = 0; i < arr.length; i++) { total += arr[i]; } while (i < 10) { i++; } do { i--; } while (i > 0); return total; }";
     const fileAbs = join(tmpdir, fileRel);
     await fs.writeFile(fileAbs, content, 'utf8');
-
     const result = await execute({ file: fileRel }, { cwd: tmpdir });
     const details = result.details as ComplexityDetails;
     expect(details.cyclomatic).toBe(4);
@@ -123,19 +99,9 @@ function test(a: boolean, b: boolean, c: boolean): boolean {
   });
 
   it('should compute Halstead metrics', async () => {
-    const fileRel = 'halstead.ts';
-    const content = `
-function multiply(x: number, y: number): number {
-  return x * y;
-}
-function divide(x: number, y: number): number {
-  if (y === 0) throw new Error('Divide by zero');
-  return x / y;
-}
-`;
+    const fileRel = 'halstead.ts', content = "function multiply(x: number, y: number): number { return x * y; } function divide(x: number, y: number): number { if (y === 0) throw new Error('Divide by zero'); return x / y; }";
     const fileAbs = join(tmpdir, fileRel);
     await fs.writeFile(fileAbs, content, 'utf8');
-
     const result = await execute({ file: fileRel }, { cwd: tmpdir });
     const details = result.details as ComplexityDetails;
     expect(details.halstead).toBeDefined();
