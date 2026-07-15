@@ -2,8 +2,6 @@
  * AgentMessageBus encapsulates message bus operations for a team.
  * Manages channels and message history. Thread safety via external lock.
  */
-import type { AgentTeamRuntime } from "./team-manager.js";
-
 type Message = { from: string; content: string; timestamp: number };
 
 /**
@@ -63,13 +61,5 @@ export class AgentMessageBus {
    */
   getState(): Map<string, Message[]> {
     return new Map(this.bus);
-  }
-
-  /**
-   * Clears all messages from all channels.
-   * Used during team reset/initialize.
-   */
-  clear(): void {
-    this.bus.clear();
   }
 }

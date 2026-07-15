@@ -518,7 +518,12 @@ export class AgentTeam implements AgentTeamRuntime {
     this.runtimes.push(runtime);
     this.roles.push(role);
     this.agentMonitor.registerAgent(runtime.session.sessionId, role);
+    this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
+    this.roleByAgentId.set(runtime.session.sessionId, role);
     this.size = this.roles.length;
+    if (runtime.session.subscribe) {
+      runtime.session.subscribe((event: unknown) => this.handleAgentEvent(role, event));
+    }
   }
 
   /**
@@ -583,6 +588,19 @@ export class AgentTeam implements AgentTeamRuntime {
     };
   }
 
+  private computeAgentPaths(
+    baseCwd: string | ((role: string) => string) | undefined,
+    role: string,
+    parentRuntime: AgentSessionRuntime
+  ): { agentCwd: string; agentSessionDir: string } {
+    const agentCwd = this.computeAgentCwd(baseCwd, role, parentRuntime.cwd);
+    const teamDir = path.join(parentRuntime.services.agentDir, 'teams', this.id);
+    const agentSessionDir = path.join(teamDir, role);
+    return { agentCwd, agentSessionDir };
+  }
+
+
+
   private async createRuntimeForRole(
     role: string,
     parentRuntime: AgentSessionRuntime,
@@ -604,18 +622,23 @@ export class AgentTeam implements AgentTeamRuntime {
       sessionStartEvent,
     });
 
-    this.runtimes.push(runtime);
-    this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
-    this.roleByAgentId.set(runtime.session.sessionId, role);
-    this.size = this.roles.length;
-
-    runtime.session.subscribe((event: unknown) => this.handleAgentEvent(role, event));
+    this.setupRuntimeRegistration(runtime, role);
   }
 
   /**
    * Start agent loops for all registered runtimes.
    * Should be called after initialize().
    */
+  private setupRuntimeRegistration(runtime: AgentSessionRuntime, role: string): void {
+    this.runtimes.push(runtime);
+    this.agentStatuses.set(role, { currentTaskIndex: null, status: 'idle' });
+    this.roleByAgentId.set(runtime.session.sessionId, role);
+    this.size = this.roles.length;
+    if (runtime.session.subscribe) {
+      runtime.session.subscribe((event: unknown) => this.handleAgentEvent(role, event));
+    }
+  }
+
   startAgentLoops(): void {
     for (const role of this.roles) {
       const runtime = this.runtimes.find(rt => this.roleByAgentId.get(rt.session.sessionId) === role);
@@ -628,6 +651,37 @@ export class AgentTeam implements AgentTeamRuntime {
         this.childPromises.push(p);
       }
     }
+  }
+
+  private initializeAgentLoopHelper(role: string): void {
+    this.notifyUpdate(this.createUpdate(
+      `🤖 Agent ${role} started working`,
+      { role, status: 'started' }
+    ));
+  }
+
+  private async executeLoopIterationHelper(
+    role: string,
+    runtime: AgentSessionRuntime,
+    turnCount: number,
+    maxTurns: number
+  ): Promise<boolean> {
+    this.updateHeartbeat(role);
+    const status = await this.getTeamStatus();
+
+    if (turnCount > 0) {
+      this.notifyUpdate(this.createUpdate(
+        `🔄 Agent ${role} turn ${turnCount}: ${status.completedTasks}/${status.totalTasks} tasks done`,
+        { role, turn: turnCount, completedTasks: status.completedTasks, totalTasks: status.totalTasks }
+      ));
+    }
+
+    if (this.shouldTerminate(role, status, turnCount, maxTurns)) {
+      return false;
+    }
+
+    await this.executeAgentPrompt(role, runtime, turnCount);
+    return true;
   }
 
   private async runAgentLoop(role: string, runtime: AgentSessionRuntime, controller: AbortController): Promise<void> {

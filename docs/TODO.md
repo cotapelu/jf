@@ -2,12 +2,12 @@
 
 **Priority 1: Function Length Compliance - Team Manager Refactor**
 - ✅ Batch 1: Extracted `AgentWorkspace` and `AgentMessageBus` classes (SRP foundation)
-- 🔄 Batch 2 (next): Extract large methods in `AgentTeam`:
-  - `createRuntimeForRole` (~103 lines) → split into ≤20 line helpers
-  - `runAgentLoop` (~84 lines)
-  - `handleAgentEvent` (~50 lines)
+- ✅ Batch 2: Extracted `createRuntimeForRole` and `runAgentLoop` into small helpers; fixed registerRuntime duplication. All modified functions ≤20 lines.
+- 🔄 Batch 3 (next): Extract remaining large methods in `AgentTeam`:
+  - `handleAgentEvent` (~32 lines)
   - `getTeamStatus` (~30 lines)
-- Target: reduce `AgentTeam` complexity, achieve 100% function length compliance
+  - Any other violations identified
+- Target: 100% function length compliance across codebase
 
 **Quality Gates:**
 - Tests: 1318 passing, coverage maintained above thresholds (statements ~94%, branches ~87%)

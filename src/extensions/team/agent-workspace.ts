@@ -38,7 +38,7 @@ export class AgentWorkspace {
    * @param key - Workspace key.
    * @returns Entry or undefined.
    */
-  getEntry(key: string): WorkspaceEntry | undefined {
+  getEntry(key: string): { value: unknown; owner: string; timestamp: number } | undefined {
     return this.workspace.getEntry(key);
   }
 

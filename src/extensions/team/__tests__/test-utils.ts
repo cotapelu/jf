@@ -14,6 +14,7 @@ export function createMockRuntime(): any {
       sessionId: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       prompt: async () => {},
       sessionManager: {},
+      subscribe: () => {},
     },
     cwd: process.cwd(),
     services: {

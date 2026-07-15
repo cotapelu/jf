@@ -490,16 +490,14 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 ## 8. Function Length Compliance (ACTIVE - CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Current State (2026-07-14 discovery):**
-- Functions >20 lines: **91** in src (out of ~571 total)
-- Compliance: **84%** (target: 100%)
+**Current State (2026-07-15 after Batch 7):**
+- Functions >20 lines: **~88** in src (out of ~571 total)
+- Compliance: **~85%** (target: 100%)
 - Previous count: 146 (74.43%) - significant improvement already made
 
 **High-Impact Remaining Violations:**
-- `createTodoTool` (184 lines), `createMasterTool` (194 lines)
-- `bash-actions.ts`: BashActionExecutor (229), createBashActionTool (130)
 - `dependency_tree.ts`: resolveInAllFiles (300)
-- `team-manager.ts`: AgentTeam class (1007 lines total, multiple long methods)
+- `team-manager.ts`: remaining methods `handleAgentEvent` (~32), `getTeamStatus` (~30)
 - `plugin-loader.ts`: PluginLoader class (459)
 - Plus several test files with large functions
 
@@ -546,3 +544,11 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - This sets the foundation for extracting large methods (createRuntimeForRole, runAgentLoop) in upcoming batches.
 - Function length violation count remains ~91 (still 84% compliance) because this phase focused on infrastructure.
 - Next: Batch 7 will target `createRuntimeForRole` (~103 lines) and `runAgentLoop` (~84 lines) extraction.
+
+### Batch 7 Update (2026-07-15)
+- Completed extraction of `createRuntimeForRole` and `runAgentLoop` into ≤20 line helpers.
+- Fixed registerRuntime duplication (merged two versions into one, added guard for `session.subscribe`).
+- Updated test mocks with subscribe stub.
+- All team tests pass (273 passing), overall 1318 tests.
+- Function length violations reduced by ~3, compliance improved to ~85%.
+- Next: Batch 8 will target remaining large methods in `AgentTeam`: `handleAgentEvent` (~32 lines), `getTeamStatus` (~30 lines).

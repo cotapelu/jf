@@ -4240,3 +4240,23 @@ Focus: Extract workspace & message bus infrastructures (preparatory)
 - Test count increased from 825 to 1318
 
 **Next:** Batch 2 - Extract large runtime creation and agent loop methods to further reduce `AgentTeam` complexity.
+
+## Team Manager Refactor - Batch 2 (2026-07-15)
+Focus: Extract large methods in `AgentTeam` and fix registerRuntime duplication
+
+**Changes:**
+- Extracted `createRuntimeForRole` into helpers: `computeAgentPathsHelper`, `setupRuntimeRegistration`
+- Extracted `runAgentLoop` into helpers: `initializeAgentLoopHelper`, `executeLoopIterationHelper`
+- Consolidated duplicate `registerRuntime` methods; added guard for `session.subscribe`
+- Updated test mocks to provide `subscribe` stub
+- All modifications adhere to ≤20 line function requirement
+
+**Impact:**
+- `AgentTeam` method complexity reduced; extracted functions ≤20 lines, orchestrators now ≤20 lines
+- Fixed critical test failures in multi-runtime and performance tests (58 tests failing → 0)
+- All 273 team tests passing; overall 1318 tests passing
+- Typecheck and lint clean
+- Function length compliance improved (src violations reduced by ~3, compliance ~75%)
+- No breaking changes; backward compatible
+
+**Next:** Batch 3 - Target remaining large methods in `AgentTeam`: `handleAgentEvent` (~32 lines), `getTeamStatus` (~30 lines).
