@@ -6,7 +6,8 @@
 - ✅ Batch 3: Extracted `handleAgentEvent` into `getEventText` helper; `AgentTeam` now 100% compliant.
 - ✅ Batch 4: Finalized `runAgentLoop` extraction (completes AgentTeam compliance).
 - ✅ Batch 5: Extracted `initializeLoadPromise` from `loadAll` in plugin-loader (reduced from 21 → 9 lines).
-- 🔄 Batch 6 (next): Address remaining `plugin-loader.ts` violations (`scheduleNewPluginLoad` ~28 lines, `createExecuteHandler`, etc.) and any test file violations.
+- ✅ Batch 6: Extracted `createLoadedPlugin` from `finalizePlugin` and `computeCapabilityMetadata` from `createCapability` in plugin-loader.
+- 🔄 Batch 7 (next): Target remaining plugin-loader violations: `scheduleNewPluginLoad`, `createExecuteHandler`, and `buildCapability`; then move to other test file violations.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

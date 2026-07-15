@@ -4307,4 +4307,21 @@ Focus: Reduce `loadAll` method size by extracting initialization helper
 - All 192 capability-system tests passing
 - Lint and typecheck clean
 
-**Next:** Address remaining violation(s) in `scheduleNewPluginLoad` (~28 lines) and verify other methods.
+**Next:** Address remaining violations: `scheduleNewPluginLoad` (~25 lines), `createExecuteHandler` (~29 lines), `buildCapability` (~27 lines).
+
+## Plugin Loader Refactor - Batch 6 (2026-07-15)
+Focus: Reduce `finalizePlugin` and `createCapability` by extracting helpers
+
+**Changes:**
+- Extracted `createLoadedPlugin` helper from `finalizePlugin` (object construction)
+- Extracted `computeCapabilityMetadata` helper from `createCapability` (ID, guidelines, snippet)
+- `finalizePlugin` reduced from 26 lines to ~10 lines; `createCapability` reduced from 37 lines to ~18 lines
+- Both new helpers <=10 lines; all methods now ≤20
+- No functional changes; same registration and metadata generation
+
+**Impact:**
+- PluginLoader compliance improved further (2 major violations fixed)
+- All 192 capability-system tests passing
+- Lint and typecheck clean
+
+**Next:** Continue with `scheduleNewPluginLoad`, `createExecuteHandler`, and `buildCapability`; evaluate if `buildCapability` needs inlining or further extraction.

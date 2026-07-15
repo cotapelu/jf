@@ -490,28 +490,26 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 ## 8. Function Length Compliance (ACTIVE - CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Current State (2026-07-15 after Batch 5):**
-- Functions >20 lines: **~86** in src (out of ~571 total)
-- Compliance: **~85.2%** (target: 100%)
+**Current State (2026-07-15 after Batch 6):**
+- Functions >20 lines: **~84** in src (out of ~571 total)
+- Compliance: **~85.7%** (target: 100%)
 - Previous count: 146 (74.43%) - significant improvement already made
 
 **High-Impact Remaining Violations:**
-- `plugin-loader.ts`: remaining methods (`scheduleNewPluginLoad` ~28 lines, others)
+- `plugin-loader.ts`: `scheduleNewPluginLoad` (~25 lines), `createExecuteHandler` (~29 lines), `buildCapability` (~27 lines)
 - Plus several test files with large functions
 
-**Note:** `dependency_tree.ts` is fully compliant; `AgentTeam` is fully compliant; `loadAll` in plugin-loader has been reduced.
-
-**Note:** `AgentTeam` is now fully compliant (all methods ≤20 lines).
+**Note:** `dependency_tree.ts` is fully compliant; `AgentTeam` is fully compliant; `loadAll`, `finalizePlugin`, and `createCapability` in plugin-loader have been reduced to ≤20 lines.
 
 **Root Cause:** Accumulation of large factory functions and orchestrators over time; need systematic extraction of helper methods.
 
 **Action Plan (Cycle 2+):**
 - Phase 1: Extract helper methods from high-line-count factories (todos-tool, master-tool, bash-actions)
 - Phase 2: Decompose long methods in team-manager (getBootstrapPrompt, handleAgentEvent, executeTeamTasks)
-- Phase 3: Address remaining violations in dependency_tree, plugin-loader, and test files
+- Phase 3: Address remaining violations in plugin-loader (`scheduleNewPluginLoad`, `createExecuteHandler`, `buildCapability`) and test files
 - Use proven patterns: extraction, guard clauses, single-responsibility helpers
 
-**Status:** 🟡 IN PROGRESS - Function extraction campaign active. Estimated 5-10 cycles to reach 100% compliance. All quality gates otherwise satisfied; this is the sole blocking item.
+**Status:** 🟡 IN PROGRESS - Function extraction campaign active. Estimated 3-5 cycles to reach 100% compliance. All quality gates otherwise satisfied; this is the sole blocking item.
 
 **Impact:** Once resolved, codebase will achieve full production readiness (90+ quality gate score).
 

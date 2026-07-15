@@ -1387,3 +1387,7 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Refactor createTodoTool in todos-tool.ts (2026-07-14)
 
 - [x] Refactor executeMaster & renderMasterResult in master-tool.ts (2026-07-14)
+
+- [x] Refactor plugin-loader Batch 5: extract initializeLoadPromise (2026-07-15)
+
+- [x] Refactor plugin-loader Batch 6: extract createLoadedPlugin & computeCapabilityMetadata (2026-07-15)
