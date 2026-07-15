@@ -53,21 +53,11 @@ describe('CommandCache', () => {
     });
 
     it('should move accessed entry to end (most recent)', () => {
-      const m1 = createMockModule('cmd1');
-      const m2 = createMockModule('cmd2');
-      const m3 = createMockModule('cmd3');
-
-      cache.set('cmd1', m1);
-      cache.set('cmd2', m2);
-      cache.set('cmd3', m3);
-
-      // Access cmd1 -> should become most recently used
+      const m1 = createMockModule('cmd1'), m2 = createMockModule('cmd2'), m3 = createMockModule('cmd3');
+      cache.set('cmd1', m1); cache.set('cmd2', m2); cache.set('cmd3', m3);
       cache.get('cmd1');
-
-      // Adding new entry should evict cmd2 (now oldest)
       const m4 = createMockModule('cmd4');
       cache.set('cmd4', m4);
-
       expect(cache.get('cmd1')).toBe(m1);
       expect(cache.get('cmd2')).toBeUndefined();
       expect(cache.get('cmd3')).toBe(m3);
@@ -105,20 +95,13 @@ describe('CommandCache', () => {
     });
 
     it('should move errored entry to end (lower priority) and evict when full', () => {
-      const m1 = createMockModule('cmd1');
-      const m2 = createMockModule('cmd2');
-      const m3 = createMockModule('cmd3');
-      cache.set('cmd1', m1);
-      cache.set('cmd2', m2);
-      cache.set('cmd3', m3); // at capacity
-
-      cache.markError('cmd1'); // move to end => order: cmd2, cmd3, cmd1
-
+      const m1 = createMockModule('cmd1'), m2 = createMockModule('cmd2'), m3 = createMockModule('cmd3');
+      cache.set('cmd1', m1); cache.set('cmd2', m2); cache.set('cmd3', m3);
+      cache.markError('cmd1');
       const m4 = createMockModule('cmd4');
-      cache.set('cmd4', m4); // evicts oldest (cmd2)
-
-      expect(cache.get('cmd1')).toBe(m1); // still present
-      expect(cache.get('cmd2')).toBeUndefined(); // evicted
+      cache.set('cmd4', m4);
+      expect(cache.get('cmd1')).toBe(m1);
+      expect(cache.get('cmd2')).toBeUndefined();
       expect(cache.get('cmd3')).toBe(m3);
       expect(cache.get('cmd4')).toBe(m4);
     });
