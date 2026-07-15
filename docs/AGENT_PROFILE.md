@@ -149,12 +149,14 @@
 **Status:** ✅ FIXED in Batch 16 (2026-07-15)
 
 ### 13. Large Test Blocks (IN PROGRESS 🚧)
-- Core plugin tests: ✅ DONE (codebase, call_graph, dependency_tree, complexity, safe_edit, analyze_ast, ast_query)
-- Session tests: ✅ DONE (session-tool, session-registry)
-- Master tool tests: ✅ DONE (command-registry-help-edge, command-registry, stats-command); remaining: metrics, command-cache, master_tool-stats, and others.
-- Team plugin tests: IN PROGRESS – violations in team-tool-coverage (3), team-manager-monitor (2), team-manager.gaps (2), and others.
-- Remaining violations: ~43 across multiple test files (as of Batch 28).
-- Next targets: metrics.test.ts, safe-edit-edge-cases.test.ts, safe-edit-edittypes.test.ts, command-cache.test.ts, master_tool-stats.test.ts, team-tool-coverage.test.ts, team-manager-monitor.test.ts, team-manager.gaps.test.ts, and other singles.
+- Core plugin tests: ✅ DONE
+- Session tests: ✅ DONE
+- Master tool tests: ✅ DONE (including master_tool-stats)
+- Team plugin tests: ✅ DONE (coverage, monitor, gaps)
+- Remaining violations: ~26 across 22 files (as of Batch 36)
+- Next targets: startCompletionMonitor.coverage (3), team-manager.test (2), team-multi-runtime (2), team-tool (2), bash-actions.coverage (2), plus 17 single-violation files.
+
+**Status:** 🚧 IN PROGRESS – ~95% of tests ≤20 lines; final cleanup phase.
 
 **Status:** 🚧 IN PROGRESS – ~95% of test functions now ≤20 lines
 
