@@ -97,6 +97,109 @@ const commands: Record<string, CommandLoader> = {
   optional_prop_cmd: async () => (await import('./tool-template/example-command.js')).default,
 };
 
+function buildCommandMeta(): Record<string, {
+    description: string;
+    schema: any;
+    examples: string[];
+  }> {
+  return {
+    example_command: {
+      description: "Mô tả ngắn về command này",
+      schema: exampleSchema,
+      examples: ["your_tool_name({ command: 'example_command', args: { input: 'data.txt' } })"]
+    },
+    another_command: {
+      description: "Một command khác",
+      schema: anotherSchema,
+      examples: ["your_tool_name({ command: 'another_command', args: { files: ['a.txt', 'b.txt'] } })"]
+    },
+    empty_meta_cmd: {
+      description: "",
+      schema: { type: "object" },
+      examples: []
+    },
+    optional_prop_cmd: {
+      description: "Command with optional property for coverage",
+      schema: Type.Object({
+        input: Type.String({ description: "Đường dẫn file đầu vào" }),
+        optional_field: Type.Optional(Type.String({ description: "Tùy chọn" }))
+      }),
+      examples: ["tool_template({ command: 'optional_prop_cmd', args: { input: 'data.txt', optional_field: 'extra' } })"]
+    }
+  };
+}
+
+const commandMeta = buildCommandMeta();
+
+async function executeTool(
+  _toolCallId: string,
+  params: any,
+  signal: AbortSignal | undefined,
+  _onUpdate: any,
+  ctx: any
+) {
+  const { command, args } = params;
+  const loader = commands[command];
+
+  if (!loader) {
+    return {
+      content: [{ type: "text" as const, text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }],
+      details: null,
+      isError: true
+    };
+  }
+
+  try {
+    if (Object.keys(args).length === 0) {
+      const meta = commandMeta[command];
+      if (meta) {
+        const help = generateCommandHelp(command, meta);
+        return {
+          content: [{ type: "text" as const, text: help }],
+          details: { mode: "discovery", command, schema: meta.schema },
+          isError: false
+        };
+      }
+      return {
+        content: [{ type: "text" as const, text: `Command '${command}' requires arguments. Use schema to see required fields.` }],
+        details: { mode: "discovery", command },
+        isError: false
+      };
+    }
+
+    const meta = commandMeta[command];
+    let mod: CommandModule | undefined;
+    try {
+      mod = await loader();
+    } catch (importError: any) {
+      throw new Error(`Failed to load command '${command}': ${importError.message}`);
+    }
+
+    const cwd = ctx.session?.cwd ?? process.cwd();
+    const result = await (meta?.schema
+      ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx)
+      : mod.execute(args, cwd, signal, ctx));
+
+    if (result.code !== 0) {
+      throw new Error(result.stderr || `Command ${command} exited with code ${result.code}`);
+    }
+
+    return {
+      content: [{ type: "text" as const, text: result.stdout }],
+      details: result,
+      isError: false
+    };
+
+  } catch (error: any) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      content: [{ type: "text" as const, text: `Tool '${command}' error: ${errorMessage}` }],
+      details: { error: errorMessage, command },
+      isError: true
+    };
+  }
+}
+
 // ============================================================================
 // 2. TOOL FACTORY
 // ============================================================================
@@ -113,176 +216,22 @@ const commands: Record<string, CommandLoader> = {
  * - parameters: JSON Schema cho tham số đầu vào
  */
 export function createYourTool(): ToolDefinition {
-  // ╔═══════════════════════════════════════════════════════════════════════════╗
-  // ║  COMMAND METADATA - Định nghĩa schema, description, examples cho mỗi cmd ║
-  // ╚═══════════════════════════════════════════════════════════════════════════╝
-  // Dùng để:
-  // 1. Validate khi LLM gọi (validate args theo schema của command)
-  // 2. Trả về help khi args rỗng (discovery mode)
-  // 3. Tự động generate promptGuidelines
-  // 4. Command router biết schema của từng command
-  const commandMeta: Record<string, {
-    description: string;
-    schema: any;  // TypeBox schema
-    examples: string[];
-  }> = {
-  example_command: {
-    description: "Mô tả ngắn về command này",
-    schema: exampleSchema,
-    examples: ["your_tool_name({ command: 'example_command', args: { input: 'data.txt' } })"]
-  },
-  another_command: {
-    description: "Một command khác",
-    schema: anotherSchema,
-    examples: ["your_tool_name({ command: 'another_command', args: { files: ['a.txt', 'b.txt'] } })"]
-  },
-  empty_meta_cmd: {
-    description: "",
-    schema: { type: "object" },
-    examples: []
-  },
-  optional_prop_cmd: {
-    description: "Command with optional property for coverage",
-    schema: Type.Object({
-      input: Type.String({ description: "Đường dẫn file đầu vào" }),
-      optional_field: Type.Optional(Type.String({ description: "Tùy chọn" }))
-    }),
-    examples: ["tool_template({ command: 'optional_prop_cmd', args: { input: 'data.txt', optional_field: 'extra' } })"]
-  }
-};
-
-  // Capture commandMeta trong closure (không dùng this)
-  const cm = commandMeta;
-
   return {
     name: "tool_template",
     label: "Tool Template",
-    description:"Multi-command tool. Call with empty args {} to see subcommand help.",
-    promptSnippet:"tool_template({ command:'<cmd>', args:{...} })",
-    promptGuidelines:[
+    description: "Multi-command tool. Call with empty args {} to see subcommand help.",
+    promptSnippet: "tool_template({ command:'<cmd>', args:{...} })",
+    promptGuidelines: [
       `Subcommands (call with {} for details):`,
-      ...Object.entries(commandMeta).map(([cmd,meta]) =>
-        `• ${cmd}: ${meta.description}` +
-        (meta.examples[0] ? ` e.g. ${meta.examples[0]}` : '')
-      )
+      ...Object.entries(commandMeta).map(([cmd, meta]) => `• ${cmd}: ${meta.description}` + (meta.examples[0] ? ` e.g. ${meta.examples[0]}` : ''))
     ],
-    parameters: {
-      type: "object",
-      properties: {
-        command: {
-          type: "string",
-          enum: Object.keys(commands), // Tự động lấy danh sách command
-          description: "Tên sub-command để thực thi"
-        },
-        args: {
-          type: "object",
-          description: "Arguments cho command cụ thể (xem schema của từng command)"
-        }
-      },
-      required: ["command", "args"]
-    },
-
-        // ── DISCOVERY SUPPORT: Lưu metadata để trả về help khi args rỗng ─────────
-    // Field này không phải part của ToolDefinition chuẩn, nhưng tool có thể
-    // sử dụng trong execute().
-    // Framework PI sẽ bỏ qua, không đưa vào system prompt.
+    parameters: { type: "object", properties: { command: { type: "string", enum: Object.keys(commands), description: "Tên sub-command để thực thi" }, args: { type: "object", description: "Arguments cho command cụ thể (xem schema của từng command)" } }, required: ["command", "args"] },
     // @ts-expect-error - custom field for tool template
-    commandMeta: commandMeta,
-
-    // ========================================================================
-    // 3. EXECUTE ROUTER
-    // ========================================================================
-    async execute(_toolCallId: string, params: any, signal: AbortSignal | undefined, _onUpdate: any, ctx: any) {
-      const { command, args } = params;
-      const loader = commands[command];
-
-      // Kiểm tra command hợp lệ
-      if (!loader) {
-        return {
-          content: [{ type: "text", text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }],
-          details: null,
-          isError: true
-        } as const;
-      }
-
-      try {
-        // ── DISCOVERY MODE: Nếu args rỗng → trả về help của command ───────────
-        if (Object.keys(args).length === 0) {
-          const meta = cm[command];
-          if (meta) {
-            const help = generateCommandHelp(command, meta);
-            return {
-              content: [{ type: "text", text: help }],
-              details: { mode: "discovery", command, schema: meta.schema },
-              isError: false
-            } as const;
-          }
-          // Fallback nếu không có metadata
-          return {
-            content: [{ type: "text", text: `Command '${command}' requires arguments. Use schema to see required fields.` }],
-            details: { mode: "discovery", command },
-            isError: false
-          } as const;
-        }
-
-        // ── STEP 1 (OPTIONAL): Validate args theo command-specific schema ─────
-        // Uncomment nếu cần validation runtime:
-        // import { validate } from "@sinclair/typebox/validate";
-        // const meta = cm[command];
-        // if (meta?.schema) {
-        //   const validationResult = validate(args, meta.schema);
-        //   if (!validationResult.valid) {
-        //     const errors = validationResult.errors?.map((e: any) => 
-        //       `${e.path?.join('.') || ''}: ${e.message}`
-        //     ).join('; ') || 'Invalid arguments';
-        //     return { content: [{ text: `Validation failed: ${errors}` }], isError: true } as const;
-        //   }
-        // }
-
-        // Get command metadata
-        const meta = cm[command];
-
-        // Dynamic import command module
-        let mod: CommandModule | undefined;
-        try {
-          mod = await loader();
-        } catch (importError: any) {
-          throw new Error(`Failed to load command '${command}': ${importError.message}`);
-        }
-
-        // Lấy cwd từ context, fallback về process.cwd()
-        const cwd = ctx.session?.cwd ?? process.cwd();
-
-        // Gọi command execute với typed args (nếu có schema)
-        const result = await (meta?.schema
-          ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx)
-          : mod.execute(args, cwd, signal, ctx));
-
-        // Nếu code !== 0 → error
-        if (result.code !== 0) {
-          throw new Error(result.stderr || `Command ${command} exited with code ${result.code}`);
-        }
-
-        // Success: trả về stdout
-        return {
-          content: [{ type: "text", text: result.stdout }],
-          // @ts-ignore
-          details: result,
-          isError: false
-        } as const;
-
-      } catch (error: any) {
-        // Error handling
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        return {
-          content: [{ type: "text", text: `Tool '${command}' error: ${errorMessage}` }],
-          details: { error: errorMessage, command },
-          isError: true
-        } as const;
-      }
-    }
+    commandMeta,
+    execute: executeTool
   };
 }
+
 
 // ============================================================================
 // 4. REGISTRATION
