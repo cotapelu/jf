@@ -4504,3 +4504,20 @@ Focus: Address borderline `resolveInAllFiles` (≈25 lines)
 - codebase plugin capabilities: call_graph, analyze_ast, complexity, dependency_tree all function‑length compliant
 - Next: verify no remaining violations in other modules; consider test file refactoring if needed
 
+
+## Test Refactoring - Batch 17 (2026-07-15)
+Focus: Reduce >20 line test blocks in session-tool.test.ts
+
+**Actions:**
+- Extracted common helper functions: createSession, switchSession, listSessions, getStatus, assertNoError, assertTotalSessions, assertActiveCount, assertListContains/NotContains, createConcurrent.
+- Refactored two longest tests: 'concurrent session creation' (35→12 lines) and 'full lifecycle' (34→11 lines).
+- All helpers ≤8 lines.
+
+**Results:**
+- session-tool.test.ts: Tests passing (37)
+- Remaining violations: 6 it blocks >20 lines (21-26 lines). Next batch will target these with same patterns.
+
+**Impact:**
+- Improved test maintainability and readability.
+- Established pattern for extracting test helpers applicable to other large test files.
+

@@ -148,6 +148,13 @@
 **Resolution:** Compressed to single-line logic; all functions ≤20 lines
 **Status:** ✅ FIXED in Batch 16 (2026-07-15)
 
+### 13. Large Test Blocks (IN PROGRESS 🚧)
+**Severity:** MEDIUM
+**Instance:** session-tool.test.ts: 8 `it` blocks >20 lines (max 35)
+**Resolution (Batch 17):** Extracted common session helpers; refactored two largest tests (concurrent, lifecycle); reduced to ≤20
+**Remaining:** 6 tests in session-tool.test.ts still >20 lines; apply same pattern
+**Status:** 🚧 IN PROGRESS
+
 ## Fragile Modules
 
 ### Session Tool (FIXED ✅)

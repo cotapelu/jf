@@ -17,7 +17,8 @@
 - ✅ Batch 14: Refactored `call_graph.ts`; compressed `processCandidates` to ≤20 lines.
 - ✅ Batch 15: Refactored `call_graph.ts`; compressed `resolveCallee`, `collectAllFiles`, `buildEdges` to ≤20 lines; module fully compliant.
 - ✅ Batch 16: Refactored `dependency_tree.ts`; compressed `resolveInAllFiles` to ≤20 lines.
-- 🔄 Batch 17 (next): Final verification: ensure all codebase plugin capabilities meet function‑length ≤20; then update summary metrics.
+- ✅ Batch 17: Refactored session-tool.test.ts; extracted helpers and reduced two largest test blocks (>30 lines) to ≤20.
+- 🔄 Batch 18 (next): Clean up remaining >20 line test blocks in session-tool.test.ts (6 tests) and consider other large test files (codebase.test.ts, session-registry.test.ts).
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**
