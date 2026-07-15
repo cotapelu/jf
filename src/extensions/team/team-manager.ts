@@ -688,26 +688,11 @@ export class AgentTeam implements AgentTeamRuntime {
     let turnCount = 0;
     const MAX_TURNS = 50;
 
-    this.notifyUpdate(this.createUpdate(
-      `🤖 Agent ${role} started working`,
-      { role, status: 'started' }
-    ));
+    this.initializeAgentLoopHelper(role);
 
     while (!controller.signal.aborted) {
-      this.updateHeartbeat(role);
-      const status = await this.getTeamStatus();
-
-      if (turnCount > 0) {
-        this.notifyUpdate(this.createUpdate(
-          `🔄 Agent ${role} turn ${turnCount}: ${status.completedTasks}/${status.totalTasks} tasks done`,
-          { role, turn: turnCount, completedTasks: status.completedTasks, totalTasks: status.totalTasks }
-        ));
-      }
-
-      if (this.shouldTerminate(role, status, turnCount, MAX_TURNS)) break;
-
-      await this.executeAgentPrompt(role, runtime, turnCount);
-
+      const shouldContinue = await this.executeLoopIterationHelper(role, runtime, turnCount, MAX_TURNS);
+      if (!shouldContinue) break;
       turnCount++;
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
