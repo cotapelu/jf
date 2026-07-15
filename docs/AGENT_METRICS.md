@@ -4615,3 +4615,19 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 ## Additional Test Compression - Batch 28 (2026-07-15)
 - stats-command.test.ts: 3 violations fixed (single-line objects, arrays for toContain checks).
 
+
+## Continued Test Compression - Batches 29-32 (2026-07-15)
+- metrics.test.ts: 2 violations fixed (single-line code, Promise.all).
+- safe-edit-edge-cases.test.ts: 2 violations fixed (combined mock exec, single-line params).
+- safe-edit-edittypes.test.ts: 2 violations fixed (insert and delete tests compressed).
+- command-cache.test.ts: 2 violations fixed (combined declarations, single-line set calls).
+- Remaining violations: ~35 across remaining test files.
+
+
+## Later Batches (33-36) (2026-07-15)
+- master_tool-stats.test.ts: 2 violations (human-readable and Prometheus output tests compressed).
+- team-tool-coverage.test.ts: 3 violations (status, creation, accumulation tests compressed).
+- team-manager-monitor.test.ts: 2 violations (retry handling tests compressed).
+- team-manager.gaps.test.ts: 2 violations (edge cases compressed).
+- Remaining violations: ~26 across 22 files.
+

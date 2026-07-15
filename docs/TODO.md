@@ -29,7 +29,15 @@
 - ✅ Batch 26: complexity.test.ts (3 violations) fixed.
 - ✅ Batch 27: dependency_tree.test.ts (3 violations) fixed.
 - ✅ Batch 28: stats-command.test.ts (3 violations) fixed.
-- 🔄 Batch 29 (next): Continue with remaining files: metrics.test.ts (2), safe-edit-edge-cases (2), safe-edit-edittypes (2), command-cache (2), master_tool-stats (2), team-tool-coverage (3), team-manager-monitor (2), team-manager.gaps (2), and many singles.
+- ✅ Batch 29: metrics.test.ts (2 violations) fixed.
+- ✅ Batch 30: safe-edit-edge-cases.test.ts (2 violations) fixed.
+- ✅ Batch 31: safe-edit-edittypes.test.ts (2 violations) fixed.
+- ✅ Batch 32: command-cache.test.ts (2 violations) fixed.
+- ✅ Batch 33: master_tool-stats.test.ts (2 violations) fixed.
+- ✅ Batch 34: team-tool-coverage.test.ts (3 violations) fixed.
+- ✅ Batch 35: team-manager-monitor.test.ts (2 violations) fixed.
+- ✅ Batch 36: team-manager.gaps.test.ts (2 violations) fixed.
+- 🔄 Batch 37 (next): Remaining violations: startCompletionMonitor.coverage (3), team-manager.test (2), team-multi-runtime (2), team-tool (2), bash-actions.coverage (2), and 17 single-violation files.
 
 **Quality Gates:**
 - Tests: 1318 passing, coverage maintained above thresholds (statements ~94%, branches ~87%)
