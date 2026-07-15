@@ -15,7 +15,8 @@
 - ✅ Batch 12: Refactored `team-tool.ts`; extracted `executeTeamTool` and helpers; all methods ≤20 lines.
 - ✅ Batch 13: Refactored `team-ops-tool.ts`; extracted `executeTeamOpsTool` and helpers; all methods ≤20 lines; added `AgentTeam.updateStatus`.
 - ✅ Batch 14: Refactored `call_graph.ts`; compressed `processCandidates` to ≤20 lines.
-- 🔄 Batch 15 (next): Target remaining violations in `analyze_ast.ts`, `complexity.ts`, `dependency_tree.ts` and large test blocks.
+- ✅ Batch 15: Refactored `call_graph.ts`; compressed `resolveCallee`, `collectAllFiles`, `buildEdges` to ≤20 lines; module fully compliant.
+- 🔄 Batch 16 (next): Verify no new violations; consider targeting other codebase plugins if any functions >20 lines, or large test blocks.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

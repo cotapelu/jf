@@ -138,9 +138,9 @@
 
 ### 11. Call Graph Compliance (FIXED ✅)
 **Severity:** HIGH
-**Instance:** `processCandidates` 27→~10 lines (compressed); other functions already ≤20
-**Resolution:** Compressed `processCandidates` by removing blank lines and inlining try-catch; all functions now ≤20 lines
-**Status:** ✅ FIXED in Batch 14 (2026-07-15)
+**Instance:** 4 functions >20 lines: `resolveCallee` (32), `collectAllFiles` (21), `buildEdges` (23), `processCandidates` (27)
+**Resolution:** Batch 14 compressed `processCandidates`; Batch 15 compressed `resolveCallee`, `collectAllFiles`, `buildEdges`
+**Status:** ✅ FIXED in Batch 14-15 (2026-07-15)
 
 ## Fragile Modules
 
