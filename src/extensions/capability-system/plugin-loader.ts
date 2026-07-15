@@ -51,19 +51,19 @@ export class PluginLoader {
     if (this.loadPromise) {
       return this.loadPromise;
     }
-
-    this.loadPromise = (async () => {
-      try {
-        const stats = await this.performLoadAll();
-        this.isLoaded = true;
-        return stats;
-      } catch (error) {
-        this.loadPromise = null; // Allow retry
-        throw error;
-      }
-    })();
-
+    this.loadPromise = this.initializeLoadPromise();
     return this.loadPromise;
+  }
+
+  private async initializeLoadPromise(): Promise<PluginLoaderStats> {
+    try {
+      const stats = await this.performLoadAll();
+      this.isLoaded = true;
+      return stats;
+    } catch (error) {
+      this.loadPromise = null; // Allow retry
+      throw error;
+    }
   }
 
   private async performLoadAll(): Promise<PluginLoaderStats> {
