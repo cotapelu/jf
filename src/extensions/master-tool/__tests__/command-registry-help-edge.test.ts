@@ -40,182 +40,8 @@ describe('CommandRegistry - getCommandHelp edge cases', () => {
   });
 
   describe('getCommandHelp', () => {
-    it('should return basic info for simple command', () => {
-      const meta = {
-        name: 'simple',
-        category: 'misc',
-        description: 'A simple command'
-      };
-      // Manually register command in executor
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('simple');
-      expect(help).toContain('Command: simple');
-      expect(help).toContain('Category: misc');
-      expect(help).toContain('Description: A simple command');
-    });
-
-    it('should include longDescription when present', () => {
-      const meta = {
-        name: 'long',
-        category: 'misc',
-        description: 'Short desc',
-        longDescription: 'Detailed explanation\nwith multiple lines'
-      };
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('long');
-      expect(help).toContain('Detailed explanation');
-      expect(help).toContain('multiple lines');
-    });
-
-    it('should include examples when provided', () => {
-      const meta = {
-        name: 'ex',
-        category: 'test',
-        description: 'Command with examples',
-        examples: [
-          'master_tool({ command: "ex", args: { x: 1 } })',
-          'Another example: /ex --force'
-        ]
-      };
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('ex');
-      expect(help).toContain('Examples:');
-      expect(help).toContain('master_tool({ command: "ex", args: { x: 1 } })');
-    });
-
-    it('should not include Examples section when none provided', () => {
-      const meta = {
-        name: 'noex',
-        category: 'test',
-        description: 'No examples',
-        examples: undefined
-      };
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('noex');
-      expect(help).not.toContain('Examples:');
-    });
-
-    it('should include dependsOn when present', () => {
-      const meta = {
-        name: 'withdep',
-        category: 'test',
-        description: 'Has dependencies',
-        dependsOn: ['auth', 'network']
-      };
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('withdep');
-      expect(help).toContain('Depends on: auth, network');
-    });
-
-    it('should include permissions when present', () => {
-      const meta = {
-        name: 'secure',
-        category: 'admin',
-        description: 'Secure command',
-        permissions: ['admin', 'write']
-      };
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('secure');
-      expect(help).toContain('Permissions: admin, write');
-    });
-
-    it('should include experimental warning when experimental is true', () => {
-      const meta = {
-        name: 'exp',
-        category: 'test',
-        description: 'Experimental command',
-        experimental: true
-      };
-      (registry as any).executor.register({
-        loader: async () => createMockCommandModule({ metadata: meta }),
-        metadata: meta,
-        schema: {},
-        StateClass: undefined,
-        getPersistencePath: undefined,
-        lastLoaded: Date.now(),
-        loadCount: 0,
-        errorCount: 0
-      });
-
-      const help = registry.getCommandHelp('exp');
-      expect(help).toContain('EXPERIMENTAL');
-    });
-
-    it('should include parameter description when schema has properties', () => {
-      const meta = {
-        name: 'params',
-        category: 'test',
-        description: 'Command with parameters'
-      };
-      const schema = {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: 'User name' },
-          age: { type: 'number', description: 'User age' },
-          verbose: { type: 'boolean' }
-        },
-        required: ['name']
-      };
+    // Helper to register command for help tests
+    function registerHelpTestCommand(meta: any, schema: any = {}) {
       (registry as any).executor.register({
         loader: async () => createMockCommandModule({ metadata: meta, schema }),
         metadata: meta,
@@ -226,12 +52,64 @@ describe('CommandRegistry - getCommandHelp edge cases', () => {
         loadCount: 0,
         errorCount: 0
       });
+    }
+    it('should return basic info for simple command', () => {
+      const meta = { name: 'simple', category: 'misc', description: 'A simple command' };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('simple');
+      ['Command: simple','Category: misc','Description: A simple command'].forEach(s => expect(help).toContain(s));
+    });
 
+    it('should include longDescription when present', () => {
+      const meta = { name: 'long', category: 'misc', description: 'Short desc', longDescription: 'Detailed explanation\nwith multiple lines' };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('long');
+      ['Detailed explanation','multiple lines'].forEach(s => expect(help).toContain(s));
+    });
+
+    it('should include examples when provided', () => {
+      const meta = { name: 'ex', category: 'test', description: 'Command with examples', examples: ['master_tool({ command: "ex", args: { x: 1 } })','Another example: /ex --force'] };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('ex');
+      expect(help).toContain('Examples:');
+      expect(help).toContain('master_tool({ command: "ex", args: { x: 1 } })');
+    });
+
+    it('should not include Examples section when none provided', () => {
+      const meta = { name: 'noex', category: 'test', description: 'No examples' };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('noex');
+      expect(help).not.toContain('Examples:');
+    });
+
+    it('should include dependsOn when present', () => {
+      const meta = { name: 'withdep', category: 'test', description: 'Has dependencies', dependsOn: ['auth','network'] };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('withdep');
+      expect(help).toContain('Depends on: auth, network');
+    });
+
+    it('should include permissions when present', () => {
+      const meta = { name: 'secure', category: 'admin', description: 'Secure command', permissions: ['admin','write'] };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('secure');
+      expect(help).toContain('Permissions: admin, write');
+    });
+
+    it('should include experimental warning when experimental is true', () => {
+      const meta = { name: 'exp', category: 'test', description: 'Experimental command', experimental: true };
+      registerHelpTestCommand(meta);
+      const help = registry.getCommandHelp('exp');
+      expect(help).toContain('EXPERIMENTAL');
+    });
+
+    it('should include parameter description when schema has properties', () => {
+      const meta = { name: 'params', category: 'test', description: 'Command with parameters' };
+      const schema = { type: 'object', properties: { name: { type: 'string', description: 'User name' }, age: { type: 'number', description: 'User age' }, verbose: { type: 'boolean' } }, required: ['name'] };
+      registerHelpTestCommand(meta, schema);
       const help = registry.getCommandHelp('params');
       expect(help).toContain('Parameters:');
-      expect(help).toContain('name: string (required) - User name');
-      expect(help).toContain('age: number (optional) - User age');
-      expect(help).toContain('verbose: boolean (optional)');
+      ['name: string (required) - User name','age: number (optional) - User age','verbose: boolean (optional)'].forEach(s => expect(help).toContain(s));
     });
 
     it('should return null for unknown command', () => {
