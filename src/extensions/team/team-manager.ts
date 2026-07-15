@@ -405,6 +405,13 @@ export class AgentTeam implements AgentTeamRuntime {
     });
   }
 
+  // Update status for an agent (used by team_ops tool)
+  public async updateStatus(agentId: string, status: string): Promise<void> {
+    const role = this.roleByAgentId.get(agentId) ?? agentId;
+    const current = this.agentStatuses.get(role)?.currentTaskIndex ?? null;
+    this.agentMonitor.setAgentStatus(role, { currentTaskIndex: current, status: status as 'idle' | 'working' });
+  }
+
   // Compatibility for tests
   insertPendingIndexSorted(idx: number): void {
     this.taskManager.insertPendingIndexSorted(idx);
