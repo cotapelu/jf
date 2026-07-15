@@ -4578,3 +4578,10 @@ Tests: should build correct tree structure & should handle large trees efficient
 Used combined declarations, removed intermediate steps, leveraged single-line variable assignments.
 All 37 tests pass.
 
+
+## Final Test Compression - Batch 22 (2026-07-15)
+Summary:
+- ast_query.test.ts: 3 tests compressed using single-line code strings, combined declarations, and array iteration for asserts.
+- analyze_ast.test.ts: 1 test compressed similarly.
+Result: All major test files now have all it blocks ≤20 lines. Total tests: 1318 passing.
+

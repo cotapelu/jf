@@ -1408,3 +1408,4 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - [x] Test refactor Batch 19: codebase.test.ts analyze tests fixed; runAnalyze helper added (2026-07-15)
 - [x] Test refactor Batch 20: compress codebase.test.ts safe_edit tests; atomic operations & rollback ≤20 lines; simple imports single-line (2026-07-15)
 - [x] Test refactor Batch 21: session-registry.test.ts compressions (tree structure, large tree) (2026-07-15)
+- [x] Test refactor Batch 22: ast_query.test.ts (3 >20-line tests) and analyze_ast.test.ts (1 >20-line test) compressed to ≤20 lines each (2026-07-15)

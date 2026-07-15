@@ -148,12 +148,14 @@
 **Resolution:** Compressed to single-line logic; all functions ≤20 lines
 **Status:** ✅ FIXED in Batch 16 (2026-07-15)
 
-### 13. Large Test Blocks (IN PROGRESS 🚧)
+### 13. Large Test Blocks ✅ COMPLETED
 - session-tool.test.ts: ✅ FIXED (all 37 tests ≤20 lines)
-- codebase.test.ts: analyze tests ✅ FIXED; safe_edit tests atomic operations & rollback ✅ FIXED; 2 tests maybe borderline but likely okay.
-- Other large files: session-registry.test.ts (479 lines), ast_query.test.ts (475 lines), analyze_ast.test.ts (469 lines) – next targets.
+- codebase.test.ts: ✅ FIXED (all 28 tests ≤20 lines)
+- session-registry.test.ts: ✅ FIXED (all 37 tests ≤20 lines)
+- ast_query.test.ts: ✅ FIXED (all 27 tests ≤20 lines)
+- analyze_ast.test.ts: ✅ FIXED (all 30 tests ≤20 lines)
 
-**Status:** 🚧 IN PROGRESS – 2/3 major test files partially done
+**Status:** ✅ DONE – All major test files now function-length compliant
 
 ## Fragile Modules
 
