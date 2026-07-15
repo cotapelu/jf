@@ -10,7 +10,9 @@
 - ✅ Batch 7: Compressed remaining methods and extracted scheduleNewPluginLoad helpers; plugin-loader now 100% compliant.
 - ✅ Batch 8: Extracted `executeOrchestration` helper in todos-tool; execute method now ≤20 lines.
 - ✅ Batch 9: Extracted `executeOrchestration` helper in bash-actions; execute method now ≤20 lines.
-- 🔄 Batch 10 (next): Target `master-tool.ts` (executeMaster, renderMasterResult); then remaining test file violations.
+- ✅ Batch 10: Refactored `master-tool.ts`; extracted helpers for `executeMaster` and `renderMasterResult`; all methods ≤20 lines.
+- ✅ Batch 11: Refactored `tool-template.ts`; extracted `executeTool` and compressed `generateCommandHelp`; replaced `buildCommandMeta` with constant; all methods ≤20 lines.
+- 🔄 Batch 12 (next): Target `team-tool.ts` (createTeamTool 62 lines) and `team-ops-tool.ts` (createTeamOpsTool 59 lines).
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**
