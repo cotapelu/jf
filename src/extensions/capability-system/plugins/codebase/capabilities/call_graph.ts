@@ -184,21 +184,10 @@ async function processCandidates(
   nextDepth: number
 ): Promise<void> {
   for (const cand of candidates) {
-    // Skip visited early
     if (visited.has(cand)) continue;
-
-    try {
-      await fs.access(cand);
-    } catch {
-      continue; // try next candidate
-    }
-
-    // Compute relative path
+    try { await fs.access(cand); } catch { continue; }
     let rel = cand;
-    if (cand.startsWith(cwd)) {
-      rel = cand.slice(cwd.length + 1);
-    }
-
+    if (cand.startsWith(cwd)) rel = cand.slice(cwd.length + 1);
     await visitFile(rel, nextDepth);
     break;
   }
