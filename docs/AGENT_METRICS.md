@@ -4571,3 +4571,10 @@ Focus: Reduce remaining >20 line tests in codebase.test.ts
 **Next:**
 - Address remaining large test files: session-registry.test.ts, ast_query.test.ts, analyze_ast.test.ts.
 
+
+
+## Session Registry Test Compression - Batch 21 (2026-07-15)
+Tests: should build correct tree structure & should handle large trees efficiently.
+Used combined declarations, removed intermediate steps, leveraged single-line variable assignments.
+All 37 tests pass.
+
