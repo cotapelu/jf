@@ -31,6 +31,63 @@ describe('SessionTool', () => {
     tool = createSessionTool();
   });
 
+  // Helper functions for common session operations
+  async function createSession(label: string, name: string): Promise<any> {
+    return await tool.execute(label, { operation: 'create', name });
+  }
+
+  async function switchSession(label: string, sessionId: string): Promise<any> {
+    return await tool.execute(label, { operation: 'switch', sessionId });
+  }
+
+  async function listSessions(label: string, filterState?: string): Promise<any> {
+    const params: any = { operation: 'list' };
+    if (filterState) params.filterState = filterState;
+    return await tool.execute(label, params);
+  }
+
+  async function getStatus(label: string): Promise<any> {
+    return await tool.execute(label, { operation: 'status' });
+  }
+
+  function assertNoError(result: any): void {
+    // @ts-ignore
+    expect(result.isError).toBeUndefined();
+    // @ts-ignore
+    expect(result.details).toBeDefined();
+    // @ts-ignore
+    expect(result.details.sessionId).toBeDefined();
+  }
+
+  function assertSessionIdsUnique(ids: string[], expectedCount: number): void {
+    expect(new Set(ids).size).toBe(expectedCount);
+  }
+
+  function assertTotalSessions(status: any, expected: number): void {
+    // @ts-ignore
+    expect(status.details.diagnostics.totalSessions).toBe(expected);
+  }
+
+  function assertActiveCount(list: any, expected: number): void {
+    // @ts-ignore
+    const active = list.details.sessions.filter((s: any) => s.isActive).length;
+    expect(active).toBe(expected);
+  }
+
+  function assertListContains(list: any, text: string): void {
+    // @ts-ignore
+    expect(list.content[0].text).toContain(text);
+  }
+
+  function assertListNotContains(list: any, text: string): void {
+    // @ts-ignore
+    expect(list.content[0].text).not.toContain(text);
+  }
+
+  async function createConcurrent(baseLabel: string, names: string[]): Promise<any[]> {
+    return Promise.all(names.map((name, i) => createSession(`${baseLabel}${i+1}`, name)));
+  }
+
   describe('Tool Definition', () => {
     it('should have correct metadata', () => {
       expect(tool.name).toBe('session');
@@ -494,38 +551,19 @@ describe('SessionTool', () => {
 
   describe('concurrency', () => {
     it('should handle concurrent session creation without corruption', async () => {
-      // Create 3 sessions concurrently
-      const results = await Promise.all([
-        tool.execute('conc1', { operation: 'create', name: 'conc-1' }),
-        tool.execute('conc2', { operation: 'create', name: 'conc-2' }),
-        tool.execute('conc3', { operation: 'create', name: 'conc-3' }),
-      ]);
-
-      // All should succeed without isError
-      results.forEach((r: any) => {
-        expect(r.isError).toBeUndefined();
-        expect(r.details).toBeDefined();
-        expect(r.details.sessionId).toBeDefined();
-      });
-
-      // All session IDs should be unique
+      const names = ['conc-1', 'conc-2', 'conc-3'];
+      const results = await createConcurrent('conc', names);
+      results.forEach(assertNoError);
       const ids = results.map((r: any) => r.details.sessionId);
-      const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(3);
-
-      // Check registry state: parent + 3 children = 4
-      const status: any = await tool.execute('status_after_conc', { operation: 'status' });
-      expect(status.details.diagnostics.totalSessions).toBe(4);
-
-      // Exactly one session should be active
+      expect(new Set(ids).size).toBe(3);
+      const status = await getStatus('status_after_conc');
+      assertTotalSessions(status, 4);
       expect(status.details.activeSession).not.toBeNull();
       const activeId = status.details.activeSession.id;
-      const list: any = await tool.execute('list_conc', { operation: 'list' });
+      const list = await listSessions('list_conc');
       expect(list.details.sessions).toHaveLength(4);
-      const activeCount = list.details.sessions.filter((s: any) => s.isActive).length;
-      expect(activeCount).toBe(1);
-      // Verify active ID is among the three created IDs
-      expect([ids[0], ids[1], ids[2]]).toContain(activeId);
+      assertActiveCount(list, 1);
+      expect(ids).toContain(activeId);
     });
 
     it('should handle concurrent switches to different sessions', async () => {
@@ -578,37 +616,20 @@ describe('SessionTool', () => {
 
   describe('Integration scenarios', () => {
     it('should handle full lifecycle: create child, work, switch back, view tree, delete child', async () => {
-      // Create child
-      const childResult = await tool.execute('int1', { operation: 'create', name: 'feature-work' });
-      // @ts-ignore
-      const childId = childResult.details.sessionId;
-
-      // Switch to child
-      await tool.execute('int2', { operation: 'switch', sessionId: childId });
-
-      // Check status inside child
-      let status = await tool.execute('int3', { operation: 'status' });
-      // @ts-ignore
-      expect(status.content[0].text).toContain(childId);
-
-      // Switch back to parent
-      await tool.execute('int4', { operation: 'switch', sessionId: 'parent' });
-      status = await tool.execute('int5', { operation: 'status' });
-      // @ts-ignore
-      expect(status.content[0].text).toContain('parent');
-
-      // View tree
-      const tree: any = await tool.execute('int6', { operation: 'tree' });
+      const child = await createSession('int1', 'feature-work');
+      const childId = child.details.sessionId;
+      await switchSession(childId, 'int2');
+      let status = await getStatus('int3');
+      assertListContains(status, childId);
+      await switchSession('parent', 'int4');
+      status = await getStatus('int5');
+      assertListContains(status, 'parent');
+      const tree = await tool.execute('int6', { operation: 'tree' });
       // @ts-ignore
       expect(tree.content[0].text).toContain('feature-work');
-
-      // Delete child
       await tool.execute('int7', { operation: 'delete', sessionId: childId });
-
-      // Verify child deleted
-      const list = await tool.execute('int8', { operation: 'list' });
-      // @ts-ignore
-      expect(list.content[0].text).not.toContain('feature-work');
+      const list = await listSessions('int8');
+      assertListNotContains(list, 'feature-work');
     });
 
     it('should support tagging and renaming', async () => {
