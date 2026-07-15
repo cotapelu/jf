@@ -40,13 +40,7 @@ import { schema as anotherSchema } from './tool-template/another-command.js';
 // Trả về help text từ schema
 function generateCommandHelp(commandName: string, meta: { description: string; schema: any; examples: string[] }): string {
   const lines: string[] = [`=== ${commandName} ===`];
-  
-  if (meta.description) {
-    lines.push(`\nDescription: ${meta.description}`);
-  }
-  
-  // Extract schema properties
-  // @ts-ignore
+  if (meta.description) lines.push(`\nDescription: ${meta.description}`);
   const schema = meta.schema;
   if (schema?.properties) {
     lines.push("\nArguments:");
@@ -58,12 +52,10 @@ function generateCommandHelp(commandName: string, meta: { description: string; s
       lines.push(`  ${key}${required ? '*' : ''} (${type}): ${desc}`);
     }
   }
-  
-  if (meta.examples && meta.examples.length > 0) {
+  if (meta.examples?.length) {
     lines.push("\nExamples:");
     meta.examples.forEach((ex: string) => lines.push(`  ${ex}`));
   }
-  
   return lines.join("\n");
 }
 
@@ -97,39 +89,36 @@ const commands: Record<string, CommandLoader> = {
   optional_prop_cmd: async () => (await import('./tool-template/example-command.js')).default,
 };
 
-function buildCommandMeta(): Record<string, {
+const commandMeta: Record<string, {
     description: string;
     schema: any;
     examples: string[];
-  }> {
-  return {
-    example_command: {
-      description: "Mô tả ngắn về command này",
-      schema: exampleSchema,
-      examples: ["your_tool_name({ command: 'example_command', args: { input: 'data.txt' } })"]
-    },
-    another_command: {
-      description: "Một command khác",
-      schema: anotherSchema,
-      examples: ["your_tool_name({ command: 'another_command', args: { files: ['a.txt', 'b.txt'] } })"]
-    },
-    empty_meta_cmd: {
-      description: "",
-      schema: { type: "object" },
-      examples: []
-    },
-    optional_prop_cmd: {
-      description: "Command with optional property for coverage",
-      schema: Type.Object({
-        input: Type.String({ description: "Đường dẫn file đầu vào" }),
-        optional_field: Type.Optional(Type.String({ description: "Tùy chọn" }))
-      }),
-      examples: ["tool_template({ command: 'optional_prop_cmd', args: { input: 'data.txt', optional_field: 'extra' } })"]
-    }
-  };
-}
+  }> = {
+  example_command: {
+    description: "Mô tả ngắn về command này",
+    schema: exampleSchema,
+    examples: ["your_tool_name({ command: 'example_command', args: { input: 'data.txt' } })"]
+  },
+  another_command: {
+    description: "Một command khác",
+    schema: anotherSchema,
+    examples: ["your_tool_name({ command: 'another_command', args: { files: ['a.txt', 'b.txt'] } })"]
+  },
+  empty_meta_cmd: {
+    description: "",
+    schema: { type: "object" },
+    examples: []
+  },
+  optional_prop_cmd: {
+    description: "Command with optional property for coverage",
+    schema: Type.Object({
+      input: Type.String({ description: "Đường dẫn file đầu vào" }),
+      optional_field: Type.Optional(Type.String({ description: "Tùy chọn" }))
+    }),
+    examples: ["tool_template({ command: 'optional_prop_cmd', args: { input: 'data.txt', optional_field: 'extra' } })"]
+  }
+};
 
-const commandMeta = buildCommandMeta();
 
 async function executeTool(
   _toolCallId: string,
@@ -140,63 +129,26 @@ async function executeTool(
 ) {
   const { command, args } = params;
   const loader = commands[command];
-
-  if (!loader) {
-    return {
-      content: [{ type: "text" as const, text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }],
-      details: null,
-      isError: true
-    };
-  }
-
+  if (!loader) return { content: [{ type: "text" as const, text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }], details: null, isError: true };
   try {
     if (Object.keys(args).length === 0) {
       const meta = commandMeta[command];
       if (meta) {
         const help = generateCommandHelp(command, meta);
-        return {
-          content: [{ type: "text" as const, text: help }],
-          details: { mode: "discovery", command, schema: meta.schema },
-          isError: false
-        };
+        return { content: [{ type: "text" as const, text: help }], details: { mode: "discovery", command, schema: meta.schema }, isError: false };
       }
-      return {
-        content: [{ type: "text" as const, text: `Command '${command}' requires arguments. Use schema to see required fields.` }],
-        details: { mode: "discovery", command },
-        isError: false
-      };
+      return { content: [{ type: "text" as const, text: `Command '${command}' requires arguments. Use schema to see required fields.` }], details: { mode: "discovery", command }, isError: false };
     }
-
     const meta = commandMeta[command];
     let mod: CommandModule | undefined;
-    try {
-      mod = await loader();
-    } catch (importError: any) {
-      throw new Error(`Failed to load command '${command}': ${importError.message}`);
-    }
-
+    try { mod = await loader(); } catch (importError: any) { throw new Error(`Failed to load command '${command}': ${importError.message}`); }
     const cwd = ctx.session?.cwd ?? process.cwd();
-    const result = await (meta?.schema
-      ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx)
-      : mod.execute(args, cwd, signal, ctx));
-
-    if (result.code !== 0) {
-      throw new Error(result.stderr || `Command ${command} exited with code ${result.code}`);
-    }
-
-    return {
-      content: [{ type: "text" as const, text: result.stdout }],
-      details: result,
-      isError: false
-    };
-
+    const result = await (meta?.schema ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx) : mod.execute(args, cwd, signal, ctx));
+    if (result.code !== 0) throw new Error(result.stderr || `Command ${command} exited with code ${result.code}`);
+    return { content: [{ type: "text" as const, text: result.stdout }], details: result, isError: false };
   } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [{ type: "text" as const, text: `Tool '${command}' error: ${errorMessage}` }],
-      details: { error: errorMessage, command },
-      isError: true
-    };
+    return { content: [{ type: "text" as const, text: `Tool '${command}' error: ${errorMessage}` }], details: { error: errorMessage, command }, isError: true };
   }
 }
 
