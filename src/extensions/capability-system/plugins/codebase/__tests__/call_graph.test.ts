@@ -65,25 +65,15 @@ describe("codebase.call_graph", () => {
   });
 
   it("should build simple call graph within one file", async () => {
-    const code = `
-function a() { b(); }
-function b() { c(); }
-function c() {}
-    `;
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
+    const code = "function a() { b(); }\nfunction b() { c(); }\nfunction c() {}";
+    const file = await writeTempFile(code), ctx = { cwd: path.dirname(file) };
     const result = await callGraphModule.execute({ file: path.basename(file), query: { includeCrossFile: false } }, ctx as { cwd: string });
-
     expect(result.isError).toBe(false);
-    const nodes = result.details.result.nodes;
-    const edges = result.details.result.edges;
-
+    const nodes = result.details.result.nodes, edges = result.details.result.edges;
     expect(nodes.length).toBe(3);
     expect(edges.length).toBe(2);
-    // Check edges: a->b, b->c
     const edgeNames = edges.map(e => `${e.from.name}->${e.to.name}`).sort();
     expect(edgeNames).toEqual(["a->b", "b->c"]);
-
     await unlink(file);
   });
 
@@ -118,66 +108,33 @@ function baz() {}
   });
 
   it("should build cross-file call graph with simple import", async () => {
-    // lib.ts exports function callee
-    const libCode = `export function callee() {}`;
-    const mainCode = `import { callee } from "./lib"; function main() { callee(); }`;
-
-    const dir = await mkdtemp(path.join(os.tmpdir(), "callgraph-cross-"));
-    const libFile = path.join(dir, "lib.ts");
-    const mainFile = path.join(dir, "main.ts");
-    await writeFile(libFile, libCode, "utf-8");
-    await writeFile(mainFile, mainCode, "utf-8");
-
+    const dir = await mkdtemp(path.join(os.tmpdir(), "callgraph-cross-")), libFile = path.join(dir, "lib.ts"), mainFile = path.join(dir, "main.ts");
+    await Promise.all([writeFile(libFile, "export function callee() {}", "utf-8"), writeFile(mainFile, "import { callee } from \"./lib\"; function main() { callee(); }", "utf-8")]);
     const result = await callGraphModule.execute({ file: "main.ts", query: { includeCrossFile: true, depth: 1 } }, { cwd: dir } as { cwd: string });
-
     expect(result.isError).toBe(false);
     const nodes = result.details.result.nodes.map(n => n.name);
     expect(nodes).toContain("main");
     expect(nodes).toContain("callee");
-    const edges = result.details.result.edges;
-    expect(edges.length).toBe(1);
-    expect(edges[0].from.name).toBe("main");
-    expect(edges[0].to.name).toBe("callee");
-
-    // Cleanup
-    await unlink(libFile);
-    await unlink(mainFile);
-    await rm(dir, { recursive: true, force: true });
+    expect(result.details.result.edges).toHaveLength(1);
+    expect(result.details.result.edges[0].from.name).toBe("main");
+    expect(result.details.result.edges[0].to.name).toBe("callee");
+    await Promise.all([unlink(libFile), unlink(mainFile), rm(dir, { recursive: true, force: true })]);
   });
 
   it('filters reachable subgraph with entryPoints', async () => {
-    // Graph: a->b->c ->d
-    const codeA = `export function a() {}`;
-    const codeB = `import { a } from './a'; export function b() { a(); }`;
-    const codeC = `import { b } from './b'; export function c() { b(); }`;
-    const codeD = `import { c } from './c'; export function d() { c(); }`;
+    const codes = { a: "export function a() {}", b: "import { a } from './a'; export function b() { a(); }", c: "import { b } from './b'; export function c() { b(); }", d: "import { c } from './c'; export function d() { c(); }" };
     const dir = await mkdtemp(path.join(os.tmpdir(), 'callgraph-ep-'));
-    await writeFile(path.join(dir, 'a.ts'), codeA);
-    await writeFile(path.join(dir, 'b.ts'), codeB);
-    await writeFile(path.join(dir, 'c.ts'), codeC);
-    await writeFile(path.join(dir, 'd.ts'), codeD);
-
-    // Without entryPoints, only the file itself is visited (no imports)
-    const full = await callGraphModule.execute({ file: 'a.ts', query: { includeCrossFile: true, depth: 10 } }, { cwd: dir } as { cwd: string });
-    expect(full.isError).toBe(false);
-    expect(full.details.result.nodes.map(n => n.name).sort()).toEqual(['a']);
-
-    // With entryPoints=['b.ts'], both a.ts (file) and b.ts (entryPoints) are visited; b imports a, so both appear.
-    const sub = await callGraphModule.execute({ file: 'a.ts', entryPoints: ['b.ts'], query: { includeCrossFile: true, depth: 10 } }, { cwd: dir } as { cwd: string });
-    expect(sub.isError).toBe(false);
-    const subNames = sub.details.result.nodes.map(n => n.name).sort();
-    expect(subNames).toEqual(['a','b']);
-
-    // With entryPoints=['a.ts','c.ts'], visited files: a, c; c imports b, which imports a (already visited). So {a,b,c}.
-    const multi = await callGraphModule.execute({ file: 'a.ts', entryPoints: ['a.ts','c.ts'], query: { includeCrossFile: true, depth: 10 } }, { cwd: dir } as { cwd: string });
-    expect(multi.isError).toBe(false);
-    const multiNames = multi.details.result.nodes.map(n => n.name).sort();
-    expect(multiNames).toEqual(['a','b','c']);
-
-    // Cleanup
-    for (const f of ['a.ts','b.ts','c.ts','d.ts']) {
-      try { await unlink(path.join(dir, f)); } catch {}
-    }
+    await Promise.all(Object.entries(codes).map(([name, code]) => writeFile(path.join(dir, name+'.ts'), code)));
+    const exec = (params) => callGraphModule.execute({ file: params.file, entryPoints: params.entryPoints, query: { includeCrossFile: true, depth: 10 } }, { cwd: dir } as { cwd: string });
+    const check = async (file, entryPoints, expected) => {
+      const res = await exec({ file, entryPoints });
+      expect(res.isError).toBe(false);
+      expect(res.details.result.nodes.map(n => n.name).sort()).toEqual(expected);
+    };
+    await check('a.ts', [], ['a']);
+    await check('a.ts', ['b.ts'], ['a','b']);
+    await check('a.ts', ['a.ts','c.ts'], ['a','b','c']);
+    await Promise.all(['a.ts','b.ts','c.ts','d.ts'].map(f => unlink(path.join(dir, f)).catch(()=>{})));
     await rm(dir, { recursive: true, force: true });
   });
 
@@ -196,28 +153,14 @@ function baz() {}
   });
 
   it("should handle depth limit", async () => {
-    // chain: a -> b -> c -> d
-    const libC = `export function c() {}`;
-    const libD = `export function d() {}`;
-    const libB = `import { c } from "./libC"; export function b() { c(); }`;
-    const libA = `import { b } from "./libB"; export function a() { b(); }`;
+    const codes = { libC: "export function c() {}", libD: "export function d() {}", libB: "import { c } from \"./libC\"; export function b() { c(); }", libA: "import { b } from \"./libB\"; export function a() { b(); }" };
     const dir = await mkdtemp(path.join(os.tmpdir(), "callgraph-depth-"));
-    await writeFile(path.join(dir, "libC.ts"), libC);
-    await writeFile(path.join(dir, "libD.ts"), libD);
-    await writeFile(path.join(dir, "libB.ts"), libB);
-    await writeFile(path.join(dir, "libA.ts"), libA);
-
+    await Promise.all(Object.entries(codes).map(([name, code]) => writeFile(path.join(dir, name+'.ts'), code)));
     const result = await callGraphModule.execute({ file: "libA.ts", query: { includeCrossFile: true, depth: 2 } }, { cwd: dir } as { cwd: string });
-
     expect(result.isError).toBe(false);
     const names = result.details.result.nodes.map(n => n.name).sort();
-    // depth 2: a -> b -> c (includes a, b, c). d is at depth 3 and should be excluded.
     expect(names).toEqual(["a", "b", "c"]);
-
-    // Cleanup
-    for (const f of ["libA.ts", "libB.ts", "libC.ts", "libD.ts"]) {
-      try { await unlink(path.join(dir, f)); } catch {}
-    }
+    await Promise.all(Object.keys(codes).map(k => unlink(path.join(dir, k+'.ts')).catch(()=>{})));
     await rm(dir, { recursive: true, force: true });
   });
 
