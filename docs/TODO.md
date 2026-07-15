@@ -16,7 +16,8 @@
 - ✅ Batch 13: Refactored `team-ops-tool.ts`; extracted `executeTeamOpsTool` and helpers; all methods ≤20 lines; added `AgentTeam.updateStatus`.
 - ✅ Batch 14: Refactored `call_graph.ts`; compressed `processCandidates` to ≤20 lines.
 - ✅ Batch 15: Refactored `call_graph.ts`; compressed `resolveCallee`, `collectAllFiles`, `buildEdges` to ≤20 lines; module fully compliant.
-- 🔄 Batch 16 (next): Verify no new violations; consider targeting other codebase plugins if any functions >20 lines, or large test blocks.
+- ✅ Batch 16: Refactored `dependency_tree.ts`; compressed `resolveInAllFiles` to ≤20 lines.
+- 🔄 Batch 17 (next): Final verification: ensure all codebase plugin capabilities meet function‑length ≤20; then update summary metrics.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

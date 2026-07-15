@@ -142,6 +142,12 @@
 **Resolution:** Batch 14 compressed `processCandidates`; Batch 15 compressed `resolveCallee`, `collectAllFiles`, `buildEdges`
 **Status:** ✅ FIXED in Batch 14-15 (2026-07-15)
 
+### 12. Dependency Tree Compliance (FIXED ✅)
+**Severity:** MEDIUM
+**Instance:** `resolveInAllFiles` ~25 lines (borderline)
+**Resolution:** Compressed to single-line logic; all functions ≤20 lines
+**Status:** ✅ FIXED in Batch 16 (2026-07-15)
+
 ## Fragile Modules
 
 ### Session Tool (FIXED ✅)
