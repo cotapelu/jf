@@ -8,7 +8,8 @@
 - ✅ Batch 5: Extracted `initializeLoadPromise` from `loadAll` in plugin-loader (reduced from 21 → 9 lines).
 - ✅ Batch 6: Extracted `createLoadedPlugin` from `finalizePlugin` and `computeCapabilityMetadata` from `createCapability` in plugin-loader.
 - ✅ Batch 7: Compressed remaining methods and extracted scheduleNewPluginLoad helpers; plugin-loader now 100% compliant.
-- 🔄 Batch 8 (next): Address remaining test file function violations; pursue overall 100% compliance.
+- ✅ Batch 8: Extracted `executeOrchestration` helper in todos-tool; execute method now ≤20 lines.
+- 🔄 Batch 9 (next): Target `bash-actions.ts` execute method (large); then `master-tool.ts` (executeMaster, renderMasterResult).
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**
