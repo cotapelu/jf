@@ -153,21 +153,10 @@ describe('CommandRegistry', () => {
   describe('execute', () => {
     it('should execute a custom command successfully', async () => {
       const execSpy = vi.fn().mockResolvedValue({ code: 0, stdout: 'Hello', stderr: '' });
-      const loader: CommandLoader = async () => createMockCommandModule({
-        metadata: { name: 'hello.cmd', category: 'test' },
-        execute: execSpy
-      });
+      const loader: CommandLoader = async () => createMockCommandModule({ metadata: { name: 'hello.cmd', category: 'test' }, execute: execSpy });
       const r = new CommandRegistry({}, new Map([['hello.cmd', loader]]));
       await r.initialize();
-
-      const result = await r.execute('hello.cmd', {}, {
-        toolCallId: '1',
-        signal: new AbortController().signal,
-        onUpdate: vi.fn(),
-        ctx: {},
-        maxOutputSize: 1024
-      });
-
+      const result = await r.execute('hello.cmd', {}, { toolCallId: '1', signal: new AbortController().signal, onUpdate: vi.fn(), ctx: {}, maxOutputSize: 1024 });
       expect(result.isError).toBe(false);
       expect(result.content).toEqual([{ type: 'text', text: 'Hello' }]);
       expect(result.details.command).toBe('hello.cmd');
@@ -176,21 +165,10 @@ describe('CommandRegistry', () => {
 
     it('should return error status when command fails', async () => {
       const execSpy = vi.fn().mockResolvedValue({ code: 1, stdout: '', stderr: 'Oops' });
-      const loader: CommandLoader = async () => createMockCommandModule({
-        metadata: { name: 'fail.cmd', category: 'test' },
-        execute: execSpy
-      });
+      const loader: CommandLoader = async () => createMockCommandModule({ metadata: { name: 'fail.cmd', category: 'test' }, execute: execSpy });
       const r = new CommandRegistry({}, new Map([['fail.cmd', loader]]));
       await r.initialize();
-
-      const result = await r.execute('fail.cmd', {}, {
-        toolCallId: '1',
-        signal: new AbortController().signal,
-        onUpdate: vi.fn(),
-        ctx: {},
-        maxOutputSize: 1024
-      });
-
+      const result = await r.execute('fail.cmd', {}, { toolCallId: '1', signal: new AbortController().signal, onUpdate: vi.fn(), ctx: {}, maxOutputSize: 1024 });
       expect(result.isError).toBe(true);
       expect(result.details.error).toBe('Oops');
     });
@@ -321,48 +299,24 @@ describe('CommandRegistry', () => {
 
   describe('listCommands', () => {
     it('should return all command names', async () => {
-      readdir.mockImplementation(async (path: string) => {
-        if (path === '/fake/commands') {
-          return [
-            { isFile: () => true, isDirectory: () => false, name: 'a.ts' },
-            { isFile: () => false, isDirectory: () => true, name: 'cat' }
-          ];
-        }
-        if (path === '/fake/commands/cat') {
-          return ['b.ts'];
-        }
-        return [];
-      });
-
+      readdir.mockImplementation(async (path: string) => path === '/fake/commands' ? [{ isFile:()=>true, isDirectory:()=>false, name:'a.ts' },{ isFile:()=>false, isDirectory:()=>true, name:'cat' }] : path === '/fake/commands/cat' ? ['b.ts'] : []);
       await registry.initialize();
       const names = registry.listCommands();
-      expect(names).toContain('a');
-      expect(names).toContain('cat.b');
+      ['a','cat.b'].forEach(n => expect(names).toContain(n));
     });
   });
 
   describe('listCommandsByCategory', () => {
     it('should group commands by category', async () => {
       readdir.mockImplementation(async (path: string) => {
-        if (path === '/fake/commands') {
-          return [
-            { isFile: () => false, isDirectory: () => true, name: 'dev' },
-            { isFile: () => false, isDirectory: () => true, name: 'git' }
-          ];
-        }
-        if (path === '/fake/commands/dev') {
-          return ['build.ts', 'clean.ts'];
-        }
-        if (path === '/fake/commands/git') {
-          return ['status.ts'];
-        }
+        if (path === '/fake/commands') return [{ isFile:()=>false, isDirectory:()=>true, name:'dev' },{ isFile:()=>false, isDirectory:()=>true, name:'git' }];
+        if (path === '/fake/commands/dev') return ['build.ts','clean.ts'];
+        if (path === '/fake/commands/git') return ['status.ts'];
         return [];
       });
-
       await registry.initialize();
       const map = registry.listCommandsByCategory();
-      expect(map.get('dev')).toContain('dev.build');
-      expect(map.get('dev')).toContain('dev.clean');
+      ['dev.build','dev.clean'].forEach(n => expect(map.get('dev')).toContain(n));
       expect(map.get('git')).toContain('git.status');
     });
   });
@@ -389,32 +343,10 @@ describe('CommandRegistry', () => {
     it('should format basic help with required params', () => {
       readdir.mockResolvedValue([]);
       const customLoader: CommandLoader = async () => createMockCommandModule({
-        metadata: {
-          name: 'help.test',
-          category: 'test',
-          description: 'A test command',
-          longDescription: 'Detailed info',
-          examples: ['example usage'],
-          tags: ['test'],
-          experimental: false,
-          dependsOn: ['dep1'],
-          permissions: ['write']
-        },
-        schema: {
-          type: 'object',
-          properties: {
-            force: { type: 'boolean', description: 'Force operation' },
-            count: { type: 'number', description: 'Number of times' }
-          },
-          required: ['count']
-        }
+        metadata: { name: 'help.test', category: 'test', description: 'A test command', longDescription: 'Detailed info', examples: ['example usage'], tags: ['test'], experimental: false, dependsOn: ['dep1'], permissions: ['write'] },
+        schema: { type: 'object', properties: { force: { type: 'boolean', description: 'Force operation' }, count: { type: 'number', description: 'Number of times' } }, required: ['count'] }
       });
       const r = new CommandRegistry({}, new Map([['help.test', customLoader]]));
-      // Need to initialize to register command
-      // But getCommandHelp uses executor metadata which is set during register.
-      // However, custom commands are registered synchronously in initialize (scanning is async but custom ones added initPromise).
-      // Actually custom commands are added after scanning inside initPromise. So they may not be available until after initialize.
-      // We'll call initialize.
     });
 
     // More help tests...
