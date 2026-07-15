@@ -2,11 +2,9 @@
 
 **Priority 1: Function Length Compliance - Team Manager Refactor**
 - ✅ Batch 1: Extracted `AgentWorkspace` and `AgentMessageBus` classes (SRP foundation)
-- ✅ Batch 2: Extracted `createRuntimeForRole` and `runAgentLoop` into small helpers; fixed registerRuntime duplication. All modified functions ≤20 lines.
-- 🔄 Batch 3 (next): Extract remaining large methods in `AgentTeam`:
-  - `handleAgentEvent` (~32 lines)
-  - `getTeamStatus` (~30 lines)
-  - Any other violations identified
+- ✅ Batch 2: Extracted `createRuntimeForRole` and `runAgentLoop` into small helpers; fixed registerRuntime duplication.
+- ✅ Batch 3: Extracted `handleAgentEvent` into `getEventText` helper; `AgentTeam` now 100% compliant (all functions ≤20 lines).
+- 🔄 Batch 4 (next): Target remaining violations in other modules: `dependency_tree.ts` (resolveInAllFiles), `plugin-loader.ts`, and test files.
 - Target: 100% function length compliance across codebase
 
 **Quality Gates:**

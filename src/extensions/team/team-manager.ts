@@ -761,27 +761,7 @@ export class AgentTeam implements AgentTeamRuntime {
   private handleAgentEvent(role: string, event: unknown): void {
     if (typeof event !== 'object' || event === null || !('type' in event)) return;
     const e = event as { type: string; stopReason?: unknown; message?: unknown; toolName?: unknown };
-    let text: string | null = null;
-    switch (e.type) {
-      case 'agent_start':
-        text = this.renderAgentStart(role);
-        break;
-      case 'agent_end':
-        text = this.renderAgentEnd(role, e.stopReason);
-        break;
-      case 'message_start':
-        text = this.renderMessageStart(role, e.message);
-        break;
-      case 'tool_execution_start':
-        text = this.renderToolExecution(role, e.toolName, true);
-        break;
-      case 'tool_execution_end':
-        text = this.renderToolExecution(role, e.toolName, false);
-        break;
-      case 'message_update':
-        // ignore streaming updates
-        break;
-    }
+    const text = this.getEventText(role, e);
     if (text) {
       this.notifyUpdate({
         content: [{ type: 'text', text }],
@@ -826,6 +806,26 @@ export class AgentTeam implements AgentTeamRuntime {
     const parts = (msg.content || []) as Array<{ type: string; text?: string }>;
     const texts = parts.filter(c => c.type === 'text').map(c => c.text).filter(Boolean);
     return texts.join('');
+  }
+
+  // New helper for Batch 3: extract event text to reduce handleAgentEvent size
+  private getEventText(role: string, e: { type: string; stopReason?: unknown; message?: unknown; toolName?: unknown }): string | null {
+    switch (e.type) {
+      case 'agent_start':
+        return this.renderAgentStart(role);
+      case 'agent_end':
+        return this.renderAgentEnd(role, e.stopReason);
+      case 'message_start':
+        return this.renderMessageStart(role, e.message);
+      case 'tool_execution_start':
+        return this.renderToolExecution(role, e.toolName, true);
+      case 'tool_execution_end':
+        return this.renderToolExecution(role, e.toolName, false);
+      case 'message_update':
+        return null;
+      default:
+        return null;
+    }
   }
 
   // resetTaskState removed – TaskManager.initialize() replaces it

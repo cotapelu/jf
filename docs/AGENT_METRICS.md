@@ -4260,3 +4260,20 @@ Focus: Extract large methods in `AgentTeam` and fix registerRuntime duplication
 - No breaking changes; backward compatible
 
 **Next:** Batch 3 - Target remaining large methods in `AgentTeam`: `handleAgentEvent` (~32 lines), `getTeamStatus` (~30 lines).
+
+## Team Manager Refactor - Batch 3 (2026-07-15)
+Focus: Extract `handleAgentEvent` to achieve full AgentTeam compliance
+
+**Changes:**
+- Created `getEventText(role, e)` helper containing the event switch logic (≤20 lines)
+- Simplified `handleAgentEvent` to use the helper; method now ≤10 lines
+- Preserved all event handling semantics (agent_start, agent_end, message_start, tool_execution, message_update)
+- No changes to render methods
+
+**Impact:**
+- `AgentTeam` achieves 100% function length compliance (all methods ≤20 lines)
+- All 273 team tests still passing; overall 1318 tests
+- Lint clean, typecheck clean
+- Code more maintainable: separation of event text generation from dispatch
+
+**Next:** Move to other modules: `dependency_tree.ts` (resolveInAllFiles ~300 lines) and `plugin-loader.ts` (~459 lines).
