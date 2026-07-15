@@ -66,6 +66,18 @@ interface SafeEditDetails {
 }
 
 describe("codebase.analyze", () => {
+  // Helper to run analyze capability with automatic cleanup
+  async function runAnalyze(code: string): Promise<any> {
+    const file = await writeTempFile(code);
+    const ctx = { cwd: path.dirname(file) };
+    try {
+      return await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    } finally {
+      await unlink(file);
+    }
+  }
+
+
   it("should parse simple imports and exports", async () => {
     const code = `
 import { foo, bar as baz } from "lib";
@@ -78,12 +90,7 @@ const x = 1;
 let y = 2;
 function myFunc() {}
     `;
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
-    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
-    if (result.isError) console.error('ANALYZE ERROR:', result.content, result.details);
-    else console.log('ANALYZE RESULT:', { imports: result.details.imports.length, exports: result.details.exports.length, symbols: result.details.symbols.map(s => `${s.kind} ${s.name}`) });
-
+    const result = await runAnalyze(code);
     expect(result.isError).toBe(false);
     expect(result.details.imports.length).toBeGreaterThanOrEqual(3);
     expect(result.details.exports.length).toBeGreaterThanOrEqual(3);
@@ -91,9 +98,6 @@ function myFunc() {}
     expect(result.details.symbols.some(s => s.name === "MyType" && s.kind === "type")).toBe(true);
     expect(result.details.symbols.some(s => s.name === "myFunc" && s.kind === "function")).toBe(true);
     expect(result.details.symbols.some(s => s.name === "x" && s.kind === "variable")).toBe(true);
-
-    // Cleanup
-    await unlink(file);
   });
 
   it("should report missing file as error", async () => {
@@ -251,15 +255,12 @@ function myFunc() {}
 
   it('should parse export interface', async () => {
     const code = "export interface ExportedInterface { method(): void; }";
-    const file = await writeTempFile(code);
-    const ctx = { cwd: path.dirname(file) };
-    const result = await analyzeModule.execute({ file: path.basename(file) }, ctx as { cwd: string });
+    const result = await runAnalyze(code);
     expect(result.isError).toBe(false);
     expect(result.details.exports.length).toBe(1);
     expect(result.details.exports[0].type).toBe('named');
     expect(result.details.exports[0].name).toBe('ExportedInterface');
     expect(result.details.symbols.some(s => s.kind === 'interface' && s.name === 'ExportedInterface')).toBe(true);
-    await unlink(file);
   });
 });
 
