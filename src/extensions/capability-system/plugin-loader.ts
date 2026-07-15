@@ -198,28 +198,17 @@ export class PluginLoader {
   }
 
   private async createCapability(
-    pluginId: string,
-    pluginPath: string,
-    capMan: CapabilityManifest,
-    pluginMan: PluginManifest
+    pluginId: string, pluginPath: string,
+    capMan: CapabilityManifest, pluginMan: PluginManifest
   ): Promise<Capability> {
     const executePath = join(pluginPath, capMan.execute);
     const rendererPath = capMan.renderer ? join(pluginPath, capMan.renderer) : null;
-
     const { executeFn } = await this.loadExecuteModule(executePath);
     const renderResultFn = rendererPath ? await this.loadRendererModule(rendererPath) : undefined;
-
     const { capabilityId, finalGuidelines, promptSnippet } = this.computeCapabilityMetadata(pluginMan, capMan);
-
     return this.buildCapability(
-      pluginId,
-      capMan,
-      pluginMan,
-      executeFn,
-      renderResultFn,
-      capabilityId,
-      finalGuidelines,
-      promptSnippet
+      pluginId, capMan, pluginMan, executeFn, renderResultFn,
+      capabilityId, finalGuidelines, promptSnippet
     );
   }
 
@@ -263,29 +252,21 @@ export class PluginLoader {
   }
 
   private buildCapability(
-    pluginId: string,
-    capMan: CapabilityManifest,
-    pluginMan: PluginManifest,
+    pluginId: string, capMan: CapabilityManifest, pluginMan: PluginManifest,
     executeFn: (params: Record<string, unknown>, ctx: ExtensionContext) => Promise<AgentToolResult<unknown>>,
     renderResultFn: Capability["renderResult"] | undefined,
-    capabilityId: string,
-    finalGuidelines: string[],
-    promptSnippet: string
+    capabilityId: string, finalGuidelines: string[], promptSnippet: string
   ): Capability {
     return {
       id: capabilityId,
-      name: capMan.name,
-      description: capMan.description,
+      name: capMan.name, description: capMan.description,
       pluginId,
       promptSnippet,
       promptGuidelines: finalGuidelines,
-      parameters: capMan.inputSchema,
-      outputSchema: capMan.outputSchema,
+      parameters: capMan.inputSchema, outputSchema: capMan.outputSchema,
       execute: this.createExecuteHandler(capabilityId, executeFn),
       ...(renderResultFn && { renderResult: renderResultFn }),
-      tags: pluginMan.tags,
-      dependencies: capMan.dependencies,
-      permissions: capMan.permissions
+      tags: pluginMan.tags, dependencies: capMan.dependencies, permissions: capMan.permissions
     };
   }
 
@@ -294,26 +275,18 @@ export class PluginLoader {
     executeFn: (params: Record<string, unknown>, ctx: ExtensionContext) => Promise<AgentToolResult<unknown>>
   ): Capability["execute"] {
     return async (
-      toolCallId: string,
-      params: Record<string, unknown>,
-      signal: AbortSignal | null | undefined,
-      onUpdate: ((data: unknown) => void) | null | undefined,
-      ctx: ExtensionContext
+      toolCallId: string, params: Record<string, unknown>, signal: AbortSignal | null | undefined,
+      onUpdate: ((data: unknown) => void) | null | undefined, ctx: ExtensionContext
     ): Promise<AgentToolResult<unknown>> => {
       try {
         const result = await executeFn(params, ctx);
-        return {
-          ...result,
-          details: result.details && typeof result.details === 'object' && !Array.isArray(result.details)
-            ? { ...result.details, capabilityId }
-            : { capabilityId }
-        };
+        const details = result.details && typeof result.details === 'object' && !Array.isArray(result.details)
+          ? { ...result.details, capabilityId }
+          : { capabilityId };
+        return { ...result, details };
       } catch (error: unknown) {
-        return {
-          content: [{ type: "text" as const, text: `❌ ${capabilityId} error: ${error instanceof Error ? error.message : String(error)}` }],
-          details: { error: error instanceof Error ? error.message : String(error), capabilityId },
-          isError: true
-        };
+        const msg = error instanceof Error ? error.message : String(error);
+        return { content: [{ type: "text" as const, text: `❌ ${capabilityId} error: ${msg}` }], details: { error: msg, capabilityId }, isError: true };
       }
     };
   }
@@ -361,28 +334,27 @@ export class PluginLoader {
   }
 
   private scheduleNewPluginLoad(pluginFolder: string): void {
-    // Clear any pending load for this plugin
-    const existing = this.newPluginTimers.get(pluginFolder);
-    if (existing) {
-      clearTimeout(existing);
-    }
-
-    const timer = setTimeout(() => {
-      this.newPluginTimers.delete(pluginFolder);
-      const pluginPath = join(this.options.pluginsDir, pluginFolder);
-      const manifestPath = join(pluginPath, MANIFEST_FILENAME);
-
-      // Only load if manifest exists now
-      if (existsSync(manifestPath)) {
-        this.loadPlugin(pluginFolder).catch(err => {
-          console.error(`[PluginLoader] Delayed load failed for ${pluginFolder}:`, err);
-        });
-      } else {
-        console.warn(`[PluginLoader] Manifest not found for ${pluginFolder} after delay, skipping`);
-      }
-    }, 500); // 500ms debounce allows file system operations to complete
-
+    this.clearNewPluginTimer(pluginFolder);
+    const timer = setTimeout(() => { void this.performNewPluginLoad(pluginFolder); }, 500);
     this.newPluginTimers.set(pluginFolder, timer);
+  }
+
+  private clearNewPluginTimer(pluginFolder: string): void {
+    const existing = this.newPluginTimers.get(pluginFolder);
+    if (existing) clearTimeout(existing);
+  }
+
+  private async performNewPluginLoad(pluginFolder: string): Promise<void> {
+    this.newPluginTimers.delete(pluginFolder);
+    const pluginPath = join(this.options.pluginsDir, pluginFolder);
+    const manifestPath = join(pluginPath, MANIFEST_FILENAME);
+    if (existsSync(manifestPath)) {
+      await this.loadPlugin(pluginFolder).catch(err => {
+        console.error(`[PluginLoader] Delayed load failed for ${pluginFolder}:`, err);
+      });
+    } else {
+      console.warn(`[PluginLoader] Manifest not found for ${pluginFolder} after delay, skipping`);
+    }
   }
 
   private watchSinglePlugin(pluginPath: string, pluginFolder: string): void {
