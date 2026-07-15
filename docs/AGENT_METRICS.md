@@ -4585,3 +4585,16 @@ Summary:
 - analyze_ast.test.ts: 1 test compressed similarly.
 Result: All major test files now have all it blocks ≤20 lines. Total tests: 1318 passing.
 
+
+## Master Tool Test Compression - Batch 23 (2026-07-15)
+- command-registry-help-edge.test.ts: 8 violations fixed by extracting `registerHelpTestCommand` helper, single-line objects, array loops.
+- All tests ≤20 lines.
+
+## Command Registry Test Compression - Batch 24 (2026-07-15)
+- command-registry.test.ts: 5 violations fixed. Compressed execute success/failure tests; reduced help test (placeholder) using inline objects.
+- All tests ≤20 lines.
+
+## Call Graph Test Compression - Batch 25 (2026-07-15)
+- call_graph.test.ts: 4 violations fixed. Compressed multi-file setups with Promise.all, single-line code strings, internal helper for entryPoints checks.
+- All tests ≤20 lines.
+

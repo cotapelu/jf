@@ -148,14 +148,14 @@
 **Resolution:** Compressed to single-line logic; all functions ≤20 lines
 **Status:** ✅ FIXED in Batch 16 (2026-07-15)
 
-### 13. Large Test Blocks ✅ COMPLETED
-- session-tool.test.ts: ✅ FIXED (all 37 tests ≤20 lines)
-- codebase.test.ts: ✅ FIXED (all 28 tests ≤20 lines)
-- session-registry.test.ts: ✅ FIXED (all 37 tests ≤20 lines)
-- ast_query.test.ts: ✅ FIXED (all 27 tests ≤20 lines)
-- analyze_ast.test.ts: ✅ FIXED (all 30 tests ≤20 lines)
+### 13. Large Test Blocks (IN PROGRESS 🚧)
+- Core plugin tests: ✅ DONE (codebase, call_graph, dependency_tree, complexity, safe_edit, analyze_ast, ast_query)
+- Session tests: ✅ DONE (session-tool, session-registry)
+- Master tool tests: IN PROGRESS – 5 violations fixed (command-registry-help-edge, command-registry), others remain
+- Remaining violations: ~52 across multiple test files (as of Batch 25)
+- Next targets: complexity.test.ts, dependency_tree.test.ts, stats-command.test.ts, and other remaining files.
 
-**Status:** ✅ DONE – All major test files now function-length compliant
+**Status:** 🚧 IN PROGRESS – ~90% of test functions now ≤20 lines
 
 ## Fragile Modules
 

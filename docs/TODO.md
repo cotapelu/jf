@@ -23,7 +23,10 @@
 - ✅ Batch 20: Compressed codebase.test.ts safe_edit tests: atomic success & rollback now ≤20 lines; simple imports test compressed.
 - ✅ Batch 21: Refactored session-registry.test.ts; compressed tree structure tests; all 37 tests ≤20 lines.
 - ✅ Batch 22: Compressed ast_query.test.ts (3 violations) and analyze_ast.test.ts (1 violation); all tests ≤20 lines.
-- ✅ Milestone: All major test files function-length compliant. Core codebase plugin capabilities already compliant. Next: maintain and address any other emerging issues.
+- ✅ Batch 23: command-registry-help-edge.test.ts (8 violations) fixed.
+- ✅ Batch 24: command-registry.test.ts (5 violations) fixed.
+- ✅ Batch 25: call_graph.test.ts (4 violations) fixed.
+- 🔄 Batch 26 (next): Target remaining high-violation test files: complexity.test.ts (3), dependency_tree.test.ts (3), stats-command.test.ts (3), and others.
 
 **Quality Gates:**
 - Tests: 1318 passing, coverage maintained above thresholds (statements ~94%, branches ~87%)
