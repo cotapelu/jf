@@ -213,6 +213,45 @@ export const schema = Type.Object({
   content: Type.Optional(Type.String({ description: "Task content (required for add)" })),
   id: Type.Optional(Type.Integer({ description: "Task ID (required for toggle/remove)" }))
 }, { additionalProperties: false });
+// --- Execute Handlers (≤20 lines) ---
+
+async function handleAdd(state: TodoState, args: any): Promise<any> {
+  if (!args.content) return { code: 1, stdout: '', stderr: 'content required for add action', data: { error: 'validation' } };
+  const item = await state.add(args.content);
+  return { code: 0, stdout: `✅ Added task #${item.id}: ${item.content}`, stderr: '', data: { action: 'add', item } };
+}
+
+async function handleList(state: TodoState): Promise<any> {
+  const tasks = state.tasks;
+  const pending = tasks.filter(t => !t.done).length;
+  const done = tasks.filter(t => t.done).length;
+  let output = `📝 Todo List\n\n`;
+  output += `Total: ${tasks.length} (${done} done, ${pending} pending)\n\n`;
+  if (tasks.length === 0) {
+    output += 'No tasks. Add one with action=\'add\'.\\n';
+  } else {
+    tasks.forEach(task => {
+      const icon = task.done ? '✅' : '⏳';
+      output += `${icon} [${task.id}] ${task.content}\\n`;
+    });
+  }
+  return { code: 0, stdout: output.trim(), stderr: '', data: { action: 'list', tasks, stats: { total: tasks.length, done, pending } } };
+}
+
+async function handleToggle(state: TodoState, args: any): Promise<any> {
+  if (args.id === undefined) return { code: 1, stdout: '', stderr: 'id required for toggle action', data: { error: 'validation' } };
+  const toggled = await state.toggle(args.id);
+  if (!toggled) return { code: 1, stdout: '', stderr: `Task #${args.id} not found`, data: { error: 'not_found' } };
+  const taskAfter = state.tasks.find(t => t.id === args.id)!;
+  return { code: 0, stdout: `✅ Toggled task #${args.id}: ${taskAfter.done ? 'done' : 'pending'}`, stderr: '', data: { action: 'toggle', id: args.id, done: taskAfter.done } };
+}
+
+async function handleRemove(state: TodoState, args: any): Promise<any> {
+  if (args.id === undefined) return { code: 1, stdout: '', stderr: 'id required for remove action', data: { error: 'validation' } };
+  const removed = await state.remove(args.id);
+  if (!removed) return { code: 1, stdout: '', stderr: `Task #${args.id} not found`, data: { error: 'not_found' } };
+  return { code: 0, stdout: `✅ Removed task #${args.id}`, stderr: '', data: { action: 'remove', id: args.id } };
+}
 
 // ============================================================================
 // 4. EXECUTE (State will be injected via ctx.commandState)
@@ -220,184 +259,86 @@ export const schema = Type.Object({
 
 export async function execute(
   args: { action: string; content?: string; id?: number },
-  cwd: string,
+  _cwd: string,
   signal?: AbortSignal,
   ctx?: any
 ): Promise<{ code: number; stdout: string; stderr: string; data?: any }> {
-  // State được executor inject vào ctx.commandState
   const state = (ctx)?.commandState as TodoState | undefined;
-
-  if (!state) {
-    // Should never happen nếu executor đã được upgrade
-    return {
-      code: 1,
-      stdout: "",
-      stderr: "State not initialized. This command requires stateful support.",
-      data: { error: "state_missing" }
-    };
-  }
-
-  // Check cancellation
-  if (signal?.aborted) {
-    return {
-      code: 1,
-      stdout: "",
-      stderr: "Operation cancelled",
-      data: { error: "cancelled" }
-    };
-  }
-
+  if (!state) return { code: 1, stdout: '', stderr: 'State not initialized. This command requires stateful support.', data: { error: 'state_missing' } };
+  if (signal?.aborted) return { code: 1, stdout: '', stderr: 'Operation cancelled', data: { error: 'cancelled' } };
   try {
     switch (args.action) {
-      case "add": {
-        if (!args.content) {
-          return { code: 1, stdout: "", stderr: "content required for add action" };
-        }
-        const item = await state.add(args.content);
-        return {
-          code: 0,
-          stdout: `✅ Added task #${item.id}: ${item.content}`,
-          stderr: "",
-          data: { action: "add", item }
-        };
-      }
-
-      case "list": {
-        const tasks = state.tasks;
-        const pending = tasks.filter(t => !t.done).length;
-        const done = tasks.filter(t => t.done).length;
-
-        let output = `📝 Todo List\n\n`;
-        output += `Total: ${tasks.length} (${done} done, ${pending} pending)\n\n`;
-
-        if (tasks.length === 0) {
-          output += "No tasks. Add one with action='add'.\n";
-        } else {
-          tasks.forEach(task => {
-            const icon = task.done ? "✅" : "⏳";
-            output += `${icon} [${task.id}] ${task.content}\n`;
-          });
-        }
-
-        return {
-          code: 0,
-          stdout: output.trim(),
-          stderr: "",
-          data: { action: "list", tasks, stats: { total: tasks.length, done, pending } }
-        };
-      }
-
-      case "toggle": {
-        if (args.id === undefined) {
-          return { code: 1, stdout: "", stderr: "id required for toggle action" };
-        }
-        const toggled = await state.toggle(args.id);
-        if (!toggled) {
-          return { code: 1, stdout: "", stderr: `Task #${args.id} not found` };
-        }
-        const taskAfter = state.tasks.find(t => t.id === args.id)!;
-        return {
-          code: 0,
-          stdout: `✅ Toggled task #${args.id}: ${taskAfter.done ? 'done' : 'pending'}`,
-          stderr: "",
-          data: { action: "toggle", id: args.id, done: taskAfter.done }
-        };
-      }
-
-      case "remove": {
-        if (args.id === undefined) {
-          return { code: 1, stdout: "", stderr: "id required for remove action" };
-        }
-        const removed = await state.remove(args.id);
-        if (!removed) {
-          return { code: 1, stdout: "", stderr: `Task #${args.id} not found` };
-        }
-        return {
-          code: 0,
-          stdout: `✅ Removed task #${args.id}`,
-          stderr: "",
-          data: { action: "remove", id: args.id }
-        };
-      }
-
-      default:
-        return {
-          code: 1,
-          stdout: "",
-          stderr: `Unknown action: ${args.action}`,
-          data: { error: "unknown_action" }
-        };
+      case 'add': return await handleAdd(state, args);
+      case 'list': return await handleList(state);
+      case 'toggle': return await handleToggle(state, args);
+      case 'remove': return await handleRemove(state, args);
+      default: return { code: 1, stdout: '', stderr: 'Unknown action: ' + args.action, data: { error: 'unknown_action' } };
     }
   } catch (error: any) {
-    return {
-      code: 1,
-      stdout: "",
-      stderr: `Error: ${error.message}`,
-      data: { error: error.message }
-    };
+    return { code: 1, stdout: '', stderr: 'Error: ' + error.message, data: { error: error.message } };
   }
 }
 
 // ============================================================================
 // 5. CUSTOM RENDERER
+
+// --- Render Helpers (≤20 lines) ---
+
+function renderAdd(theme: any, data: any): Text {
+  const item = data.item;
+  const line1 = theme.fg('success', '✓ Added todo');
+  const line2 = theme.fg('accent', '#' + item.id) + ': ' + item.content;
+  return new Text(line1 + '\n' + line2, 0, 0);
+}
+
+function renderList(theme: any, data: any): Text {
+  const lines: string[] = [];
+  lines.push(theme.fg('accent', '📝 Todo List').bold());
+  lines.push('');
+  lines.push('Total: ' + theme.fg('highlight', data.stats.total.toString()) + ' | ' + theme.fg('success', data.stats.done + ' done') + ' | ' + theme.fg('text', data.stats.pending + ' pending'));
+  if (data.tasks.length > 0) {
+    lines.push('');
+    const recent = data.tasks.slice(-10);
+    for (const task of recent) {
+      const icon = task.done ? '✅' : '⏳';
+      const color = task.done ? 'dim' : 'text';
+      lines.push(icon + ' ' + theme.fg(color, '[' + task.id + '] ' + task.content));
+    }
+    if (data.tasks.length > 10) lines.push(theme.fg('dim', '... and ' + (data.tasks.length - 10) + ' more'));
+  } else {
+    lines.push('\nNo tasks yet. Add one with action=\'add\'.');
+  }
+  return new Text(lines.join('\n'), 0, 0);
+}
+
+function renderToggle(theme: any, data: any): Text {
+  const line1 = theme.fg('success', '✓ Toggled task #' + data.id);
+  const status = data.done ? 'DONE' : 'PENDING';
+  const color = data.done ? 'success' : 'text';
+  const line2 = 'Status: ' + theme.fg(color, status);
+  return new Text(line1 + '\n' + line2, 0, 0);
+}
+
+function renderRemove(theme: any, data: any): Text {
+  return new Text(theme.fg('warning', '🗑️  Removed task #' + data.id), 0, 0);
+}
+
+function renderDefault(result: any, theme: any): Text {
+  return new Text(theme.fg('muted', result.content?.[0]?.text || ''), 0, 0);
+}
 // ============================================================================
 
-export function renderResult(result: any, options: any, theme: any): any {
-  if (result.code !== 0) {
-    return new Text(theme.fg("error", `❌ ${result.stderr}`));
-  }
-
+export function renderResult(result: any, _options: any, theme: any): any {
+  if (result.code !== 0) return new Text(theme.fg("error", "❌ " + result.stderr), 0, 0);
   const data = result.data;
-  if (!data) {
-    return new Text(theme.fg("text", result.stdout));
-  }
-
-  const lines: string[] = [];
-
+  if (!data) return new Text(theme.fg("text", result.stdout), 0, 0);
   switch (data.action) {
-    case "add": {
-      const item = data.item;
-      lines.push(theme.fg("success", `✓ Added todo`));
-      lines.push(`${theme.fg("accent", `#${item.id}`)}: ${item.content}`);
-      break;
-    }
-
-    case "list": {
-      lines.push(theme.fg("accent", "📝 Todo List").bold());
-      lines.push("");
-      lines.push(`Total: ${theme.fg("highlight", data.stats.total.toString())} | ` +
-        `${theme.fg("success", data.stats.done + " done")} | ` +
-        `${theme.fg("text", data.stats.pending + " pending")}`);
-
-      if (data.tasks.length > 0) {
-        lines.push("");
-        // Show recent 10
-        const recent = data.tasks.slice(-10);
-        for (const task of recent) {
-          const icon = task.done ? "✅" : "⏳";
-          const color = task.done ? "dim" : "text";
-          lines.push(`${icon} ${theme.fg(color, `[${task.id}] ${task.content}`)}`);
-        }
-        if (data.tasks.length > 10) {
-          lines.push(theme.fg("dim", `... and ${data.tasks.length - 10} more`));
-        }
-      } else {
-        lines.push("\nNo tasks yet. Add one with action='add'.");
-      }
-      break;
-    }
-
-    case "toggle":
-      lines.push(theme.fg("success", `✓ Toggled task #${data.id}`));
-      lines.push(`Status: ${data.done ? theme.fg("success", "DONE") : theme.fg("text", "PENDING")}`);
-      break;
-
-    case "remove":
-      lines.push(theme.fg("warning", `🗑️  Removed task #${data.id}`));
-      break;
+    case "add": return renderAdd(theme, data);
+    case "list": return renderList(theme, data);
+    case "toggle": return renderToggle(theme, data);
+    case "remove": return renderRemove(theme, data);
+    default: return renderDefault(result, theme);
   }
-
-  return new Text(lines.join("\n"));
 }
 
 export const StateClass = TodoState;

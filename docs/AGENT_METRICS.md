@@ -5271,3 +5271,26 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 - Maintain vigilance via future evolution cycles; ensure new code adheres to ≤20 line standard.
 
 ---
+
+## Cycle 56 - Todo Manage Refactor - 2026-07-16 (Autonomous)
+
+**Task:** Eliminate two function length violations in `todo/manage.ts` (execute ~80 lines, renderResult ~42 lines).
+
+**Type:** Violation Fix (Function Length)
+
+**Priority:** HIGH
+
+**Status:** ✅ Completed
+
+**Changes:**
+- Extracted `handleAdd`, `handleList`, `handleToggle`, `handleRemove` helpers (all ≤20 lines).
+- Rewrote `execute` as thin dispatcher (~16 lines).
+- Inserted `renderAdd`, `renderList`, `renderToggle`, `renderRemove`, `renderDefault` helpers.
+- Rewrote `renderResult` as thin dispatcher (~12 lines).
+- Minor lint fixes: renamed unused parameters to `_cwd`, `_options`, removed unused `args` in `handleList`.
+
+**Metrics:** Tests pass, coverage unchanged, lint clean.
+
+**Next Targets:** Remaining 14 violations in capability-renderer, keybinding-extension, skill-reader, multi-agent/router, task-manager, etc.
+
+---
