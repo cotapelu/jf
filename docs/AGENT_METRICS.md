@@ -4700,3 +4700,37 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 
 ---
 
+
+## Cycle 38 - Team Widget Coverage - 2026-07-16
+
+**Task:** Increase test coverage for `team-widget.ts` (function coverage from 60% → 71%).
+
+**Type:** Proactive Improvement (Coverage Deep Dive)
+
+**Priority:** HIGH
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Test Delta:** +9 tests (total 1340)
+
+**Coverage Delta (global):**
+- Statements: 93.84% (maintained)
+- Branches: 86.33%
+- Functions: 92.72%
+- Lines: 95.2%
+
+**Notes:**
+- Created `agent-workspace-coverage.test.ts` (already done) and now `team-widget.test.ts`
+- Covered widget lifecycle: session_start, startWidget, refreshWidget, stopWidget, session_shutdown
+- Tested error handling for team status fetch failures (partial), periodic interval logic (partial)
+- All tests pass, lint clean
+
+**Impact:** Improved observability UI robustness; uncovered remaining branches in refreshWidget (error branch) and interval callback → next cycle.
+
+**Next targets:** 
+- Add test for team status error branch and interval callback to push team-widget to >85% function coverage.
+- Continue coverage deep dive on tool-template.ts (functions 75%).
+
+---
