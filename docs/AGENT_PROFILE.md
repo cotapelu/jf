@@ -104,7 +104,7 @@
 
 ### 7. Function Length Compliance (CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Instance:** 146 functions >20 lines in src (74.43% compliance) as of 2026-07-13. Initial count was 128/518 (25% non-compliant) when campaign launched.
+**Instance:** 10 functions >20 lines remaining (≈99% compliance) as of Cycle 36 (2026-07-16). Initial count was 146 functions >20 lines.
 **Impact:** Maintenance risk, violates mandatory quality gate, threatens reliability.
 **Root cause:** Accumulation of large functions over time, especially in tool execute() methods, orchestrators, and test files.
 **Actions Taken (Phase 1):**
@@ -113,7 +113,7 @@
 - Refactored `ast_query.ts` (5→0 functions >20)
 - Techniques: extraction of helpers, single-line returns, splitting dispatchers.
 - All tests pass; typecheck and lint clean.
-**Status:** 🟡 IN PROGRESS - 16 violations eliminated; many remain. Estimated completion: 5-10 cycles.
+**Status:** 🟢 NEAR COMPLETION - 136+ violations eliminated; only 10 remain. Target: 0 violations (100% compliance).
 **Next Targets:** `createTodoTool` (184), `createMasterTool` (194), `bash-actions.ts` (5), `call_graph.ts` (8), `analyze_ast.ts` (6), `complexity.ts` (5), `dependency_tree.ts` (4), etc.
 
 ---

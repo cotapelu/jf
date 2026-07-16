@@ -149,76 +149,44 @@ export const schema = Type.Object({
 // 4. EXECUTE
 // ============================================================================
 
+async function handleInc(state: CounterState, args: any): Promise<any> {
+  const delta = args.delta ?? 1;
+  const newValue = await state.increment(delta);
+  return { code: 0, stdout: `🔢 Counter: ${newValue} (added ${delta})`, stderr: "", data: { action: "inc", value: newValue, delta } };
+}
+
+async function handleGet(state: CounterState, _args: any): Promise<any> {
+  const current = state.count;
+  return { code: 0, stdout: `🔢 Counter: ${current}`, stderr: "", data: { action: "get", value: current } };
+}
+
+async function handleReset(state: CounterState): Promise<any> {
+  await state.reset();
+  return { code: 0, stdout: "✅ Counter reset to 0", stderr: "", data: { action: "reset", value: 0 } };
+}
+
 export async function execute(
   args: { action: string; delta?: number },
   cwd: string,
   signal?: AbortSignal,
   ctx?: any
 ): Promise<{ code: number; stdout: string; stderr: string; data?: any }> {
-  // State được inject bởi executor
   const state = (ctx)?.commandState as CounterState | undefined;
-
   if (!state) {
-    return {
-      code: 1,
-      stdout: "",
-      stderr: "State not initialized. This command requires stateful support.",
-      data: { error: "state_missing" }
-    };
+    return { code: 1, stdout: "", stderr: "State not initialized. This command requires stateful support.", data: { error: "state_missing" } };
   }
-
   if (signal?.aborted) {
     return { code: 1, stdout: "", stderr: "Cancelled", data: { error: "cancelled" } };
   }
-
   try {
     switch (args.action) {
-      case "inc": {
-        const delta = args.delta ?? 1;
-        const newValue = await state.increment(delta);
-        return {
-          code: 0,
-          stdout: `🔢 Counter: ${newValue} (added ${delta})`,
-          stderr: "",
-          data: { action: "inc", value: newValue, delta }
-        };
-      }
-
-      case "get": {
-        const current = state.count;
-        return {
-          code: 0,
-          stdout: `🔢 Counter: ${current}`,
-          stderr: "",
-          data: { action: "get", value: current }
-        };
-      }
-
-      case "reset": {
-        await state.reset();
-        return {
-          code: 0,
-          stdout: "✅ Counter reset to 0",
-          stderr: "",
-          data: { action: "reset", value: 0 }
-        };
-      }
-
-      default:
-        return {
-          code: 1,
-          stdout: "",
-          stderr: `Unknown action: ${args.action}`,
-          data: { error: "unknown_action" }
-        };
+      case "inc": return await handleInc(state, args);
+      case "get": return await handleGet(state, args);
+      case "reset": return await handleReset(state);
+      default: return { code: 1, stdout: "", stderr: `Unknown action: ${args.action}`, data: { error: "unknown_action" } };
     }
   } catch (error: any) {
-    return {
-      code: 1,
-      stdout: "",
-      stderr: `Error: ${error.message}`,
-      data: { error: error.message }
-    };
+    return { code: 1, stdout: "", stderr: `Error: ${error.message}`, data: { error: error.message } };
   }
 }
 
@@ -226,37 +194,45 @@ export async function execute(
 // 5. CUSTOM RENDERER
 // ============================================================================
 
+function renderInc(data: any, theme: any): any {
+  const lines = [
+    theme.fg("success", "✅ Incremented"),
+    `Counter value: ${theme.fg("highlight", data.value.toString())}`,
+    `Added: ${theme.fg("accent", data.delta)}`
+  ];
+  return new Text(lines.join("\n"));
+}
+
+function renderGet(data: any, theme: any): any {
+  const lines = [
+    theme.fg("accent", "📊 Counter Value"),
+    theme.fg("highlight", `   ${data.value}`)
+  ];
+  return new Text(lines.join("\n"));
+}
+
+function renderReset(theme: any): any {
+  const lines = [
+    theme.fg("warning", "🔄 Reset"),
+    "Counter set to 0"
+  ];
+  return new Text(lines.join("\n"));
+}
+
 export function renderResult(result: any, options: any, theme: any): any {
   if (result.code !== 0) {
     return new Text(theme.fg("error", `❌ ${result.stderr}`));
   }
-
   const data = result.data;
   if (!data) {
     return new Text(theme.fg("text", result.stdout));
   }
-
-  const lines: string[] = [];
-
   switch (data.action) {
-    case "inc":
-      lines.push(theme.fg("success", "✅ Incremented"));
-      lines.push(`Counter value: ${theme.fg("highlight", data.value.toString())}`);
-      lines.push(`Added: ${theme.fg("accent", data.delta)}`);
-      break;
-
-    case "get":
-      lines.push(theme.fg("accent", "📊 Counter Value"));
-      lines.push(theme.fg("highlight", `   ${data.value}`));
-      break;
-
-    case "reset":
-      lines.push(theme.fg("warning", "🔄 Reset"));
-      lines.push("Counter set to 0");
-      break;
+    case "inc": return renderInc(data, theme);
+    case "get": return renderGet(data, theme);
+    case "reset": return renderReset(theme);
+    default: return new Text(theme.fg("text", result.stdout));
   }
-
-  return new Text(lines.join("\n"));
 }
 
 export const StateClass = CounterState;

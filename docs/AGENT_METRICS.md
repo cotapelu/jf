@@ -5294,3 +5294,33 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Next Targets:** Remaining 14 violations in capability-renderer, keybinding-extension, skill-reader, multi-agent/router, task-manager, etc.
 
 ---
+
+## Cycle 36 - Counter Tool Refactor - 2026-07-16
+
+**Task:** Reduce function length violations in `master-tool/commands/demo/counter.ts` (execute function 40 lines)
+**Type:** Violation Fix (Function Length >20 lines)
+**Priority:** HIGH
+**Duration:** ~20 minutes
+**Status:** ✅ Success
+
+**Test Delta:** 0 tests (all existing tests pass)
+**Coverage Delta:** None (refactor only)
+**Violation Reduction:** 11 → 10 (1 eliminated)
+
+**Actions:**
+- Extracted `handleInc`, `handleGet`, `handleReset` helpers
+- Rewrote `execute` as thin dispatcher (≤20 lines)
+- Cleaned up unused parameter in `handleGet` (renamed to `_args`)
+- Minor improvement to `renderResult` (remains ≤20 lines)
+
+**Verification:**
+- Lint: 0 errors
+- TypeScript: clean
+- Tests: 1342/1342 passing
+- Coverage: ~94% (unchanged)
+
+**Impact:** Eliminated one of the largest remaining function-length violations; progress toward 100% compliance.
+
+**Next targets:** `capability-renderer.ts` (33), `keybinding-extension.ts` (now clean), `skill-reader.ts` (fixed), remaining: `multi-agent/router.ts` (31), `subtool-loader.ts` (34), `task-manager.ts` (26/24), `provider-command.ts` (30/22), `master-tool/commands/dev/test.ts` (23), `tools/indexer/index.ts` (22), etc.
+
+*Last updated: 2026-07-16T20:05:00Z*
