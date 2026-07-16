@@ -532,16 +532,16 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 ## 8. Function Length Compliance (ACTIVE - CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Current State (2026-07-16 after Batch 43):**
-- Functions >20 lines: **~5** in src (out of ~600 total)
-- Compliance: **~99.2%** (target: 100%)
-- Batches 38-43 cumulatively reduced violations from ~12 to ~5.
+**Current State (2026-07-16 after Batch 44):**
+- Functions >20 lines: **~4** in src (out of ~600 total)
+- Compliance: **~99.3%** (target: 100%)
+- Batches 38-44 cumulatively reduced violations from ~12 to ~4.
 
 **High-Impact Remaining Violations:**
-- ~5 remaining functions (mostly test utilities and small production helpers).
+- ~4 remaining functions (likely minor helpers and a few test blocks).
 - Next targets: finalize elimination to reach 100% compliance.
 
-**Note:** `dependency_tree.ts` fully compliant; `AgentTeam` fully compliant; `plugin-loader.ts` mostly compliant; `todos-tool.ts` ≤20; `bash-actions.ts` ≤20; `logger.ts` ≤20; `compaction/algorithm.ts` ≤20; `session/operations/list.ts` ≤20; `tests/utils.ts:createMockRuntime` ≤20 after class extraction.
+**Note:** `dependency_tree.ts` fully compliant; `AgentTeam` fully compliant; `plugin-loader.ts` mostly compliant; `todos-tool.ts` ≤20; `bash-actions.ts` ≤20; `logger.ts` ≤20; `compaction/algorithm.ts` ≤20; `session/operations/list.ts` ≤20; `tests/utils.ts:createMockRuntime` ≤20; `ast-scanner.ts:scanCodebase` now ≤20.
 
 **Root Cause:** Accumulation of large factory functions and orchestrators over time; systematic extraction ongoing.
 
