@@ -30,12 +30,25 @@ export const schema = {
 
 function formatPrometheus(stats: any): string[] {
   const lines: string[] = [];
-  // HELP and TYPE for each metric
-  lines.push('# HELP jf_command_executions_total Total number of command executions');
-  lines.push('# TYPE jf_command_executions_total counter');
-  lines.push(`jf_command_executions_total ${stats.totalExecutions}`);
-  lines.push('');
+  lines.push(...formatExecutions(stats));
+  lines.push(...formatErrors(stats));
+  lines.push(...formatDurations(stats));
+  lines.push(...formatCache(stats));
+  lines.push(...formatRegistered(stats));
+  return lines;
+}
 
+function formatExecutions(stats: any): string[] {
+  return [
+    '# HELP jf_command_executions_total Total number of command executions',
+    '# TYPE jf_command_executions_total counter',
+    `jf_command_executions_total ${stats.totalExecutions}`,
+    ''
+  ];
+}
+
+function formatErrors(stats: any): string[] {
+  const lines: string[] = [];
   lines.push('# HELP jf_command_errors_total Total number of command errors');
   lines.push('# TYPE jf_command_errors_total counter');
   for (const e of stats.recentErrors) {
@@ -43,7 +56,11 @@ function formatPrometheus(stats: any): string[] {
     lines.push(`jf_command_errors_total{command="${e.command}",error="${error}"} ${e.count}`);
   }
   lines.push('');
+  return lines;
+}
 
+function formatDurations(stats: any): string[] {
+  const lines: string[] = [];
   lines.push('# HELP jf_command_duration_seconds_total Total duration of command executions in seconds');
   lines.push('# TYPE jf_command_duration_seconds_total counter');
   for (const cs of stats.commandStats) {
@@ -51,23 +68,29 @@ function formatPrometheus(stats: any): string[] {
     lines.push(`jf_command_duration_seconds_total{command="${cs.command}"} ${seconds.toFixed(6)}`);
   }
   lines.push('');
-
-  lines.push('# HELP jf_command_cache_hits_total Number of cache hits');
-  lines.push('# TYPE jf_command_cache_hits_total counter');
-  lines.push(`jf_command_cache_hits_total ${stats.cacheStats.hits}`);
-  lines.push('');
-
-  lines.push('# HELP jf_command_cache_misses_total Number of cache misses');
-  lines.push('# TYPE jf_command_cache_misses_total counter');
-  lines.push(`jf_command_cache_misses_total ${stats.cacheStats.misses}`);
-  lines.push('');
-
-  lines.push('# HELP jf_command_registered_total Number of registered commands');
-  lines.push('# TYPE jf_command_registered_total gauge');
-  lines.push(`jf_command_registered_total ${stats.registeredCommands}`);
-  lines.push('');
-
   return lines;
+}
+
+function formatCache(stats: any): string[] {
+  return [
+    '# HELP jf_command_cache_hits_total Number of cache hits',
+    '# TYPE jf_command_cache_hits_total counter',
+    `jf_command_cache_hits_total ${stats.cacheStats.hits}`,
+    '',
+    '# HELP jf_command_cache_misses_total Number of cache misses',
+    '# TYPE jf_command_cache_misses_total counter',
+    `jf_command_cache_misses_total ${stats.cacheStats.misses}`,
+    ''
+  ];
+}
+
+function formatRegistered(stats: any): string[] {
+  return [
+    '# HELP jf_command_registered_total Number of registered commands',
+    '# TYPE jf_command_registered_total gauge',
+    `jf_command_registered_total ${stats.registeredCommands}`,
+    ''
+  ];
 }
 
 export async function execute(args: any, _cwd: string, _signal: any, _ctx: any): Promise<CommandResult> {

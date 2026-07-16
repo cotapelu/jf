@@ -140,35 +140,42 @@ class RegistryImpl implements CapabilityRegistry {
   }
 
   private applyFilter(capabilities: Capability[], options: any): Capability[] {
-    let result = capabilities;
+    return this.limitCapabilities(
+      this.sortCapabilities(
+        this.filterByExcludeTags(
+          this.filterByTags(capabilities, options),
+          options
+        ),
+        options
+      ),
+      options
+    );
+  }
 
-    // Filter by tags
-    if (options.filterTags && options.filterTags.length > 0) {
-      result = result.filter(cap =>
-        options.filterTags.some((tag: string) => cap.tags.includes(tag))
-      );
-    }
+  private filterByTags(caps: Capability[], options: any): Capability[] {
+    if (!options.filterTags?.length) return caps;
+    return caps.filter(cap => options.filterTags.some((tag: string) => cap.tags.includes(tag)));
+  }
 
-    // Exclude by tags
-    if (options.excludeTags && options.excludeTags.length > 0) {
-      result = result.filter(cap =>
-        !options.excludeTags.some((tag: string) => cap.tags.includes(tag))
-      );
-    }
+  private filterByExcludeTags(caps: Capability[], options: any): Capability[] {
+    if (!options.excludeTags?.length) return caps;
+    return caps.filter(cap => !options.excludeTags.some((tag: string) => cap.tags.includes(tag)));
+  }
 
-    // Sort
+  private sortCapabilities(caps: Capability[], options: any): Capability[] {
     if (options.sortBy === 'name') {
-      result.sort((a, b) => a.name.localeCompare(b.name));
+      return [...caps].sort((a, b) => a.name.localeCompare(b.name));
     } else if (options.sortBy === 'plugin') {
-      result.sort((a, b) => a.pluginId.localeCompare(b.pluginId) || a.name.localeCompare(b.name));
+      return [...caps].sort((a, b) => a.pluginId.localeCompare(b.pluginId) || a.name.localeCompare(b.name));
     }
+    return caps;
+  }
 
-    // Limit
+  private limitCapabilities(caps: Capability[], options: any): Capability[] {
     if (options.maxCapabilities && options.maxCapabilities > 0) {
-      result = result.slice(0, options.maxCapabilities);
+      return caps.slice(0, options.maxCapabilities);
     }
-
-    return result;
+    return caps;
   }
 
   private summarizeParameters(schema: any): string {

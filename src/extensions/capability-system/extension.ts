@@ -5,14 +5,16 @@
 
 import { join, dirname } from "path";
 import type { Component } from "@earendil-works/pi-tui";
-import { Container, Text, truncateToWidth } from "@earendil-works/pi-tui";
+import { Text } from "@earendil-works/pi-tui";
 import { fileURLToPath } from "url";
 import { PluginLoader, getGlobalLoader, setGlobalLoader, createPluginLoader } from "./plugin-loader.js";
 import { getCapabilityRegistry } from "./registry.js";
 import type { Capability } from "./types.js";
 import type { CapabilityContext } from "./types.js";
+import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
 
 import { createCapabilityDiscoveryCapability } from "./prompt-integration.js";
+import { CapabilityResultRenderComponent, rebuildCapabilityRenderComponent } from "./capability-renderer.js";
 
 // Helper for reducing execute complexity (Cycle 117)
 function populateResultDetails(result: any, cap: any): void {
@@ -21,39 +23,10 @@ function populateResultDetails(result: any, cap: any): void {
     result.details.capabilityId = cap.id;
   }
 }
-
-// Simple truncateToVisualLines implementation (matches pi-tui internal)
-function truncateToVisualLines(text: string, maxLines: number, width: number): { visualLines: string[]; skippedCount: number } {
-  const lines: string[] = [];
-  let skipped = 0;
-  for (const line of text.split('\n')) {
-    if (lines.length >= maxLines) {
-      skipped++;
-      continue;
-    }
-    let pos = 0;
-    while (pos < line.length) {
-      if (lines.length >= maxLines) {
-        skipped++;
-        break;
-      }
-      lines.push(line.slice(pos, pos + width));
-      pos += width;
-    }
-  }
-  return { visualLines: lines, skippedCount: skipped };
-}
-
-// Simple keyHint implementation
-function keyHint(action: string, fallback: string): string {
-  return fallback;
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Helper functions for complexity reduction (Cycle 117)
-
 function createExecFunction(api: any, ctx: any, signal: any): CapabilityContext['exec'] {
   return async (command: string, args: string[], options: { cwd?: string; env?: Record<string, string> } = {}): Promise<{ code: number; stdout: string; stderr: string }> => {
     const cwd = options.cwd || ctx.cwd || process.cwd();
@@ -108,7 +81,6 @@ function maybeStopInterval(state: any, options: any, context: any): void {
     }
   }
 }
-
 
 /**
  * Extension factory.
@@ -186,111 +158,32 @@ export default async function capabilitySystemExtension(api: any): Promise<any> 
 }
 
 // ============================================================================
-// Router Tool
+// Capability Router Helpers (Batch 38)
 // ============================================================================
 
-function createCapabilityRouterTool(api: any) {
-  interface RouterRendererState {
-    startedAt?: number;
-    endedAt?: number;
-    interval?: NodeJS.Timeout;
-  }
-  const registry = getCapabilityRegistry();
-  const allCaps = registry.listAll();
+interface RouterRendererState {
+  startedAt?: number;
+  endedAt?: number;
+  interval?: NodeJS.Timeout;
+}
 
-  // Group capabilities by plugin for clear presentation
+function groupCapsByPlugin(registry: any): Map<string, Capability[]> {
+  const allCaps = registry.listAll();
   const byPlugin = new Map<string, Capability[]>();
   for (const cap of allCaps) {
     const pluginCaps = byPlugin.get(cap.pluginId) || [];
     pluginCaps.push(cap);
     byPlugin.set(cap.pluginId, pluginCaps);
   }
+  return byPlugin;
+}
 
-  // Helper to get capability name from ID
-  const getCapabilityName = (capId: string) => {
-    const cap = registry.get(capId);
-    return cap?.name || capId;
-  };
+function getCapabilityName(registry: any, capId: string): string {
+  const cap = registry.get(capId);
+  return cap?.name || capId;
+}
 
-  // Constants for display
-  const CAPABILITY_PREVIEW_LINES = 5;
-
-  function formatDuration(ms: number): string {
-    return `${(ms / 1000).toFixed(1)}s`;
-  }
-
-  class CapabilityResultRenderComponent extends Container {
-    state: {
-      cachedWidth?: number;
-      cachedLines?: string[];
-      cachedSkipped?: number;
-    } = {};
-  }
-
-  function rebuildCapabilityRenderComponent(
-    component: CapabilityResultRenderComponent,
-    result: any,
-    options: any,
-    theme: any,
-    startedAt: number | undefined,
-    endedAt: number | undefined,
-  ): void {
-    const state = component.state;
-    component.clear();
-
-    // Extract text output
-    let output = "";
-    if (result.content) {
-      output = result.content
-        .filter((c: any) => c.type === "text")
-        .map((c: any) => c.text || "")
-        .join("\n")
-        .trim();
-    }
-
-    if (output) {
-      const styledOutput = output
-        .split("\n")
-        .map((line: string) => theme.fg("toolOutput", line))
-        .join("\n");
-
-      if (options.expanded) {
-        component.addChild(new Text(`\n${styledOutput}`, 0, 0));
-      } else {
-        component.addChild({
-          render: (width: number) => {
-            if (state.cachedLines === undefined || state.cachedWidth !== width) {
-              const preview = truncateToVisualLines(styledOutput, CAPABILITY_PREVIEW_LINES, width);
-              state.cachedLines = preview.visualLines;
-              state.cachedSkipped = preview.skippedCount;
-              state.cachedWidth = width;
-            }
-            if (state.cachedSkipped && state.cachedSkipped > 0) {
-              const hint =
-                theme.fg("muted", `... (${state.cachedSkipped} earlier lines,`) +
-                ` ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
-              return ["", truncateToWidth(hint, width, "..."), ...(state.cachedLines ?? [])];
-            }
-            return ["", ...(state.cachedLines ?? [])];
-          },
-          invalidate: () => {
-            state.cachedWidth = undefined;
-            state.cachedLines = undefined;
-            state.cachedSkipped = undefined;
-          },
-        });
-      }
-    }
-
-    // Timing
-    if (startedAt !== undefined) {
-      const label = options.isPartial ? "Elapsed" : "Took";
-      const endTime = endedAt ?? Date.now();
-      component.addChild(new Text(`\n${theme.fg("muted", `${label} ${formatDuration(endTime - startedAt)}`)}`, 0, 0));
-    }
-  };
-
-  // Build comprehensive guidelines
+function buildCapabilityGuidelines(byPlugin: Map<string, Capability[]>): string[] {
   const guidelines: string[] = [
     "Execute any registered capability.",
     "First call system.capabilities() to see the full list and get current capabilities.",
@@ -299,7 +192,6 @@ function createCapabilityRouterTool(api: any) {
     "Available capabilities by plugin:"
   ];
 
-  // List actual capabilities with IDs and short descriptions
   const sortedPluginIds = Array.from(byPlugin.keys()).sort();
   for (const pluginId of sortedPluginIds) {
     const caps = byPlugin.get(pluginId)!;
@@ -313,146 +205,161 @@ function createCapabilityRouterTool(api: any) {
   guidelines.push("Format: { capability: 'plugin.capability', params: { ... } }");
   guidelines.push("Example: { capability: 'system.capabilities', params: { tag: 'git' } }");
 
+  return guidelines;
+}
+
+function buildCapabilityDescription(allCaps: Capability[], byPlugin: Map<string, Capability[]>): string {
+  return `Execute any of ${allCaps.length} registered capabilities across ${byPlugin.size} plugins (git, dev, security, system, etc.). Discover available operations with system.capabilities().`;
+}
+
+function capabilityParameters(): any {
   return {
-    name: "capability",
-    label: "Capability Router",
-    description: `Execute any of ${allCaps.length} registered capabilities across ${byPlugin.size} plugins (git, dev, security, system, etc.). Discover available operations with system.capabilities().`,
-    promptSnippet: "{ capability: 'system.capabilities', params: {} }",
-    promptGuidelines: guidelines,
-    parameters: {
-      type: "object",
-      properties: {
-        capability: { 
-          type: "string", 
-          description: "Capability ID (e.g., 'git.status', 'dev.test', 'security.scan', 'system.metrics')"
-        },
-        params: { 
-          type: "object", 
-          description: "Arguments for the capability (see each capability's schema)"
-        }
+    type: "object",
+    properties: {
+      capability: {
+        type: "string",
+        description: "Capability ID (e.g., 'git.status', 'dev.test', 'security.scan', 'system.metrics')"
       },
-      required: ["capability", "params"]
-    },
-
-    async execute(toolCallId: string, params: any, signal: any, onUpdate: any, ctx: any): Promise<any> {
-      const { capability, params: capParams } = params;
-      if (!capability) {
-        // @ts-ignore
-        return { content: [{ type: "text" as const, text: "Missing 'capability'" }], isError: true };
-      }
-
-      const registry = getCapabilityRegistry();
-      const cap = registry.get(capability);
-
-      if (!cap) {
-        const suggestions = registry.listAll()
-          .filter(c => c.id.includes(capability.split('.').pop() || ''))
-          .slice(0, 5).map(c => c.id);
-        // @ts-ignore
-        return {
-          content: [{ type: "text" as const, text: `❌ Not found: ${capability}\nSuggestions: ${suggestions.join(', ')}` }],
-          isError: true,
-          details: { error: "not_found", capability }
-        };
-      }
-
-      let startTime = 0;
-      let result: any = null;
-      let enhancedCtx: CapabilityContext;
-
-      try {
-        startTime = Date.now();
-        // Log: capability is starting
-        console.log(`[CapabilityRouter] Starting: ${cap.name} (${cap.id})`);
-
-        enhancedCtx = buildEnhancedContext(ctx, api, registry, cap, signal, toolCallId, onUpdate);
-        result = await cap.execute(toolCallId, capParams, signal, onUpdate, enhancedCtx);
-        // Ensure result has capabilityId in details for renderer
-        populateResultDetails(result, cap);
-        // @ts-ignore
-        return result;
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error);
-        result = { content: [{ type: "text" as const, text: `❌ ${msg}` }], isError: true, details: { error: msg, capabilityId: cap.id } };
-        // @ts-ignore
-        return result;
-      } finally {
-        const duration = Date.now() - startTime;
-        const isError = result?.isError || (result?.content && result.content.some((c: any) => c.text?.includes('❌')));
-        const emoji = isError ? "❌" : "✅";
-        console.log(`[CapabilityRouter] ${emoji} ${cap.name} (${cap.id}) completed in ${duration}ms`);
-        // No UI notification - use timing display instead
+      params: {
+        type: "object",
+        description: "Arguments for the capability (see each capability's schema)"
       }
     },
-
-    // Display the command line when starting
-    renderCall(args: any, theme: any, context: any) {
-      const state = (context.state ?? {}) as RouterRendererState;
-      if (context.executionStarted && state.startedAt === undefined) {
-        state.startedAt = Date.now();
-        state.endedAt = undefined;
-      }
-
-      const capId = args?.capability || 'unknown';
-      const capName = getCapabilityName(capId);
-      const params = args?.params ?? {};
-
-      // Build human-readable command description
-      // Format: $ <Capability Name> (param1: value1, param2: value2)
-      let command = `$ ${capName}`;
-      const paramEntries = Object.entries(params);
-      if (paramEntries.length > 0) {
-        const paramParts = paramEntries.map(([key, value]) => {
-          // Format arrays as comma-separated
-          if (Array.isArray(value)) {
-            return `${key}: ${value.join(', ')}`;
-          }
-          // Format objects as JSON-like
-          if (typeof value === 'object' && value !== null) {
-            return `${key}: ${JSON.stringify(value)}`;
-          }
-          // Simple value (use String() to handle unknown)
-          return `${key}: ${String(value)}`;
-        });
-        command += ' (' + paramParts.join(', ') + ')';
-      }
-
-      const text = theme.fg('toolTitle', theme.bold(command));
-      const comp = (context.lastComponent as Text | undefined) ?? new Text('', 0, 0);
-      comp.setText(text);
-      return comp;
-    },
-
-    renderResult(result: any, options: any, theme: any, context: any) {
-      const details = result.details || {};
-      const capabilityId = details.capabilityId;
-
-      const registry = getCapabilityRegistry();
-      const cap = capabilityId ? registry.get(capabilityId) : null;
-
-      // Use custom renderer if available
-      if (cap?.renderResult) {
-        try { return cap.renderResult(result, options, theme); } catch (e) {
-          console.error('Capability renderer error:', e);
-        }
-      }
-
-      const state = (context.state ?? {}) as RouterRendererState;
-
-      // Manage interval for partial updates
-      maybeStartInterval(state, options, context);
-      maybeStopInterval(state, options, context);
-
-
-      const component = (context.lastComponent as CapabilityResultRenderComponent | undefined) ?? new CapabilityResultRenderComponent();
-      rebuildCapabilityRenderComponent(component, result, options, theme, state.startedAt, state.endedAt);
-      component.invalidate();
-      return component;
-    }
+    required: ["capability", "params"]
   };
 }
 
+function findCapabilityWithSuggestions(registry: any, capabilityId: string): { cap?: Capability; suggestions?: string[]; found: boolean } {
+  const cap = registry.get(capabilityId);
+  if (cap) return { cap, found: true };
+  const suggestions = registry.listAll()
+    .filter((c: any) => c.id.includes(capabilityId.split('.').pop() || ''))
+    .slice(0, 5).map((c: any) => c.id);
+  return { suggestions, found: false };
+}
 
+function formatCapabilityCommand(args: any, getName: (id: string) => string): string {
+  const capId = args?.capability || 'unknown';
+  const capName = getName(capId);
+  const params = args?.params ?? {};
+
+  let command = `$ ${capName}`;
+  const paramEntries = Object.entries(params);
+  if (paramEntries.length > 0) {
+    const paramParts = paramEntries.map(([key, value]) => {
+      if (Array.isArray(value)) return `${key}: ${value.join(', ')}`;
+      if (typeof value === 'object' && value !== null) return `${key}: ${JSON.stringify(value)}`;
+      return `${key}: ${String(value)}`;
+    });
+    command += ' (' + paramParts.join(', ') + ')';
+  }
+  return command;
+}
+
+function handleExecuteError(error: unknown, cap: Capability): any {
+  const msg = error instanceof Error ? error.message : String(error);
+  return { content: [{ type: "text" as const, text: `❌ ${msg}` }], isError: true, details: { error: msg, capabilityId: cap.id } };
+}
+
+function logCompletion(cap: Capability, duration: number, result: any): void {
+  const isError = result?.isError || (result?.content && result.content.some((c: any) => c.text?.includes('❌')));
+  const emoji = isError ? "❌" : "✅";
+  console.log(`[CapabilityRouter] ${emoji} ${cap.name} (${cap.id}) completed in ${duration}ms`);
+}
+
+function createExecuteFunction(api: any, registry: any): ToolDefinition['execute'] {
+  return async (toolCallId: string, params: any, signal: any, onUpdate: any, ctx: any): Promise<any> => {
+    const { capability, params: capParams } = params;
+    if (!capability) {
+      return { content: [{ type: "text" as const, text: "Missing 'capability'" }], isError: true };
+    }
+
+    const lookup = findCapabilityWithSuggestions(registry, capability);
+    if (!lookup.cap) {
+      return {
+        content: [{ type: "text" as const, text: `❌ Not found: ${capability}\nSuggestions: ${lookup.suggestions?.join(', ') || 'none'}` }],
+        isError: true,
+        details: { error: "not_found", capability }
+      };
+    }
+
+    const cap = lookup.cap;
+    const startTime = Date.now();
+    let result: any;
+    try {
+      const enhancedCtx = buildEnhancedContext(ctx, api, registry, cap, signal, toolCallId, onUpdate);
+      result = await cap.execute(toolCallId, capParams, signal, onUpdate, enhancedCtx);
+      populateResultDetails(result, cap);
+    } catch (error) {
+      result = handleExecuteError(error, cap);
+    } finally {
+      const duration = Date.now() - startTime;
+      logCompletion(cap, duration, result);
+    }
+    return result;
+  };
+}
+
+function createRenderCallFunction(registry: any): ToolDefinition['renderCall'] {
+  return (args: any, theme: any, context: any) => {
+    const state = (context.state ?? {}) as RouterRendererState;
+    if (context.executionStarted && state.startedAt === undefined) {
+      state.startedAt = Date.now();
+      state.endedAt = undefined;
+    }
+
+    const command = formatCapabilityCommand(args, (id: string) => getCapabilityName(registry, id));
+    const text = theme.fg('toolTitle', theme.bold(command));
+    const comp = (context.lastComponent as Text | undefined) ?? new Text('', 0, 0);
+    comp.setText(text);
+    return comp;
+  };
+}
+
+function createRenderResultFunction(registry: any): ToolDefinition['renderResult'] {
+  return (result: any, options: any, theme: any, context: any) => {
+    const details = result.details || {};
+    const capabilityId = details.capabilityId;
+    const cap = capabilityId ? registry.get(capabilityId) : null;
+
+    if (cap?.renderResult) {
+      try { return cap.renderResult(result, options, theme); } catch (e) {
+        console.error('Capability renderer error:', e);
+      }
+    }
+
+    const state = (context.state ?? {}) as RouterRendererState;
+    maybeStartInterval(state, options, context);
+    maybeStopInterval(state, options, context);
+
+    const component = (context.lastComponent as CapabilityResultRenderComponent | undefined) ?? new CapabilityResultRenderComponent();
+    rebuildCapabilityRenderComponent(component, result, options, theme, state.startedAt, state.endedAt);
+    component.invalidate();
+    return component;
+  };
+}
+
+// ============================================================================
+// Router Tool
+// ============================================================================
+
+function createCapabilityRouterTool(api: any): ToolDefinition {
+  const registry = getCapabilityRegistry();
+  const allCaps = registry.listAll();
+  const byPlugin = groupCapsByPlugin(registry);
+
+  return {
+    name: "capability",
+    label: "Capability Router",
+    description: buildCapabilityDescription(allCaps, byPlugin),
+    promptSnippet: "{ capability: 'system.capabilities', params: {} }",
+    promptGuidelines: buildCapabilityGuidelines(byPlugin),
+    parameters: capabilityParameters(),
+    execute: createExecuteFunction(api, registry),
+    renderCall: createRenderCallFunction(registry),
+    renderResult: createRenderResultFunction(registry)
+  };
+}
 
 // ============================================================================
 // Helpers

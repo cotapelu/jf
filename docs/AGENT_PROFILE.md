@@ -620,3 +620,9 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 ## Recent Improvements (2026-07-16)
 
 - **Child-Worker Main Compliance:** Refactored 49-line `main` to 19 lines, extracting `handleMessage` and `handleError`. Fixed lint. All tests pass (1342). Violations reduced to ~12.
+
+## Latest Fixes (2026-07-16)
+
+- **Batch 38 Function Compliance:** Refactored `createCapabilityRouterTool` (262→17 lines), `applyFilter` (35→5), `formatPrometheus` (41→5). Created `capability-renderer.ts` to separate renderer.
+- All tests passing (1342), coverage unchanged.
+- Remaining function violations ~10; on track for 100% compliance soon.
