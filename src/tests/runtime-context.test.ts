@@ -39,41 +39,27 @@ import type {
   ToolInfo,
 } from '@earendil-works/pi-coding-agent';
 
-// Helper to create a minimal mock runtime without using `as any`
-function createMockRuntime(overrides: Partial<AgentSessionRuntime> = {}): AgentSessionRuntime {
-  // Construct services object with structural compatibility
-  const services: AgentSessionServices = {
+// Builders for mock runtime
+function buildMockServices(): AgentSessionServices {
+  return {
     cwd: '/tmp',
     agentDir: '/tmp/agent',
-    authStorage: {
-      get: vi.fn(),
-      set: vi.fn(),
-      delete: vi.fn(),
-    },
-    settingsManager: {
-      get: vi.fn(),
-      set: vi.fn(),
-    },
-    modelRegistry: {
-      getCurrentModel: vi.fn(),
-      listModels: vi.fn(),
-    },
-    resourceLoader: {
-      loadSkill: vi.fn(),
-    },
+    authStorage: { get: vi.fn(), set: vi.fn(), delete: vi.fn() },
+    settingsManager: { get: vi.fn(), set: vi.fn() },
+    modelRegistry: { getCurrentModel: vi.fn(), listModels: vi.fn() },
+    resourceLoader: { loadSkill: vi.fn() },
     diagnostics: [],
   };
+}
 
-  // Construct session object
-  const session: AgentSession = {
+function buildMockSession(services: AgentSessionServices): AgentSession {
+  return {
     sessionId: 'test-session-id',
     sessionFile: '/tmp/test-session.jsonl',
     sessionName: 'Test Session',
     messages: [],
     model: undefined,
-    extensionRunner: {
-      run: vi.fn().mockResolvedValue(undefined),
-    },
+    extensionRunner: { run: vi.fn().mockResolvedValue(undefined) },
     sessionManager: {
       dispose: vi.fn(),
       getActive: vi.fn(),
@@ -88,7 +74,12 @@ function createMockRuntime(overrides: Partial<AgentSessionRuntime> = {}): AgentS
     ] as ToolInfo[]),
     getToolDefinition: vi.fn().mockName('getToolDefinition'),
   };
+}
 
+// Helper to create a minimal mock runtime without using `as any`
+function createMockRuntime(overrides: Partial<AgentSessionRuntime> = {}): AgentSessionRuntime {
+  const services = buildMockServices();
+  const session = buildMockSession(services);
   return {
     session,
     services,
