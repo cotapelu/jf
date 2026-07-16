@@ -532,16 +532,16 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 ## 8. Function Length Compliance (ACTIVE - CRITICAL)
 **Severity:** CRITICAL (quality gate violation, blocks production)
-**Current State (2026-07-16 after Batch 42):**
-- Functions >20 lines: **~6** in src (out of ~600 total)
-- Compliance: **~99%** (target: 100%)
-- Batch 38 reduced violations from ~12 to ~10; Batch 39 by 1; Batch 41 by 2 (summarizeMessages, compactSession); Batch 42 by 1 (operationList). Cumulative reduction ~6.
+**Current State (2026-07-16 after Batch 43):**
+- Functions >20 lines: **~5** in src (out of ~600 total)
+- Compliance: **~99.2%** (target: 100%)
+- Batches 38-43 cumulatively reduced violations from ~12 to ~5.
 
 **High-Impact Remaining Violations:**
-- ~6 remaining functions across a few files (primarily test helpers and minor production functions).
-- Next targets: continue systematic extraction to reach 0 violations (100% compliance).
+- ~5 remaining functions (mostly test utilities and small production helpers).
+- Next targets: finalize elimination to reach 100% compliance.
 
-**Note:** `dependency_tree.ts` fully compliant; `AgentTeam` fully compliant; `plugin-loader.ts` mostly compliant; `todos-tool.ts` execute method ≤20 lines; `bash-actions.ts` fully compliant; `logger.ts` now compliant; `compaction/algorithm.ts` now compliant; `session/operations/list.ts` now compliant.
+**Note:** `dependency_tree.ts` fully compliant; `AgentTeam` fully compliant; `plugin-loader.ts` mostly compliant; `todos-tool.ts` ≤20; `bash-actions.ts` ≤20; `logger.ts` ≤20; `compaction/algorithm.ts` ≤20; `session/operations/list.ts` ≤20; `tests/utils.ts:createMockRuntime` ≤20 after class extraction.
 
 **Root Cause:** Accumulation of large factory functions and orchestrators over time; systematic extraction ongoing.
 

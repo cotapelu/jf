@@ -88,6 +88,27 @@ async function collectTsFiles(dir: string): Promise<string[]> {
   return files;
 }
 
+/** Scan helper (Batch 44) */
+async function scanFiles(
+  files: string[],
+  cwd: string,
+  kind: string,
+  limit: number,
+  matches: SymbolMatch[],
+  query?: string
+): Promise<void> {
+  for (const file of files) {
+    if (matches.length >= limit) break;
+    try {
+      const sourceText = await readFile(file, 'utf-8');
+      const sourceFile = ts.createSourceFile(relative(cwd, file), sourceText, ts.ScriptTarget.Latest, true);
+      walk(sourceFile, sourceFile, cwd, matches, { query, kind, limit });
+    } catch {
+      // ignore files that can't be read or parsed
+    }
+  }
+}
+
 /** Main scan function */
 export async function scanCodebase(
   cwd: string,
@@ -98,26 +119,14 @@ export async function scanCodebase(
     limit?: number;
   } = {}
 ): Promise<{ matches: SymbolMatch[] }> {
-  const { kind = 'all', limit = 50 } = options;
+  const { kind = 'all', limit = 50, query } = options;
   let files: string[];
   try {
     files = await collectTsFiles(cwd);
   } catch {
-    // cwd does not exist or cannot be read
     return { matches: [] };
   }
   const matches: SymbolMatch[] = [];
-
-  for (const file of files) {
-    if (matches.length >= limit) break;
-    try {
-      const sourceText = await readFile(file, 'utf-8');
-      const sourceFile = ts.createSourceFile(relative(cwd, file), sourceText, ts.ScriptTarget.Latest, true);
-      walk(sourceFile, sourceFile, cwd, matches, { ...options, kind, limit });
-    } catch {
-      // ignore files that can't be read or parsed
-    }
-  }
-
+  await scanFiles(files, cwd, kind, limit, matches, query);
   return { matches: matches.slice(0, limit) };
 }
