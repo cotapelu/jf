@@ -163,4 +163,26 @@ describe('team-widget', () => {
       expect(lines.some((l: string) => l.includes('Team'))).toBe(true);
     });
   });
+
+  describe('error handling', () => {
+    it('handles team getTeamStatus rejection and shows error line', async () => {
+      const fakeTeam = {
+        getTeamStatus: vi.fn().mockRejectedValue(new Error('down')),
+      };
+      mockRegistryInstance.getAll.mockReturnValue(new Map([['t1', fakeTeam]]));
+      const api = { on: vi.fn() };
+      let sessionStartCb!: Function;
+      api.on = vi.fn((e: string, cb: any) => {
+        if (e === 'session_start') sessionStartCb = cb;
+      });
+      teamWidget.registerTeamWidget(api);
+      await sessionStartCb(undefined, context);
+      await Promise.resolve();
+      // Expect error line in widget output
+      const calls = context.ui.setWidget as any;
+      const lastCall = calls.mock.calls[calls.mock.calls.length - 1];
+      const lines = lastCall[1];
+      expect(lines.some((l: string) => l.includes('error fetching status'))).toBe(true);
+    });
+  });
 });
