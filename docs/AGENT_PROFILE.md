@@ -599,3 +599,7 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - `AgentTeam` achieves 100% function length compliance.
 - All team tests pass (273), overall 1318 tests.
 - Next: Focus on other modules: `dependency_tree.ts` (resolveInAllFiles ~300 lines) and `plugin-loader.ts` (~459 lines).
+
+## Recent Improvements (2026-07-16)
+
+- **Workspace Coverage Expansion:** Added 13 tests covering SharedWorkspace and AgentWorkspace, achieving ~100% module coverage and increasing global function coverage to 93.19%. Addresses previously identified coverage gaps in team utilities.

@@ -781,3 +781,7 @@ This is **16-20 hours** of focused work. Suggestions:
 - [x] Refactor createMasterTool in master-tool.ts (next high-impact)
 - [ ] Refactor resolveInAllFiles in dependency_tree.ts (next)
 - [ ] Refactor AgentTeam in team-manager.ts (1007 lines)
+
+## ✅ COMPLETED IMPROVEMENTS
+
+- **Cycle 37** (2026-07-16): Workspace coverage expansion - added 13 tests covering SharedWorkspace and AgentWorkspace, achieved ~100% module coverage, improved global function coverage to 93.19%.

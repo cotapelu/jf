@@ -41,4 +41,25 @@ describe('SharedWorkspace coverage gaps', () => {
     const ws = new SharedWorkspace();
     expect(ws.get('missing')).toBeUndefined();
   });
+
+  it('should clear remove all entries', () => {
+    const ws = new SharedWorkspace();
+    ws.set('a', 1, 'x');
+    ws.set('b', 2, 'y');
+    ws.clear();
+    expect(ws.list()).toEqual([]);
+    expect(ws.toObject()).toEqual({});
+  });
+
+  it('should delete return true when key exists', () => {
+    const ws = new SharedWorkspace();
+    ws.set('key', 'val', 'owner');
+    expect(ws.delete('key')).toBe(true);
+    expect(ws.list()).not.toContain('key');
+  });
+
+  it('should delete return false when key missing', () => {
+    const ws = new SharedWorkspace();
+    expect(ws.delete('missing')).toBe(false);
+  });
 });
