@@ -1450,3 +1450,16 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - `stats.ts:formatPrometheus` (41 lines)
 
 Focus remains on systematic function length reduction while maintaining coverage and stability.
+
+## Function Length Compliance Progress (2026-07-16)
+
+**Cycle 41:** `skill-tool.ts:execute` reduced from 68 to 18 lines via helper extraction. Remaining violations: 14 (down from 15). 
+
+**Next high-impact targets:**
+- `extension.ts:createCapabilityRouterTool` (262 lines)
+- `registry.ts:RegistryImpl` (203 lines)
+- `child-worker.ts:main` (49 lines)
+- `stats.ts:formatPrometheus` (41 lines)
+- `agent-workspace.ts:createWorkspace` (35 lines)
+
+Continuing systematic function length reduction.

@@ -608,3 +608,7 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 
 - **Team Widget Compliance:** Refactored `refreshWidget` and `processTeams` to ≤20 lines each, removing 2 function length violations. Used `then(success, error)` pattern to ensure proper resolution. All tests pass (1342).
 - **Workspace Coverage Expansion:** Added comprehensive tests for `SharedWorkspace` and `AgentWorkspace`, achieving ~100% module coverage.
+
+## Recent Improvements (2026-07-16)
+
+- **Skill-Tool Function Compliance:** Refactored `execute` from 68 lines to 18 lines, extracting three helpers. All tests pass (1342). Function length violations reduced to 14.

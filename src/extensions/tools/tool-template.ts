@@ -120,32 +120,32 @@ const commandMeta: Record<string, {
 };
 
 
-async function executeTool(
-  _toolCallId: string,
-  params: any,
-  signal: AbortSignal | undefined,
-  _onUpdate: any,
-  ctx: any
-) {
+function handleDiscovery(command: string, _args: any): any {
+  const meta = commandMeta[command];
+  if (meta) {
+    const help = generateCommandHelp(command, meta);
+    return { content: [{ type: "text" as const, text: help }], details: { mode: "discovery", command, schema: meta.schema }, isError: false };
+  }
+  return { content: [{ type: "text" as const, text: `Command '${command}' requires arguments. Use schema to see required fields.` }], details: { mode: "discovery", command }, isError: false };
+}
+
+async function runCommand(command: string, args: any, signal: AbortSignal | undefined, ctx: any): Promise<any> {
+  const meta = commandMeta[command];
+  let mod: CommandModule | undefined;
+  try { mod = await commands[command](); } catch (importError: any) { throw new Error(`Failed to load command '${command}': ${importError.message}`); }
+  const cwd = ctx.session?.cwd ?? process.cwd();
+  const result = await (meta?.schema ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx) : mod.execute(args, cwd, signal, ctx));
+  if (result.code !== 0) throw new Error(result.stderr || `Command ${command} exited with code ${result.code}`);
+  return { content: [{ type: "text" as const, text: result.stdout }], details: result, isError: false };
+}
+
+async function executeTool(_toolCallId: string, params: any, signal: AbortSignal | undefined, _onUpdate: any, ctx: any) {
   const { command, args } = params;
   const loader = commands[command];
   if (!loader) return { content: [{ type: "text" as const, text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }], details: null, isError: true };
   try {
-    if (Object.keys(args).length === 0) {
-      const meta = commandMeta[command];
-      if (meta) {
-        const help = generateCommandHelp(command, meta);
-        return { content: [{ type: "text" as const, text: help }], details: { mode: "discovery", command, schema: meta.schema }, isError: false };
-      }
-      return { content: [{ type: "text" as const, text: `Command '${command}' requires arguments. Use schema to see required fields.` }], details: { mode: "discovery", command }, isError: false };
-    }
-    const meta = commandMeta[command];
-    let mod: CommandModule | undefined;
-    try { mod = await loader(); } catch (importError: any) { throw new Error(`Failed to load command '${command}': ${importError.message}`); }
-    const cwd = ctx.session?.cwd ?? process.cwd();
-    const result = await (meta?.schema ? mod.execute(args as Static<typeof meta.schema>, cwd, signal, ctx) : mod.execute(args, cwd, signal, ctx));
-    if (result.code !== 0) throw new Error(result.stderr || `Command ${command} exited with code ${result.code}`);
-    return { content: [{ type: "text" as const, text: result.stdout }], details: result, isError: false };
+    if (Object.keys(args).length === 0) return await handleDiscovery(command, args);
+    return await runCommand(command, args, signal, ctx);
   } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return { content: [{ type: "text" as const, text: `Tool '${command}' error: ${errorMessage}` }], details: { error: errorMessage, command }, isError: true };
