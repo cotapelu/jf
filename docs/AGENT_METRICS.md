@@ -4786,3 +4786,26 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Remaining violations:** 14 functions >20 lines (down from 15). Largest: `extension.ts:createCapabilityRouterTool` (262), `registry.ts:RegistryImpl` (203), others.
 
 ---
+
+## Cycle 42 - Tool-Template Function Compliance - 2026-07-16
+
+**Task:** Reduce `tool-template.ts:executeTool` function to ≤20 lines.
+
+**Type:** Violation Fix (Function Length)
+
+**Priority:** HIGH (quality gate)
+
+**Duration:** ~1 hour
+
+**Status:** ✅ Success
+
+**Refactor:**
+- Extracted `handleDiscovery` (synchronous helper) and `runCommand` (async helper)
+- Compressed `executeTool` to 12 lines
+- Fixed unused `args` lint (prefixed with `_` unused in `handleDiscovery`)
+
+**Coverage:** All existing tests pass (12 tool-template tests, 1342 total)
+
+**Remaining violations:** 13 functions >20 lines (down from 14). Largest: `extension.ts:createCapabilityRouterTool` (262), `registry.ts:RegistryImpl` (203), `child-worker.ts:main` (49), `stats.ts:formatPrometheus` (41).
+
+---
