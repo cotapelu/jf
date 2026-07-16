@@ -164,6 +164,38 @@ describe('team-widget', () => {
     });
   });
 
+  describe('periodic refresh', () => {
+    it('triggers refreshWidget on interval after start', async () => {
+      const fakeTeam = {
+        getTeamStatus: vi.fn().mockResolvedValue({
+          agents: [],
+          tasks: [],
+          completedTasks: 0,
+          failedTasks: 0,
+          pendingTasks: 0,
+          totalTasks: 0,
+          isComplete: true,
+        }),
+      };
+      mockRegistryInstance.getAll.mockReturnValue(new Map([['t1', fakeTeam]]));
+      const api = { on: vi.fn() };
+      let sessionStartCb!: Function;
+      api.on = vi.fn((e: string, cb: any) => {
+        if (e === 'session_start') sessionStartCb = cb;
+      });
+      teamWidget.registerTeamWidget(api);
+      await sessionStartCb(undefined, context);
+      await Promise.resolve(); // initial refreshWidget
+      const before = (context.ui.setWidget as any).mock.calls.length;
+      // Advance past interval (2000ms)
+      await vi.advanceTimersByTimeAsync(2500);
+      // Wait for microtasks from refreshWidget promise
+      await Promise.resolve();
+      const after = (context.ui.setWidget as any).mock.calls.length;
+      expect(after).toBeGreaterThan(before);
+    });
+  });
+
   describe('error handling', () => {
     it('handles team getTeamStatus rejection and shows error line', async () => {
       const fakeTeam = {
