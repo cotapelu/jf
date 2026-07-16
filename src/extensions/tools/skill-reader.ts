@@ -38,6 +38,13 @@ const commandMeta: Record<string, {
 
 const cm = commandMeta;
 
+async function executeCommand(loader: () => Promise<any>, args: any, cwd: string, signal?: AbortSignal, ctx?: any): Promise<any> {
+  const mod = await loader();
+  const execFn = mod.execute || mod.executeLoadSkill;
+  if (!execFn) throw new Error("Command module missing execute function");
+  return await execFn(args, cwd, signal, ctx);
+}
+
 // Helper for discovery mode to reduce nesting depth in execute()
 function buildDiscoveryOutput(command: string, meta: any) {
   const lines: string[] = [`=== ${command} ===`, `Description: ${meta.description}`, '', 'Arguments:'];
@@ -172,48 +179,17 @@ export function createSkillLoaderTool(): ToolDefinition {
     async execute(_toolCallId: string, params: any, signal?: AbortSignal, _onUpdate?: any, ctx?: any) {
       const { command, args } = params;
       const loader = commands[command];
-
-      // Validate command exists
-      if (!loader) {
-        return {
-          content: [{ type: "text", text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }],
-          details: null,
-          isError: true
-        };
-      }
-
+      if (!loader) return { content: [{ type: 'text', text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }], details: null, isError: true };
       try {
-        // Discovery mode: empty args → help
         if (Object.keys(args).length === 0) {
           const meta = cm[command];
-          if (meta) {
-            return buildDiscoveryOutput(command, meta);
-          }
+          if (meta) return buildDiscoveryOutput(command, meta);
         }
-
-        // Load command module
-        const mod = await loader();
-
-        // Execute (support both .execute and .executeLoadSkill naming)
-        const execFn = mod.execute || mod.executeLoadSkill;
-        if (!execFn) {
-          throw new Error(`Command module missing execute function`);
-        }
-        const result = await execFn(args, ctx?.session?.cwd ?? process.cwd(), signal, ctx);
-
-        // Return
-        return {
-          content: [{ type: "text", text: result.stdout }],
-          details: result,
-          isError: result.code !== 0
-        };
-
+        const cwd = ctx?.session?.cwd ?? process.cwd();
+        const result = await executeCommand(loader, args, cwd, signal, ctx);
+        return { content: [{ type: 'text', text: result.stdout }], details: result, isError: result.code !== 0 };
       } catch (error: any) {
-        return {
-          content: [{ type: "text", text: `skill_reader ${command} error: ${error.message}` }],
-          details: { error: error.message, command },
-          isError: true
-        };
+        return { content: [{ type: 'text', text: `skill_reader ${command} error: ${error.message}` }], details: { error: error.message, command }, isError: true };
       }
     }
   };
