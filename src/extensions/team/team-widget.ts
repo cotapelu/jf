@@ -8,7 +8,8 @@
  */
 
 import type { ExtensionAPI, ExtensionContext, ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
-import { TeamRegistry } from "./team-manager.js"; // AgentTeam unused
+import { TeamRegistry } from "./team-manager.js";
+import type { AgentTeam } from "./team-manager.js"; // Added for type
 
 // Unique symbol for per-session state attachment
 const TEAM_WIDGET_STATE = Symbol('teamWidgetState');
@@ -72,43 +73,40 @@ function buildTeamLines(ui: ExtensionUIContext, teamId: string, status: TeamStat
   return lines;
 }
 
+function processTeams(ui: ExtensionUIContext, teams: Map<string, AgentTeam>, lines: string[]): Promise<void> {
+  return new Promise((resolve) => {
+    let pending = teams.size;
+    if (pending === 0) { resolve(); return; }
+    teams.forEach((team, teamId) => {
+      team.getTeamStatus().then(
+        (status) => {
+          lines.push(...buildTeamLines(ui, teamId, status));
+          if (--pending === 0) resolve();
+        },
+        () => {
+          lines.push(ui.theme.fg("error", `Team ${teamId.slice(-6)}: error fetching status`));
+          if (--pending === 0) resolve();
+        }
+      );
+    });
+  });
+}
+
 function refreshWidget(ui: ExtensionUIContext): Promise<void> {
   return new Promise((resolve) => {
     try {
       const registry = TeamRegistry.getInstance();
       const teams = registry.getAll();
       const lines: string[] = [];
-
       lines.push(...buildHeaderLines(ui.theme));
-
       if (teams.size === 0) {
         lines.push(ui.theme.fg("muted", "No active teams"));
         ui.setWidget("team", lines);
         resolve();
         return;
       }
-
-      // Collect promises for all teams
-      let pending = teams.size;
-      teams.forEach((team, teamId) => {
-        team.getTeamStatus().then((status: TeamStatus) => {
-          lines.push(...buildTeamLines(ui, teamId, status));
-          // Only set widget after all teams processed
-          if (--pending === 0) {
-            ui.setWidget("team", lines);
-            resolve();
-          }
-        }).catch(() => {
-          lines.push(ui.theme.fg("error", `Team ${teamId.slice(-6)}: error fetching status`));
-          if (--pending === 0) {
-            ui.setWidget("team", lines);
-            resolve();
-          }
-        });
-      });
-    } catch {
-      resolve();
-    }
+      processTeams(ui, teams, lines).then(() => { ui.setWidget("team", lines); resolve(); });
+    } catch { resolve(); }
   });
 }
 
