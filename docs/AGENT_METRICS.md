@@ -5002,3 +5002,36 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 - Target remaining production and test helper functions.
 
 ---
+
+## Cycle 48 - Compaction Algorithm Refactor - 2026-07-16 (Autonomous)
+
+**Task:** Reduce function length and complexity in compaction algorithm (`summarizeMessages`, `compactSession`)
+
+**Type:** Function Decomposition / Complexity Reduction
+
+**Priority:** HIGH (quality gate)
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Metrics Snapshot:**
+- Tests: 1342 passing (100%)
+- Coverage: Statements 93.93%, Branches 86.44%, Functions 92.94%, Lines 95.31% (unchanged)
+- Lint: 0 errors
+- TypeScript: clean
+- Security: 0 vulnerabilities
+- Quality Gate Score: 100/100
+
+**Refactor Details:**
+- `summarizeMessages`: reduced from ~28 lines to ~20 lines by extracting `isImportantMessage` and `formatMessage` helpers.
+- `compactSession`: reduced from ~53 lines to ~18 lines by extracting `computeCutoffIndex` and `adjustWithinBudget`.
+- Improved readability, testability, and reduced cyclomatic complexity.
+
+**Test Delta:** 0 (all 1342 tests passing)
+
+**Next Steps:**
+- Continue reducing remaining function length violations (now ~7) to reach 100% compliance.
+- Target any remaining production and test helper functions.
+
+---
