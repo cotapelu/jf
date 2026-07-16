@@ -11,48 +11,41 @@ export function createMockSession(name: string): AgentSession {
   } as unknown as AgentSession;
 }
 
-/**
- * Create a mock AgentSessionRuntime
- *
- * Supports:
- * - session getter/setter
- * - newSession(options)
- * - switchSession(filePath)
- * - dispose()
- *
- * Also maintains an internal array of sessions for verification.
- */
-export function createMockRuntime(initialSession: AgentSession = createMockSession('parent')): AgentSessionRuntime {
-  let currentSession: AgentSession | null = initialSession;
-  const sessions: AgentSession[] = [initialSession];
-  let counter = 0;
+class MockRuntime {
+  private currentSession: any = null;
+  private sessions: any[] = [];
+  private counter = 0;
 
-  // Use `any` internally to avoid needing to implement all methods of AgentSessionRuntime
-  const runtime: any = {
-    get session() {
-      return currentSession;
-    },
-    set session(s) {
-      currentSession = s;
-    },
-    async newSession(_options?: { parentSession?: string }) {
-      const newSession = createMockSession(`child-${++counter}`);
-      sessions.push(newSession);
-      currentSession = newSession;
-      return { cancelled: false };
-    },
-    async switchSession(filePath: string) {
-      const target = sessions.find((s) => s.sessionFile === filePath);
-      if (!target) throw new Error(`Session not found: ${filePath}`);
-      currentSession = target;
-    },
-    async dispose() {
-      for (const s of sessions) await s.dispose();
-      sessions.length = 0;
-      currentSession = null;
-    },
-    _sessions: sessions,
-  };
+  constructor(initialSession: any) {
+    this.currentSession = initialSession;
+    this.sessions = [initialSession];
+  }
 
-  return runtime as AgentSessionRuntime;
+  get session() { return this.currentSession; }
+  set session(s: any) { this.currentSession = s; }
+
+  async newSession(_options?: any) {
+    const newSession = createMockSession(`child-${++this.counter}`);
+    this.sessions.push(newSession);
+    this.currentSession = newSession;
+    return { cancelled: false };
+  }
+
+  async switchSession(filePath: string) {
+    const target = this.sessions.find((s: any) => s.sessionFile === filePath);
+    if (!target) throw new Error(`Session not found: ${filePath}`);
+    this.currentSession = target;
+  }
+
+  async dispose() {
+    for (const s of this.sessions) await s.dispose();
+    this.sessions.length = 0;
+    this.currentSession = null;
+  }
+
+  get _sessions() { return this.sessions; }
+}
+
+export function createMockRuntime(initialSession: any = createMockSession('parent')): any {
+  return new MockRuntime(initialSession);
 }
