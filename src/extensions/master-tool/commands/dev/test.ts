@@ -141,43 +141,40 @@ export function parseTestOutput(stdout: string): TestResult {
 
   return result;
 }
+function buildTestResultLines(data: TestResult, theme: any): string[] {
+  const lines: string[] = [];
+  lines.push(theme.fg("accent", "🧪 Test Results").bold());
+  lines.push("");
+  lines.push(`Passed: ${theme.fg("success", data.passed.toString())}`);
+  lines.push(`Failed: ${theme.fg(data.failed > 0 ? "error" : "text", data.failed.toString())}`);
+  lines.push(`Skipped: ${theme.fg("muted", data.skipped.toString())}`);
+  if (data.duration > 0) {
+    lines.push(`Duration: ${theme.fg("text", `${(data.duration / 1000).toFixed(2)}s`)}`);
+  }
+  if (data.coverage) {
+    lines.push("");
+    lines.push(theme.fg("accent", "Coverage:"));
+    lines.push(`  Lines: ${data.coverage.lines}%`);
+    lines.push(`  Functions: ${data.coverage.functions}%`);
+  }
+  const total = data.passed + data.failed + data.skipped;
+  if (total > 0) {
+    const passRate = ((data.passed / total) * 100).toFixed(1);
+    lines.push(`\nPass rate: ${passRate}%`);
+  }
+  return lines;
+}
 
 // Optional custom renderer
 export function renderResult(result: any, options: any, theme: any): any {
   if (result.code !== 0) {
     return new Text(theme.fg("error", `❌ Tests failed\n\n${result.stderr?.slice(0, 500) || ''}`));
   }
-
   const data = result.data as TestResult | undefined;
-  const lines: string[] = [];
-  
-  lines.push(theme.fg("accent", "🧪 Test Results").bold());
-  
-  if (data) {
-    lines.push("");
-    lines.push(`Passed: ${theme.fg("success", data.passed.toString())}`);
-    lines.push(`Failed: ${theme.fg(data.failed > 0 ? "error" : "text", data.failed.toString())}`);
-    lines.push(`Skipped: ${theme.fg("muted", data.skipped.toString())}`);
-    
-    if (data.duration > 0) {
-      lines.push(`Duration: ${theme.fg("text", `${(data.duration / 1000).toFixed(2)}s`)}`);
-    }
-    
-    if (data.coverage) {
-      lines.push("");
-      lines.push(theme.fg("accent", "Coverage:"));
-      lines.push(`  Lines: ${data.coverage.lines}%`);
-      lines.push(`  Functions: ${data.coverage.functions}%`);
-    }
-    
-    const total = data.passed + data.failed + data.skipped;
-    if (total > 0) {
-      const passRate = ((data.passed / total) * 100).toFixed(1);
-      lines.push(`\nPass rate: ${passRate}%`);
-    }
+  if (!data) {
+    return new Text(theme.fg("text", result.stdout));
   }
-
-  return new Text(lines.join("\n"));
+  return new Text(buildTestResultLines(data, theme).join("\n"));
 }
 
 export default { metadata, schema, execute, renderResult };
