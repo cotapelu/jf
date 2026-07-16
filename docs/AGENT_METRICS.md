@@ -5344,3 +5344,24 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Next targets:** `subtool-loader.ts` (34), `capability-renderer.ts` (33), `multi-agent/router.ts` (31), etc.
 
 *Last updated: 2026-07-16T20:30:00Z*
+
+## Cycle 39 - Capability Renderer Refactor - 2026-07-16
+
+**Task:** Reduce function length violations in `extensions/capability-system/capability-renderer.ts` (rebuildCapabilityRenderComponent 33 lines)
+**Type:** Violation Fix (Function Length >20 lines)
+**Priority:** HIGH
+**Status:** ✅ Success
+
+**Test Delta:** 0 tests (all existing tests pass)
+**Coverage Delta:** None (refactor only)
+**Violation Reduction:** 8 → 7 (1 eliminated)
+
+**Actions:**
+- Extracted `renderOutput`, `createPreviewRenderer`, `updatePreviewCache`, and `buildSkippedHint` helpers.
+- Rewrote `rebuildCapabilityRenderComponent` as a thin orchestrator (≤20 lines).
+- All helpers within ≤20 line limit.
+- Lint, typecheck, tests all pass.
+
+**Next targets:** `multi-agent/router.ts` (31), `provider-command.ts` (30), `task-manager.ts` (26), etc.
+
+*Last updated: 2026-07-16T22:55:00Z*

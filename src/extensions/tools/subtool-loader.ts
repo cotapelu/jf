@@ -79,6 +79,49 @@ function createReadToolWrapper(cwd: string): ToolDefinition {
  * Execute a subtool call.
  * Validates subtool, routes to appropriate SDK tool, returns standardized result.
  */
+async function handleHttpSubtool(tool: any, toolCallId: string, args: any, signal?: AbortSignal, onUpdate?: any, ctx?: any): Promise<any> {
+  const { url, method = "GET", headers, body } = args as { url: string; method?: string; headers?: Record<string, string>; body?: string };
+  if (!url) {
+    return { isError: true, content: [{ type: "text", text: "Missing required parameter: url" }], details: undefined };
+  }
+  try { new URL(url); } catch {
+    return { isError: true, content: [{ type: "text", text: `Invalid URL: ${url}` }], details: undefined };
+  }
+  const curlArgs: string[] = ["-sS", "--fail"];
+  if (method && method !== "GET") curlArgs.push("-X", method);
+  if (headers && typeof headers === "object") Object.entries(headers).forEach(([k, v]) => curlArgs.push("-H", `${k}: ${v}`));
+  if (body) curlArgs.push("-d", body);
+  curlArgs.push(url);
+  const command = `curl ${curlArgs.map(a => JSON.stringify(a)).join(' ')}`;
+  // @ts-ignore
+  const result: any = await tool.execute(toolCallId, { command }, signal, onUpdate, ctx);
+  return {
+    isError: result?.isError ?? false,
+    content: result?.content ?? [{ type: "text", text: result?.output ?? "No output" }],
+    details: { ...result?.details, url, method, headers },
+  };
+}
+async function handleGenericSubtool(tool: any, toolCallId: string, args: any, signal?: AbortSignal, onUpdate?: any, ctx?: any): Promise<any> {
+  // @ts-ignore
+  const result: any = await tool.execute(toolCallId, args, signal, onUpdate, ctx);
+  return {
+    isError: result?.isError ?? false,
+    content: result?.content ?? [],
+    details: result?.details,
+  };
+}
+function getToolForSubtool(ctx: ExtensionContext, subtool: string): ToolDefinition {
+  return getOrCreateTool(ctx, subtool, (cwd) => {
+    switch (subtool) {
+      case "http": return createHttpTool(cwd);
+      case "ls": return createLsToolWrapper(cwd);
+      case "find": return createFindToolWrapper(cwd);
+      case "grep": return createGrepToolWrapper(cwd);
+      case "read": return createReadToolWrapper(cwd);
+      default: throw new Error(`Unhandled subtool: ${subtool}`);
+    }
+  });
+}
 async function executeSubtool(
   _toolCallId: string,
   params: { subtool: string; args: Record<string, unknown> },
@@ -88,78 +131,15 @@ async function executeSubtool(
 ): Promise<any> {
   const { subtool, args } = params;
   const toolCallId = `subtool-${subtool}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-  if (!subtool) {
-    return { isError: true, content: [{ type: "text", text: "Missing required parameter: subtool" }], details: undefined };
-  }
-
-  const validSubtools = ["http", "ls", "find", "grep", "read"];
-  if (!validSubtools.includes(subtool)) {
-    return {
-      isError: true,
-      content: [{ type: "text", text: `Unknown sub-tool: ${subtool}. Valid: ${validSubtools.join(", ")}` }],
-      details: undefined,
-    };
-  }
-
+  if (!subtool) return { isError: true, content: [{ type: "text", text: "Missing required parameter: subtool" }], details: undefined };
+  const valid = ["http","ls","find","grep","read"];
+  if (!valid.includes(subtool)) return { isError: true, content: [{ type: "text", text: `Unknown sub-tool: ${subtool}. Valid: ${valid.join(", ")}` }], details: undefined };
   try {
-    const tool = getOrCreateTool(ctx, subtool, (cwd) => {
-      switch (subtool) {
-        case "http": return createHttpTool(cwd);
-        case "ls": return createLsToolWrapper(cwd);
-        case "find": return createFindToolWrapper(cwd);
-        case "grep": return createGrepToolWrapper(cwd);
-        case "read": return createReadToolWrapper(cwd);
-        default: throw new Error(`Unhandled subtool: ${subtool}`);
-      }
-    });
-
-    // HTTP needs special handling to build curl command
-    if (subtool === "http") {
-      const { url, method = "GET", headers, body } = args as {
-        url: string;
-        method?: string;
-        headers?: Record<string, string>;
-        body?: string;
-      };
-
-      if (!url) {
-        return { isError: true, content: [{ type: "text", text: "Missing required parameter: url" }], details: undefined };
-      }
-
-      try { new URL(url); } catch {
-        return { isError: true, content: [{ type: "text", text: `Invalid URL: ${url}` }], details: undefined };
-      }
-
-      const curlArgs: string[] = ["-sS", "--fail"];
-      if (method && method !== "GET") curlArgs.push("-X", method);
-      if (headers && typeof headers === "object") {
-        Object.entries(headers).forEach(([k, v]) => curlArgs.push("-H", `${k}: ${v}`));
-      }
-      if (body) curlArgs.push("-d", body);
-      curlArgs.push(url);
-
-      const command = `curl ${curlArgs.map(a => JSON.stringify(a)).join(' ')}`;
-      // @ts-ignore
-      const result: any = await tool.execute(toolCallId, { command }, signal, onUpdate, ctx);
-
-      return {
-        isError: result?.isError ?? false,
-        content: result?.content ?? [{ type: "text", text: result?.output ?? "No output" }],
-        details: { ...result?.details, url, method, headers },
-      };
-    }
-
-    // Other tools: pass args directly (SDK validates)
-    // @ts-ignore
-    const result: any = await tool.execute(toolCallId, args, signal, onUpdate, ctx);
-
-    return {
-      isError: result?.isError ?? false,
-      content: result?.content ?? [],
-      details: result?.details,
-    };
-  } catch (error) {
+    const tool = getToolForSubtool(ctx, subtool);
+    return await (subtool === "http"
+      ? handleHttpSubtool(tool, toolCallId, args, signal, onUpdate, ctx)
+      : handleGenericSubtool(tool, toolCallId, args, signal, onUpdate, ctx));
+  } catch (error: any) {
     const msg = error instanceof Error ? error.message : String(error);
     return { isError: true, content: [{ type: "text", text: `❌ Error: ${msg}` }], details: { error: msg } };
   }

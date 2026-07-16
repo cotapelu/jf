@@ -51,6 +51,50 @@ export class CapabilityResultRenderComponent extends Container {
   } = {};
 }
 
+function updatePreviewCache(state: any, styledOutput: string, width: number): void {
+  if (state.cachedLines === undefined || state.cachedWidth !== width) {
+    const preview = truncateToVisualLines(styledOutput, CAPABILITY_PREVIEW_LINES, width);
+    state.cachedLines = preview.visualLines;
+    state.cachedSkipped = preview.skippedCount;
+    state.cachedWidth = width;
+  }
+}
+
+function buildSkippedHint(state: any, theme: any, width: number): string {
+  const hint = theme.fg("muted", `... (${state.cachedSkipped} earlier lines,`) + ` ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
+  return truncateToWidth(hint, width, "...");
+}
+
+function createPreviewRenderer(styledOutput: string, state: any, theme: any): any {
+  return {
+    render: (width: number) => {
+      updatePreviewCache(state, styledOutput, width);
+      if (state.cachedSkipped > 0) {
+        return ["", buildSkippedHint(state, theme, width), ...(state.cachedLines ?? [])];
+      }
+      return ["", ...(state.cachedLines ?? [])];
+    },
+    invalidate: () => {
+      state.cachedWidth = undefined;
+      state.cachedLines = undefined;
+      state.cachedSkipped = undefined;
+    }
+  };
+}
+
+function renderOutput(component: CapabilityResultRenderComponent, output: string, options: any, theme: any, state: any): void {
+  const styledOutput = output
+    .split("\n")
+    .map((line: string) => theme.fg("toolOutput", line))
+    .join("\n");
+
+  if (options.expanded) {
+    component.addChild(new Text(`\n${styledOutput}`, 0, 0));
+  } else {
+    component.addChild(createPreviewRenderer(styledOutput, state, theme));
+  }
+}
+
 export function rebuildCapabilityRenderComponent(
   component: CapabilityResultRenderComponent,
   result: any,
@@ -62,7 +106,6 @@ export function rebuildCapabilityRenderComponent(
   const state = component.state;
   component.clear();
 
-  // Extract text output
   let output = "";
   if (result.content) {
     output = result.content
@@ -73,37 +116,7 @@ export function rebuildCapabilityRenderComponent(
   }
 
   if (output) {
-    const styledOutput = output
-      .split("\n")
-      .map((line: string) => theme.fg("toolOutput", line))
-      .join("\n");
-
-    if (options.expanded) {
-      component.addChild(new Text(`\n${styledOutput}`, 0, 0));
-    } else {
-      component.addChild({
-        render: (width: number) => {
-          if (state.cachedLines === undefined || state.cachedWidth !== width) {
-            const preview = truncateToVisualLines(styledOutput, CAPABILITY_PREVIEW_LINES, width);
-            state.cachedLines = preview.visualLines;
-            state.cachedSkipped = preview.skippedCount;
-            state.cachedWidth = width;
-          }
-          if (state.cachedSkipped && state.cachedSkipped > 0) {
-            const hint =
-              theme.fg("muted", `... (${state.cachedSkipped} earlier lines,`) +
-              ` ${keyHint("app.tools.expand", "to expand")}${theme.fg("muted", ")")}`;
-            return ["", truncateToWidth(hint, width, "..."), ...(state.cachedLines ?? [])];
-          }
-          return ["", ...(state.cachedLines ?? [])];
-        },
-        invalidate: () => {
-          state.cachedWidth = undefined;
-          state.cachedLines = undefined;
-          state.cachedSkipped = undefined;
-        },
-      });
-    }
+    renderOutput(component, output, options, theme, state);
   }
 
   // Timing
