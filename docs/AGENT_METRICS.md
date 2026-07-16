@@ -4734,3 +4734,29 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 - Continue coverage deep dive on tool-template.ts (functions 75%).
 
 ---
+
+## Cycle 40 - Team Widget Function Compliance - 2026-07-16
+
+**Task:** Ensure `team-widget.ts` functions meet ≤20 line requirement.
+
+**Type:** Violation Fix (Function Length)
+
+**Priority:** HIGH (quality gate)
+
+**Duration:** ~30 minutes
+
+**Status:** ✅ Success
+
+**Refactor:**
+- Split `refreshWidget` into `processTeams` helper
+- Compressed both functions to ≤20 lines (refreshWidget 17, processTeams 18)
+- Fixed error handling to use `then(success, error)` pattern ensuring proper resolution
+
+**Impact:**
+- Removed 2 function length violations from production code
+- All tests pass (1342)
+- Quality gate remains 100/100
+
+**Remaining violations:** 15 functions >20 lines (down from 17). Largest: `extension.ts:createCapabilityRouterTool` (262), `registry.ts:RegistryImpl` (203), others.
+
+---

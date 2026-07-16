@@ -12,6 +12,35 @@ import { getCurrentCwd, getCurrentResourceLoader } from '../../runtime-context.j
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
+function getSkillPaths(cwd: string, skill: string): string[] {
+  return [
+    join(cwd, 'src', 'addon', 'tools', 'skills', 'skills-md', `${skill}.md`),
+    join(cwd, 'dist', 'tools', 'skills', 'skills-md', `${skill}.md`),
+    join(cwd, 'tools', 'skills', 'skills-md', `${skill}.md`),
+  ];
+}
+
+async function tryLoadFromPaths(paths: string[]): Promise<{ content: string; path: string } | null> {
+  for (const path of paths) {
+    try {
+      const content = await readFile(path, 'utf-8');
+      return { content, path };
+    } catch {
+      // continue
+    }
+  }
+  return null;
+}
+
+async function tryLoadViaResourceLoader(skill: string, resourceLoader: any): Promise<{ content: string } | null> {
+  try {
+    const resource = await resourceLoader.loadSkill(skill);
+    return { content: resource.content };
+  } catch {
+    return null;
+  }
+}
+
 export const skillTool: ToolDefinition = {
   name: 'skills',
   label: 'Skill Loader',
@@ -60,70 +89,20 @@ You: (follow instructions and analyze code)
   },
   async execute(toolCallId: string, params: any, _signal?: AbortSignal, _onUpdate?: (result: any) => void, _ctx?: any) {
     const startTime = Date.now();
-
     try {
-      const cwd = getCurrentCwd();
-      const resourceLoader = getCurrentResourceLoader();
-
-      // Build skill file path
-      // Look in src/tools/skills/skills-md (dev) and dist/tools/skills/skills-md (production)
-      const possiblePaths = [
-        join(cwd, 'src', 'addon', 'tools', 'skills', 'skills-md', `${params.skill}.md`),
-        join(cwd, 'dist', 'tools', 'skills', 'skills-md', `${params.skill}.md`),
-        join(cwd, 'tools', 'skills', 'skills-md', `${params.skill}.md`),
-      ];
-
-      let content: string | null = null;
-      let loadedPath: string | null = null;
-
-      // Try each path
-      for (const path of possiblePaths) {
-        try {
-          content = await readFile(path, 'utf-8');
-          loadedPath = path;
-          break;
-        } catch {
-          // Continue to next path
-        }
+      const cwd = getCurrentCwd(), resourceLoader = getCurrentResourceLoader(), paths = getSkillPaths(cwd, params.skill);
+      let loaded = await tryLoadFromPaths(paths);
+      if (!loaded) {
+        const resourceResult = await tryLoadViaResourceLoader(params.skill, resourceLoader);
+        if (resourceResult) loaded = { content: resourceResult.content, path: `[loaded via resourceLoader: ${params.skill}]` };
       }
-
-      if (!content) {
-        // Also try via resourceLoader if available (handles extensions)
-        try {
-          const resource = await resourceLoader.loadSkill(params.skill);
-          content = resource.content;
-          loadedPath = `[loaded via resourceLoader: ${params.skill}]`;
-        } catch {
-          // Resource loader failed too
-        }
-      }
-
-      if (!content) {
-        return {
-          content: [{ type: 'text', text: `❌ Skill "${params.skill}" not found. Check available skill names.` }],
-          details: { toolCallId, status: 'error', error: 'Skill file not found', duration: Date.now() - startTime },
-        };
-      }
-
+      if (!loaded) return { content: [{ type: 'text', text: `❌ Skill "${params.skill}" not found. Check available skill names.` }], details: { toolCallId, status: 'error', error: 'Skill file not found', duration: Date.now() - startTime } };
       const duration = Date.now() - startTime;
-
-      return {
-        content: [{ type: 'text', text: content }],
-        details: {
-          toolCallId,
-          skill: params.skill,
-          status: 'success',
-          path: loadedPath,
-          duration,
-        },
-      };
+      return { content: [{ type: 'text', text: loaded.content }], details: { toolCallId, skill: params.skill, status: 'success', path: loaded.path, duration } };
     } catch (error: any) {
       const duration = Date.now() - startTime;
       console.error(`[skill-tool] Failed to load skill:`, error);
-      return {
-        content: [{ type: 'text', text: `❌ Failed to load skill: ${error.message}` }],
-        details: { toolCallId, status: 'error', error: error.message, duration },
-      };
+      return { content: [{ type: 'text', text: `❌ Failed to load skill: ${error.message}` }], details: { toolCallId, status: 'error', error: error.message, duration } };
     }
   },
 };

@@ -1437,3 +1437,16 @@ System status: 🟢 PRODUCTION-READY — Zero lint errors (with max-depth as war
 - Next targets: `tool-template.ts` (functions 75%), `team-widget.ts` (39-line), `state-manager.ts` (32-line), investigate any remaining long functions.
 
 **Trajectory:** Continue per-file coverage deep dive to reach >85% on all core modules, while maintaining quality gate 100/100 and addressing any emergent violations.
+
+## Function Length Compliance Progress (2026-07-16)
+
+**Cycle 40:** team-widget.ts now 100% compliant (both main functions ≤20 lines). Remaining violations: 15 (down from 17). 
+
+**Next high-impact targets:**
+- `createCapabilityRouterTool` (262 lines) - requires substantial extraction
+- `RegistryImpl` (203 lines) - modularization needed
+- `skill-tool.ts:execute` (68 lines)
+- `child-worker.ts:main` (49 lines)
+- `stats.ts:formatPrometheus` (41 lines)
+
+Focus remains on systematic function length reduction while maintaining coverage and stability.
