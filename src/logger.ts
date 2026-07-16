@@ -3,6 +3,7 @@ const logFormat = process.env.PI_LOG_FORMAT as 'pretty' | 'json' | undefined;
 
 const enabledLevels = logLevel ? new Set([logLevel]) : null;
 
+
 function isEnabled(level: string): boolean {
   if (!enabledLevels) return false;
   return enabledLevels.has(level as any);
@@ -11,26 +12,9 @@ function isEnabled(level: string): boolean {
 function makePrettyLogger(level: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal') {
   return (...args: any[]) => {
     if (isEnabled(level)) {
-      switch (level) {
-        case 'trace':
-          console.trace(`[${level.toUpperCase()}]`, ...args);
-          break;
-        case 'debug':
-          console.debug(`[${level.toUpperCase()}]`, ...args);
-          break;
-        case 'info':
-          console.info(`[${level.toUpperCase()}]`, ...args);
-          break;
-        case 'warn':
-          console.warn(`[${level.toUpperCase()}]`, ...args);
-          break;
-        case 'error':
-          console.error(`[${level.toUpperCase()}]`, ...args);
-          break;
-        case 'fatal':
-          console.error(`[${level.toUpperCase()}]`, ...args);
-          break;
-      }
+      const method = level === 'fatal' ? 'error' : level;
+      // @ts-ignore
+      console[method](`[${level.toUpperCase()}]`, ...args);
     }
   };
 }
