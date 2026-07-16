@@ -22,20 +22,33 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
+function isImportantMessage(msg: { role: string; content: string }): boolean {
+  return msg.role === 'tool' || msg.role === 'function';
+}
+
+function formatMessage(msg: { role: string; content: string }): string {
+  const snippet = msg.content.slice(0, 200);
+  return `[${msg.role.toUpperCase()}] ${snippet}`;
+}
+
 /** Summarize a batch of messages using extractive approach (simple for MVP) */
 export function summarizeMessages(messages: { role: string; content: string }[]): string {
   if (messages.length === 0) return '(no messages to summarize)';
-  // Simple extractive: take first and last few messages, and any tool calls
   const important: string[] = [];
+
+  // Add tool/function messages
   for (const msg of messages) {
-    if (msg.role === 'tool' || msg.role === 'function') {
-      important.push(`[TOOL] ${msg.content.slice(0, 200)}`);
+    if (isImportantMessage(msg)) {
+      important.push(formatMessage(msg));
     }
   }
+
+  // Add first user and last assistant
   const firstUser = messages.find(m => m.role === 'user');
   const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
-  if (firstUser) important.push(`[USER] ${firstUser.content.slice(0, 200)}`);
-  if (lastAssistant) important.push(`[ASSISTANT] ${lastAssistant.content.slice(0, 200)}`);
+  if (firstUser) important.push(formatMessage(firstUser));
+  if (lastAssistant) important.push(formatMessage(lastAssistant));
+
   if (important.length === 0) {
     // fallback: just list counts
     return `Summarized ${messages.length} messages.`;
@@ -44,49 +57,33 @@ export function summarizeMessages(messages: { role: string; content: string }[])
 }
 
 /** Main compaction function */
-export async function compactSession(
-  messages: { role: string; content: string }[],
-  options: CompactionOptions
-): Promise<CompactionResult> {
-  const originalTokens = estimateTokens(JSON.stringify(messages));
-  if (originalTokens <= options.maxTokens) {
-    return {
-      originalTokens,
-      compactedTokens: originalTokens,
-      summary: '',
-      removedMessages: 0,
-    };
-  }
 
-  // Strategy: if preserveRecent, keep the last N messages (approx 1/3 of budget)
+function computeCutoffIndex(messages: { role: string; content: string }[], options: CompactionOptions): number {
+  if (!options.preserveRecent) return 0;
+  const recentTokensEstimate = Math.floor(options.maxTokens * 0.3);
   let cutoffIndex = 0;
-  if (options.preserveRecent) {
-    const recentTokensEstimate = Math.floor(options.maxTokens * 0.3);
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const tokens = estimateTokens(JSON.stringify(messages[i]));
-      if (recentTokensEstimate - tokens >= 0) {
-        cutoffIndex = i;
-      } else break;
-    }
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const tokens = estimateTokens(JSON.stringify(messages[i]));
+    if (recentTokensEstimate - tokens >= 0) {
+      cutoffIndex = i;
+    } else break;
   }
+  return cutoffIndex;
+}
 
-  // Messages to compact: older ones before cutoff
-  const toCompact = messages.slice(0, cutoffIndex);
-  const preserved = messages.slice(cutoffIndex);
-  const summary = summarizeMessages(toCompact);
-  const summaryTokens = estimateTokens(summary);
-  const preservedTokens = estimateTokens(JSON.stringify(preserved));
-
-  // Ensure within budget
+function adjustWithinBudget(
+  preserved: { role: string; content: string }[],
+  summary: string,
+  preservedTokens: number,
+  summaryTokens: number,
+  maxTokens: number
+): { finalMessages: { role: string; content: string }[]; finalSummary: string; totalTokens: number } {
+  let totalTokens = preservedTokens + summaryTokens;
   let finalMessages = preserved;
   let finalSummary = summary;
-  let totalTokens = preservedTokens + summaryTokens;
-  if (totalTokens > options.maxTokens) {
-    // If still over, shrink summary
-    const allowedSummary = options.maxTokens - preservedTokens;
+  if (totalTokens > maxTokens) {
+    const allowedSummary = maxTokens - preservedTokens;
     if (allowedSummary < 100) {
-      // Can't fit even minimal summary; remove some preserved
-      // simplistic: drop one preserved message if possible
       finalMessages = preserved.slice(1);
       finalSummary = summary.slice(0, Math.max(10, allowedSummary));
     } else {
@@ -94,11 +91,28 @@ export async function compactSession(
     }
     totalTokens = estimateTokens(JSON.stringify(finalMessages)) + estimateTokens(finalSummary);
   }
+  return { finalMessages, finalSummary, totalTokens };
+}
 
+export async function compactSession(
+  messages: { role: string; content: string }[],
+  options: CompactionOptions
+): Promise<CompactionResult> {
+  const originalTokens = estimateTokens(JSON.stringify(messages));
+  if (originalTokens <= options.maxTokens) {
+    return { originalTokens, compactedTokens: originalTokens, summary: '', removedMessages: 0 };
+  }
+  const cutoffIndex = computeCutoffIndex(messages, options);
+  const toCompact = messages.slice(0, cutoffIndex);
+  const preserved = messages.slice(cutoffIndex);
+  const summary = summarizeMessages(toCompact);
+  const summaryTokens = estimateTokens(summary);
+  const preservedTokens = estimateTokens(JSON.stringify(preserved));
+  const { finalSummary, totalTokens } = adjustWithinBudget(preserved, summary, preservedTokens, summaryTokens, options.maxTokens);
   return {
     originalTokens,
     compactedTokens: totalTokens,
     summary: finalSummary,
-    removedMessages: toCompact.length,
+    removedMessages: cutoffIndex,
   };
 }
