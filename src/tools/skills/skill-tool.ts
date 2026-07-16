@@ -41,6 +41,12 @@ async function tryLoadViaResourceLoader(skill: string, resourceLoader: any): Pro
   }
 }
 
+function buildSkillError(error: any, start: number, toolCallId: string, skill: string): any {
+  const isNotFound = error.message === 'Skill file not found';
+  const text = isNotFound ? `Skill "${skill}" not found. Check available skill names.` : `Failed to load skill: ${error.message}`;
+  return { content: [{ type: 'text' as const, text: `❌ ${text}` }], details: { toolCallId, status: 'error', error: isNotFound ? 'Skill file not found' : error.message, duration: Date.now() - start } };
+}
+
 export const skillTool: ToolDefinition = {
   name: 'skills',
   label: 'Skill Loader',
@@ -88,21 +94,22 @@ You: (follow instructions and analyze code)
     required: ['skill']
   },
   async execute(toolCallId: string, params: any, _signal?: AbortSignal, _onUpdate?: (result: any) => void, _ctx?: any) {
-    const startTime = Date.now();
+    const start = Date.now();
     try {
-      const cwd = getCurrentCwd(), resourceLoader = getCurrentResourceLoader(), paths = getSkillPaths(cwd, params.skill);
+      const cwd = getCurrentCwd(), loader = getCurrentResourceLoader(), paths = getSkillPaths(cwd, params.skill);
       let loaded = await tryLoadFromPaths(paths);
       if (!loaded) {
-        const resourceResult = await tryLoadViaResourceLoader(params.skill, resourceLoader);
-        if (resourceResult) loaded = { content: resourceResult.content, path: `[loaded via resourceLoader: ${params.skill}]` };
+        const r = await tryLoadViaResourceLoader(params.skill, loader);
+        if (r) loaded = { content: r.content, path: `[loaded via resourceLoader: ${params.skill}]` };
       }
-      if (!loaded) return { content: [{ type: 'text', text: `❌ Skill "${params.skill}" not found. Check available skill names.` }], details: { toolCallId, status: 'error', error: 'Skill file not found', duration: Date.now() - startTime } };
-      const duration = Date.now() - startTime;
-      return { content: [{ type: 'text', text: loaded.content }], details: { toolCallId, skill: params.skill, status: 'success', path: loaded.path, duration } };
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[skill-tool] Failed to load skill:`, error);
-      return { content: [{ type: 'text', text: `❌ Failed to load skill: ${error.message}` }], details: { toolCallId, status: 'error', error: error.message, duration } };
+      if (!loaded) throw new Error('Skill file not found');
+      return {
+        content: [{ type: 'text', text: loaded.content }],
+        details: { toolCallId, skill: params.skill, status: 'success', path: loaded.path, duration: Date.now() - start }
+      };
+    } catch (e: any) {
+      console.error(`[skill-tool] Failed to load skill:`, e);
+      return buildSkillError(e, start, toolCallId, params.skill);
     }
   },
 };
