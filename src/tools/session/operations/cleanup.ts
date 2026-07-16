@@ -3,118 +3,77 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { logger } from '../../../logger.js';
 
-/**
- * Cleanup old session files on disk
- *
- * Parameters:
- * - olderThanDays: delete files older than N days (default: 30)
- * - keepCount: keep at least N most recent files (default: 100)
- * - dryRun: if true, only report what would be deleted (default: false)
- */
-export async function operationCleanup(
-  mgr: MultiSessionManager,
-  params: {
-    olderThanDays?: number;
-    keepCount?: number;
-    dryRun?: boolean;
-  }
-) {
-  const runtime = mgr.getRuntime();
-  const services = (runtime as any).services; // AgentSessionServices
-  const sessionManager = services?.sessionManager;
-  if (!sessionManager) {
-    throw new Error('Session manager not available');
-  }
-
-  // Get session directory path from sessionManager internals.
-  // Pi SDK's SessionManager has a `dir` property.
-  const sessionDir = sessionManager.dir || sessionManager.sessionDir;
-  if (!sessionDir) {
-    throw new Error('Cannot determine session directory');
-  }
-
-  // Read all .jsonl files
+async function listSessionFiles(sessionDir: string): Promise<Array<{ file: string; mtime: Date }>> {
   const entries = await fs.readdir(sessionDir, { withFileTypes: true });
   const files = entries
     .filter((e) => e.isFile() && e.name.endsWith('.jsonl'))
     .map((e) => path.join(sessionDir, e.name));
-
-  // Get stats for each file
-  const fileStats = await Promise.all(
+  const stats = await Promise.all(
     files.map(async (file) => {
       const stat = await fs.stat(file);
-      return { file, mtime: stat.mtime, size: stat.size };
+      return { file, mtime: stat.mtime };
     })
   );
+  return stats;
+}
 
-  // Sort by mtime ascending (oldest first)
-  fileStats.sort((a, b) => a.mtime.getTime() - b.mtime.getTime());
-
+function computeDeletionCandidates(
+  fileStats: Array<{ file: string; mtime: Date }>,
+  params: { olderThanDays?: number; keepCount?: number }
+): string[] {
   const now = Date.now();
   const olderThanMs = (params.olderThanDays ?? 30) * 24 * 60 * 60 * 1000;
   const cutoff = now - olderThanMs;
-
-  const toDelete: string[] = [];
   const keep = params.keepCount ?? 100;
-
-  // Collect files older than cutoff OR beyond keepCount (oldest ones)
+  fileStats.sort((a, b) => a.mtime.getTime() - b.mtime.getTime());
+  const toDelete: string[] = [];
   for (let i = 0; i < fileStats.length; i++) {
-    const { file, mtime } = fileStats[i];
     if (fileStats.length - i > keep) {
-      toDelete.push(file);
-    } else if (mtime.getTime() < cutoff) {
-      toDelete.push(file);
+      toDelete.push(fileStats[i].file);
+    } else if (fileStats[i].mtime.getTime() < cutoff) {
+      toDelete.push(fileStats[i].file);
     }
   }
+  return [...new Set(toDelete)];
+}
 
-  // Deduplicate (some may satisfy both)
-  const uniqueDelete = [...new Set(toDelete)];
-
-  if (params.dryRun) {
-    // No deletion
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `🧹 Cleanup dry-run: would delete ${uniqueDelete.length} session files (older than ${params.olderThanDays} days, keep most recent ${keep}).`,
-        },
-      ],
-      details: {
-        operation: 'cleanup',
-        dryRun: true,
-        filesConsidered: fileStats.length,
-        filesToDelete: uniqueDelete.length,
-        deletionCandidates: uniqueDelete.map((f) => path.basename(f)),
-      },
-    };
-  }
-
-  // Actually delete
+async function deleteFiles(files: string[], dryRun: boolean, mgr: MultiSessionManager): Promise<number> {
+  if (dryRun) return files.length;
   await Promise.all(
-    uniqueDelete.map(
-      (file) =>
-        fs.unlink(file).catch((err) => logger.error(`Failed to delete ${file}: ${err}`))
-    )
+    files.map((file) => fs.unlink(file).catch((err) => logger.error(`Failed to delete ${file}: ${err}`)))
   );
+  (mgr as any).recordCleanup?.(files.length);
+  return files.length;
+}
 
-  // Record cleanup stats (only if not dry-run)
-  if (!params.dryRun) {
-    (mgr as any).recordCleanup?.(uniqueDelete.length);
-  }
+export async function operationCleanup(
+  mgr: MultiSessionManager,
+  params: { olderThanDays?: number; keepCount?: number; dryRun?: boolean }
+) {
+  const runtime = mgr.getRuntime();
+  const services = (runtime as any).services;
+  const sessionManager = services?.sessionManager;
+  if (!sessionManager) throw new Error('Session manager not available');
+  const sessionDir = sessionManager.dir || sessionManager.sessionDir;
+  if (!sessionDir) throw new Error('Cannot determine session directory');
 
+  const fileStats = await listSessionFiles(sessionDir);
+  const toDelete = computeDeletionCandidates(fileStats, params);
+  const deletedCount = await deleteFiles(toDelete, params.dryRun ?? false, mgr);
+
+  const dry = params.dryRun === true;
+  const content = dry
+    ? `🧹 Cleanup dry-run: would delete ${deletedCount} session files (older than ${params.olderThanDays} days, keep most recent ${params.keepCount ?? 100}).`
+    : `✅ Cleanup complete: deleted ${deletedCount} session files.`;
   return {
-    content: [
-      {
-        type: 'text',
-        text: `✅ Cleanup complete: deleted ${uniqueDelete.length} session files.`,
-      },
-    ],
+    content: [{ type: 'text', text: content }],
     details: {
       operation: 'cleanup',
-      dryRun: false,
+      dryRun: dry,
       filesConsidered: fileStats.length,
-      filesDeleted: uniqueDelete.length,
-      deletedFiles: uniqueDelete.map((f) => path.basename(f)),
+      ...(dry
+        ? { filesToDelete: deletedCount, deletionCandidates: toDelete.map((f) => path.basename(f)) }
+        : { filesDeleted: deletedCount, deletedFiles: toDelete.map((f) => path.basename(f)) }),
     },
   };
 }
