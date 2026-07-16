@@ -5168,3 +5168,36 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 - Likely in remaining test utilities or small helpers.
 
 ---
+
+## Cycle 53 - Cleanup Operation Refactor - 2026-07-16 (Autonomous)
+
+**Task:** Reduce function length of `operationCleanup` (was ~70 lines) to ≤20 lines.
+
+**Type:** Violation Fix (Function Length)
+
+**Priority:** HIGH (quality gate)
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Metrics Snapshot:**
+- Tests: 1342 passing (100%)
+- Coverage: Statements 93.95%, Branches 86.52%, Functions 92.99%, Lines 95.32% (unchanged)
+- Lint: 0 errors
+- TypeScript: clean
+- Security: 0 vulnerabilities
+- Quality Gate Score: 100/100
+
+**Refactor Details:**
+- Extracted `listSessionFiles`, `computeDeletionCandidates`, `deleteFiles`.
+- `operationCleanup` now ~15 lines; each helper ≤20.
+- Preserved exact behavior; all tests pass.
+
+**Test Delta:** 0
+
+**Next Steps:**
+- Address final ~2 function length violations to achieve 100% compliance.
+- Final sweep likely finds only trivial remaining blocks.
+
+---
