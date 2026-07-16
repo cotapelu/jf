@@ -58,14 +58,8 @@ function buildDiscoveryOutput(command: string, meta: any) {
       lines.push(`  ${key}${required ? '*' : ''} (${type}): ${desc}`);
     });
   }
-  if (meta.examples?.length > 0) {
-    lines.push('', 'Examples:', `  ${meta.examples[0]}`);
-  }
-  return {
-    content: [{ type: "text" as const, text: lines.join('\n') }],
-    details: { mode: "discovery", command },
-    isError: false
-  };
+  if (meta.examples?.length > 0) lines.push('', 'Examples:', `  ${meta.examples[0]}`);
+  return { content: [{ type: 'text' as const, text: lines.join('\n') }], details: { mode: 'discovery', command }, isError: false };
 }
 
 // Additional test-only commands for branch coverage
