@@ -1476,3 +1476,15 @@ Continuing systematic function length reduction.
 - `agent-workspace.ts:createWorkspace` (35 lines) if exists.
 
 Continuing systematic reduction; next likely `child-worker.ts:main` (moderate complexity).
+
+## Function Length Compliance Progress (2026-07-16)
+
+**Cycle 43:** `child-worker.ts:main` reduced from 49 to 19 lines via extraction of `handleMessage` and `handleError`. Remaining violations ~12.
+
+**Next high-impact targets:**
+- `extension.ts:createCapabilityRouterTool` (262 lines)
+- `registry.ts:RegistryImpl` (203 lines)
+- `stats.ts:formatPrometheus` (41 lines)
+- Possibly `master-tool/stats.ts` other helpers for prometheus formatting.
+
+Continuing systematic reduction; considering modularization for huge router/registry next.

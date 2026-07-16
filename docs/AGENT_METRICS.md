@@ -4809,3 +4809,33 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Remaining violations:** 13 functions >20 lines (down from 14). Largest: `extension.ts:createCapabilityRouterTool` (262), `registry.ts:RegistryImpl` (203), `child-worker.ts:main` (49), `stats.ts:formatPrometheus` (41).
 
 ---
+
+## Cycle 43 - Child-Worker Main Compliance - 2026-07-16
+
+**Task:** Reduce `child-worker.ts:main` to ≤20 lines.
+
+**Type:** Violation Fix (Function Length)
+
+**Priority:** HIGH
+
+**Duration:** ~1.5 hours
+
+**Status:** ✅ Success
+
+**Refactor:**
+- Extracted `handleMessage` (async) to encapsulate message handling logic
+- Extracted `handleError` helper to reduce catch block
+- Compressed `main` to 19 lines
+- Fixed lint: event handler no longer returns promise
+
+**Impact:**
+- Removed 1 more function length violation (child-worker main)
+- All 1342 tests pass
+
+**Remaining violations:** Estimate ~12 functions >20 lines, including:
+- `extension.ts:createCapabilityRouterTool` (262)
+- `registry.ts:RegistryImpl` (203)
+- `stats.ts:formatPrometheus` (41) – may be eligible for extraction
+- Potential other utility functions in extensions
+
+---

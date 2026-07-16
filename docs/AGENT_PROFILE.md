@@ -616,3 +616,7 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 ## Recent Improvements (2026-07-16)
 
 - **Tool-Template Function Compliance:** Refactored `executeTool` from 31 to 12 lines, extracting `handleDiscovery` and `runCommand`. Fixed lint unused variable. All tests pass (1342). Function length violations reduced to 13.
+
+## Recent Improvements (2026-07-16)
+
+- **Child-Worker Main Compliance:** Refactored 49-line `main` to 19 lines, extracting `handleMessage` and `handleError`. Fixed lint. All tests pass (1342). Violations reduced to ~12.
