@@ -42,75 +42,46 @@ function loadKeybindings(): Record<string, string> {
   }
 }
 
-export function registerKeybindingExtension(api: ExtensionAPI): void {
-  // Listen for session start to set up keybindings
-  api.on("session_start", async (_event, ctx: ExtensionContext) => {
-    const bindings = loadKeybindings();
-
-    // Build inverse map: key string -> command name
-    // Support simple keys (single char) or combos like "ctrl+r", "alt+s", "ctrl+shift+t"
-    const keyToCmd = new Map<string, string>();
-    for (const [cmd, key] of Object.entries(bindings)) {
-      if (typeof key === "string" && key.length > 0) {
-        // Normalize: lowercase, but preserve ctrl/alt/shift modifiers (case-insensitive)
-        const normalized = key.toLowerCase();
-        keyToCmd.set(normalized, cmd);
-      }
+function buildKeyToCmd(bindings: Record<string, string>): Map<string, string> {
+  const keyToCmd = new Map<string, string>();
+  for (const [cmd, key] of Object.entries(bindings)) {
+    if (typeof key === "string" && key.length > 0) {
+      const normalized = key.toLowerCase();
+      keyToCmd.set(normalized, cmd);
     }
+  }
+  return keyToCmd;
+}
 
-    if (keyToCmd.size === 0) {
-      // No bindings configured, do nothing
+function handleInputData(api: ExtensionAPI, data: string, keyToCmd: Map<string, string>, ctx: ExtensionContext): { consume: boolean } | undefined {
+  if (!ctx.isIdle() || !ctx.hasUI) return;
+  let received = data;
+  if (data.length === 1) {
+    const code = data.charCodeAt(0);
+    if (code >= 1 && code <= 26) {
+      const letter = String.fromCharCode(code + 96);
+      received = `ctrl+${letter}`;
+    } else if (code === 27) {
       return;
     }
+  }
+  const normalizedReceived = received.toLowerCase();
+  const cmd = keyToCmd.get(normalizedReceived);
+  if (!cmd) return;
+  try {
+    api.sendUserMessage(`/${cmd}`);
+  } catch (err: any) {
+    ctx.ui.notify(`Failed to execute ${cmd}: ${err?.message || "unknown error"}`, 'error');
+  }
+  return { consume: true };
+}
 
-    // Register a terminal input listener
-    const unsubscribe = ctx.ui.onTerminalInput((data) => {
-      // Only process if agent idle and in TUI mode (to avoid interfering with streaming output)
-      if (!ctx.isIdle() || !ctx.hasUI) {
-        return; // don't consume
-      }
-
-      // data is a string; we want to interpret as raw key sequence
-      // For combos, we need to parse control sequences. For simplicity, we treat normalized key string as representation.
-      // We'll convert incoming data to a comparable string. For simple keys, it's just the char.
-      // For ctrl+letter, terminal sends control bytes (e.g., ctrl+r = 0x12). We'll map common ones.
-      // To keep it simple, we only support single printable characters and a few common combos via their string names.
-      // We'll check if data matches an entry in keyToCmd directly by string comparison.
-      // However, when user presses 't', data = 't'. If binding is "t", it matches.
-      // For ctrl+r, data is '\u0012' (ASCII 18). Our normalized key is "ctrl+r". We need to map.
-      // We'll create a mapping from actual received char to normalized.
-      let received = data;
-      // Normalize control characters
-      if (data.length === 1) {
-        const code = data.charCodeAt(0);
-        if (code >= 1 && code <= 26) {
-          // ctrl+A = 1 -> ctrl+a
-          const letter = String.fromCharCode(code + 96); // 1->a
-          received = `ctrl+${letter}`;
-        } else if (code === 27) {
-          // Escape - ignore
-          return;
-        }
-      }
-      const normalizedReceived = received.toLowerCase();
-
-      const cmd = keyToCmd.get(normalizedReceived);
-      if (cmd) {
-        // Execute slash command via sendUserMessage (handled synchronously by command system)
-        try {
-          api.sendUserMessage(`/${cmd}`);
-        } catch (err: any) {
-          ctx.ui.notify(`Failed to execute ${cmd}: ${err?.message || "unknown error"}`, "error");
-        }
-        // Consume the input so it doesn't go to editor
-        return { consume: true };
-      }
-      // If not matched, let it pass through
-    });
-
-    // Ensure cleanup on session shutdown
-    api.on("session_shutdown", () => {
-      unsubscribe();
-    });
+export function registerKeybindingExtension(api: ExtensionAPI): void {
+  api.on('session_start', async (_event, ctx: ExtensionContext) => {
+    const bindings = loadKeybindings();
+    const keyToCmd = buildKeyToCmd(bindings);
+    if (keyToCmd.size === 0) return;
+    const unsubscribe = ctx.ui.onTerminalInput((data) => handleInputData(api, data, keyToCmd, ctx));
+    api.on('session_shutdown', () => unsubscribe());
   });
 }
