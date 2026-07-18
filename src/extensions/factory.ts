@@ -30,7 +30,7 @@ import { registerTeamWidget } from "./team/team-widget.js";
 import { registerMemoryRenderer } from "./renderers/memory-renderer.js";
 import { registerBranchSummaryRenderer } from "./renderers/branch-summary-renderer.js";
 import { registerTeamOpsRenderer } from "./renderers/team-ops-renderer.js";
-import { registerProviderCommand } from "./commands/provider-command.js";
+
 import { registerTeamCommand } from "./commands/team-command.js";
 import { registerKeybindingExtension } from "./keybinding/keybinding-extension.js";
 
@@ -72,7 +72,7 @@ export default async function extensionsAggregator(api: import("@earendil-works/
   registerTeamOpsRenderer(api);
 
   // Register commands
-  registerProviderCommand(api);
+
   registerTeamCommand(api);
   // Register keybinding extension
   registerKeybindingExtension(api);
