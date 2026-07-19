@@ -5589,3 +5589,32 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Next Cycle:** Continue with `extensions/tools/skill-reader.ts` (76 lines) to refactor `createSkillLoaderTool` which dominates that violation.
 
 ---
+
+## Cycle 140 - SkillReader Tool Function Refactor - 2026-07-18 (Autonomous)
+
+**Task:** Refactor `extensions/tools/skill-reader.ts` to bring `createSkillLoaderTool` and related helpers within ≤20 lines.  
+**Type:** Violation Fix (Function Length)  
+**Priority:** HIGH (76-line function)  
+**Duration:** ~45 minutes  
+**Status:** ✅ Success
+
+**Refactor Details:**
+- Extracted `getSkillPromptGuidelines` to single-line return (14 lines total)
+- Extracted `getSkillSnippet` (6 lines)
+- Extracted `getSkillParameters` (17 lines)
+- Extracted `skillLoaderExecute` (16 lines)
+- Simplified `createSkillLoaderTool` to thin wrapper (12 lines)
+
+**Verification:**
+- Lint: 0 errors
+- TypeScript: clean
+- Tests: 1342 passing (100%)
+- Function length check: 0 violations in skill-reader.ts
+
+**Violations Reduction:**
+- Global total: 208 → 207 (1 eliminated)
+- skill-reader.ts: 1 → 0
+
+**Next Cycle:** Attack next highest offenders: `extensions/hooks/auto-continue.ts` (99 lines), `extensions/master-tool/commands/git/status.ts` (83 lines).
+
+---

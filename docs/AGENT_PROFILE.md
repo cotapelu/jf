@@ -637,3 +637,9 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - **Read-skill Function Compliance:** Refactored `executeLoadSkill` into 5 small helpers (≤12 lines each). Eliminated 1 global violation. All tests pass (1342), lint and TypeScript clean.
 - **Next:** Tackle `extensions/tools/skill-reader.ts` `createSkillLoaderTool` (76 lines) to reach 0 violations.
 
+
+## Recent Improvements (2026-07-18)
+
+- **SkillReader Tool Compliance:** Refactored `createSkillLoaderTool` and helpers to ≤20 lines each (eliminated 1 global violation). All tests pass (1342), lint and TypeScript clean.
+- **Next:** Focus on `extensions/hooks/auto-continue.ts` (99 lines) and `master-tool/commands/git/status.ts` (83 lines) to continue progress toward 0 violations.
+

@@ -118,9 +118,8 @@ function getAvailableSkills(): string[] {
 // 3. TOOL DEFINITION
 // ============================================================================
 
-export function createSkillLoaderTool(): ToolDefinition {
-  // Dynamically discover available skills and generate guidelines
-  const skills = getAvailableSkills();
+// --- Helper Functions for Skill Loader ---
+function getSkillPromptGuidelines(skills: string[]): string[] {
   const skillListLines: string[] = [];
   if (skills.length > 0) {
     skillListLines.push(`  Available skills (${skills.length}):`);
@@ -132,67 +131,64 @@ export function createSkillLoaderTool(): ToolDefinition {
   } else {
     skillListLines.push(`  No skills currently available.`);
   }
-  skillListLines.push(`  Note: Skills are read-only. Place .md files in skills/ to add new ones.`);
+  return [`skill_reader commands:`,`• read_skill: Read skill template from skills/ directory`,`  - args:{} → list all available skill names`,`  - args:{skill:'<name>'} → return full skill content as text`,...skillListLines,`  Note: Skills are read-only. Place .md files in skills/ to add new ones.`];
+}
 
-  const finalPromptGuidelines = [
-    `skill_reader commands:`,
-    `• read_skill: Read skill template from skills/ directory`,
-    `  - args:{} → list all available skill names`,
-    `  - args:{skill:'<name>'} → return full skill content as text`,
-    ...skillListLines
-  ];
-
-  // Create concise skill list for promptSnippet
+function getSkillSnippet(skills: string[]): string {
   const skillsConcise = skills.length > 0
     ? `// skills: ${skills.join(', ')}`
     : `// no skills available`;
+  return `skill_reader({ command:'read_skill', args:{skill:'<skill-name>'} })  ${skillsConcise}`;
+}
 
+function getSkillParameters(): any {
+  return {
+    type: "object",
+    properties: {
+      command: {
+        type: "string",
+        enum: Object.keys(commands),
+        description: "Sub-command name"
+      },
+      args: {
+        type: "object",
+        description: "Arguments for the selected sub-command"
+      }
+    },
+    required: ["command", "args"]
+  };
+}
+
+async function skillLoaderExecute(_toolCallId: string, params: any, signal?: AbortSignal, _onUpdate?: any, ctx?: any): Promise<any> {
+  const { command, args } = params;
+  const loader = commands[command];
+  if (!loader) return { content: [{ type: 'text', text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }], details: null, isError: true };
+  try {
+    if (Object.keys(args).length === 0) {
+      const meta = cm[command];
+      if (meta) return buildDiscoveryOutput(command, meta);
+    }
+    const cwd = ctx?.session?.cwd ?? process.cwd();
+    const result = await executeCommand(loader, args, cwd, signal, ctx);
+    return { content: [{ type: 'text', text: result.stdout }], details: result, isError: result.code !== 0 };
+  } catch (error: any) {
+    return { content: [{ type: 'text', text: `skill_reader ${command} error: ${error.message}` }], details: { error: error.message, command }, isError: true };
+  }
+}
+
+export function createSkillLoaderTool(): ToolDefinition {
+  const skills = getAvailableSkills();
   return {
     name: "skill_reader",
     label: "Skill Reader",
     description: "Retrieve skill .md content for LLM inspection (does not register with Pi).",
-    promptSnippet: `skill_reader({ command:'read_skill', args:{skill:'<skill-name>'} })  ${skillsConcise}`,
-    promptGuidelines: finalPromptGuidelines,
-    parameters: {
-      type: "object",
-      properties: {
-        command: {
-          type: "string",
-          enum: Object.keys(commands),
-          description: "Sub-command name"
-        },
-        args: {
-          type: "object",
-          description: "Arguments for the selected sub-command"
-        }
-      },
-      required: ["command", "args"]
-    },
-
-
-    async execute(_toolCallId: string, params: any, signal?: AbortSignal, _onUpdate?: any, ctx?: any) {
-      const { command, args } = params;
-      const loader = commands[command];
-      if (!loader) return { content: [{ type: 'text', text: `Unknown command: ${command}. Available: ${Object.keys(commands).join(', ')}` }], details: null, isError: true };
-      try {
-        if (Object.keys(args).length === 0) {
-          const meta = cm[command];
-          if (meta) return buildDiscoveryOutput(command, meta);
-        }
-        const cwd = ctx?.session?.cwd ?? process.cwd();
-        const result = await executeCommand(loader, args, cwd, signal, ctx);
-        return { content: [{ type: 'text', text: result.stdout }], details: result, isError: result.code !== 0 };
-      } catch (error: any) {
-        return { content: [{ type: 'text', text: `skill_reader ${command} error: ${error.message}` }], details: { error: error.message, command }, isError: true };
-      }
-    }
+    promptSnippet: getSkillSnippet(skills),
+    promptGuidelines: getSkillPromptGuidelines(skills),
+    parameters: getSkillParameters(),
+    execute: skillLoaderExecute
   };
 }
-
-// ============================================================================
-// 4. REGISTRATION
-// ============================================================================
-
 export function registerSkillReaderExtension(api: import("@earendil-works/pi-coding-agent").ExtensionAPI): void {
   api.registerTool(createSkillLoaderTool());
 }
+
