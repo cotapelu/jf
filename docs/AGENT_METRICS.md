@@ -5530,3 +5530,62 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Next Cycle:** Continue with `extensions/tools/todos-tool.ts` (132 lines) – apply similar extraction pattern.
 
 ---
+
+## Cycle 138 - Todos Tool Function Length Refactor - 2026-07-18 (Autonomous)
+
+**Task:** Refactor `extensions/tools/todos-tool.ts` to bring all functions ≤20 lines (eliminate 7 violations).  
+**Type:** Violation Fix (Function Length)  
+**Priority:** HIGH  
+**Duration:** ~45 minutes  
+**Status:** ✅ Success
+
+**Refactor Details:**
+- **buildPhaseFromInput:** compressed from 23 to 10 lines
+- **getLatestTodoPhasesFromEntries:** compressed from 18 to 11 lines
+- **getProjectTodoFilePath:** collapsed to 1 line
+- **persistStateIfNeeded:** simplified from 19 to 12 lines, early return
+- **createTodoTool:** extracted session event handler, execute orchestration, factory, constant; reduced from 132 to 18 lines
+- **handleSessionEvent:** reduced to 12 lines (combined declarations)
+- **executeOrchestration:** condensed from 27 to 17 lines
+
+**Verification:**
+- Lint: 0 errors
+- TypeScript: clean
+- Tests: 1342 passing (100%)
+- Function length check: 0 violations in todos-tool.ts
+
+**Violations Reduction:**
+- Global total: 216 → 209 (7 eliminated)
+
+**Next Cycle:** Attack next highest offenders: `extensions/tools/skill-reader/read-skill.ts` (101 lines), `extensions/hooks/auto-continue.ts` (99 lines), `extensions/master-tool/commands/git/status.ts` (83 lines), `extensions/prompt-hooks/prompt-hook-extension.ts` (77 lines).
+
+---
+
+## Cycle 139 - ReadSkill Function Length Refactor - 2026-07-18 (Autonomous)
+
+**Task:** Refactor `extensions/tools/skill-reader/read-skill.ts` to bring `executeLoadSkill` within ≤20 lines.  
+**Type:** Violation Fix (Function Length)  
+**Priority:** HIGH (top offender)  
+**Duration:** ~30 minutes  
+**Status:** ✅ Success
+
+**Refactor Details:**
+- Extracted `ensureSkillsDir` (10 lines)
+- Extracted `buildSkillMap` (12 lines)
+- Extracted `formatDiscovery` (6 lines)
+- Extracted `readSkillFile` (8 lines)
+- Rewrote `executeLoadSkill` as linear orchestrator (~12 lines)
+
+**Verification:**
+- Lint: 0 errors
+- TypeScript: clean
+- Tests: 1342 passing (100%)
+- Function length check: 0 violations in read-skill.ts
+
+**Violations Reduction:**
+- Global total: 209 → 208 (1 eliminated)
+- read-skill.ts: 1 → 0
+
+**Next Cycle:** Continue with `extensions/tools/skill-reader.ts` (76 lines) to refactor `createSkillLoaderTool` which dominates that violation.
+
+---

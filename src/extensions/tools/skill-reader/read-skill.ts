@@ -32,94 +32,66 @@ function getSkillsDir(): string {
  * IMPORTANT: This tool only RETRIEVES skill content for LLM inspection.
  * It does NOT register skills with Pi or modify system state.
  */
+// --- Helpers ---
+async function ensureSkillsDir(dir: string): Promise<{stdout:string,stderr:string,code:number} | null> {
+  try {
+    const stat = await fs.stat(dir);
+    if (!stat.isDirectory()) {
+      return { stdout:"", stderr:`Skills directory not found: ${dir}`, code:1 };
+    }
+    return null;
+  } catch (e: any) {
+    return { stdout:"", stderr:`Cannot access skills directory: ${dir} (${e.message})`, code:1 };
+  }
+}
+
+async function buildSkillMap(dir: string): Promise<Map<string,string> | {stdout:string,stderr:string,code:number}> {
+  const files = await fs.readdir(dir);
+  const mdFiles = files.filter(f => f.endsWith('.md'));
+  if (mdFiles.length === 0) {
+    return { stdout:`No skill templates found in ${dir}`, stderr:"", code:0 };
+  }
+  const map = new Map<string, string>();
+  for (const file of mdFiles) {
+    const name = path.basename(file, '.md');
+    map.set(name, path.join(dir, file));
+  }
+  return map;
+}
+
+function formatDiscovery(dir: string, map: Map<string,string>): {stdout:string,stderr:"",code:0} {
+  const lines = [
+    `Available skills (${map.size}) in ${dir}:`,
+    ...Array.from(map.keys()).sort().map(s => `  • ${s}`),
+    "",
+    `To view a skill: skill_loader({ command:'load_skill', args:{ skill:'<name>' } })`
+  ];
+  return { stdout: lines.join('\n'), stderr: "", code: 0 };
+}
+
+async function readSkillFile(filePath: string): Promise<string | {stdout:"",stderr:string,code:number}> {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    return content;
+  } catch (e: any) {
+    return { stdout:"", stderr:`Error reading skill: ${e.message}`, code:1 };
+  }
+}
+
 export async function executeLoadSkill(
   args: any,
   _cwd: string,
   _signal?: AbortSignal,
   _ctx?: any
 ) {
-  const { skill } = args;
-  const skillsDir = getSkillsDir();
-
-  try {
-    // Check directory exists
-    try {
-      const stat = await fs.stat(skillsDir);
-      if (!stat.isDirectory()) {
-        return {
-          stdout: "",
-          stderr: `Skills directory not found: ${skillsDir}`,
-          code: 1,
-        };
-      }
-    } catch (e: any) {
-      return {
-        stdout: "",
-        stderr: `Cannot access skills directory: ${skillsDir} (${e.message})`,
-        code: 1,
-      };
-    }
-
-    // Read all .md files
-    const files = await fs.readdir(skillsDir);
-    const mdFiles = files.filter(f => f.endsWith('.md'));
-
-    if (mdFiles.length === 0) {
-      return {
-        stdout: `No skill templates found in ${skillsDir}`,
-        stderr: "",
-        code: 0,
-      };
-    }
-
-    // Build skill map: name → file path
-    const skillMap = new Map<string, string>();
-    for (const file of mdFiles) {
-      const name = path.basename(file, '.md');
-      skillMap.set(name, path.join(skillsDir, file));
-    }
-
-    // ── DISCOVERY MODE: No skill specified → list all ────────────────────────
-    if (!skill) {
-      const lines = [
-        `Available skills (${skillMap.size}) in ${skillsDir}:`,
-        ...Array.from(skillMap.keys()).sort().map(s => `  • ${s}`),
-        "",
-        `To view a skill: skill_loader({ command:'load_skill', args:{ skill:'<name>' } })`
-      ];
-      return {
-        stdout: lines.join('\n'),
-        stderr: "",
-        code: 0,
-      };
-    }
-
-    // ── GET MODE: Retrieve specific skill content ────────────────────────────
-    if (!skillMap.has(skill)) {
-      return {
-        stdout: "",
-        stderr: `Skill '${skill}' not found. Available: ${Array.from(skillMap.keys()).join(', ')}`,
-        code: 1,
-      };
-    }
-
-    const filePath = skillMap.get(skill)!;
-    const content = await fs.readFile(filePath, 'utf-8');
-
-    // Return full content for LLM to read
-    return {
-      stdout: content,
-      stderr: "",
-      code: 0,
-    };
-
-  } catch (error: any) {
-    return {
-      stdout: "",
-      stderr: `load_skill error: ${error.message}`,
-      code: 1,
-    };
-  }
+  const { skill } = args; const skillsDir = getSkillsDir();
+  const dirCheck = await ensureSkillsDir(skillsDir); if (dirCheck) return dirCheck;
+  const mapResult = await buildSkillMap(skillsDir); if (!(mapResult instanceof Map)) return mapResult;
+  const skillMap = mapResult as Map<string,string>;
+  if (!skill) return formatDiscovery(skillsDir, skillMap);
+  if (!skillMap.has(skill)) return { stdout:"", stderr:`Skill '${skill}' not found. Available: ${Array.from(skillMap.keys()).join(', ')}`, code:1 };
+  const filePath = skillMap.get(skill)!; const content = await readSkillFile(filePath);
+  return typeof content === 'string' ? { stdout: content, stderr:"", code:0 } : content;
 }
 
 export default { schema, executeLoadSkill };

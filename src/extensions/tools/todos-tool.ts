@@ -155,9 +155,7 @@ interface PersistedTodo {
 // File I/O - Project-based storage
 // ============================================================================
 
-function getProjectTodoFilePath(cwd: string): string {
-  return join(cwd, CONFIG_DIR_NAME, "agent", "todos.json");
-}
+function getProjectTodoFilePath(cwd: string): string { return join(cwd, CONFIG_DIR_NAME, "agent", "todos.json"); }
 
 async function loadTodoFromFile(cwd: string): Promise<TodoFile | null> {
   const filePath = getProjectTodoFilePath(cwd);
@@ -211,21 +209,11 @@ function buildPhaseFromInput(
   phaseId: string,
   nextTaskId: number,
 ): { phase: TodoPhase; nextTaskId: number } {
-  const tasks: TodoItem[] = [];
-  let tid = nextTaskId;
+  const tasks: TodoItem[] = []; let tid = nextTaskId;
   for (const t of input.tasks ?? []) {
-    // Cast status to TodoStatus if valid, otherwise default to pending
     let status: TodoStatus = "pending";
-    if (t.status && ["pending", "in_progress", "completed", "abandoned"].includes(t.status)) {
-      status = t.status as TodoStatus;
-    }
-    tasks.push({
-      id: `task-${tid++}`,
-      content: t.content,
-      status,
-      notes: t.notes,
-      details: t.details,
-    });
+    if (t.status && ["pending","in_progress","completed","abandoned"].includes(t.status)) status = t.status as TodoStatus;
+    tasks.push({ id: `task-${tid++}`, content: t.content, status, notes: t.notes, details: t.details });
   }
   return { phase: { id: phaseId, name: input.name, tasks }, nextTaskId: tid };
 }
@@ -464,22 +452,16 @@ export function formatSummary(phases: TodoPhase[], errors: string[]): string {
  * Used for reconstructing state from conversation history.
  */
 export function getLatestTodoPhasesFromEntries(entries: any[]): TodoPhase[] {
-  // Iterate from the end to find the most recent valid todos toolResult
   for (let i = entries.length - 1; i >= 0; i--) {
-    const entry = entries[i];
-    if (entry.type !== 'message') continue;
-    const message = entry.message;
-    if (!message || message.role !== 'toolResult') continue;
-    const toolName = message.toolName;
-    if (toolName !== 'todos' && toolName !== 'todo_write') continue;
-    // Skip error entries (they may have isError flag)
-    if (message.isError) continue;
-    const details = message.details;
-    if (details && Array.isArray(details.phases)) {
-      return details.phases;
-    }
+    const e = entries[i];
+    if (e.type !== 'message') continue;
+    const m = e.message;
+    if (!m || m.role !== 'toolResult') continue;
+    if ((m.toolName !== 'todos' && m.toolName !== 'todo_write') || m.isError) continue;
+    const d = m.details;
+    if (d && Array.isArray(d.phases)) return d.phases;
   }
-    return [];
+  return [];
 }
 
 // ============================================================================
@@ -639,23 +621,15 @@ async function applyAndUpdateState(session: TodoSessionState, p: any): Promise<{
   return { errors };
 }
 
-async function persistStateIfNeeded(
-  session: TodoSessionState,
-  ctx: ExtensionContext,
-  op: string,
-  errors: string[]
-): Promise<void> {
-  if (errors.length === 0 && op !== "list") {
-    try {
-      const filePath = getProjectTodoFilePath(ctx.cwd);
-      await withFileMutationQueue(filePath, async () => {
-        await session.state.saveToFile(ctx.cwd);
-      });
-      session.state.setStorageType("file");
-    } catch (e: any) {
-      errors.push(`Save failed: ${e.message}`);
-      session.state.setStorageType("memory");
-    }
+async function persistStateIfNeeded(session: TodoSessionState, ctx: ExtensionContext, op: string, errors: string[]): Promise<void> {
+  if (errors.length !== 0 || op === "list") return;
+  try {
+    const filePath = getProjectTodoFilePath(ctx.cwd);
+    await withFileMutationQueue(filePath, async () => { await session.state.saveToFile(ctx.cwd); });
+    session.state.setStorageType("file");
+  } catch (e: any) {
+    errors.push(`Save failed: ${e.message}`);
+    session.state.setStorageType("memory");
   }
 }
 
@@ -685,130 +659,74 @@ function buildResult(session: TodoSessionState, errors: string[], summaryText: s
 // Tool Factory (with mergeCallAndResult support)
 // ============================================================================
 
+async function handleSessionEvent(_event: any, ctx: ExtensionContext): Promise<void> {
+  const session = getSessionState(ctx), cwd = ctx.cwd, release = await session.mutex.lock();
+  try {
+    const found = session.state.reconstructFromEntries(ctx.sessionManager.getBranch());
+    if (!found) {
+      const loaded = await session.state.loadFromFile(cwd);
+      if (!loaded) session.state.setStorageType("memory");
+    } else {
+      session.state.setStorageType("session");
+    }
+  } finally { release(); }
+}
+
+async function executeOrchestration(session: TodoSessionState, params: TodosParams | string, ctx: ExtensionContext, api: ExtensionAPI): Promise<AgentToolResult<any>> {
+  const { p, errors: parseErrors } = parseAndValidateParams(params);
+  if (parseErrors.length > 0) return buildResult(session, parseErrors, formatResultSummary(session, parseErrors));
+  const { op, errors: opErrors } = getOperationInfo(p);
+  if (opErrors.length > 0) return buildResult(session, opErrors, formatResultSummary(session, opErrors));
+  const { errors: applyErrors } = await applyAndUpdateState(session, p);
+  const allErrors = [...parseErrors, ...opErrors, ...applyErrors];
+  await persistStateIfNeeded(session, ctx, op!, allErrors);
+  const summaryText = formatResultSummary(session, allErrors);
+  if (op && op !== "list" && allErrors.length === 0) await maybeSendSystemMessage(api, op, summaryText);
+  return buildResult(session, allErrors, summaryText);
+}
+
+function createExecuteHandler(api: ExtensionAPI) {
+  return async (_toolCallId: string, params: TodosParams | string, _signal: AbortSignal | undefined, _onUpdate: any, ctx: ExtensionContext): Promise<AgentToolResult<any>> => {
+    const session = getSessionState(ctx);
+    const release = await session.mutex.lock();
+    try { return await executeOrchestration(session, params, ctx, api); } finally { release(); }
+  };
+}
+
+const TODOS_PROMPT_GUIDELINES = [
+  "RULE: Operation is the KEY. todos({ OPERATION: params }), NOT { operation: name, params: {...} }",
+  "",
+  "TEMPLATES:",
+  "• add_phase: todos({ add_phase: { name: 'Phase', tasks: [{ content: 'Task' }] } })",
+  "• add_task:  todos({ add_task: { phase: 'phase-1', content: 'Task' } })",
+  "  ⚠️ phase must be ID (phase-1), NOT name",
+  "• update:    todos({ update: { id: 'task-5', status: 'in_progress' } })",
+  "  Batch:    todos({ update: { ids: ['task-1','task-2'], status: 'completed' } })",
+  "  status: pending|in_progress|completed|abandoned",
+  "• remove_task: todos({ remove_task: { id: 'task-3' } })",
+  "• delete: todos({ delete: {} })",
+  "• list: todos({ list: {} })",
+  "",
+  "AUTO-RULES:",
+  "• Only ONE task can be 'in_progress' (auto-normalizes others to 'pending')",
+  "• Data persists to " + CONFIG_DIR_NAME + "/agent/todos.json",
+  "• Use 'details' field only for in_progress context (multiline)",
+  "• Task IDs are auto: task-1, task-2... Find them by running todos({ list: {} })"
+];
+
 function createTodoTool(api: ExtensionAPI): ToolDefinition<any, TodoToolDetails> {
-  // No per-session state; global constants only
-
-  api.on("session_start", async (_event, ctx) => {
-    const session = getSessionState(ctx);
-    const cwd = ctx.cwd;
-    const release = await session.mutex.lock();
-    try {
-      const found = session.state.reconstructFromEntries(ctx.sessionManager.getBranch());
-      if (!found) {
-        // Load file without lock (read-only)
-        const loaded = await session.state.loadFromFile(cwd);
-        if (!loaded) {
-          session.state.setStorageType("memory");
-        }
-        // If loaded, loadFromFile already set storage to "file"
-      } else {
-        session.state.setStorageType("session");
-      }
-    } finally {
-      release();
-    }
-  });
-
-  api.on("session_tree", async (_event, ctx) => {
-    const session = getSessionState(ctx);
-    const cwd = ctx.cwd;
-    const release = await session.mutex.lock();
-    try {
-      const found = session.state.reconstructFromEntries(ctx.sessionManager.getBranch());
-      if (!found) {
-        // Load file without lock (read-only)
-        const loaded = await session.state.loadFromFile(cwd);
-        if (!loaded) {
-          session.state.setStorageType("memory");
-        }
-        // If loaded, loadFromFile already set storage to "file"
-      } else {
-        session.state.setStorageType("session");
-      }
-    } finally {
-      release();
-    }
-  });
-
-  async function executeOrchestration(
-    session: TodoSessionState,
-    params: TodosParams | string,
-    ctx: ExtensionContext,
-    api: ExtensionAPI
-  ): Promise<AgentToolResult<any>> {
-    const { p, errors: parseErrors } = parseAndValidateParams(params);
-    if (parseErrors.length > 0) {
-      return buildResult(session, parseErrors, formatResultSummary(session, parseErrors));
-    }
-    const { op, errors: opErrors } = getOperationInfo(p);
-    if (opErrors.length > 0) {
-      return buildResult(session, opErrors, formatResultSummary(session, opErrors));
-    }
-    const { errors: applyErrors } = await applyAndUpdateState(session, p);
-    const allErrors = [...parseErrors, ...opErrors, ...applyErrors];
-    await persistStateIfNeeded(session, ctx, op!, allErrors);
-    const summaryText = formatResultSummary(session, allErrors);
-    if (op && op !== "list" && allErrors.length === 0) {
-      await maybeSendSystemMessage(api, op, summaryText);
-    }
-    return buildResult(session, allErrors, summaryText);
-  }
-
+  api.on("session_start", handleSessionEvent);
+  api.on("session_tree", handleSessionEvent);
   return {
     name: "todos",
     label: "Todo",
     description: "Complete todo management: add_phase, add_task, update, remove_task, delete, list. Auto-normalizes ONE in_progress task. Persists to " + CONFIG_DIR_NAME + "/agent/todos.json. add_task accepts phase name or ID. update supports batch update via ids array.",
     promptSnippet: "todos({ OPERATION: {...} }). All params are OBJECTS (not JSON strings). Ops: add_phase, add_task, update, remove_task, delete, list.",
-    promptGuidelines: [
-      "RULE: Operation is the KEY. todos({ OPERATION: params }), NOT { operation: name, params: {...} }",
-      "",
-      "TEMPLATES:",
-      "• add_phase: todos({ add_phase: { name: 'Phase', tasks: [{ content: 'Task' }] } })",
-      "• add_task:  todos({ add_task: { phase: 'phase-1', content: 'Task' } })",
-      "  ⚠️ phase must be ID (phase-1), NOT name",
-      "• update:    todos({ update: { id: 'task-5', status: 'in_progress' } })",
-      "  Batch:    todos({ update: { ids: ['task-1','task-2'], status: 'completed' } })",
-      "  status: pending|in_progress|completed|abandoned",
-      "• remove_task: todos({ remove_task: { id: 'task-3' } })",
-      "• delete: todos({ delete: {} })",
-      "• list: todos({ list: {} })",
-      "",
-      "AUTO-RULES:",
-      "• Only ONE task can be 'in_progress' (auto-normalizes others to 'pending')",
-      "• Data persists to " + CONFIG_DIR_NAME + "/agent/todos.json",
-      "• Use 'details' field only for in_progress context (multiline)",
-      "• Task IDs are auto: task-1, task-2... Find them by running todos({ list: {} })",
-    ],
+    promptGuidelines: TODOS_PROMPT_GUIDELINES,
     parameters: {},
-
-    /**
-     * Execute a todos operation.
-     *
-     * @param toolCallId - Unique identifier for this tool call
-     * @param params - Operation parameters (TodosParams) or JSON string
-     * @param _signal - Optional abort signal
-     * @param _onUpdate - Optional update callback
-     * @param ctx - Extension context containing session manager
-     * @returns Promise resolving to tool result with content, details, and error flag
-     */
-    async execute(
-      toolCallId: string,
-      params: TodosParams | string,
-      _signal: AbortSignal | undefined,
-      _onUpdate: (update: any) => void | undefined,
-      ctx: ExtensionContext
-    ) {
-      const session = getSessionState(ctx);
-      const release = await session.mutex.lock();
-      try {
-        return await executeOrchestration(session, params, ctx, api);
-      } finally {
-        release();
-      }
-    },
-
+    execute: createExecuteHandler(api),
     renderCall: renderTodosCall,
-    renderResult: renderTodosResult,
+    renderResult: renderTodosResult
   };
 }
 
