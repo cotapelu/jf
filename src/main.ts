@@ -20,9 +20,9 @@ import type {
 } from '@earendil-works/pi-coding-agent';
 
 import { defaultAssistantPrompt } from './prompts/index.js';
-
 import { setCurrentRuntime } from './runtime-context.js';
 import { registerAllAddon } from './index.js';
+import { detectProjectProfile, writeProjectProfile } from './project-profile.js';
 
 /**
  * Tạo runtime factory sử dụng addon đã đăng ký
@@ -30,6 +30,21 @@ import { registerAllAddon } from './index.js';
 export function createRuntimeFactory(): CreateAgentSessionRuntimeFactory {
   return async (options) => {
     const { cwd, agentDir, sessionManager, sessionStartEvent } = options;
+
+    // 1. Detect and record project profile (for quality thresholds)
+    try {
+      const profile = await detectProjectProfile(cwd);
+      await writeProjectProfile(profile);
+      console.log('[JF] Project profile detected:', {
+        size: profile.size,
+        risk: profile.risk,
+        deployment: profile.deployment,
+        team: profile.team,
+      });
+    } catch (err) {
+      console.warn('[JF] Project profile detection failed:', err);
+    }
+
     const { tools, extensions: addonExtensions } = registerAllAddon(cwd);
 
     const servicesOptions: CreateAgentSessionServicesOptions = {

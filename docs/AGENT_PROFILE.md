@@ -631,6 +631,7 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - **Todos Tool Function Compliance:** Refactored `todos-tool.ts` to ≤20 line functions (7 violations eliminated). Used extraction pattern similar to memory-tool. All tests pass (1342), lint and TypeScript clean. Global function length violations reduced to 209.
 - **Next:** Focus on `skill-reader/read-skill.ts` (101 lines) and other top offenders to reach 100% function length compliance.
 
+<<<<<<< HEAD
 
 ## Recent Improvements (2026-07-18)
 
@@ -643,3 +644,5 @@ All previously identified coverage gaps have been addressed. System exceeds qual
 - **SkillReader Tool Compliance:** Refactored `createSkillLoaderTool` and helpers to ≤20 lines each (eliminated 1 global violation). All tests pass (1342), lint and TypeScript clean.
 - **Next:** Focus on `extensions/hooks/auto-continue.ts` (99 lines) and `master-tool/commands/git/status.ts` (83 lines) to continue progress toward 0 violations.
 
+=======
+>>>>>>> origin/main

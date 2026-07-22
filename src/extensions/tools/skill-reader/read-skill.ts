@@ -74,7 +74,7 @@ async function readSkillFile(filePath: string): Promise<string | {stdout:"",stde
     const content = await fs.readFile(filePath, 'utf-8');
     return content;
   } catch (e: any) {
-    return { stdout:"", stderr:`Error reading skill: ${e.message}`, code:1 };
+    return { stdout:"", stderr:`load_skill error: ${e.message}`, code:1 };
   }
 }
 
@@ -87,7 +87,7 @@ export async function executeLoadSkill(
   const { skill } = args; const skillsDir = getSkillsDir();
   const dirCheck = await ensureSkillsDir(skillsDir); if (dirCheck) return dirCheck;
   const mapResult = await buildSkillMap(skillsDir); if (!(mapResult instanceof Map)) return mapResult;
-  const skillMap = mapResult as Map<string,string>;
+  const skillMap = mapResult;
   if (!skill) return formatDiscovery(skillsDir, skillMap);
   if (!skillMap.has(skill)) return { stdout:"", stderr:`Skill '${skill}' not found. Available: ${Array.from(skillMap.keys()).join(', ')}`, code:1 };
   const filePath = skillMap.get(skill)!; const content = await readSkillFile(filePath);

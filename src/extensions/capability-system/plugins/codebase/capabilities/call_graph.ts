@@ -8,11 +8,9 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { resolve, dirname } from "path";
-// import { fileURLToPath } from "url"; // unused removed
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import path, { dirname, resolve } from "path";
+import { Worker } from "worker_threads";
+import { fileURLToPath } from "url";
 
 // __filename unused
 // __dirname unused
@@ -132,8 +130,38 @@ async function parseFile(cwd: string, fileRel: string): Promise<ParsedFile | nul
   try { await fs.access(fileAbs); } catch { return null; }
   let content: string; try { content = await fs.readFile(fileAbs, 'utf-8'); } catch { return null; }
   let ast; try {
-    const parser = require('@typescript-eslint/parser'); const { parse } = parser;
-    ast = parse(content, { sourceType:"module", ecmaVersion:"latest", ts:true, jsx:true, loc:true, range:false });
+    // Run parser in a worker thread to avoid blocking
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const workerPath = path.join(__dirname, 'parserWorker.js');
+    console.log('Creating worker:', workerPath);
+    ast = await new Promise((resolve, reject) => {
+      let worker;
+      try {
+        worker = new Worker(workerPath, { workerData: { content } });
+      } catch (e) {
+        console.error('Worker creation error:', e);
+        reject(new Error(String(e)));
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        console.log('Parser timeout triggered');
+        worker.terminate();
+        reject(new Error('Parser timeout after 10000ms'));
+      }, 10000);
+      worker.on('message', (msg: any) => {
+        clearTimeout(timeout);
+        worker.terminate();
+        if (msg.error) reject(new Error(msg.error));
+        else {
+          console.log('DEBUG call_graph worker message:', { hasAst: !!msg.ast, astKeys: msg.ast ? Object.keys(msg.ast) : [] });
+          resolve(msg.ast);
+        }
+      });
+      worker.on('error', (err) => { console.error('Worker error:', err); reject(new Error(String(err))); });
+      worker.on('exit', (code) => { console.log('Worker exit code:', code, 'timeout?', !!timeout); if (code !== 0 && !timeout) reject(new Error(`Parser worker exited with code ${code}`)); });
+    });
   } catch { return null; }
   const funcs = new Map<string, CallGraphNode>();
   const imports = new Map<string, { source: string; original: string }>();

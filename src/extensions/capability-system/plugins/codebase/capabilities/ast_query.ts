@@ -7,11 +7,9 @@
 
 import { Type } from "typebox";
 import * as fsSync from "fs";
-import { join } from "path";
-// import { fileURLToPath } from "url"; // unused
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import path, { join } from "path";
+import { fileURLToPath } from "url";
+import { Worker } from "worker_threads";
 
 // __filename and __dirname unused
 
@@ -205,15 +203,32 @@ function createCollectVisitor(kind: string, maxResults: number, matches: Match[]
 
 // --- Execute capability ---
 async function parseAST(content: string): Promise<any> {
-  const parser = require('@typescript-eslint/parser');
-  const { parse } = parser;
-  return parse(content, {
-    sourceType: "module",
-    ecmaVersion: "latest",
-    ts: true,
-    jsx: true,
-    range: false,
-    loc: true
+  // Run parser in a worker thread to avoid blocking the event loop on syntax errors
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const workerPath = path.join(__dirname, 'parserWorker.js');
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(workerPath, { workerData: { content } });
+    const timeout = setTimeout(() => {
+      worker.terminate();
+      reject(new Error('Parser timeout after 10000ms'));
+    }, 10000);
+    worker.on('message', (msg: any) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      if (msg.error) reject(new Error(msg.error));
+      else resolve(msg.ast);
+    });
+    worker.on('error', (err) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      reject(new Error(String(err)));
+    });
+    worker.on('exit', (code) => {
+      if (code !== 0 && !timeout) {
+        reject(new Error(`Parser worker exited with code ${code}`));
+      }
+    });
   });
 }
 

@@ -7,11 +7,9 @@
 
 import { Type } from "typebox";
 import { promises as fs } from "fs";
-import { join } from "path";
-// import { fileURLToPath } from "url"; // unused
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import path, { join } from "path";
+import { Worker } from "worker_threads";
+import { fileURLToPath } from "url";
 
 // __filename unused
 
@@ -74,9 +72,33 @@ async function parseFile(cwd: string, fileRel: string): Promise<ParseResult> {
   const fileAbs = join(cwd, fileRel);
   try {
     const source = await fs.readFile(fileAbs, "utf8");
-    const parser = require('@typescript-eslint/parser');
-    const { parse } = parser;
-    const ast = parse(source, { sourceType: "module", ecmaVersion: "latest", ts: true, jsx: true });
+    // Run parser in a worker thread to avoid blocking the event loop on syntax errors
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const workerPath = path.join(__dirname, 'parserWorker.js');
+    const ast = await new Promise((resolve, reject) => {
+      const worker = new Worker(workerPath, { workerData: { content: source } });
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        reject(new Error('Parser timeout after 10000ms'));
+      }, 10000);
+      worker.on('message', (msg: any) => {
+        clearTimeout(timeout);
+        worker.terminate();
+        if (msg.error) reject(new Error(msg.error));
+        else resolve(msg.ast);
+      });
+      worker.on('error', (err) => {
+        clearTimeout(timeout);
+        worker.terminate();
+        reject(new Error(String(err)));
+      });
+      worker.on('exit', (code) => {
+        if (code !== 0 && !timeout) {
+          reject(new Error(`Parser worker exited with code ${code}`));
+        }
+      });
+    });
     return { source, ast };
   } catch (e: any) {
     return { error: e.message };

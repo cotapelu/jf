@@ -1,5 +1,9 @@
 # AUTO-CONTINUE.md - Optimized Agent Workflow
-*Version: v2.1 Compact (AGENTS.md compliant)*
+*Version: v2.2 Compact (GOAL.md v2.0 aligned)*
+
+---
+
+**NOTE**: This is a compact quick-reference. The full specification is `GOAL.md` (1155 lines). In case of conflict, `GOAL.md` prevails.
 
 ---
 
@@ -19,13 +23,13 @@ LOOP: while failed || improvable || not_minimal:
 Mỗi session mới hoặc sau khi đọc codebase mới:
 
 1. Đọc toàn bộ repository
-2. Đọc `docs/PROJECT_STATE.md` (nếu có)
+2. **Đọc `docs/PROJECT_PROFILE.md`** (auto-detected profile – replaces PROJECT_STATE.md)
 3. Hiểu capabilities và failures hiện tại
 4. Xác định next highest-impact task
 5. Implement improvements
 6. Run tests/builds với tools
-7. Update `PROJECT_STATE.md`
-8. Update `TODO.md` với completed và follow-ups
+7. Update `docs/PROJECT_PROFILE.md` nếu profile thay đổi
+8. Update `docs/TODO.md` với completed và follow-ups
 
 ---
 
@@ -40,13 +44,16 @@ Default: continuous evolution. Sau khi complete iteration, phải identify next 
 
 ## EVOLUTION & SELF-IMPROVEMENT (CORE)
 
-**Mỗi vòng loop phải update evolution files:**
+**Mỗi vòng loop phải update evolution files** (in `docs/`):
 
 - `docs/AGENT_METRICS.md`: Iterations/task, test failure rate, rollback count, regressions, MTTR
 - `docs/AGENT_PROFILE.md`: Tasks thường fail, weak languages/stacks, fragile modules, weaknesses
 - `docs/EVOLUTION.md`: Trajectory changes, planned refactors, anticipated debt updates
+- `docs/PROJECT_PROFILE.md`: Auto-updated nếu profile thay đổi (re-run detection)
 
 **Meta-Goal:** System breaks less, fixes faster, plans further ahead, ít repeated mistakes.
+
+**See also**: `docs/GOAL_REFERENCE.md` for index of all GOAL-related documentation.
 
 ---
 
@@ -212,10 +219,27 @@ chore: evolution round - <description>
 - Minimal & clear code
 - No hidden assumptions
 - No regression
+- **Quality gate score ≥90** (GOAL.md §3.1)
+- **System audit passed** (GOAL.md §11)
+- **Compliance matrix complete** if applicable (GOAL.md §13)
 
 **ANTI-SLOP (STRICT):**
 Bloat, abstraction, side effects, duplication, premature optimization = FORBIDDEN
 
 ---
 
-*v2.1 Compact: ~135 lines. Evolution-focused workflow with all critical features.*
+## NEW DOCUMENTATION (GOAL.md v2.0)
+
+These supplements are part of the unified framework:
+
+- [COMPLIANCE.md](docs/COMPLIANCE.md) – GDPR, HIPAA, PCI, SOX, COPPA matrix
+- [SYSTEM_AUDIT_TEMPLATE.md](docs/SYSTEM_AUDIT_TEMPLATE.md) – 10-dimension audit (mandatory before verify)
+- [TESTING_PIPELINE.md](docs/TESTING_PIPELINE.md) – 27 production gates, Makefile integration
+- [EDGE_CASES.md](docs/EDGE_CASES.md) – Domain-specific edge case handling
+- [PROJECT_PROFILE.md](docs/PROJECT_PROFILE.md) – Auto-detection spec (size/risk/deployment/team)
+- [SIGN_OFF_CHECKLIST.md](docs/SIGN_OFF_CHECKLIST.md) – Release gate 27 stakeholder approvals
+- [GOAL_REFERENCE.md](docs/GOAL_REFERENCE.md) – Index of all GOAL docs
+
+---
+
+*v2.2 Compact (GOAL.md v2.0 aligned) – ~150 lines*

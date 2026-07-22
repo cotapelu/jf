@@ -11,9 +11,9 @@
 import { Type } from "typebox";
 import { promises as fs } from "fs";
 import { resolveSecurePath } from "../../../../tools/utils/path-security.js";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import { Worker } from "worker_threads";
+import { fileURLToPath } from "url";
+import path from "path";
 
 export const schema = Type.Object({
   file: Type.String({ description: "File path to analyze (relative to cwd)" })
@@ -255,15 +255,34 @@ ${result.symbols.map((sym, i) => `  ${i+1}. ${sym.kind} ${sym.name} (line ${sym.
 }
 
 async function parseAST(content: string): Promise<any> {
-  const parser = require('@typescript-eslint/parser');
-  const { parse } = parser;
-  return parse(content, {
-    sourceType: "module",
-    ecmaVersion: "latest",
-    ts: true,
-    jsx: true,
-    range: false,
-    loc: true
+  // Run parser in a worker thread to avoid blocking the event loop on syntax errors
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const workerPath = path.join(__dirname, 'parserWorker.js');
+  console.log('Worker absolute path:', workerPath);
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(workerPath, { workerData: { content } });
+    const timeout = setTimeout(() => {
+      console.log('Parser timeout triggered');
+      worker.terminate();
+      reject(new Error('Parser timeout after 10000ms'));
+    }, 10000);
+    worker.on('message', (msg: any) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      if (msg.error) reject(new Error(msg.error));
+      else resolve(msg.ast);
+    });
+    worker.on('error', (err) => {
+      clearTimeout(timeout);
+      worker.terminate();
+      reject(new Error(String(err)));
+    });
+    worker.on('exit', (code) => {
+      if (code !== 0 && !timeout) { // timeout already handled
+        reject(new Error(`Parser worker exited with code ${code}`));
+      }
+    });
   });
 }
 
@@ -295,6 +314,7 @@ export async function execute(params: { file: string }, ctx: any): Promise<any> 
     const { result, summary } = await executeInternal(filePath, params.file, language);
     return { content: [{ type: "text" as const, text: summary }], details: result, isError: false };
   } catch (err: any) {
+    console.error('analyze_ast execute error:', err);
     return { content: [{ type: "text" as const, text: `Parse error: ${err.message}` }], isError: true, details: { file: params.file, error: err.message } };
   }
 }

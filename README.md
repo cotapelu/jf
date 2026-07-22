@@ -95,6 +95,22 @@ master_tool({ command: "master_tool.stats", args: { format: "json" } })
 
 Metrics include registered commands, total executions, success rate, per‑command count & average duration, cache stats, and recent errors. Useful for SLO monitoring and capacity planning.
 
+## Production Standards
+
+JF follows the **GOAL.md** production-readiness framework. See `GOAL.md` for the full specification.
+
+- Quality gates: Functions ≤20 lines, Complexity ≤10, Coverage ≥80%
+- Security: Input validation, parameterized queries, TLS 1.2+, JWT RS256, rate limiting
+- Performance: p50<100ms, p99<200ms, 1000+ RPS
+- Observability: Structured logs, metrics, tracing, health checks
+- Resilience: Retry, timeout, circuit breaker, bulkhead, fallback
+- Error handling: Format `[ERROR] Component Action - Reason - Suggestion`
+- Concurrency safety: mutexes, atomic ops, deadlock avoidance
+
+## Compliance
+
+See `docs/COMPLIANCE.md` for the compliance matrix (GDPR, HIPAA, PCI, SOX, COPPA) and audit evidence.
+
 ## License
 
 Apache License 2.0 - xem file [LICENSE](LICENSE).

@@ -9,10 +9,8 @@
 import { Type } from "typebox";
 import { promises as fs } from "fs";
 import { join, dirname, relative, resolve } from "path";
-// import { fileURLToPath } from "url"; // unused
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import { Worker } from "worker_threads";
+import { fileURLToPath } from "url";
 
 // __filename unused
 
@@ -122,8 +120,30 @@ function handleImportDeclaration(node: any, imports: Map<string, string[]>): voi
 }
 
 async function parseModule(filePath: string, source: string): Promise<FileModuleInfo> {
-  const { parse } = require('@typescript-eslint/parser');
-  let ast; try { ast = parse(source, { sourceType: "module", ecmaVersion: "latest", ts: true, jsx: true }); } catch (err: any) { throw new Error(`Parse error in ${filePath}: ${err.message}`); }
+  // Run parser in a worker thread to avoid blocking
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const workerPath = join(__dirname, 'parserWorker.js');
+  let ast;
+  try {
+    ast = await new Promise((resolve, reject) => {
+      const worker = new Worker(workerPath, { workerData: { content: source } });
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        reject(new Error('Parser timeout after 10000ms'));
+      }, 10000);
+      worker.on('message', (msg: any) => {
+        clearTimeout(timeout);
+        worker.terminate();
+        if (msg.error) reject(new Error(msg.error));
+        else resolve(msg.ast);
+      });
+      worker.on('error', reject);
+      worker.on('exit', (code) => {
+        if (code !== 0 && !timeout) reject(new Error(`Parser worker exited with code ${code}`));
+      });
+    });
+  } catch (err: any) { throw new Error(`Parse error in ${filePath}: ${err.message}`); }
   const exports: string[] = [], imports = new Map<string, string[]>();
   walk(ast, (node: any) => {
     if (node.type === 'ExportNamedDeclaration') handleExportNamedDeclaration(node, exports, imports);
@@ -380,6 +400,7 @@ export async function execute(params: { files: string[]; entryPoints?: string[] 
     const output = formatOutput(relResult, params.entryPoints ?? []);
     return { content: [{ type: "text" as const, text: output }], isError: false, details: relResult };
   } catch (err) {
+    console.error('dependency_tree execute error:', err);
     return handleParseError(err, params, cwd);
   }
 }

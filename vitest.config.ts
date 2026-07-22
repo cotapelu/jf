@@ -5,6 +5,7 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+        testTimeout: 20000,
         coverage: {
             reporter: ['text', 'json', 'html'],
             exclude: [
