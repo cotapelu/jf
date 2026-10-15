@@ -87,7 +87,7 @@ async function executeTeamCreation(parsed: TeamToolParams, ctx: ExtensionContext
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
     onUpdate?.({ content: [{ type: "text" as const, text: `❌ Team execution failed: ${message}` }], details: { error: message, stack }, isError: true });
-    return { content: [{ type: "text" as const, text: `❌ Team execution failed: ${message}` }], details: { error: message, stack }, isError: true };
+    return { content: [{ type: "text" as const, text: `❌ Team execution failed: ${message}` }], details: { error: message, stack: stack ?? null }, isError: true };
   }
 }
 

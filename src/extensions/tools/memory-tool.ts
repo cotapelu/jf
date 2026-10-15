@@ -105,11 +105,10 @@ const reconstructState = async (state: MemoryState, api: ExtensionAPI, ctx: Exte
     state.nextId = 1;
     for (const entry of ctx.sessionManager.getBranch()) {
       if (entry.type !== "message" || entry.message.role !== "toolResult" || entry.message.toolName !== "memory") continue;
-      // @ts-ignore
-      const details = entry.message.details;
+      const details = entry.message.details as { memories?: Memory[]; nextId?: number } | undefined;
       if (!details || !Array.isArray(details.memories)) continue;
       state.memories = details.memories;
-      state.nextId = details.nextId;
+      state.nextId = details.nextId ?? state.nextId;
     }
   } finally {
     release();
