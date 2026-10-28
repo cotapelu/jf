@@ -22,7 +22,7 @@ describe('Codebase Indexer Tool', () => {
 
   it('should have correct metadata', () => {
     expect(rawTool).toBeDefined();
-    expect(rawTool.name).toBe('codebase.index');
+    expect(rawTool.name).toBe('codebase_index');
     expect(rawTool.description).toContain('code');
   });
 

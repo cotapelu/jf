@@ -4,7 +4,7 @@ import { promisify } from 'util';
 const exec = promisify(execFile);
 
 export const gitPushTool: ToolDefinition = {
-  name: 'git.push',
+  name: 'git_push',
   label: 'Git Push',
   description: 'Update remote refs along with associated objects',
   parameters: {

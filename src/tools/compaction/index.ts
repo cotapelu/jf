@@ -7,8 +7,11 @@ import { compactSession } from './algorithm.js';
  * Compacts session history to fit within token budget by summarizing older messages.
  * Useful for managing LLM context window limits.
  */
+// Underscore name: OpenAI-compatible providers (e.g. NVIDIA NIM) reject
+// dots in function names with 400 "Validation: Function ... invalid name".
+// Name also avoids the SDK's built-in "session_compact" compaction event.
 export const compactContextTool: ToolDefinition = {
-  name: 'session.compact',
+  name: 'compact_session',
   label: 'Context Compaction',
   description: 'Summarize session history to reduce token count while preserving key information',
   parameters: {

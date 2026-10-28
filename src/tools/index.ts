@@ -46,10 +46,32 @@ export function registerAllCustomTools(): ToolDefinition[] {
 }
 
 /**
+ * OpenAI-compatible function-name rule enforced by providers such as
+ * NVIDIA NIM: only a-z, A-Z, 0-9, underscores and dashes are allowed.
+ * A dotted name otherwise fails the very first model call with
+ * 400 "Validation: Function at index N has an invalid name".
+ */
+const VALID_TOOL_NAME = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * Warn at registration time for tool names that providers would reject,
+ * turning a cryptic provider 400 into an actionable startup warning.
+ */
+export function warnOnInvalidToolNames(tools: ToolDefinition[]): void {
+	for (const tool of tools.filter((t) => !VALID_TOOL_NAME.test(t.name))) {
+		console.warn(
+			`[JF] Tool name "${tool.name}" is invalid for OpenAI-compatible providers (allowed: a-z, A-Z, 0-9, _, -)`,
+		);
+	}
+}
+
+/**
  * Combined: ALL tools (built-in via all factories + custom)
  */
 export function registerAllBuiltinAndCustomTools(cwd: string): ToolDefinition[] {
-	return [...registerAllBuiltinTools(cwd), ...registerAllCustomTools()];
+	const tools = [...registerAllBuiltinTools(cwd), ...registerAllCustomTools()];
+	warnOnInvalidToolNames(tools);
+	return tools;
 }
 
 /**

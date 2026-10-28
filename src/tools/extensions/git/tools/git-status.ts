@@ -4,7 +4,7 @@ import { promisify } from 'util';
 const exec = promisify(execFile);
 
 export const gitStatusTool: ToolDefinition = {
-  name: 'git.status',
+  name: 'git_status',
   label: 'Git Status',
   description: 'Show working tree status',
   parameters: {

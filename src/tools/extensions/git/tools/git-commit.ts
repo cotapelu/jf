@@ -4,7 +4,7 @@ import { promisify } from 'util';
 const exec = promisify(execFile);
 
 export const gitCommitTool: ToolDefinition = {
-  name: 'git.commit',
+  name: 'git_commit',
   label: 'Git Commit',
   description: 'Record changes to repository',
   parameters: {

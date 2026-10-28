@@ -4,7 +4,7 @@ import { promisify } from 'util';
 const exec = promisify(execFile);
 
 export const gitDiffTool: ToolDefinition = {
-  name: 'git.diff',
+  name: 'git_diff',
   label: 'Git Diff',
   description: 'Show changes between commits, commit and working tree, etc.',
   parameters: {

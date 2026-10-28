@@ -13,8 +13,8 @@
 - ✅ Quality infrastructure: ESLint, Prettier, CI/CD, coverage thresholds
 - ✅ Concurrency safety (Mutex), session history limit, disk rotation
 - ✅ Structured logging (pretty + JSON), diagnostics integration
-- ✅ Codebase Indexer (AST scanner, codebase.index tool, 4 tests)
-- ✅ Context Compaction (session.compact algorithm + tool, 5 tests)
+- ✅ Codebase Indexer (AST scanner, codebase_index tool, 4 tests)
+- ✅ Context Compaction (compact_session algorithm + tool, 5 tests)
 - ✅ Extensions Framework (ExtensionRegistry, GitExtension, 16 tests)
 - ✅ Extension Loading Refactor & Tool-Template (reliable aggregator, commands, full test coverage)
 - ✅ Lint Cleanup (0 errors in modified files)

@@ -1,8 +1,12 @@
 import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { scanCodebase } from './ast-scanner.js';
 
+// Tool name must follow the OpenAI-compatible function-name rule
+// (a-z, A-Z, 0-9, underscores, dashes). Dotted names such as
+// 'codebase.index' are rejected by providers like NVIDIA NIM with
+// 400 "Validation: Function ... has an invalid name".
 export const codebaseIndexTool: ToolDefinition = {
-  name: 'codebase.index',
+  name: 'codebase_index',
   label: 'Codebase Indexer',
   description: 'Search codebase for symbols (functions, classes, interfaces) using AST',
   parameters: {

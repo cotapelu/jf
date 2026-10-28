@@ -4,7 +4,7 @@ import { promisify } from 'util';
 const exec = promisify(execFile);
 
 export const gitPullTool: ToolDefinition = {
-  name: 'git.pull',
+  name: 'git_pull',
   label: 'Git Pull',
   description: 'Fetch from and integrate with another repository or a local branch',
   parameters: {

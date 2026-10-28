@@ -25,11 +25,11 @@ describe('GitExtension', () => {
     const tools = ext.getTools('/cwd');
     const names = tools.map((t: any) => t.name).sort();
     expect(names).toEqual([
-      'git.commit',
-      'git.diff',
-      'git.pull',
-      'git.push',
-      'git.status',
+      'git_commit',
+      'git_diff',
+      'git_pull',
+      'git_push',
+      'git_status',
     ]);
   });
 

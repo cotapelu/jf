@@ -22,7 +22,7 @@ describe('Context Compaction Tool', () => {
 
   it('should have correct metadata', () => {
     expect(compactContextTool).toBeDefined();
-    expect(compactContextTool.name).toBe('session.compact');
+    expect(compactContextTool.name).toBe('compact_session');
     expect(compactContextTool.description).toContain('token');
   });
 
