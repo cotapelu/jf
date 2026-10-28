@@ -5560,7 +5560,6 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Next Cycle:** Attack next highest offenders: `extensions/tools/skill-reader/read-skill.ts` (101 lines), `extensions/hooks/auto-continue.ts` (99 lines), `extensions/master-tool/commands/git/status.ts` (83 lines), `extensions/prompt-hooks/prompt-hook-extension.ts` (77 lines).
 
 ---
-<<<<<<< HEAD
 
 ## Cycle 139 - ReadSkill Function Length Refactor - 2026-07-18 (Autonomous)
 
@@ -5619,5 +5618,31 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 **Next Cycle:** Attack next highest offenders: `extensions/hooks/auto-continue.ts` (99 lines), `extensions/master-tool/commands/git/status.ts` (83 lines).
 
 ---
-=======
->>>>>>> origin/main
+
+## Cycle 141 - Tool Name Compatibility Hardening + Test Repair - 2026-10-27 (Collaborative)
+
+**Task:** Rename LLM-exposed tools to dot-free names (OpenAI-compatible providers like NVIDIA NIM reject dots with 400 "invalid function name"); remove tool/event name collision; repair 14 pre-existing test failures caused by SDK 1.4.x API change.
+
+**Type:** Compatibility Fix + Regression Fix  
+**Priority:** CRITICAL (every model call fails on strict providers)  
+**Duration:** ~1 hour  
+**Status:** ✅ Success
+
+**Changes:**
+- Renamed `session_compact` → `compact_session` (underscore rule + avoids SDK `session_compact` event name)
+- Renamed `codebase.index` → `codebase_index`
+- Renamed GitExtension tools: `git.commit`/`git.status`/`git.diff`/`git.pull`/`git.push` → `git_commit`/`git_status`/`git_diff`/`git_pull`/`git_push` (dead code with latent 400 risk)
+- Added `warnOnInvalidToolNames()` startup validator in tool registry (turns provider 400 into actionable warning)
+- Fixed `team-multi-runtime.test.ts`: dropped `ModelRegistry.inMemory()` (removed in SDK 1.4.x; `ModelRegistry` now wraps `ModelRuntime`) — restored 14 tests to green
+
+**Verification:**
+- TypeScript: clean
+- Lint: clean
+- Tests: 1342/1342 passing (baseline was 1328 pass + 14 fail pre-existing)
+- Audit: 0 dots remaining across all LLM tool definitions
+
+**Notes:**
+- `auto-continue.ts` keeps `pi.on("session_compact")` — SDK built-in event, unrelated to custom tool
+- master-tool / capability-system dotted IDs are internal command/capability identifiers, not LLM tool names
+
+---
