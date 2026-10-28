@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { vi, expect } from 'vitest';
 import { AgentTeam } from '../team-manager.js';
-import { SessionManager, SettingsManager, AuthStorage, ModelRegistry } from '@earendil-works/pi-coding-agent';
+import { SessionManager, SettingsManager } from '@earendil-works/pi-coding-agent';
 import type { AgentSessionRuntime, AgentSessionEvent } from '@earendil-works/pi-coding-agent';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -23,10 +23,11 @@ function createSimpleRuntime(role: string): Partial<AgentSessionRuntime> {
   const tmpAgentDir = path.join(os.tmpdir(), `evo-test-${role}-${Date.now()}`);
   try { fs.mkdirSync(tmpAgentDir, { recursive: true }); } catch (e) {}
 
-  // Use real in-memory services to avoid mocking hundreds of methods
+  // Real in-memory services (SettingsManager.inMemory / SessionManager.create) to avoid
+  // mocking hundreds of methods. AuthStorage/ModelRegistry are intentionally omitted:
+  // SDK 1.4.x removed ModelRegistry.inMemory() (ModelRegistry now wraps ModelRuntime),
+  // and the code paths under test never read authStorage/modelRegistry.
   const settingsManager = SettingsManager.inMemory({});
-  const authStorage = AuthStorage.inMemory();
-  const modelRegistry = ModelRegistry.inMemory(authStorage);
   const sessionMgr = SessionManager.create(process.cwd(), tmpAgentDir);
 
   return {
@@ -39,9 +40,7 @@ function createSimpleRuntime(role: string): Partial<AgentSessionRuntime> {
       agentDir: tmpAgentDir,
       cwd: process.cwd(),
       diagnostics: [],
-      authStorage,
       settingsManager,
-      modelRegistry,
     },
     cwd: process.cwd(),
     setRebindSession: vi.fn(),
