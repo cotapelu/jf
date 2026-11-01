@@ -1,0 +1,1 @@
+const value = 123; export default value;
