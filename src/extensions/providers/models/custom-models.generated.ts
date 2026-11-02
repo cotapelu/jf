@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 // Source: https://models.dev/api.json
-// Generated: 2026-11-01T10:02:25.801Z
+// Generated: 2026-11-02T11:20:48.477Z
 // DO NOT EDIT MANUALLY - Run 'npm run generate-custom-models' to update
 
 import type { Model } from "@earendil-works/pi-ai";
@@ -1229,7 +1229,7 @@ export const CUSTOM_MODELS = {
         cacheWrite: 0,
       },
       contextWindow: 262144,
-      maxTokens: 235929,
+      maxTokens: 32768,
     } satisfies Model<"openai-completions">,
     "google/gemma-4-31b-it": {
       id: "google/gemma-4-31b-it",
@@ -1739,7 +1739,7 @@ export const CUSTOM_MODELS = {
         cacheWrite: 0,
       },
       contextWindow: 1048576,
-      maxTokens: 131072,
+      maxTokens: 943718,
     } satisfies Model<"openai-completions">,
     "meta/muse-wonder": {
       id: "meta/muse-wonder",
@@ -3348,9 +3348,9 @@ export const CUSTOM_MODELS = {
       reasoning: true,
       input: ["text"],
       cost: {
-        input: 0.026,
-        output: 0.097,
-        cacheRead: 0,
+        input: 0.03,
+        output: 0.15,
+        cacheRead: 0.015,
         cacheWrite: 0,
       },
       contextWindow: 131072,
@@ -3365,9 +3365,9 @@ export const CUSTOM_MODELS = {
       reasoning: true,
       input: ["text"],
       cost: {
-        input: 0.006,
-        output: 0.023,
-        cacheRead: 0,
+        input: 0.01,
+        output: 0.04,
+        cacheRead: 0.009,
         cacheWrite: 0,
       },
       contextWindow: 131072,
@@ -4708,8 +4708,8 @@ export const CUSTOM_MODELS = {
       reasoning: true,
       input: ["text", "image"],
       cost: {
-        input: 0.087,
-        output: 0.187,
+        input: 0.1,
+        output: 0.28,
         cacheRead: 0.003,
         cacheWrite: 0,
       },
@@ -5150,7 +5150,7 @@ export const CUSTOM_MODELS = {
       reasoning: true,
       input: ["text"],
       cost: {
-        input: 0.0434,
+        input: 0.059,
         output: 0.3,
         cacheRead: 0.035,
         cacheWrite: 0,
