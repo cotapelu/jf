@@ -77,6 +77,48 @@ export default function (pi: ExtensionAPI): any {
 		}, idleTimeoutMs);
 	};
 
+	const disableAutoContinue = (ctx: ExtensionContext): void => {
+		enabled = false;
+		if (idleTimer) {
+			clearTimeout(idleTimer);
+			idleTimer = null;
+		}
+		if (ctx.hasUI) {
+			ctx.ui.notify("Auto-continue đã TẮT", "info");
+		}
+	};
+
+	const enableAutoContinue = (ctx: ExtensionContext): void => {
+		enabled = true;
+		if (ctx.hasUI) {
+			ctx.ui.notify(`Auto-continue đã BẬT - ${idleTimeoutMs / 1000}s timeout`, "info");
+		}
+		if (ctx.isIdle()) {
+			startIdleTimer();
+		}
+	};
+
+	const setTimeoutValue = (timeoutSec: number, ctx: ExtensionContext): void => {
+		idleTimeoutMs = timeoutSec * 1000;
+		if (ctx.hasUI) {
+			ctx.ui.notify(`Auto-continue timeout set to ${timeoutSec} giây`, "info");
+		}
+	};
+
+	const toggleAutoContinue = (ctx: ExtensionContext): void => {
+		enabled = !enabled;
+		if (enabled) {
+			if (ctx.hasUI) {
+				ctx.ui.notify(`Auto-continue đã BẬT - timeout=${idleTimeoutMs / 1000}s`, "info");
+			}
+			if (ctx.isIdle()) {
+				startIdleTimer();
+			}
+		} else {
+			disableAutoContinue(ctx);
+		}
+	};
+
 	pi.registerCommand("gnpi", {
 		description: "Toggle auto-continue: /gnpi [on|off|seconds]",
 		handler: async (args: string, ctx: ExtensionContext) => {
@@ -84,54 +126,21 @@ export default function (pi: ExtensionAPI): any {
 			const command = parts[0].toLowerCase();
 
 			if (command === "off" || command === "0") {
-				enabled = false;
-				if (idleTimer) {
-					clearTimeout(idleTimer);
-					idleTimer = null;
-				}
-				if (ctx.hasUI) {
-					ctx.ui.notify("Auto-continue đã TẮT", "info");
-				}
+				disableAutoContinue(ctx);
 				return;
 			}
-
 			if (command === "on" || command === "1") {
-				enabled = true;
-				if (ctx.hasUI) {
-					ctx.ui.notify(`Auto-continue đã BẬT - ${idleTimeoutMs / 1000}s timeout`, "info");
-				}
-				if (ctx.isIdle()) {
-					startIdleTimer();
-				}
+				enableAutoContinue(ctx);
 				return;
 			}
 
 			const timeoutSec = parseInt(parts[0], 10);
 			if (!isNaN(timeoutSec) && timeoutSec > 0) {
-				idleTimeoutMs = timeoutSec * 1000;
-				if (ctx.hasUI) {
-					ctx.ui.notify(`Auto-continue timeout set to ${timeoutSec} giây`, "info");
-				}
+				setTimeoutValue(timeoutSec, ctx);
 				return;
 			}
 
-			enabled = !enabled;
-			if (enabled) {
-				if (ctx.hasUI) {
-					ctx.ui.notify(`Auto-continue đã BẬT - timeout=${idleTimeoutMs / 1000}s`, "info");
-				}
-				if (ctx.isIdle()) {
-					startIdleTimer();
-				}
-			} else {
-				if (idleTimer) {
-					clearTimeout(idleTimer);
-					idleTimer = null;
-				}
-				if (ctx.hasUI) {
-					ctx.ui.notify("Auto-continue đã TẮT", "info");
-				}
-			}
+			toggleAutoContinue(ctx);
 		},
 	});
 

@@ -5646,3 +5646,11 @@ Result: All major test files now have all it blocks ≤20 lines. Total tests: 13
 - master-tool / capability-system dotted IDs are internal command/capability identifiers, not LLM tool names
 
 ---
+
+## Cycle 142 - Refactor auto-continue.ts + git/status.ts function-length compliance - 2026-10-27
+- **Type**: Refactor
+- **Priority**: MEDIUM
+- **Duration**: ~10 min
+- **Status**: ✅ Success
+- **Changes**: Extracted disable/enable/set-timeout/toggle helpers in auto-continue.ts; extracted parseBranch/processEntries in git/status.ts.
+- **Verification**: TypeScript clean, lint clean, git-status tests 13/13 pass.

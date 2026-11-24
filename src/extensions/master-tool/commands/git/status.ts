@@ -40,6 +40,31 @@ interface GitStatusResult {
   totalFiles: number;
 }
 
+function parseBranch(lines: string[]): string {
+  const branchLine = lines.find((l: string) => l.startsWith('## '));
+  if (!branchLine) return '(unknown)';
+  return branchLine.slice(3).split('...')[0].trim();
+}
+
+function processEntries(lines: string[]): { staged: string[]; unstaged: string[]; untracked: string[] } {
+  const staged: string[] = [];
+  const unstaged: string[] = [];
+  const untracked: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith('##')) continue;
+    const code = line.slice(0, 2);
+    const file = line.slice(3);
+    if (code === '??') {
+      untracked.push(file);
+    } else if (code.startsWith(' ')) {
+      unstaged.push(`${code} ${file}`);
+    } else {
+      staged.push(`${code} ${file}`);
+    }
+  }
+  return { staged, unstaged, untracked };
+}
+
 export async function execute(
   args: { porcelain?: boolean },
   cwd: string,
@@ -61,30 +86,8 @@ export async function execute(
     }
 
     const lines = result.stdout.trim().split('\n').filter(Boolean);
-    const staged: string[] = [];
-    const unstaged: string[] = [];
-    const untracked: string[] = [];
-    let branch = '(unknown)';
-
-    // Extract branch (lines starting with ##)
-    const branchLine = lines.find((l: string) => l.startsWith('## '));
-    if (branchLine) {
-      branch = branchLine.slice(3).split('...')[0].trim();
-    }
-
-    // Process file entries
-    for (const line of lines) {
-      if (line.startsWith('##')) continue; // skip branch meta line
-      const code = line.slice(0, 2);
-      const file = line.slice(3);
-      if (code === '??') {
-        untracked.push(file);
-      } else if (code.startsWith(' ')) {
-        unstaged.push(`${code} ${file}`);
-      } else {
-        staged.push(`${code} ${file}`);
-      }
-    }
+    const branch = parseBranch(lines);
+    const { staged, unstaged, untracked } = processEntries(lines);
 
     const data: GitStatusResult = {
       branch,
