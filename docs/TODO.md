@@ -779,7 +779,10 @@ This is **16-20 hours** of focused work. Suggestions:
 **Status**: 📝 Planning
  - [x] Refactor createTodoTool in todos-tool.ts (next high-impact)
 - [x] Refactor createMasterTool in master-tool.ts (next high-impact)
-- [ ] Refactor resolveInAllFiles in dependency_tree.ts (next)
+- [x] Refactor resolveInAllFiles in dependency_tree.ts (already compliant)
+- [x] Refactor auto-continue.ts command handler (Cycle 142)
+- [x] Refactor git/status.ts execute (Cycle 142)
+- [ ] Refactor AgentTeam in team-manager.ts (1098 lines) (next high-risk)
 - [ ] Refactor AgentTeam in team-manager.ts (1007 lines)
 
 ## ✅ COMPLETED IMPROVEMENTS
